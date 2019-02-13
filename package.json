@@ -1,0 +1,62 @@
+{
+  "name": "pakkasmarja",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.2.0",
+    "@types/moment": "^2.13.0",
+    "@types/node": "^10.12.18",
+    "@types/react-native-vector-icons": "^4.6.4",
+    "base-64": "^0.1.0",
+    "base64-js": "^1.3.0",
+    "famifarm-typescript-models": "0.0.7",
+    "fs": "0.0.1-security",
+    "jwt-decode": "^2.2.0",
+    "localized-strings": "^0.2.1",
+    "moment": "^2.23.0",
+    "moment-duration-format": "^2.2.2",
+    "native-base": "^2.10.0",
+    "query-string": "^6.2.0",
+    "react": "16.6.3",
+    "react-native": "0.57.8",
+    "react-native-base64": "0.0.2",
+    "react-native-easy-grid": "^0.2.0",
+    "react-native-elements": "^0.19.1",
+    "react-native-file-viewer": "^1.0.10",
+    "react-native-fs": "^2.13.3",
+    "react-native-gesture-handler": "^1.0.12",
+    "react-native-image-picker": "^0.28.0",
+    "react-native-modal-datetime-picker": "^6.0.0",
+    "react-native-pdf": "^5.0.11",
+    "react-native-side-menu": "^1.1.3",
+    "react-navigation": "^3.0.9",
+    "react-redux": "^6.0.0",
+    "redux": "^4.0.1",
+    "rn-fetch-blob": "^0.10.15",
+    "url": "^0.11.0",
+    "utf8": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/jwt-decode": "^2.2.1",
+    "@types/moment-duration-format": "^2.2.2",
+    "@types/query-string": "^6.1.1",
+    "@types/react": "^16.7.18",
+    "@types/react-native": "^0.57.24",
+    "@types/react-navigation": "^3.0.1",
+    "@types/react-redux": "^6.0.0",
+    "babel-jest": "23.6.0",
+    "jest": "23.6.0",
+    "metro-react-native-babel-preset": "0.51.1",
+    "react-native-dotenv": "^0.2.0",
+    "react-native-typescript-transformer": "^1.2.11",
+    "react-test-renderer": "16.6.3",
+    "typescript": "^3.2.2"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}
