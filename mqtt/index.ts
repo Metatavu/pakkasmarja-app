@@ -7,6 +7,9 @@ import { IClientOptions } from "mqtt";
  */
 export type OnMessageCallback = (message: any) => void;
 
+/**
+ * MQTT server connection configuration
+ */
 export interface MqttConfig {
   host: string,
   port: number,
@@ -15,6 +18,9 @@ export interface MqttConfig {
   topicPrefix: string
 }
 
+/**
+ * Interface describing a pending MQTT message
+ */
 interface PendingMessage {
   subtopic: string,
   message: string | Buffer
@@ -38,6 +44,11 @@ export class MqttConnection {
     this.subscribers = new Map();
   }
 
+  /**
+   * Connects to MQTT server
+   * 
+   * @param config connection config
+   */
   public connect(config: MqttConfig) {
     this.config = config;
 
