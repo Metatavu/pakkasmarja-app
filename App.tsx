@@ -7,7 +7,8 @@ import { StoreState } from "./types";
 import { AppAction } from "./actions";
 import { reducer } from "./reducers";
 import { Provider } from "react-redux";
-import AuthRefresh from "./components/screens/AuthRefresh";
+import AuthRefresh from "./components/AuthRefresh";
+import MqttConnector from "./components/MqttConnector";
 
 interface State {
   authenticated: boolean
@@ -27,7 +28,7 @@ const RootStack = createStackNavigator({
       height: 100
     },
   },
-  initialRouteName: "Main"
+  initialRouteName: "Login"
 });
 
 const AppContainer = createAppContainer(RootStack);
@@ -44,7 +45,9 @@ export default class App extends React.Component<any, State> {
   render() {
     return (
       <Provider store={store}>
-        <AppContainer />
+        <MqttConnector>
+          <AppContainer />
+        </MqttConnector>
         <AuthRefresh />
       </Provider>
     );

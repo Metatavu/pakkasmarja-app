@@ -1,8 +1,8 @@
 import React, { Dispatch } from "react";
 import { connect } from "react-redux";
-import { StoreState, AccessToken } from "../../types";
-import * as actions from "../../actions";
-import Auth from "../../utils/Auth";
+import { StoreState, AccessToken } from "../types";
+import * as actions from "../actions";
+import Auth from "../utils/Auth";
 
 /**
  * Component props
@@ -15,7 +15,9 @@ interface Props {
 /**
  * Component state
  */
-interface State {};
+interface State {
+
+}
 
 /**
  * Component for keeping authentication token fresh

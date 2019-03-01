@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import BasicLayout from "../layout/BasicLayout";
 import Auth from "../../utils/Auth";
 import { Text, Form, Item, Input, Label, Button } from 'native-base';
-import { KEYCLOAK_REALM, KEYCLOAK_SERVER_URL, KEYCLOAK_RESOURCE, DEFAULT_USER, DEFAULT_PASSWORD } from 'react-native-dotenv';
+import { REACT_APP_AUTH_SERVER_URL, REACT_APP_AUTH_RESOURCE, REACT_APP_AUTH_REALM, REACT_APP_DEFAULT_USER, REACT_APP_DEFAULT_PASSWORD } from 'react-native-dotenv';
 import { AccessToken, StoreState } from "../../types";
 import * as actions from "../../actions";
 import strings from "../../localization/strings";
@@ -84,13 +84,12 @@ class LoginScreen extends React.Component<Props, State> {
    */
   sendLogin = (event: any) => {
     const loginData = this.state.loginDetails;
-
     Auth.login({
-      clientId: KEYCLOAK_RESOURCE,
-      url: `${KEYCLOAK_SERVER_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`,
-      username: loginData.username || DEFAULT_USER,
-      password: loginData.password || DEFAULT_PASSWORD,
-      realmId: KEYCLOAK_REALM
+      clientId: REACT_APP_AUTH_RESOURCE,
+      url: `${REACT_APP_AUTH_SERVER_URL}/realms/${REACT_APP_AUTH_REALM}/protocol/openid-connect/token`,
+      username: loginData.username || REACT_APP_DEFAULT_USER,
+      password: loginData.password || REACT_APP_DEFAULT_PASSWORD,
+      realmId: REACT_APP_AUTH_REALM
     }).then(async (accessToken) => {
       if (accessToken) {
         this.props.onAccessTokenUpdate(accessToken);
