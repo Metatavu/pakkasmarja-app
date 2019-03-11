@@ -47,7 +47,7 @@ export default class ContractHeader extends React.Component<Props, State> {
         marginBottom: 15
       },
       ContentText:{
-        fontSize: 18,
+        fontSize: 20,
         lineHeight: 25,
         fontWeight:"bold"
       }

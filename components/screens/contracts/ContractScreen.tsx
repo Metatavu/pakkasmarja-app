@@ -58,7 +58,6 @@ export default class ContractScreen extends React.Component<Props, State> {
   public componentDidMount = () => {
     if (this.props.navigation.getParam('itemGroup')) {
       this.setState({ itemGroup: this.props.navigation.getParam('itemGroup') });
-      console.log(this.props.navigation.getParam('itemGroup'))
     }
 
     if (this.props.navigation.getParam('contact')) {
@@ -125,6 +124,9 @@ export default class ContractScreen extends React.Component<Props, State> {
         padding: 15,
         paddingBottom: 20,
       },
+      readingText:{
+        fontSize: 20
+      },
       TextBold: {
         fontWeight: "bold"
       },
@@ -143,6 +145,16 @@ export default class ContractScreen extends React.Component<Props, State> {
         marginTop: 8,
         marginBottom: 8,
         marginLeft:0
+      },
+      textWithSpace:{
+        paddingTop:7,
+        paddingBottom:7
+      },
+      textInput:{
+        backgroundColor:"white",
+        borderColor: "gray",
+        borderWidth: 1,
+        borderRadius: 4,
       }
     });
     if (!this.state.itemGroup || !this.state.contact || !this.state.contract) {
@@ -170,6 +182,7 @@ export default class ContractScreen extends React.Component<Props, State> {
             deliverAllChecked={this.state.contractData.deliverAllChecked}
           />
           <ContractAreaDetails 
+            styles={styles} 
             itemGroup={this.state.itemGroup}
             areaDetails={this.state.contract.areaDetails}
             areaDetailValues={this.state.contractData.areaDetailValues}

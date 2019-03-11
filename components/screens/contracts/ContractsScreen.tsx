@@ -70,11 +70,11 @@ class ContractsScreen extends React.Component<Props, State> {
     this.setState({ contact: contact });
   }
 
-    /**
-   * Find prices
-   * 
-   * @param contract contract
-   */
+  /**
+ * Find prices
+ * 
+ * @param contract contract
+ */
   private findPrices = async (contract: Contract) => {
     if (!this.props.accessToken || !contract.itemGroupId) {
       return;
@@ -86,11 +86,11 @@ class ContractsScreen extends React.Component<Props, State> {
     this.setState({ prices: prices });
   }
 
-    /**
-   * Get item group 
-   * 
-   * @param itemGroupId itemGroupId
-   */
+  /**
+ * Get item group 
+ * 
+ * @param itemGroupId itemGroupId
+ */
   private getItemGroup = async (itemGroupId: any) => {
     if (!this.props.accessToken) {
       return;
@@ -134,24 +134,24 @@ class ContractsScreen extends React.Component<Props, State> {
 
   render() {
     const styles = StyleSheet.create({
-      headerView:{
-        backgroundColor: "#E51D2A", 
-        padding: 10 
+      headerView: {
+        backgroundColor: "#E51D2A",
+        padding: 10
       },
       headerText: {
         color: "#fff",
-        fontWeight: "bold", 
-        fontSize: 25 
+        fontWeight: "bold",
+        fontSize: 25
       },
-      titleView:{
+      titleView: {
         backgroundColor: "#fff",
-        padding: 10 
+        padding: 10
       },
-      titleText:{
-        color: "#000000", 
-        fontWeight: "bold", 
+      titleText: {
+        color: "#000000",
+        fontWeight: "bold",
         fontSize: 25,
-        textAlign:"center"
+        textAlign: "center"
       }
     });
 

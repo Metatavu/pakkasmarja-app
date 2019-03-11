@@ -1,8 +1,9 @@
 import React from "react";
 import { Text, List, ListItem, Input } from "native-base";
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { AreaDetail, ItemGroup } from "pakkasmarja-client";
+import { any } from "prop-types";
 
 /**
  * Interface for component props
@@ -13,6 +14,7 @@ interface Props {
   areaDetailValues: AreaDetail[],
   isActiveContract: boolean,
   onUserInputChange: (key:any, value:any) => void,
+  styles?: any
 };
 
 /**
@@ -41,6 +43,8 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
       backgroundColor:"white",
       borderWidth: 3,
       borderRadius: 18,
+      marginTop: 10,
+      textAlignVertical: "center"
     }
     return (
       <Row>
@@ -85,6 +89,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
    */
   private renderInputField = (index: number, key: string, editable: boolean, keyboardType: any, value: string, style: any) => {
     return (
+      
       <Input
         key={index}
         style={style}
@@ -98,8 +103,8 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
 
   public render() {
     return (
-      <View style={{ marginBottom: 10 }}>
-        <Text>Tuotannossa olevat hehtaarit</Text>
+      <View style={this.props.styles.BlueContentView}>
+        <Text style={this.props.styles.ContentHeader}>Tuotannossa olevat hehtaarit</Text>
         <Grid>
           <Row>
             <Col>
