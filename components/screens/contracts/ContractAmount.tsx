@@ -122,7 +122,7 @@ class ContractAmount extends React.Component<Props, State> {
           {`Pakkasmarjan ehdotus: ${this.props.contract.contractQuantity} kg`}
         </Text>
         <TouchableOpacity onPress={this.togglePastContracts}>
-          <Text style={[{ textDecorationLine: "underline", color: "blue" },this.props.styles.readingText]}>
+          <Text style={{ textDecorationLine: "underline", color: "blue" }}>
             Edellisten vuosien sopimusmäärät ja toimitusmäärät
           </Text>
         </TouchableOpacity>

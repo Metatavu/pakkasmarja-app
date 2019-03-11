@@ -96,7 +96,7 @@ class ContractModal extends React.Component<Props, State> {
       modalButton: {
         width: "100%",
         height: 40,
-        backgroundColor: "red",
+        backgroundColor: "#e01e36",
         justifyContent: "center",
         alignItems: "center",
       },

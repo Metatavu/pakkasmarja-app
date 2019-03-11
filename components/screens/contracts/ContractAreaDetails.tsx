@@ -13,7 +13,7 @@ interface Props {
   areaDetails?: AreaDetail[],
   areaDetailValues: AreaDetail[],
   isActiveContract: boolean,
-  onUserInputChange: (key:any, value:any) => void,
+  onUserInputChange: (key: any, value: any) => void,
   styles?: any
 };
 
@@ -67,15 +67,15 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     const minimumEstimation = this.props.itemGroup ? this.props.itemGroup.minimumProfitEstimation : null;
 
     const style = {
-      height:40,
+      height: 40,
       borderColor: "red",
-      backgroundColor:"white",
+      backgroundColor: "white",
       borderWidth: 3,
       borderRadius: 18,
       marginTop: 10,
       textAlignVertical: "center"
     }
-    
+
     return (
       <Row>
         <Col>
@@ -89,9 +89,9 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
         </Col>
         {
           !minimumEstimation &&
-            <Col>
-              {this.renderInputField(index, "profitEstimation", !this.props.isActiveContract, "numeric", "0", style)}
-            </Col>
+          <Col>
+            {this.renderInputField(index, "profitEstimation", !this.props.isActiveContract, "numeric", "0", style)}
+          </Col>
         }
       </Row>
     );
@@ -122,7 +122,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     }
 
     if (this.props.itemGroup && this.props.itemGroup.minimumProfitEstimation) {
-      this.setState({ minimumProfit: this.props.itemGroup.minimumProfitEstimation});
+      this.setState({ minimumProfit: this.props.itemGroup.minimumProfitEstimation });
     }
   }
 
@@ -150,13 +150,13 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     }, 0);
 
     if (proposedAmount) {
-      const errorStyle = totalProfit < proposedAmount ? {color: "red"} : {};
+      const errorStyle = totalProfit < proposedAmount ? { color: "red" } : {};
       return (
         <View>
-          <Text>
+          <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>
             {`Lohkoja yhteensä ${blocks} kpl. Pinta-alaa yhteensä ${totalHectares} ha.`}
           </Text>
-          <Text style={{color: totalProfit < proposedAmount ? "red": "black"}}>
+          <Text style={[{ color: totalProfit < proposedAmount ? "red" : "black" }, this.props.styles.readingText]}>
             {`Minimisopimusmäärä on ${totalProfit} kg, perustuen hehtaarikohtaiseen toimitusmääräminimiin 500 kg / ha. Lisätietoja sopimuksen kohdasta Sopimuksen mukaiset toimitusmäärät, takuuhinnat ja bonus satokaudella ${(new Date()).getFullYear()}`}
           </Text>
         </View>
@@ -203,31 +203,35 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
 
   public render() {
     return (
-      <View style={this.props.styles.BlueContentView}>
-        <Text style={this.props.styles.ContentHeader}>Tuotannossa olevat hehtaarit</Text>
-        <Grid>
+      <View>
+        <View style={this.props.styles.BlueContentView}>
+          <Text style={this.props.styles.ContentHeader}>Tuotannossa olevat hehtaarit</Text>
+          <Grid>
+            {
+              this.renderAreaDetailHeaders()
+            }
+            {
+              this.props.areaDetailValues && this.props.areaDetailValues.length > 0 && this.props.areaDetailValues.map((areaDetail, index) => {
+                return (
+                  this.renderAreaDetailsRow(index, areaDetail.name, areaDetail.size, areaDetail.species)
+                );
+              })
+            }
+          </Grid>
+        </View>
+        <View style={this.props.styles.WhiteContentView}>
           {
-            this.renderAreaDetailHeaders()
-          }
-          {
-            this.props.areaDetailValues && this.props.areaDetailValues.length > 0 && this.props.areaDetailValues.map((areaDetail, index) => {
-              return (
-                this.renderAreaDetailsRow(index, areaDetail.name, areaDetail.size, areaDetail.species)
-              );
-            })
-          }
-        </Grid>
-        {
-          !this.props.isActiveContract && 
-          <TouchableOpacity onPress={this.createEmptyAreaDetail}>
-            <Text style={{ backgroundColor: "red"}}>
-              Lisää rivi
+            !this.props.isActiveContract &&
+            <TouchableOpacity style={this.props.styles.bigRedButton} onPress={this.createEmptyAreaDetail}>
+              <Text style={this.props.styles.buttonText}>
+                LISÄÄ RIVI
             </Text>
-          </TouchableOpacity>
-        }
-        {
-          this.renderProfitTextElements()
-        }
+            </TouchableOpacity>
+          }
+          {
+            this.renderProfitTextElements()
+          }
+        </View>
       </View>
     );
   }

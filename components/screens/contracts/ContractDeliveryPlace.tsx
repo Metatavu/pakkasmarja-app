@@ -63,13 +63,13 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
     return (
       <View style={this.props.styles.BlueContentView}>
         <View>
-          <Text>
+          <Text style={this.props.styles.ContentHeader}>
             Toimituspaikka
           </Text>
           <Picker
             selectedValue={this.props.selectedPlace}
             enabled={!this.props.isActiveContract}
-            style={{height: 50, width: "100%"}}
+            style={{height: 50, width: "100%", backgroundColor:"white"}}
             onValueChange={(itemValue, itemIndex) =>
               this.props.onUserInputChange("deliveryPlace", itemValue)
             }>
@@ -91,12 +91,12 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
           }
         </View>
         <View>
-        <Text>Kommentti</Text>
+        <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>Kommentti</Text>
         <TextInput 
           multiline = {true}
           numberOfLines = {4}
           editable={!this.props.isActiveContract}
-          style={{backgroundColor: "grey"}}
+          style={this.props.styles.textInput}
           value={this.props.deliveryPlaceComment}
           onChange={this.onDeliveryPlaceChange}
         />

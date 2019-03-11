@@ -192,6 +192,19 @@ export default class ContractScreen extends React.Component<Props, State> {
         borderColor: "gray",
         borderWidth: 1,
         borderRadius: 4,
+      },
+      bigRedButton: {
+        width: "100%",
+        height: 45,
+        backgroundColor: "#e01e36",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom:10
+      },
+      buttonText:{
+        color:"white",
+        fontSize:22,
+        fontWeight: "500"
       }
     });
     if (!this.state.itemGroup || !this.state.contact || !this.state.contract) {
