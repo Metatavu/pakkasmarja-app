@@ -1,13 +1,13 @@
 import React from "react";
 import { Text, List, ListItem } from "native-base";
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { ItemGroup, Price } from "pakkasmarja-client";
 /**
  * Interface for component props
  */
 export interface Props {
-  itemGroup?: ItemGroup,
+  itemGroup: ItemGroup,
   prices?: Price[],
   styles?: any
 };
@@ -48,7 +48,6 @@ export default class ContractPrices extends React.Component<Props, State> {
     if (!this.props.itemGroup) {
       return;
     }
-
     return `Ostettavien marjojen (${this.props.itemGroup.displayName}) takuuhinnat satokaudella ${new Date().getFullYear()}`;
   }
 
@@ -93,10 +92,16 @@ export default class ContractPrices extends React.Component<Props, State> {
   }
 
   public render() {
+    const styles = StyleSheet.create({
+      listItem:{
+        paddingLeft:0,
+        marginLeft:0
+      }
+    });
     if (this.props.itemGroup && this.props.itemGroup.category === "FROZEN") {
       return (
         <View style={this.props.styles.WhiteContentView}>
-          <Text style={{ fontWeight: "bold", fontSize: 25 }}>
+          <Text style={this.props.styles.ContentHeader}>
             Takuuhinnat
           </Text>
           <Text>
@@ -139,13 +144,13 @@ export default class ContractPrices extends React.Component<Props, State> {
     }
     return (
       <View style={this.props.styles.WhiteContentView}>
-        <Text>Tuotemarjojen hinnottelu</Text>
+        <Text style={this.props.styles.ContentHeader}>Tuotemarjojen hinnottelu</Text>
         <List>
-          <ListItem><Text> Vähimmäislaatuvaatimukset täyttävästä tuoremarjasta yhtiö maksaa päivän hinnan.</Text></ListItem>
-          <ListItem><Text> Yhtiö voi huomioida max. 0,20 eur Alv 0%/ kg -suuruisella bonuksella BONUS-laatuiset marjat.</Text></ListItem>
-          <ListItem><Text> Tunneli-/ kasvihuonetuotannosta ostettavalle marjalle pyritään maksamaan korkeampi päivän hinta.</Text></ListItem>
-          <ListItem><Text> Jos marjaerä ei täytä yhtiön vähimmäislaatuvaatimuksia neuvotellaan erän hinnasta aina erikseen viljelijän kanssa.</Text></ListItem>
-          <ListItem><Text> Yhtiö voi myös maksaa kyseisellä viikolla toimittaneille viljelijöille lisäbonuksen hyvin onnistuneen sopimusyhteistyön johdosta.</Text></ListItem>
+          <ListItem style={styles.listItem}><Text> Vähimmäislaatuvaatimukset täyttävästä tuoremarjasta yhtiö maksaa päivän hinnan.</Text></ListItem>
+          <ListItem style={styles.listItem}><Text> Yhtiö voi huomioida max. 0,20 eur Alv 0%/ kg -suuruisella bonuksella BONUS-laatuiset marjat.</Text></ListItem>
+          <ListItem style={styles.listItem}><Text> Tunneli-/ kasvihuonetuotannosta ostettavalle marjalle pyritään maksamaan korkeampi päivän hinta.</Text></ListItem>
+          <ListItem style={styles.listItem}><Text> Jos marjaerä ei täytä yhtiön vähimmäislaatuvaatimuksia neuvotellaan erän hinnasta aina erikseen viljelijän kanssa.</Text></ListItem>
+          <ListItem style={styles.listItem}><Text> Yhtiö voi myös maksaa kyseisellä viikolla toimittaneille viljelijöille lisäbonuksen hyvin onnistuneen sopimusyhteistyön johdosta.</Text></ListItem>
         </List>
       </View>
     );

@@ -98,19 +98,16 @@ class ContractAmount extends React.Component<Props, State> {
    * Render method for contract amount component
    */
   public render() {
-    const styles = StyleSheet.create({
-      
-    });
     return (
       <View style={this.props.styles.BlueContentView}>
         <Text style={this.props.styles.ContentHeader}>
           Määrä
         </Text>
         {this.props.itemGroup.category === "FRESH" &&
-          <Text>Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.</Text>
+          <Text style={{fontSize:18,paddingBottom:10}}>Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.</Text>
         }
         <Form>
-          <Text>Määrä</Text>
+          <Text style={this.props.styles.readingText}>Määrä</Text>
           <Item>
             <Input 
               style={this.props.styles.InputStyle}
@@ -121,25 +118,25 @@ class ContractAmount extends React.Component<Props, State> {
             />
           </Item>
         </Form>
-        <Text>
+        <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>
           {`Pakkasmarjan ehdotus: ${this.props.contract.contractQuantity} kg`}
         </Text>
         <TouchableOpacity onPress={this.togglePastContracts}>
-          <Text style={{ textDecorationLine: "underline", color: "blue" }}>
+          <Text style={[{ textDecorationLine: "underline", color: "blue" },this.props.styles.readingText]}>
             Edellisten vuosien sopimusmäärät ja toimitusmäärät
           </Text>
         </TouchableOpacity>
-        <ContractModal closeModal={() => this.setState({showPastContracts: false})} pastContracts={true} modalOpen={this.state.showPastContracts} itemGroupId={this.props.itemGroup.id || ""}/>
+        <ContractModal styles={this.props.styles} closeModal={() => this.setState({showPastContracts: false})} pastContracts={true} modalOpen={this.state.showPastContracts} itemGroupId={this.props.itemGroup.id || ""}/>
         <CheckBox
           checked={this.props.deliverAllChecked}
           onPress={() => this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked)}
           title='Haluaisin toimittaa kaiken tilallani viljeltävän sadon tästä marjasta Pakkasmarjalle pakastettavaksi ja tuorekauppaan (lisätietoja sopimuksen kohdasta 100 % toimittajuus).'
         />
-        <Text>Kommentti</Text>
+        <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>Kommentti</Text>
         <TextInput 
           multiline = {true}
           numberOfLines = {4}
-          style={{backgroundColor: "grey"}}
+          style={this.props.styles.textInput}
           value={this.props.quantityComment}
           onChange={this.onQuantityCommentChange}
         />
