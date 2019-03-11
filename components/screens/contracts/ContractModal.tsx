@@ -90,7 +90,7 @@ class ContractModal extends React.Component<Props, State> {
               {
                 this.state.contracts.map((contract) => {
                   return (
-                    <Row>
+                    <Row key={contract.itemGroupId}>
                       <Col><Text>{contract.year}</Text></Col>
                       <Col><Text>{contract.contractQuantity}</Text></Col>
                       <Col><Text>{contract.deliveredQuantity}</Text></Col>

@@ -1,7 +1,7 @@
 import React from "react";
 import { Contact } from "pakkasmarja-client";
 import { Text } from "native-base";
-import { View } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 
 /**
@@ -10,7 +10,8 @@ import { Col, Row, Grid } from "react-native-easy-grid";
 export interface Props {
   contact: Contact,
   companyName: string,
-  companyBusinessId: string
+  companyBusinessId: string,
+  styles?:any
 };
 
 /**
@@ -49,14 +50,14 @@ export default class ContractParties extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <View style={{marginBottom: 10, marginTop: 10, paddingLeft:10, paddingRight:10}}>
-        <Text style={{fontWeight: "bold", fontSize: 25}}>
+      <View style={this.props.styles.WhiteContentView}>
+        <Text style={this.props.styles.ContentHeader}>
           OSAPUOLET
         </Text>
         <Grid>
           <Row>
-            <Col><Text style={{fontWeight: "bold"}}>Viljelijä</Text></Col>
-            <Col><Text style={{fontWeight: "bold"}}>Yhtiö</Text></Col>
+            <Col><Text style={this.props.styles.TextBold}>Viljelijä</Text></Col>
+            <Col><Text style={this.props.styles.TextBold}>Yhtiö</Text></Col>
           </Row>
           <Row>
             <Col>

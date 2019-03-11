@@ -68,7 +68,7 @@ class TopBar extends React.Component<Props, State> {
           <View style={{flex: 1, flexDirection: "row", paddingLeft: 10, paddingRight: 10, alignItems: "center", justifyContent: "space-between"}}>
             {this.props.secondaryNavItems.map((navItem: any) => {
               return (
-                <Text style={{color: "#fff", fontWeight: "bold"}}>{navItem.text}</Text>
+                <Text key={navItem.text} style={{color: "#fff", fontWeight: "bold"}}>{navItem.text}</Text>
               );
             })}
           </View>

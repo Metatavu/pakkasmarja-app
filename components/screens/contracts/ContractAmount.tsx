@@ -1,7 +1,7 @@
 import React, { Dispatch } from "react";
 import { Contact, Price, ContractModel, AccessToken, StoreState } from "../../../types";
 import { Text, Form, Item, Label, Input } from "native-base";
-import { View, TouchableOpacity, Modal, TextInput } from "react-native";
+import { View, TouchableOpacity, Modal, TextInput, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { Contract, ItemGroup } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
@@ -24,7 +24,8 @@ export interface Props {
   onUserInputChange: (key:any, value:any) => void,
   proposedAmount: string,
   quantityComment: string,
-  deliverAllChecked: boolean
+  deliverAllChecked: boolean,
+  styles?: any
 };
 
 /**
@@ -97,26 +98,22 @@ class ContractAmount extends React.Component<Props, State> {
    * Render method for contract amount component
    */
   public render() {
+    const styles = StyleSheet.create({
+      
+    });
     return (
-      <View style={{backgroundColor:"lightblue", width:"100%"}}>
-        <Text style={{ fontWeight: "bold", fontSize: 25}}>
+      <View style={this.props.styles.BlueContentView}>
+        <Text style={this.props.styles.ContentHeader}>
           Määrä
         </Text>
         {this.props.itemGroup.category === "FRESH" &&
           <Text>Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.</Text>
         }
         <Form>
-          <Text style={{fontWeight:"bold"}}>Määrä</Text>
+          <Text>Määrä</Text>
           <Item>
             <Input 
-              style={{
-                height:40,
-                width:"90%",
-                borderColor: "red",
-                backgroundColor:"white",
-                borderWidth: 3,
-                borderRadius: 18,
-            }}
+              style={this.props.styles.InputStyle}
               editable={this.props.isActiveContract}
               keyboardType="numeric"
               value={this.props.proposedAmount}
