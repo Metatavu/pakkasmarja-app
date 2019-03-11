@@ -1,9 +1,8 @@
 import React from "react";
-import { ItemGroup, Price } from "../../../types";
 import { Text, List, ListItem } from "native-base";
 import { View, TouchableOpacity } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
-
+import { ItemGroup, Price } from "pakkasmarja-client";
 /**
  * Interface for component props
  */

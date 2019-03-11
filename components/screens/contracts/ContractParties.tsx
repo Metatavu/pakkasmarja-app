@@ -1,5 +1,5 @@
 import React from "react";
-import { ItemGroup, Contact } from "../../../types";
+import { Contact } from "pakkasmarja-client";
 import { Text } from "native-base";
 import { View } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";

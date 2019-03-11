@@ -1,9 +1,9 @@
 import React, { Dispatch } from "react";
-import { ItemGroup, Contact, Price, ContractModel, AccessToken, StoreState } from "../../../types";
+import { Contact, Price, ContractModel, AccessToken, StoreState } from "../../../types";
 import { Text, Form, Item, Label, Input } from "native-base";
 import { View, TouchableOpacity, Modal, TextInput } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
-import { Contract } from "pakkasmarja-client";
+import { Contract, ItemGroup } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import * as actions from "../../../actions";
@@ -23,6 +23,7 @@ export interface Props {
   accessToken?: AccessToken,
   onUserInputChange: (key:any, value:any) => void,
   proposedAmount: string,
+  quantityComment: string,
   deliverAllChecked: boolean
 };
 
@@ -86,7 +87,14 @@ class ContractAmount extends React.Component<Props, State> {
   }
 
   /**
-   * Render method for contract parties component
+   * On quantity comment change
+   */
+  private onQuantityCommentChange = (event: any) => {
+    this.props.onUserInputChange("quantityComment", event.currentTarget.value);
+  }
+
+  /**
+   * Render method for contract amount component
    */
   public render() {
     return (
@@ -135,7 +143,8 @@ class ContractAmount extends React.Component<Props, State> {
           multiline = {true}
           numberOfLines = {4}
           style={{backgroundColor: "grey"}}
-          value=''
+          value={this.props.quantityComment}
+          onChange={this.onQuantityCommentChange}
         />
       </View>
     );

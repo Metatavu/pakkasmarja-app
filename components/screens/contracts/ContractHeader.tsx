@@ -1,5 +1,5 @@
 import React from "react";
-import { ItemGroup } from "../../../types";
+import { ItemGroup } from "pakkasmarja-client";
 import { Text } from "native-base";
 import { View } from "react-native";
 

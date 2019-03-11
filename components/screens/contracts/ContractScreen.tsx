@@ -1,5 +1,4 @@
 import React from "react";
-import { ItemGroup, Contact, Price, ContractModel } from "../../../types";
 import { Text } from "native-base";
 import { View } from "react-native";
 import BasicLayout from "../../layout/BasicLayout";
@@ -8,7 +7,8 @@ import ContractPrices from "./ContractPrices";
 import ContractHeader from "./ContractHeader";
 import ContractParties from "./ContractParties";
 import ContractAmount from "./ContractAmount";
-import { Contract } from "pakkasmarja-client";
+import ContractAreaDetails from "./ContractAreaDetails";
+import { Contract, ItemGroup, Price, Contact, AreaDetail } from "pakkasmarja-client";
 
 /**
  * Interface for component props
@@ -16,11 +16,6 @@ import { Contract } from "pakkasmarja-client";
 interface Props {
   navigation: any
 };
-
-interface UserInputs {
-  proposedQuantity: string
-  deliverAllChecked: boolean
-}
 
 /**
  * Interface for component state
@@ -34,7 +29,7 @@ interface State {
   companyName: string,
   companyBusinessId: string,
   showPastPrices: boolean,
-  contractData: any
+  contractData: any,
 };
 
 export default class ContractScreen extends React.Component<Props, State> {
@@ -50,7 +45,9 @@ export default class ContractScreen extends React.Component<Props, State> {
       showPastPrices: false,
       contractData: {
         proposedQuantity: "",
-        deliverAllChecked: false
+        deliverAllChecked: false,
+        quantityComment: "",
+        areaDetailValues: []
       }
     };
   }
@@ -74,12 +71,19 @@ export default class ContractScreen extends React.Component<Props, State> {
     if (this.props.navigation.getParam('contract')) {
       this.setState({contract: this.props.navigation.getParam('contract')});
     }
+
+    if (!this.state.contract || !this.state.contract.areaDetails) {
+      return;
+    }
+
+    const areaDetailValues = this.state.contract.areaDetails;
+    this.updateContractData("areaDetailValues", areaDetailValues);
   }
 
   /**
    * On user input change
    */
-  private onUserInputChange = (key: string, value: boolean | string) => {
+  private updateContractData = (key: string, value: boolean | string | AreaDetail[]) => {
     const contractData = this.state.contractData;
     contractData[key] = value;
 
@@ -126,9 +130,17 @@ export default class ContractScreen extends React.Component<Props, State> {
             contract={this.state.contract}
             isActiveContract={this.state.contract.status === "APPROVED"}
             category={this.state.itemGroup.category || ""}
-            onUserInputChange={this.onUserInputChange}
+            onUserInputChange={this.updateContractData}
             proposedAmount={this.state.contractData.proposedQuantity}
+            quantityComment={this.state.contractData.quantityComment}
             deliverAllChecked={this.state.contractData.deliverAllChecked}
+          />
+          <ContractAreaDetails 
+            itemGroup={this.state.itemGroup}
+            areaDetails={this.state.contract.areaDetails}
+            areaDetailValues={this.state.contractData.areaDetailValues}
+            isActiveContract={this.state.contract.status === "APPROVED"}
+            onUserInputChange={this.updateContractData}
           />
         </View>
       </BasicLayout>
