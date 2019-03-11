@@ -1,5 +1,4 @@
 apply plugin: "com.android.application"
-apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 
 import com.android.build.OutputFile
 
@@ -99,7 +98,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
-        applicationId "com.famifarm"
+        applicationId "com.pakkasmarja"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -138,11 +137,11 @@ android {
 }
 
 dependencies {
-    compile project(':react-native-vector-icons')
-    compile project(':react-native-gesture-handler')
     compile project(':rn-fetch-blob')
+    compile project(':react-native-vector-icons')
     compile project(':react-native-pdf')
     compile project(':react-native-image-picker')
+    compile project(':react-native-gesture-handler')
     compile project(':react-native-fs')
     compile project(':react-native-file-viewer')
     implementation fileTree(dir: "libs", include: ["*.jar"])

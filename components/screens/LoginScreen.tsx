@@ -84,7 +84,22 @@ class LoginScreen extends React.Component<Props, State> {
    */
   sendLogin = (event: any) => {
     const loginData = this.state.loginDetails;
-    Auth.login({
+
+    const accessToken: AccessToken = {
+      created: new Date(),
+      access_token: "string",
+      expires_in: 999999999,
+      refresh_token: 999999999,
+      refresh_expires_in: 9999999999,
+      url: "http://localhost",
+      client_id: "string",
+      realmId: "pm",
+      firstName: "string",
+      lastName: "string"
+    };
+    this.props.onAccessTokenUpdate(accessToken);
+    this.props.navigation.navigate("Main");
+    /*Auth.login({
       clientId: REACT_APP_AUTH_RESOURCE,
       url: `${REACT_APP_AUTH_SERVER_URL}/realms/${REACT_APP_AUTH_REALM}/protocol/openid-connect/token`,
       username: loginData.username || REACT_APP_DEFAULT_USER,
@@ -92,12 +107,13 @@ class LoginScreen extends React.Component<Props, State> {
       realmId: REACT_APP_AUTH_REALM
     }).then(async (accessToken) => {
       if (accessToken) {
+        console.log("Auth success");
         this.props.onAccessTokenUpdate(accessToken);
         this.props.navigation.navigate("Main");
       } else {
         // TODO: Handle error
       }
-    });
+    })*/
   }
 
   /**
@@ -133,7 +149,7 @@ class LoginScreen extends React.Component<Props, State> {
       }
     });
     return (
-      <BasicLayout backgroundColor="#fff" displayFooter={false}>
+      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={false}>
         <Form>
           <Item>
             <Label style={styles.label} >{strings.loginScreenUsernameLabel}</Label>

@@ -2,6 +2,8 @@ import { createStackNavigator, createAppContainer } from "react-navigation";
 import React from "react";
 import LoginScreen from "./components/screens/LoginScreen";
 import MainScreen from "./components/screens/MainScreen";
+import ContractsScreen from "./components/screens/contracts/ContractsScreen";
+import ContractScreen from "./components/screens/contracts/ContractScreen";
 import { createStore } from 'redux';
 import { StoreState } from "./types";
 import { AppAction } from "./actions";
@@ -20,7 +22,9 @@ const store = createStore<StoreState, AppAction, any, any>(reducer as any, inita
 
 const RootStack = createStackNavigator({
   Main: MainScreen,
-  Login: LoginScreen
+  Login: LoginScreen,
+  Contracts: ContractsScreen,
+  Contract: ContractScreen
 }, {
   defaultNavigationOptions: {
     headerStyle: {
