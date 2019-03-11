@@ -9,7 +9,7 @@ import { View, TouchableHighlight, StyleSheet } from "react-native";
 //import Api from "../../../api";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
-import { Contract, Contact, Address, Price, ItemGroup } from "pakkasmarja-client";
+import { Contract, Contact, Address, Price, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import ContractAmountTable from "./ContractAmountTable";
 
@@ -24,6 +24,7 @@ interface State {
   contact?: Contact;
   itemGroup?: ItemGroup;
   prices?: Price[],
+  deliveryPlaces? : DeliveryPlace[],
   bool: boolean;
 };
 
@@ -86,7 +87,7 @@ class ContractsScreen extends React.Component<Props, State> {
     this.setState({ prices: prices });
   }
 
-    /**
+  /**
    * Get item group 
    * 
    * @param itemGroupId itemGroupId
@@ -101,15 +102,37 @@ class ContractsScreen extends React.Component<Props, State> {
     return await itemGroupService.findItemGroup(itemGroupId);
   }
 
+  /**
+   * Get delivery places
+   */
+  private getDeliveryPlaces = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const deliveryPlacesService = api.getDeliveryPlacesService(this.props.accessToken.access_token);
+    const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
+    this.setState({ deliveryPlaces: deliveryPlaces });
+  }
+
+  /**
+   * Handle contract click
+   * 
+   * @param contract contract
+   */
   public handleContractClick = async (contract: Contract) => {
     await this.findContractContact(contract);
     await this.findPrices(contract);
+    await this.getDeliveryPlaces();
+    
     this.setState({ bool: false });
     this.props.navigation.navigate('Contract', {
       contact: this.state.contact,
       itemGroup: await this.getItemGroup(contract.itemGroupId),
       prices: this.state.prices,
-      contract: contract
+      contract: contract,
+      deliveryPlaces: this.state.deliveryPlaces
     });
   }
 

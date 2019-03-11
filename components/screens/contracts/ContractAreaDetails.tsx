@@ -19,6 +19,7 @@ interface Props {
  * Interface for component state
  */
 interface State {
+  minimumProfit: number
 };
 
 export default class ContractAreaDetails extends React.Component<Props, State> {
@@ -28,13 +29,41 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      minimumProfit: 0
     };
+  }
+
+  /**
+   * Render area detail headers
+   */
+  private renderAreaDetailHeaders = () => {
+    return (
+      <Row>
+        <Col>
+          <Text>Lohko/Lohkot</Text>
+        </Col>
+        <Col>
+          <Text>Pinta-ala (ha)</Text>
+        </Col>
+        <Col>
+          <Text>Lajike/Lajikkeet</Text>
+        </Col>
+        {
+          this.props.itemGroup && this.props.itemGroup.minimumProfitEstimation &&
+          <Col>
+            <Text>Tuottoarvio (kg / ha)</Text>
+          </Col>
+        }
+      </Row>
+    );
   }
 
   /**
    * Get area details row
    */
   private renderAreaDetailsRow = (index: number, name?: string, size?: number, species?: string) => {
+    const minimumEstimation = this.props.itemGroup ? this.props.itemGroup.minimumProfitEstimation : null;
+
     const style = {
       height:40,
       borderColor: "red",
@@ -42,6 +71,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
       borderWidth: 3,
       borderRadius: 18,
     }
+    
     return (
       <Row>
         <Col>
@@ -53,31 +83,14 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
         <Col>
           {this.renderInputField(index, "species", !this.props.isActiveContract, "default", species || "", style)}
         </Col>
+        {
+          !minimumEstimation &&
+            <Col>
+              {this.renderInputField(index, "profitEstimation", !this.props.isActiveContract, "numeric", "0", style)}
+            </Col>
+        }
       </Row>
     );
-  }
-
-  componentDidMount = () => {
-    console.log(this.props.areaDetailValues);
-  }
-
-  /**
-   * Handle input change
-   */
-  private handleInputChange = (index: number, key: string, value: any) => {
-    const areaDetails: any = this.props.areaDetailValues;
-
-    if (areaDetails.length <= 0) {
-      let areaDetail: any = {};
-      areaDetail[key] = value;
-      areaDetails.push(areaDetail);
-      console.log("JOOO", areaDetails);
-      this.props.onUserInputChange("areaDetailValues", areaDetails);
-    } else {
-      console.log("JAA", areaDetails);
-      areaDetails[index][key] = value;
-      this.props.onUserInputChange("areaDetailValues", areaDetails);
-    }
   }
 
   /**
@@ -96,22 +109,105 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     );
   }
 
+  /**
+   * Component did mount
+   */
+  public componentDidMount = () => {
+    if (this.props.areaDetailValues.length <= 0) {
+      this.createEmptyAreaDetail();
+    }
+
+    if (this.props.itemGroup && this.props.itemGroup.minimumProfitEstimation) {
+      this.setState({ minimumProfit: this.props.itemGroup.minimumProfitEstimation});
+    }
+  }
+
+  /**
+   * Updates profit text
+   */
+  private renderProfitTextElements = () => {
+    if (!this.props.itemGroup || this.props.areaDetailValues.length <= 0) {
+      return;
+    }
+
+    const blocks = this.props.areaDetailValues.length;
+    const proposedAmount = this.props.itemGroup.minimumProfitEstimation;
+
+    const totalHectares = this.props.areaDetailValues.reduce((total, areaDetailValue) => {
+      const size = areaDetailValue.size ? areaDetailValue.size : 0;
+      return total += parseInt(size.toString(), 10);
+    }, 0);
+
+    const totalProfit = this.props.areaDetailValues.reduce((total, areaDetailValue) => {
+      const estimation = proposedAmount || 0;
+      const totalHectares = areaDetailValue.size ? areaDetailValue.size : 0;
+
+      return total += estimation * totalHectares;
+    }, 0);
+
+    if (proposedAmount) {
+      const errorStyle = totalProfit < proposedAmount ? {color: "red"} : {};
+      return (
+        <View>
+          <Text>
+            {`Lohkoja yhteensä ${blocks} kpl. Pinta-alaa yhteensä ${totalHectares} ha.`}
+          </Text>
+          <Text style={{color: totalProfit < proposedAmount ? "red": "black"}}>
+            {`Minimisopimusmäärä on ${totalProfit} kg, perustuen hehtaarikohtaiseen toimitusmääräminimiin 500 kg / ha. Lisätietoja sopimuksen kohdasta Sopimuksen mukaiset toimitusmäärät, takuuhinnat ja bonus satokaudella ${(new Date()).getFullYear()}`}
+          </Text>
+        </View>
+      );
+    } else {
+      return (
+        <Text>
+          {`Lohkoja yhteensä ${blocks} kpl. Pinta-alaa yhteensä ${totalHectares} ha. Tuotantoarvio yhteensä ${totalProfit} kg`}
+        </Text>
+      );
+    }
+  }
+
+  /**
+   * Create empty area detail
+   */
+  createEmptyAreaDetail = () => {
+    const areaDetails: any = this.props.areaDetailValues;
+    areaDetails.push({
+      name: "",
+      size: "",
+      species: ""
+    });
+
+    this.props.onUserInputChange("areaDetailValues", areaDetails);
+  }
+
+  /**
+   * Handle input change
+   */
+  private handleInputChange = (index: number, key: string, value: any) => {
+    const areaDetails: any = this.props.areaDetailValues;
+
+    if (areaDetails.length <= 0) {
+      let areaDetail: any = {};
+      areaDetail[key] = value;
+      areaDetails.push(areaDetail);
+      this.props.onUserInputChange("areaDetailValues", areaDetails);
+    } else {
+      areaDetails[index][key] = value;
+      this.props.onUserInputChange("areaDetailValues", areaDetails);
+    }
+  }
+
+  /**
+   * Render method
+   */
   public render() {
     return (
       <View style={{ marginBottom: 10 }}>
         <Text>Tuotannossa olevat hehtaarit</Text>
         <Grid>
-          <Row>
-            <Col>
-              <Text>Lohko/Lohkot</Text>
-            </Col>
-            <Col>
-              <Text>Pinta-ala (ha)</Text>
-            </Col>
-            <Col>
-              <Text>Lajike/Lajikkeet</Text>
-            </Col>
-          </Row>
+          {
+            this.renderAreaDetailHeaders()
+          }
           {
             this.props.areaDetailValues && this.props.areaDetailValues.length > 0 && this.props.areaDetailValues.map((areaDetail, index) => {
               return (
@@ -119,11 +215,18 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
               );
             })
           }
-          {
-            (!this.props.areaDetailValues || this.props.areaDetailValues.length <= 0) && !this.props.isActiveContract && 
-              this.renderAreaDetailsRow(0)
-          }
         </Grid>
+        {
+          !this.props.isActiveContract && 
+          <TouchableOpacity onPress={this.createEmptyAreaDetail}>
+            <Text style={{ backgroundColor: "red"}}>
+              Lisää rivi
+            </Text>
+          </TouchableOpacity>
+        }
+        {
+          this.renderProfitTextElements()
+        }
       </View>
     );
   }

@@ -8,7 +8,9 @@ import ContractHeader from "./ContractHeader";
 import ContractParties from "./ContractParties";
 import ContractAmount from "./ContractAmount";
 import ContractAreaDetails from "./ContractAreaDetails";
-import { Contract, ItemGroup, Price, Contact, AreaDetail } from "pakkasmarja-client";
+import ContractDeliveryPlace from "./ContractDeliveryPlace";
+import ContractFooter from "./ContractFooter";
+import { Contract, ItemGroup, Price, Contact, AreaDetail, DeliveryPlace } from "pakkasmarja-client";
 
 /**
  * Interface for component props
@@ -26,6 +28,7 @@ interface State {
   contracts?: Contract[],
   prices?: Price[],
   contract?: Contract,
+  deliveryPlaces?: DeliveryPlace[]
   companyName: string,
   companyBusinessId: string,
   showPastPrices: boolean,
@@ -47,7 +50,9 @@ export default class ContractScreen extends React.Component<Props, State> {
         proposedQuantity: "",
         deliverAllChecked: false,
         quantityComment: "",
-        areaDetailValues: []
+        areaDetailValues: [],
+        deliveryPlace: "",
+        deliveryPlaceComment: ""
       }
     };
   }
@@ -68,9 +73,13 @@ export default class ContractScreen extends React.Component<Props, State> {
     if (this.props.navigation.getParam('prices')) {
       this.setState({ prices: this.props.navigation.getParam('prices') });
     }
-
+    
     if (this.props.navigation.getParam('contract')) {
       this.setState({ contract: this.props.navigation.getParam('contract') });
+    }
+
+    if (this.props.navigation.getParam('deliveryPlaces')) {
+      this.setState({ deliveryPlaces: this.props.navigation.getParam('deliveryPlaces') });
     }
 
     if (!this.state.contract || !this.state.contract.areaDetails) {
@@ -108,6 +117,34 @@ export default class ContractScreen extends React.Component<Props, State> {
       }]}
     />
   };
+
+  /**
+   * Go back button clicked
+   */
+  private goBackClicked = () => {
+    this.props.navigation.navigate('Contracts', {});
+  }
+
+  /**
+   * Accept button clicked
+   */
+  private acceptContractClicked = () => {
+    console.log("Accepted", this.state.contractData)!
+  }
+
+  /**
+   * Decline button clicked
+   */
+  private declineContractClicked = () => {
+    console.log("Accepted", this.state.contractData)!
+  }
+
+  /**
+   * Download contract as pdf
+   */
+  private downloadContractPdfClicked = () => {
+    console.log("Download");
+  }
 
   /**
    * Render method
@@ -175,6 +212,22 @@ export default class ContractScreen extends React.Component<Props, State> {
             areaDetailValues={this.state.contractData.areaDetailValues}
             isActiveContract={this.state.contract.status === "APPROVED"}
             onUserInputChange={this.updateContractData}
+          />
+          <ContractDeliveryPlace 
+            styles={styles}
+            onUserInputChange={this.updateContractData}
+            deliveryPlaces={this.state.deliveryPlaces}
+            selectedPlace={this.state.contractData.deliveryPlace}
+            deliveryPlaceComment={this.state.contractData.deliveryPlaceComment}
+            isActiveContract={this.state.contract.status === "APPROVED"}
+          />
+          <ContractFooter 
+            isActiveContract={this.state.contract.status === "APPROVED"}
+            goBack={this.goBackClicked}
+            acceptContract={this.acceptContractClicked}
+            declineContract={this.declineContractClicked}
+            downloadContractPdf={this.downloadContractPdfClicked}
+            styles={styles}
           />
         </View>
       </BasicLayout>
