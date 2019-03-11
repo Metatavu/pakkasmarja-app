@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, ContractModel } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
-import { View, TouchableHighlight } from "react-native";
+import { View, TouchableHighlight, StyleSheet } from "react-native";
 //import Api from "../../../api";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
@@ -46,7 +46,6 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    console.log(`${REACT_APP_API_URL}/rest/v1`);
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
     const frozenContracts = await contractsService.listContracts("application/json", true, "FROZEN");
@@ -108,7 +107,7 @@ class ContractsScreen extends React.Component<Props, State> {
     this.setState({ bool: false });
     this.props.navigation.navigate('Contract', {
       contact: this.state.contact,
-      itemGroup: this.getItemGroup(contract.itemGroupId),
+      itemGroup: await this.getItemGroup(contract.itemGroupId),
       prices: this.state.prices,
       contract: contract
     });
@@ -134,27 +133,46 @@ class ContractsScreen extends React.Component<Props, State> {
 
 
   render() {
+    const styles = StyleSheet.create({
+      headerView:{
+        backgroundColor: "#E51D2A", 
+        padding: 10 
+      },
+      headerText: {
+        color: "#fff",
+        fontWeight: "bold", 
+        fontSize: 25 
+      },
+      titleView:{
+        backgroundColor: "#fff",
+        padding: 10 
+      },
+      titleText:{
+        color: "#000000", 
+        fontWeight: "bold", 
+        fontSize: 25,
+        textAlign:"center"
+      }
+    });
+
     return (
       <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-
-        <View style={{ backgroundColor: "#E51D2A", padding: 10 }}>
-          <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 25 }}>
+        <View style={styles.headerView}>
+          <Text style={styles.headerText}>
             Viljely- ja ostosopimukset
           </Text>
         </View>
-
         <View>
-          <View style={{ backgroundColor: "#fff", padding: 10 }}>
-            <Text style={{ color: "#000000", fontWeight: "bold", fontSize: 25 }}>
+          <View style={styles.titleView}>
+            <Text style={styles.titleText}>
               Pakastemarjat
             </Text>
           </View>
           <ContractAmountTable onContractClick={this.handleContractClick} contracts={this.state.frozenContracts} />
         </View>
-
         <View>
-          <View style={{ backgroundColor: "#fff", padding: 10 }}>
-            <Text style={{ color: "#000000", fontWeight: "bold", fontSize: 25 }}>
+          <View style={styles.titleView}>
+            <Text style={styles.titleText}>
               Tuoremarjat
             </Text>
           </View>

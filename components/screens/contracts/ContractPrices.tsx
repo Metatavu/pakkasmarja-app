@@ -9,7 +9,8 @@ import { Col, Row, Grid } from "react-native-easy-grid";
  */
 export interface Props {
   itemGroup?: ItemGroup,
-  prices?: Price[]
+  prices?: Price[],
+  styles?: any
 };
 
 /**
@@ -26,7 +27,7 @@ export default class ContractPrices extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      showPastPrices: false
+      showPastPrices: false,
     };
   }
 
@@ -93,9 +94,9 @@ export default class ContractPrices extends React.Component<Props, State> {
   }
 
   public render() {
-    if ( this.props.itemGroup&&this.props.itemGroup.category === "FROZEN") {
+    if (this.props.itemGroup && this.props.itemGroup.category === "FROZEN") {
       return (
-        <View style={{ marginBottom: 10 }}>
+        <View style={this.props.styles.WhiteContentView}>
           <Text style={{ fontWeight: "bold", fontSize: 25 }}>
             Takuuhinnat
           </Text>
@@ -138,7 +139,7 @@ export default class ContractPrices extends React.Component<Props, State> {
       );
     }
     return (
-      <View>
+      <View style={this.props.styles.WhiteContentView}>
         <Text>Tuotemarjojen hinnottelu</Text>
         <List>
           <ListItem><Text> Vähimmäislaatuvaatimukset täyttävästä tuoremarjasta yhtiö maksaa päivän hinnan.</Text></ListItem>
