@@ -1,18 +1,24 @@
-import React from "react";
+import React, { Dispatch } from "react";
 import TopBar from "../../layout/TopBar";
 import { Text } from "native-base";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { Contract } from "pakkasmarja-client";
+import PakkasmarjaApi from "../../../api";
+import { AccessToken, StoreState, ContractTableData } from "../../../types";
+import { connect } from "react-redux";
+import * as actions from "../../../actions";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 /**
  * Component props
  */
 interface Props {
-  contracts: Contract[];
+  contractTableDatas: ContractTableData[];
   onContractClick: (contract: Contract) => void;
   type: string;
   onProposeNewContractClick: (type: string) => void;
+  accessToken?: AccessToken;
 };
 
 /**
@@ -21,7 +27,7 @@ interface Props {
 interface State {
 };
 
-export default class ContractAmountTable extends React.Component<Props, State> {
+class ContractAmountTable extends React.Component<Props, State> {
 
   /**
    * Constructor 
@@ -31,7 +37,6 @@ export default class ContractAmountTable extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      tableData: []
     };
   }
 
@@ -54,10 +59,34 @@ export default class ContractAmountTable extends React.Component<Props, State> {
   };
 
   /**
-   * On propose new contract click
+   * Get item group 
+   * 
+   * @param itemGroupId itemGroupId
    */
-  proposeNewContractClick = () => {
+  private getItemGroup = async (itemGroupId: any) => {
+    if (!this.props.accessToken) {
+      return;
+    }
 
+    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
+    return await itemGroupService.findItemGroup(itemGroupId);
+  }
+
+  /**
+   * Render column
+   * 
+   * @param text
+   * @style style
+   */
+  private renderColumn = (text: string, style?: any) => {
+    return (
+      <Col style={style}>
+        <Text style={{ fontSize: 20 }}>
+          {text}
+        </Text>
+      </Col> 
+    );
   }
 
   /**
@@ -71,48 +100,115 @@ export default class ContractAmountTable extends React.Component<Props, State> {
         paddingBottom: 20,
         marginBottom: 15
       },
-      headerRow:{
-        paddingBottom: 5, 
-        marginBottom:20,
-        borderBottomColor: "#000000", 
+      WhiteContentView: {
+        padding: 15,
+        paddingBottom: 20,
+      },
+      headerRow: {
+        paddingBottom: 5,
+        marginBottom: 20,
+        borderBottomColor: "#000000",
         borderBottomWidth: 1
       },
-      row:{
-        paddingBottom: 12, 
-        paddingTop: 12, 
+      row: {
+        paddingBottom: 12,
+        paddingTop: 12,
+      },
+      bigRedButton: {
+        width: "100%",
+        height: 45,
+        backgroundColor: "#e01e36",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 10
+      },
+      buttonText: {
+        color: "white",
+        fontSize: 22,
+        fontWeight: "500"
       }
     });
     return (
       <View>
         <View style={styles.BlueContentView}>
-          <Grid style={{ padding: 10 }}>
+          <Grid>
             <Row style={styles.headerRow}>
               <Col></Col>
               <Col><Text>Sovittu KG</Text></Col>
               <Col><Text>Toteutunut KG</Text></Col>
             </Row>
-            {this.props.contracts.filter(contract => contract.status !== "TERMINATED").map((contract) => {
-              return (
-                <TouchableOpacity key={contract.id} onPress={() => { this.props.onContractClick(contract) }}>
-                  <Row style={styles.row}>
-                    <Col><Text style={{ fontSize: 20, fontWeight:"bold" }}>Mustikka</Text></Col>
-                    <Col><Text style={{ fontSize: 20 }}>{contract.contractQuantity}</Text></Col>
-                    <Col><Text style={{ fontSize: 20 }}>{contract.deliveredQuantity}</Text></Col>
-                  </Row>
-                </TouchableOpacity>
-              );
-            })}
+            {
+              this.props.contractTableDatas.filter(contractTableData => contractTableData.contract.status !== "TERMINATED").map((contractTableData) => {
+                return (
+                  <TouchableOpacity key={contractTableData.contract.id} onPress={() => { this.props.onContractClick(contractTableData.contract) }}>
+                    <Row style={styles.row}>
+                      {
+                        this.renderColumn(contractTableData.itemGroup && contractTableData.itemGroup.displayName ? contractTableData.itemGroup.displayName : "-")
+                      }
+                      {
+                        contractTableData.contract.status !== "APPROVED" && contractTableData.contract.status === "ON_HOLD" &&
+                          this.renderColumn("Pakkasmarjan tarkistettavana")
+                      }
+                      {
+                        contractTableData.contract.status !== "APPROVED" && contractTableData.contract.status === "DRAFT" &&
+                          this.renderColumn("Tarkasta ehdotus")
+                      }
+                      {
+                        contractTableData.contract.status !== "APPROVED" && contractTableData.contract.status === "REJECTED" &&
+                          this.renderColumn("Hylätty")
+                      }
+                      {
+                        contractTableData.contract.status !== "APPROVED" &&
+                          this.renderColumn("", {width: 1})
+                      }
+                      { 
+                        contractTableData.contract.status === "APPROVED" &&  contractTableData.contract.contractQuantity &&
+                          this.renderColumn(contractTableData.contract.contractQuantity.toString()) 
+                      }
+                      { 
+                        contractTableData.contract.status === "APPROVED" &&  contractTableData.contract.deliveredQuantity &&
+                          this.renderColumn(contractTableData.contract.deliveredQuantity.toString())
+                      }
+                    </Row>
+                  </TouchableOpacity>
+                );
+              })}
           </Grid>
         </View>
-        <TouchableOpacity onPress={() => this.props.onProposeNewContractClick(this.props.type)}>
-            <Text>
+        <View style={styles.WhiteContentView}>
+          <TouchableOpacity style={styles.bigRedButton} onPress={() => this.props.onProposeNewContractClick(this.props.type)}>
+            <Text style={styles.buttonText}>
               {
                 this.props.type === "FROZEN" ? "Ehdota uutta pakastesopimusta" : "Ehdota uutta tuoresopimusta"
               }
             </Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 }
+/**
+ * Redux mapper for mapping store state to component props
+ * 
+ * @param state store state
+ */
+function mapStateToProps(state: StoreState) {
+  return {
+    accessToken: state.accessToken
+  };
+}
+
+/**
+ * Redux mapper for mapping component dispatches 
+ * 
+ * @param dispatch dispatch method
+ */
+function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
+  return {
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(ContractAmountTable);
 

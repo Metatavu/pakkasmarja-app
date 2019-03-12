@@ -1,5 +1,5 @@
 import React, { Dispatch } from "react";
-import { View, StyleSheet, PermissionsAndroid } from "react-native";
+import { View, StyleSheet, Alert } from "react-native";
 import BasicLayout from "../../layout/BasicLayout";
 import TopBar from "../../layout/TopBar";
 import ContractPrices from "./ContractPrices";
@@ -9,6 +9,7 @@ import ContractAmount from "./ContractAmount";
 import ContractAreaDetails from "./ContractAreaDetails";
 import ContractDeliveryPlace from "./ContractDeliveryPlace";
 import ContractFooter from "./ContractFooter";
+import ContractRejectModal from "./ContractRejectModal";
 import { Contract, ItemGroup, Price, Contact, AreaDetail, DeliveryPlace } from "pakkasmarja-client";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import PakkasmarjaApi from "../../../api";
@@ -39,6 +40,7 @@ interface State {
   showPastPrices: boolean,
   companyApprovalRequired: boolean
   contractData: any,
+  rejectModalOpen: boolean
 };
 
 class ContractScreen extends React.Component<Props, State> {
@@ -53,7 +55,9 @@ class ContractScreen extends React.Component<Props, State> {
       companyBusinessId: "0434204-0",
       showPastPrices: false,
       companyApprovalRequired: false,
+      rejectModalOpen: false,
       contractData: {
+        rejectComment: "",
         proposedQuantity: "",
         deliverAllChecked: false,
         quantityComment: "",
@@ -99,6 +103,9 @@ class ContractScreen extends React.Component<Props, State> {
 
   /**
    * On user input change
+   * 
+   * @param key key
+   * @param value value
    */
   private updateContractData = (key: string, value: boolean | string | AreaDetail[]) => {
     const contractData = this.state.contractData;
@@ -185,13 +192,15 @@ class ContractScreen extends React.Component<Props, State> {
     }
 
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
-
-    if (this.state.companyApprovalRequired && false) {
+    const contractsService = api.getContractsService(this.props.accessToken.access_token);
+    
+    if (this.state.companyApprovalRequired) {
       contract.status = "ON_HOLD";
-      const contractsService = api.getContractsService(this.props.accessToken.access_token);
       await contractsService.updateContract(contract, contract.id || "");
       this.props.navigation.navigate('Contracts', {});
     } else {
+      await contractsService.updateContract(contract, contract.id || "");
+
       const signAuthenticationServicesService = api.getSignAuthenticationServicesService(this.props.accessToken.access_token);
       const signAuthenticationServices = await signAuthenticationServicesService.listSignAuthenticationServices();
 
@@ -206,7 +215,7 @@ class ContractScreen extends React.Component<Props, State> {
    * Decline button clicked
    */
   private declineContractClicked = () => {
-    console.log("Accepted", this.state.contractData)!
+    this.setState({ rejectModalOpen: true });
   }
 
   /**
@@ -220,6 +229,14 @@ class ContractScreen extends React.Component<Props, State> {
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}`);
     const pdfService = api.getPdfService(this.props.accessToken.access_token);
     const pdfPath = await pdfService.findPdf(this.state.contract.id, new Date().getFullYear().toString());
+
+    Alert.alert(
+      'Lataus onnistui!',
+      `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`,
+      [
+        {text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})},
+      ]
+    );
   }
 
   /**
@@ -273,7 +290,7 @@ class ContractScreen extends React.Component<Props, State> {
       },
       textInput: {
         backgroundColor: "white",
-        borderColor: "gray",
+        borderColor: "red",
         borderWidth: 1,
         borderRadius: 4,
       },
@@ -352,6 +369,15 @@ class ContractScreen extends React.Component<Props, State> {
             downloadContractPdf={this.downloadContractPdfClicked}
             approveButtonText={this.state.companyApprovalRequired ? "EHDOTA MUUTOSTA" : "HYVÄKSYN"}
             styles={styles}
+          />
+          <ContractRejectModal 
+            onUserInputChange={this.updateContractData}
+            rejectComment={this.state.contractData.rejectComment}
+            modalOpen={this.state.rejectModalOpen}
+            closeModal={() => this.setState({ rejectModalOpen: false })}
+            styles={styles}
+            contract={this.state.contract}
+            contractRejected={() => this.props.navigation.navigate('Contracts', {})}
           />
         </View>
       </BasicLayout>

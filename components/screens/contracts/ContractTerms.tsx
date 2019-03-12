@@ -74,7 +74,21 @@ class ContractTerms extends React.Component<Props, State> {
    * Download contract as pdf
    */
   private downloadContractPdfClicked = async () => {
+    if (!this.props.accessToken || !this.state.contract || !this.state.contract.id) {
+      return;
+    }
 
+    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}`);
+    const pdfService = api.getPdfService(this.props.accessToken.access_token);
+    const pdfPath = await pdfService.findPdf(this.state.contract.id, new Date().getFullYear().toString());
+
+    Alert.alert(
+      'Lataus onnistui!',
+      `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`,
+      [
+        {text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})},
+      ]
+    );
   }
 
   /**
@@ -88,7 +102,7 @@ class ContractTerms extends React.Component<Props, State> {
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
     const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "" }, this.state.contract.id || "", '2019', this.state.ssn, this.state.selectedSignServiceId);
-    
+
     if (contractSignRequest && contractSignRequest.redirectUrl) {
       this.setState({ signAuthenticationUrl: contractSignRequest.redirectUrl, modalOpen: true });
     }
@@ -113,7 +127,7 @@ class ContractTerms extends React.Component<Props, State> {
    * Accept contract
    */
   private backButtonClicked = async () => {
-
+    this.props.navigation.goBack(null);
   }
 
   static navigationOptions = {
@@ -167,8 +181,9 @@ class ContractTerms extends React.Component<Props, State> {
         marginBottom: 15
       },
       textInput: {
+        height:40,
         backgroundColor: "white",
-        borderColor: "gray",
+        borderColor: "red",
         borderWidth: 1,
         borderRadius: 4,
       },
@@ -273,10 +288,10 @@ class ContractTerms extends React.Component<Props, State> {
         <Modal isVisible={this.state.modalOpen} style={{ height: "100%", width: "100%" }}>
           <WebView
             source={{uri: this.state.signAuthenticationUrl}}
-            style={{width: "100%", height: "100%"}}
+            style={{width: "90%", height: "100%"}}
             onNavigationStateChange={(webViewState: any) => {
               const contractId = this.state.contract ? this.state.contract.id : null;
-              if (webViewState.url.idexOf(`contractId=${contractId}`) > 0) {
+              if (webViewState.url.indexOf(`contractId=${contractId}`) > 0) {
                 this.onSignSuccess;
               }
           }}

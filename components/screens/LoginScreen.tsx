@@ -92,7 +92,6 @@ class LoginScreen extends React.Component<Props, State> {
       realmId: REACT_APP_AUTH_REALM
     }).then(async (accessToken) => {
       if (accessToken) {
-        console.log("Auth success");
         this.props.onAccessTokenUpdate(accessToken);
         this.props.navigation.navigate("Main");
       } else {

@@ -39,7 +39,11 @@ export default class ContractParties extends React.Component<Props, State> {
     }
 
     if (this.props.contact.companyName) {
-      return <Text style={this.props.styles.textSize}>{this.props.contact.companyName}</Text>;
+      return (
+        <Text style={this.props.styles.textSize}>
+          {this.props.contact.companyName}
+        </Text>
+      );
     }
 
     return (

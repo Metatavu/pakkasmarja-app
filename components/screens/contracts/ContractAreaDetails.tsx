@@ -24,6 +24,7 @@ interface State {
 };
 
 export default class ContractAreaDetails extends React.Component<Props, State> {
+
   /**
    * Constructor
    */
@@ -50,7 +51,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
           <Text>Lajike/Lajikkeet</Text>
         </Col>
         {
-          this.props.itemGroup && this.props.itemGroup.minimumProfitEstimation &&
+          this.props.itemGroup && !this.props.itemGroup.minimumProfitEstimation &&
           <Col>
             <Text>Tuottoarvio (kg / ha)</Text>
           </Col>
@@ -74,7 +75,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
       height: 40,
       borderColor: "red",
       backgroundColor: "white",
-      borderWidth: 1.5,
+      borderWidth: 1,
       borderRadius: 4,
       marginTop: 10,
       textAlign: "center"
@@ -138,6 +139,21 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
   }
 
   /**
+   * Create empty area detail
+   */
+  private createEmptyAreaDetail = () => {
+    const areaDetails: any = this.props.areaDetailValues;
+    areaDetails.push({
+      name: "",
+      size: "",
+      species: "",
+      profitEstimation: ""
+    });
+
+    this.props.onUserInputChange("areaDetailValues", areaDetails);
+  }
+
+  /**
    * Render profit text
    */
   private renderProfitTextElements = () => {
@@ -146,7 +162,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     }
 
     const blocks = this.props.areaDetailValues.length;
-    const proposedAmount = this.props.itemGroup.minimumProfitEstimation;
+    const minimumProfit = this.props.itemGroup.minimumProfitEstimation;
 
     const totalHectares = this.props.areaDetailValues.reduce((total, areaDetailValue) => {
       const size = areaDetailValue.size ? areaDetailValue.size : 0;
@@ -154,20 +170,19 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     }, 0);
 
     const totalProfit = this.props.areaDetailValues.reduce((total, areaDetailValue) => {
-      const estimation = proposedAmount || 0;
+      const estimation = minimumProfit || 0;
       const totalHectares = areaDetailValue.size ? areaDetailValue.size : 0;
 
       return total += estimation * totalHectares;
     }, 0);
 
-    if (proposedAmount) {
-      const errorStyle = totalProfit < proposedAmount ? { color: "red" } : {};
+    if (minimumProfit) {
       return (
         <View>
           <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>
             {`Lohkoja yhteensä ${blocks} kpl. Pinta-alaa yhteensä ${totalHectares} ha.`}
           </Text>
-          <Text style={[{ color: totalProfit < proposedAmount ? "red" : "black" }, this.props.styles.textSize]}>
+          <Text style={[{ color: totalProfit < minimumProfit ? "red" : "black" }, this.props.styles.textSize]}>
             {`Minimisopimusmäärä on ${totalProfit} kg, perustuen hehtaarikohtaiseen toimitusmääräminimiin 500 kg / ha. Lisätietoja sopimuksen kohdasta Sopimuksen mukaiset toimitusmäärät, takuuhinnat ja bonus satokaudella ${(new Date()).getFullYear()}`}
           </Text>
         </View>
@@ -179,20 +194,6 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
         </Text>
       );
     }
-  }
-
-  /**
-   * Create empty area detail
-   */
-  private createEmptyAreaDetail = () => {
-    const areaDetails: any = this.props.areaDetailValues;
-    areaDetails.push({
-      name: "",
-      size: "",
-      species: ""
-    });
-
-    this.props.onUserInputChange("areaDetailValues", areaDetails);
   }
 
   /**
@@ -238,11 +239,11 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
           </Grid>
           {
             !this.props.isActiveContract &&
-            <TouchableOpacity style={[this.props.styles.bigRedButton, {marginTop:25}]} onPress={this.createEmptyAreaDetail}>
-              <Text style={this.props.styles.buttonText}>
-                LISÄÄ RIVI
-            </Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={[this.props.styles.bigRedButton, {marginTop:25}]} onPress={this.createEmptyAreaDetail}>
+                <Text style={this.props.styles.buttonText}>
+                  LISÄÄ RIVI
+                </Text>
+              </TouchableOpacity>
           }
         </View>
         <View style={this.props.styles.WhiteContentView}>

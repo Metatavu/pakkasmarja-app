@@ -51,45 +51,81 @@ export default class ContractProposalModal extends React.Component<Props, State>
    */
   public render() {
     const styles = StyleSheet.create({
-      BlueContentView: {
+      modalView: {
+        backgroundColor: "white",
+        height: 470,
         padding: 15,
-        backgroundColor: "#fff",
         paddingBottom: 20,
         marginBottom: 15
       },
-      headerRow: {
-        paddingBottom: 20,
-        marginBottom: 10,
-        borderBottomColor: "#000000",
-        borderBottomWidth: 1
+      contentHeader: {
+        fontWeight: "bold",
+        fontSize: 25,
+        paddingBottom: 20
       },
-      row: {
-        paddingBottom: 5,
-        paddingTop: 5,
+      Text: {
+        fontSize: 20,
+        paddingTop: 7,
+        paddingBottom: 7
       },
-      modalButton: {
-        width: "100%",
-        height: 40,
+      smallRedButton: {
+        width: "47%",
+        height: 50,
         backgroundColor: "#e01e36",
         justifyContent: "center",
         alignItems: "center",
+        marginBottom: 20
       },
-      buttonText:{
-        color:"white",
-        fontWeight:"bold",
-        fontSize:26
+      smallWhiteButton: {
+        width: "47%",
+        height: 50,
+        backgroundColor: "white",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 20,
+        borderColor: "red",
+        borderWidth: 2
+      },
+      flexView: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between'
+      },
+      smallWhiteButtonText: {
+        color: "#e01e36",
+        fontSize: 22,
+        fontWeight: "500"
+      },
+      buttonText: {
+        color: "white",
+        fontSize: 22,
+        fontWeight: "500"
+      },
+      textInput: {
+        backgroundColor: "white",
+        borderColor: "red",
+        borderWidth: 1,
+        borderRadius: 4,
       }
     });
     return (
       <View style={{ marginTop: 22 }}>
-        <Modal isVisible={this.props.modalOpen} style={{ height: "80%" }}>
-          <View style={styles.BlueContentView}>
+        <Modal isVisible={this.props.modalOpen}>
+          <View style={styles.modalView}>
             <View>
-              <Text>
+              <Text style={styles.contentHeader}>
                 Ehdota sopimusta jostain muusta marjasta
               </Text>
             </View>
             <View>
+              <View style={{
+                  height: 50,
+                  width: "100%",
+                  backgroundColor: 'white',
+                  borderColor: "red",
+                  borderWidth: 1,
+                  borderRadius: 4
+                }}>
               <Picker
                 selectedValue={this.props.selectedBerry}
                 style={{height:50,width:"100%", color:"black"}}
@@ -104,30 +140,35 @@ export default class ContractProposalModal extends React.Component<Props, State>
                   })
                 }
               </Picker>
+              </View>
             </View>
             <View>
-              <Text>Määrä</Text>
-              <TextInput 
+              <Text style={styles.Text}>Määrä</Text>
+              <TextInput
+                style={styles.textInput}
                 keyboardType="numeric"
                 value={this.props.quantity}
                 onChangeText={(text: string) => this.props.onQuantityChange(text)}
               />
             </View>
             <View>
-              <Text>Kommentti</Text>
-              <TextInput 
-                multiline = {true}
-                numberOfLines = {4}
+              <Text style={styles.Text}>Kommentti</Text>
+              <TextInput
+                multiline={true}
+                numberOfLines={4}
+                style={styles.textInput}
                 value={this.props.quantityComment}
-                onChangeText={(text:string) => this.props.onQuantityCommentChange(text)}
+                onChangeText={(text: string) => this.props.onQuantityCommentChange(text)}
               />
             </View>
-            <TouchableOpacity style={styles.modalButton} onPress={this.props.sendContractProposalClicked}>
-              <Text style={styles.buttonText}>Lähetä</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton} onPress={this.closeModal}>
-              <Text style={styles.buttonText}>Sulje</Text>
-            </TouchableOpacity>
+            <View style={[styles.flexView, {marginTop:20}]}>
+              <TouchableOpacity style={styles.smallWhiteButton} onPress={this.closeModal}>
+                <Text style={styles.smallWhiteButtonText}>Sulje</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.smallRedButton} onPress={this.props.sendContractProposalClicked}>
+                <Text style={styles.buttonText}>Lähetä</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </Modal>
       </View>

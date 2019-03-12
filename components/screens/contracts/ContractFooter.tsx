@@ -56,8 +56,8 @@ export default class ContractFooter extends React.Component<Props, State> {
       },
       flexView: {
         flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'space-between'
+        flexDirection: "row",
+        justifyContent: "space-between"
 
       },
       smallWhiteButtonText: {

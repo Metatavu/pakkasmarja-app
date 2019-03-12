@@ -49,32 +49,6 @@ class ContractAmount extends React.Component<Props, State> {
   }
 
   /**
-   * Load past contracts
-   */
-  private loadPastContracts = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
-    const contractsService = api.getContractsService(this.props.accessToken.access_token);
-
-    const contracts = await contractsService.listContracts("application/json", true, this.props.category);
-    this.setState({pastContracts: contracts});
-  }
-
-  /**
-   * Toggle display of past contracts
-   */
-  private togglePastContracts = async () => {
-    if (this.state.showPastContracts) {
-      this.setState({ showPastContracts: false });
-    } else {
-      await this.loadPastContracts();
-      this.setState({ showPastContracts: true });
-    }
-  }
-
-  /**
    * On amount change
    * 
    * @param value value
@@ -93,7 +67,7 @@ class ContractAmount extends React.Component<Props, State> {
   }
 
   /**
-   * Render method for contract amount component
+   * Render method
    */
   public render() {
     let quantityValue = "0";
@@ -106,49 +80,68 @@ class ContractAmount extends React.Component<Props, State> {
 
     return (
       <View style={this.props.styles.BlueContentView}>
-        <Text style={this.props.styles.ContentHeader}>
-          MÄÄRÄ
-        </Text>
-        {this.props.itemGroup.category === "FRESH" &&
-          <Text style={{fontSize:18,paddingBottom:10}}>
-            Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.
+        <View>
+          <Text style={this.props.styles.ContentHeader}>
+            MÄÄRÄ
           </Text>
+        </View>
+        <View>
+        {
+          this.props.itemGroup.category === "FRESH" &&
+            <Text style={{fontSize:18,paddingBottom:10}}>
+              Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.
+            </Text>
         }
-        <Form>
-          <Text style={this.props.styles.textSize}>Määrä</Text>
-          <TextInput 
-            style={this.props.styles.InputStyle}
-            editable={!this.props.isActiveContract}
-            keyboardType="numeric"
-            value={quantityValue}
-            onChangeText={(text: string) => this.onAmountChange(text)}
-          />
-        </Form>
-        <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>
-          {`Pakkasmarjan ehdotus: ${this.props.contract.contractQuantity} kg`}
-        </Text>
-        <TouchableOpacity onPress={this.togglePastContracts}>
-          <Text style={this.props.styles.linkStyle}>
-            Edellisten vuosien sopimusmäärät ja toimitusmäärät
+        </View>
+        <View>
+          <Form>
+            <Text style={this.props.styles.textSize}>Määrä</Text>
+            <TextInput 
+              style={this.props.styles.InputStyle}
+              editable={!this.props.isActiveContract}
+              keyboardType="numeric"
+              value={quantityValue}
+              onChangeText={(text: string) => this.onAmountChange(text)}
+            />
+          </Form>
+        </View>
+        <View>
+          <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>
+            {`Pakkasmarjan ehdotus: ${this.props.contract.contractQuantity} kg`}
           </Text>
-        </TouchableOpacity>
-        <ContractModal styles={this.props.styles} closeModal={() => this.setState({showPastContracts: false})} pastContracts={true} modalOpen={this.state.showPastContracts} itemGroupId={this.props.itemGroup.id || ""}/>
-        <CheckBox
-          checked={this.props.deliverAllChecked}
-          onPress={() => {
-            !this.props.isActiveContract && this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked)
-          }}
-          title='Haluaisin toimittaa kaiken tilallani viljeltävän sadon tästä marjasta Pakkasmarjalle pakastettavaksi ja tuorekauppaan (lisätietoja sopimuksen kohdasta 100 % toimittajuus).'
-        />
-        <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>Kommentti</Text>
-        <TextInput 
-          multiline = {true}
-          numberOfLines = {4}
-          editable={!this.props.isActiveContract}
-          style={this.props.styles.textInput}
-          value={this.props.quantityComment}
-          onChangeText={(text:string) => this.onQuantityCommentChange(text)}
-        />
+          <TouchableOpacity onPress={() => this.setState({ showPastContracts: !this.state.showPastContracts })}>
+            <Text style={this.props.styles.linkStyle}>
+              Edellisten vuosien sopimusmäärät ja toimitusmäärät
+            </Text>
+          </TouchableOpacity>
+          <ContractModal
+            styles={this.props.styles} 
+            closeModal={() => this.setState({showPastContracts: false})} 
+            pastContracts={true} 
+            modalOpen={this.state.showPastContracts} 
+            itemGroupId={this.props.itemGroup.id || ""}
+          />
+        </View>
+        <View>
+          <CheckBox
+            checked={this.props.deliverAllChecked}
+            onPress={() => {
+              !this.props.isActiveContract && this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked)
+            }}
+            title='Haluaisin toimittaa kaiken tilallani viljeltävän sadon tästä marjasta Pakkasmarjalle pakastettavaksi ja tuorekauppaan (lisätietoja sopimuksen kohdasta 100 % toimittajuus).'
+          />
+        </View>
+        <View>
+          <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>Kommentti</Text>
+          <TextInput 
+            multiline = {true}
+            numberOfLines = {4}
+            editable={!this.props.isActiveContract}
+            style={this.props.styles.textInput}
+            value={this.props.quantityComment}
+            onChangeText={(text:string) => this.onQuantityCommentChange(text)}
+          />
+        </View>
       </View>
     );
   }

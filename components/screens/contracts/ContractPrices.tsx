@@ -3,6 +3,7 @@ import { Text, List, ListItem } from "native-base";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { ItemGroup, Price } from "pakkasmarja-client";
+import ContractPriceModal from "./ContractPriceModal";
 
 /**
  * Interface for component props
@@ -29,17 +30,6 @@ export default class ContractPrices extends React.Component<Props, State> {
     this.state = {
       showPastPrices: false,
     };
-  }
-
-  /**
-   * Toggle display of past prices
-   */
-  private togglePastPrices = () => {
-    if (this.state.showPastPrices) {
-      this.setState({ showPastPrices: false });
-    } else {
-      this.setState({ showPastPrices: true });
-    }
   }
 
   /**
@@ -128,7 +118,7 @@ export default class ContractPrices extends React.Component<Props, State> {
             }
             <Row>
               <Col>
-                <TouchableOpacity onPress={this.togglePastPrices}>
+                <TouchableOpacity onPress={() => this.setState({showPastPrices: !this.state.showPastPrices})}>
                   <Text style={this.props.styles.linkStyle}>
                     Edellisvuosien takuuhinnat
                   </Text>
@@ -146,6 +136,12 @@ export default class ContractPrices extends React.Component<Props, State> {
               })
             }
           </Grid>
+          <ContractPriceModal 
+            prices={this.props.prices}
+            styles={this.props.styles} 
+            closeModal={() => this.setState({showPastPrices: false})} 
+            modalOpen={this.state.showPastPrices}
+          />
           {this.renderItemDetails()}
         </View>
       );

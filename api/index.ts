@@ -1,9 +1,7 @@
 
-import { AccessToken } from "../types";
-import { API_URL } from 'react-native-dotenv';
 import Api from "pakkasmarja-client";
-import { PDFService } from "./pdfservice";
-export * from './pdfservice';
+import { PDFService } from "./pdf.service";
+export * from './pdf.service';
 
 export default class PakkasmarjaApi {
 

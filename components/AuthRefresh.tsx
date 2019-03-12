@@ -47,9 +47,7 @@ class AuthRefresh extends React.Component<Props, State> {
         return;
       }
       if (!Auth.isTokenValid(this.props.accessToken)) {
-        console.log("Before auth refresh");
         const accessToken = await Auth.refreshToken(this.props.accessToken);
-        console.log("After auth refresh");
         if (accessToken) {
           this.props.onAccessTokenUpdate(accessToken);
         }

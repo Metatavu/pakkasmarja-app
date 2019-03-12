@@ -2,10 +2,10 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicLayout from "../../layout/BasicLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import { Contract, Contact, Price, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
@@ -24,19 +24,19 @@ interface Props {
  * Component state
  */
 interface State {
-  freshContracts: Contract[];
-  frozenContracts: Contract[];
+  freshContracts: ContractTableData[];
+  frozenContracts: ContractTableData[];
   contact?: Contact;
   itemGroup?: ItemGroup;
   itemGroups: ItemGroup[];
   prices?: Price[],
-  deliveryPlaces? : DeliveryPlace[],
+  deliveryPlaces?: DeliveryPlace[],
   proposeContractModalOpen: boolean,
   proposeContractModalType: string,
   selectedBerry: string,
   proposedContractQuantity: string,
-  proposedContractQuantityComment: string
-  bool: boolean;
+  proposedContractQuantityComment: string,
+  loading: boolean
 };
 
 class ContractsScreen extends React.Component<Props, State> {
@@ -51,13 +51,13 @@ class ContractsScreen extends React.Component<Props, State> {
     this.state = {
       freshContracts: [],
       frozenContracts: [],
-      bool: true,
       proposeContractModalOpen: false,
       proposeContractModalType: "FROZEN",
       itemGroups: [],
       selectedBerry: "",
       proposedContractQuantity: "",
-      proposedContractQuantityComment: ""
+      proposedContractQuantityComment: "",
+      loading: false
     };
   }
 
@@ -69,12 +69,49 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
+    this.setState({ loading: true });
+
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
     const frozenContracts = await contractsService.listContracts("application/json", false, "FROZEN");
     const freshContracts = await contractsService.listContracts("application/json", false, "FRESH");
 
-    this.setState({ frozenContracts: frozenContracts, freshContracts: freshContracts });
+    await this.asyncContractForeach(freshContracts, async (contract: Contract) => {
+      const freshContracts: ContractTableData[] = this.state.freshContracts;
+      const itemGroup = await this.getItemGroup(contract.itemGroupId);
+
+      freshContracts.push({
+        contract: contract,
+        itemGroup: itemGroup
+      });
+      
+      this.setState({ freshContracts: freshContracts });
+    });
+
+    await this.asyncContractForeach(frozenContracts, async (contract: Contract) => {
+      const frozenContracts: ContractTableData[] = this.state.frozenContracts;
+      const itemGroup = await this.getItemGroup(contract.itemGroupId);
+      frozenContracts.push({
+        contract: contract,
+        itemGroup: itemGroup
+      });
+      
+      this.setState({ frozenContracts: frozenContracts });
+    });
+
+    this.setState({ loading: false });
+  }
+
+  /**
+   * Async foreach method
+   * 
+   * @param array array
+   * @param callback callback
+   */
+  private asyncContractForeach = async (array: Contract[], callback: any) => {
+    for (let index = 0; index < array.length; index++) {
+      await callback(array[index], index, array);
+    }
   }
 
   /**
@@ -143,7 +180,7 @@ class ContractsScreen extends React.Component<Props, State> {
   /**
    * Get delivery places
    */
-  private getDeliveryPlaces = async () => {
+  private findDeliveryPlaces = async () => {
     if (!this.props.accessToken) {
       return;
     }
@@ -155,19 +192,50 @@ class ContractsScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Show alert when cant open contract
+   * 
+   * @param status status
+   */
+  private cannotOpenContractAlert = (status: string) => {
+    let infoText = "";
+
+    if (status === "REJECTED") {
+      infoText = "Olet hylännyt tämän sopimuksen. Jos näin ei kuuluisi olla, ota yhteyttä pakkasmarjaan.";
+    } else if (status === "ON_HOLD") {
+      infoText = "Sopimus on pakkasmarjalla tarkistettavana.";
+    }
+    
+    Alert.alert(
+      'Sopimusta ei voida avata',
+      infoText,
+      [
+        {text: 'OK', onPress: () => {}},
+      ]
+    );
+  }
+
+  /**
    * Handle contract click
    * 
    * @param contract contract
    */
-  public handleContractClick = async (contract: Contract) => {
+  private handleContractClick = async (contract: Contract) => {
+    if (contract.status === "REJECTED" || contract.status === "ON_HOLD") {
+      this.cannotOpenContractAlert(contract.status);
+      return;
+    }
+    this.setState({ loading: true });
+
     await this.findContractContact(contract);
     await this.findPrices(contract);
-    await this.getDeliveryPlaces();
+    await this.findDeliveryPlaces();
+    const itemGroup = await this.getItemGroup(contract.itemGroupId);
     
-    this.setState({ bool: false });
+    this.setState({ loading: false });
+
     this.props.navigation.navigate('Contract', {
       contact: this.state.contact,
-      itemGroup: await this.getItemGroup(contract.itemGroupId),
+      itemGroup: itemGroup,
       prices: this.state.prices,
       contract: contract,
       deliveryPlaces: this.state.deliveryPlaces
@@ -232,8 +300,19 @@ class ContractsScreen extends React.Component<Props, State> {
         fontWeight: "bold",
         fontSize: 25,
         textAlign: "center"
+      },
+      loaderContainer: {
+        paddingTop: 30
       }
     });
+
+    if (this.state.loading) {
+      return (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#E51D2A" />
+        </View>
+      );
+    }
 
     return (
       <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
@@ -248,9 +327,9 @@ class ContractsScreen extends React.Component<Props, State> {
               Pakastemarjat
             </Text>
           </View>
-          <ContractAmountTable 
-            onContractClick={this.handleContractClick} 
-            contracts={this.state.frozenContracts} 
+          <ContractAmountTable
+            onContractClick={this.handleContractClick}
+            contractTableDatas={this.state.frozenContracts}
             type="FROZEN"
             onProposeNewContractClick={this.onProposeNewContractClick}
           />
@@ -261,9 +340,9 @@ class ContractsScreen extends React.Component<Props, State> {
               Tuoremarjat
             </Text>
           </View>
-          <ContractAmountTable 
-            onContractClick={this.handleContractClick} 
-            contracts={this.state.freshContracts} 
+          <ContractAmountTable
+            onContractClick={this.handleContractClick}
+            contractTableDatas={this.state.freshContracts}
             type="FRESH"
             onProposeNewContractClick={this.onProposeNewContractClick}
           />
