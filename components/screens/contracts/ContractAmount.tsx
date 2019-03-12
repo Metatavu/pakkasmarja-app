@@ -107,13 +107,13 @@ class ContractAmount extends React.Component<Props, State> {
     return (
       <View style={this.props.styles.BlueContentView}>
         <Text style={this.props.styles.ContentHeader}>
-          Määrä
+          MÄÄRÄ
         </Text>
         {this.props.itemGroup.category === "FRESH" &&
           <Text style={{fontSize:18,paddingBottom:10}}>Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.</Text>
         }
         <Form>
-          <Text style={this.props.styles.readingText}>Määrä</Text>
+          <Text style={this.props.styles.textSize}>Määrä</Text>
           <TextInput 
             style={this.props.styles.InputStyle}
             editable={!this.props.isActiveContract}
@@ -122,7 +122,7 @@ class ContractAmount extends React.Component<Props, State> {
             onChangeText={(text: string) => this.onAmountChange(text)}
           />
         </Form>
-        <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>
+        <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>
           {`Pakkasmarjan ehdotus: ${this.props.contract.contractQuantity} kg`}
         </Text>
         <TouchableOpacity onPress={this.togglePastContracts}>
@@ -136,7 +136,7 @@ class ContractAmount extends React.Component<Props, State> {
           onPress={() => this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked)}
           title='Haluaisin toimittaa kaiken tilallani viljeltävän sadon tästä marjasta Pakkasmarjalle pakastettavaksi ja tuorekauppaan (lisätietoja sopimuksen kohdasta 100 % toimittajuus).'
         />
-        <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>Kommentti</Text>
+        <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>Kommentti</Text>
         <TextInput 
           multiline = {true}
           numberOfLines = {4}

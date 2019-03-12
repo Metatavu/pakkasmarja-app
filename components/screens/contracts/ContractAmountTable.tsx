@@ -110,7 +110,7 @@ export default class ContractAmountTable extends React.Component<Props, State> {
                 this.props.type === "FROZEN" ? "Ehdota uutta pakastesopimusta" : "Ehdota uutta tuoresopimusta"
               }
             </Text>
-          </TouchableOpacity>
+        </TouchableOpacity>
       </View>
     );
   }

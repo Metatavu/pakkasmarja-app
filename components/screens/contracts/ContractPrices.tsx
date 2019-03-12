@@ -50,7 +50,7 @@ export default class ContractPrices extends React.Component<Props, State> {
       return <Text></Text>;
     }
     return (
-      <Text>
+      <Text style={this.props.styles.textSize}>
         {`Ostettavien marjojen (${this.props.itemGroup.displayName}) takuuhinnat satokaudella ${new Date().getFullYear()}`}
       </Text>
     );
@@ -68,30 +68,30 @@ export default class ContractPrices extends React.Component<Props, State> {
       case "304100/Mansikka":
       case "309100/Luomu mansikk":
         return (
-          <View>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Takuuhinnan lisäksi yhtiö maksaa viljelijälle bonusta sopimuksen täyttöasteen mukaisesti. Lisätietoja sopimuksen kohdasta Sopimuksen mukaiset toimitusmäärät, takuuhinnat ja bonus satokaudella 2018.</Text>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Sopimusmäärän ylittävältä osalta mahdollinen lisämäärä, mahdollinen bonus ja maksuehto neuvotellaan aina erikseen.</Text>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Kaikki hinnat ovat vähimmäishintoja ja ALV 0%. Toimitusehto on vapaasti yhtiön osoittaman pakastevaraston laiturilla (viljelijä maksaa rahdin). Yhtiöllä on oikeus markkinatilanteen vaatiessa korottaa hintoja haluamallaan tavalla.</Text>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Takuuhinnan maksuehto on viljely- ja ostosopimuksen mukainen. Bonukset tarkistetaan satokauden jälkeen, yhtiö tekee niistä ostolaskut bonukseen oikeutetuille viljelijöille ja ne pyritään maksamaan satovuoden joulukuussa. Bonusta ei makseta, jos sopimus on tehty 31.5. jälkeen.</Text>
-          </View>
+            <Text style={{ fontSize: 18 }}>
+              Takuuhinnan lisäksi yhtiö maksaa viljelijälle bonusta sopimuksen täyttöasteen mukaisesti.
+              Lisätietoja sopimuksen kohdasta Sopimuksen mukaiset toimitusmäärät, takuuhinnat ja bonus satokaudella 2018. Sopimusmäärän ylittävältä osalta mahdollinen lisämäärä, mahdollinen bonus ja maksuehto neuvotellaan aina erikseen.
+              Kaikki hinnat ovat vähimmäishintoja ja ALV 0%. Toimitusehto on vapaasti yhtiön osoittaman pakastevaraston laiturilla (viljelijä maksaa rahdin). Yhtiöllä on oikeus markkinatilanteen vaatiessa korottaa hintoja haluamallaan tavalla.
+              Takuuhinnan maksuehto on viljely- ja ostosopimuksen mukainen. Bonukset tarkistetaan satokauden jälkeen, yhtiö tekee niistä ostolaskut bonukseen oikeutetuille viljelijöille ja ne pyritään maksamaan satovuoden joulukuussa. Bonusta ei makseta, jos sopimus on tehty 31.5. jälkeen.
+            </Text>
         );
       case "304400/Mustaherukka":
       case "309300/Luomu mustahe":
         return (
-          <View>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Tarkistathan sopimusehdoista kohdasta Sopimuksen mukainen toimitusmäärä ja takuuhinta satokaudella muut hintaan vaikuttavat tekijät.</Text>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Sopimusmäärän ylittävältä osalta mahdollinen lisämäärä, hinta ja maksuehto neuvotellaan aina erikseen.</Text>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Kaikki hinnat ovat vähimmäishintoja ja ALV 0%. Toimitusehto on vapaasti yhtiön osoittaman pakastevaraston laiturilla (viljelijä maksaa rahdin). Yhtiöllä on oikeus markkinatilanteen vaatiessa korottaa hintoja haluamallaan tavalla.</Text>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Takuuhinnan maksuehto on viljely- ja ostosopimuksen mukainen.</Text>
-          </View>
+            <Text style={{ fontSize: 18 }}>
+              Tarkistathan sopimusehdoista kohdasta Sopimuksen mukainen toimitusmäärä ja takuuhinta satokaudella muut hintaan vaikuttavat tekijät.
+              Sopimusmäärän ylittävältä osalta mahdollinen lisämäärä, hinta ja maksuehto neuvotellaan aina erikseen.
+              Kaikki hinnat ovat vähimmäishintoja ja ALV 0%. Toimitusehto on vapaasti yhtiön osoittaman pakastevaraston laiturilla (viljelijä maksaa rahdin). Yhtiöllä on oikeus markkinatilanteen vaatiessa korottaa hintoja haluamallaan tavalla.
+              Takuuhinnan maksuehto on viljely- ja ostosopimuksen mukainen.
+            </Text>
         );
       default:
         return (
-          <View>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Sopimusmäärän ylittävältä osalta mahdollinen lisämäärä, hinta ja maksuehto neuvotellaan aina erikseen.</Text>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Kaikki hinnat ovat vähimmäishintoja ja ALV 0%. Toimitusehto on vapaasti yhtiön osoittaman pakastevaraston laiturilla (viljelijä maksaa rahdin). Yhtiöllä on oikeus markkinatilanteen vaatiessa korottaa hintoja haluamallaan tavalla.</Text>
-            <Text style={{ marginTop: 1, marginBottom: 1 }}>Takuuhinnan maksuehto on viljely- ja ostosopimuksen mukainen.</Text>
-          </View>
+            <Text style={{ fontSize: 18 }}>
+              Sopimusmäärän ylittävältä osalta mahdollinen lisämäärä, hinta ja maksuehto neuvotellaan aina erikseen.
+              Kaikki hinnat ovat vähimmäishintoja ja ALV 0%. Toimitusehto on vapaasti yhtiön osoittaman pakastevaraston laiturilla (viljelijä maksaa rahdin). Yhtiöllä on oikeus markkinatilanteen vaatiessa korottaa hintoja haluamallaan tavalla.
+              Takuuhinnan maksuehto on viljely- ja ostosopimuksen mukainen.
+            </Text>
         );
     }
   }
@@ -101,18 +101,20 @@ export default class ContractPrices extends React.Component<Props, State> {
    */
   public render() {
     const styles = StyleSheet.create({
-      listItem:{
-        paddingLeft:0,
-        marginLeft:0
+      listItem: {
+        paddingLeft: 0,
+        marginLeft: 0
       }
     });
     if (this.props.itemGroup && this.props.itemGroup.category === "FROZEN") {
       return (
         <View style={this.props.styles.WhiteContentView}>
           <Text style={this.props.styles.ContentHeader}>
-            Takuuhinnat
+            TAKUUHINNAT
           </Text>
+          <View style={{flex:1}}>
             {this.renderPricesText()}
+          </View>
           <Grid>
             {
               this.props.prices && this.props.prices.filter(price => price.year === new Date().getFullYear()).map((activePrice) => {

@@ -74,8 +74,8 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
       height: 40,
       borderColor: "red",
       backgroundColor: "white",
-      borderWidth: 3,
-      borderRadius: 18,
+      borderWidth: 1.5,
+      borderRadius: 4,
       marginTop: 10,
       textAlign: "center"
     }
@@ -164,10 +164,10 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
       const errorStyle = totalProfit < proposedAmount ? { color: "red" } : {};
       return (
         <View>
-          <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>
+          <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>
             {`Lohkoja yhteensä ${blocks} kpl. Pinta-alaa yhteensä ${totalHectares} ha.`}
           </Text>
-          <Text style={[{ color: totalProfit < proposedAmount ? "red" : "black" }, this.props.styles.readingText]}>
+          <Text style={[{ color: totalProfit < proposedAmount ? "red" : "black" }, this.props.styles.textSize]}>
             {`Minimisopimusmäärä on ${totalProfit} kg, perustuen hehtaarikohtaiseen toimitusmääräminimiin 500 kg / ha. Lisätietoja sopimuksen kohdasta Sopimuksen mukaiset toimitusmäärät, takuuhinnat ja bonus satokaudella ${(new Date()).getFullYear()}`}
           </Text>
         </View>
@@ -223,7 +223,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     return (
       <View>
         <View style={this.props.styles.BlueContentView}>
-          <Text style={this.props.styles.ContentHeader}>Tuotannossa olevat hehtaarit</Text>
+          <Text style={this.props.styles.ContentHeader}>TUOTANNOSSA OLEVAT HEHTAARIT</Text>
           <Grid>
             {
               this.renderAreaDetailHeaders()
@@ -236,16 +236,16 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
               })
             }
           </Grid>
-        </View>
-        <View style={this.props.styles.WhiteContentView}>
           {
             !this.props.isActiveContract &&
-            <TouchableOpacity style={this.props.styles.bigRedButton} onPress={this.createEmptyAreaDetail}>
+            <TouchableOpacity style={[this.props.styles.bigRedButton, {marginTop:25}]} onPress={this.createEmptyAreaDetail}>
               <Text style={this.props.styles.buttonText}>
                 LISÄÄ RIVI
             </Text>
             </TouchableOpacity>
           }
+        </View>
+        <View style={this.props.styles.WhiteContentView}>
           {
             this.renderProfitTextElements()
           }

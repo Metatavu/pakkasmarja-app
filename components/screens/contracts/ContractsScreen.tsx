@@ -205,7 +205,7 @@ class ContractsScreen extends React.Component<Props, State> {
   /**
    * On contract proposal clicked
    */
-  onContractProposalClick = async (type: string) => {
+  onContractProposalClick = async () => {
     //TODO: Implement when chat messages are ready
   }
 
@@ -278,7 +278,7 @@ class ContractsScreen extends React.Component<Props, State> {
           quantityComment={this.state.proposedContractQuantityComment}
           selectedBerry={this.state.selectedBerry}
           quantity={this.state.proposedContractQuantity}
-          sendContractProposalClicked={(type: string) => this.onContractProposalClick(type)}
+          sendContractProposalClicked={() => this.onContractProposalClick()}
         />
       </BasicLayout>
     );

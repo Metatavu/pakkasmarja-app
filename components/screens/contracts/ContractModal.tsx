@@ -90,20 +90,21 @@ class ContractModal extends React.Component<Props, State> {
         borderBottomWidth: 1
       },
       row: {
-        paddingBottom: 5,
-        paddingTop: 5,
+        paddingBottom: 2,
+        paddingTop: 2
       },
-      modalButton: {
+      bigRedButton: {
         width: "100%",
-        height: 40,
+        height: 45,
         backgroundColor: "#e01e36",
         justifyContent: "center",
         alignItems: "center",
+        marginBottom: 10
       },
-      buttonText:{
-        color:"white",
-        fontWeight:"bold",
-        fontSize:26
+      buttonText: {
+        color: "white",
+        fontSize: 22,
+        fontWeight: "500"
       }
     });
     return (
@@ -128,7 +129,7 @@ class ContractModal extends React.Component<Props, State> {
                 })
               }
             </Grid>
-            <TouchableOpacity style={styles.modalButton} onPress={this.closeModal}>
+            <TouchableOpacity style={styles.bigRedButton} onPress={this.closeModal}>
               <Text style={styles.buttonText}>Sulje</Text>
             </TouchableOpacity>
           </View>

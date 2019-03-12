@@ -15,7 +15,7 @@ interface Props {
   onSelectedBerryChange: (value: string) => void;
   onQuantityChange: (value: string) => void;
   onQuantityCommentChange: (value: string) => void;
-  sendContractProposalClicked: (type: string) => void;
+  sendContractProposalClicked: () => void;
   quantity: string,
   quantityComment: string,
   styles?: any

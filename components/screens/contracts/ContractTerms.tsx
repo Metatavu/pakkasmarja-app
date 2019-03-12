@@ -141,8 +141,8 @@ class ContractTerms extends React.Component<Props, State> {
         width: "100%",
         borderColor: "red",
         backgroundColor: "white",
-        borderWidth: 2.5,
-        borderRadius: 35,
+        borderWidth: 1.5,
+        borderRadius: 4,
         marginTop: 8,
         marginBottom: 15
       },
@@ -153,7 +153,7 @@ class ContractTerms extends React.Component<Props, State> {
         borderRadius: 4,
       },
       smallRedButton: {
-        width: "45%",
+        width: "47%",
         height: 50,
         backgroundColor: "#e01e36",
         justifyContent: "center",
@@ -165,17 +165,18 @@ class ContractTerms extends React.Component<Props, State> {
         fontSize: 22,
         fontWeight: "500"
       },
-      flexView: {
-        flexWrap: 'wrap',
-        alignItems: 'flex-start',
-        flexDirection: 'row',
-      },
       linkStyle: {
         color: "blue",
         paddingTop: 4,
         paddingBottom: 4,
         marginBottom: 5,
         fontSize: 20
+      }, 
+      flexView: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between'
+
       }
     });
 
@@ -211,17 +212,10 @@ class ContractTerms extends React.Component<Props, State> {
           </View>
           <View>
             <Text style={[styles.Text, styles.TextBold]}>Tunnistautumispalvelu:</Text>
-            <View style={{
-              height: 50,
-              width: "100%",
-              backgroundColor: 'white',
-              borderColor: "red",
-              borderWidth: 2.5,
-              borderRadius: 35
-            }}>
+            <View style={styles.InputStyle}>
               <Picker
                 selectedValue={this.state.selectedSignServiceId}
-                style={{height:50,width:"100%",color:"black"}}
+                style={{ height: 50, width: "100%", color: "black" }}
                 onValueChange={(itemValue) =>
                   this.setState({ selectedSignServiceId: itemValue })
                 }>
@@ -244,12 +238,12 @@ class ContractTerms extends React.Component<Props, State> {
             />
           </View>
           <View style={styles.flexView}>
-            <TouchableOpacity style={[styles.smallRedButton, { marginRight: "5%" }]} onPress={this.backButtonClicked}>
+            <TouchableOpacity style={styles.smallRedButton} onPress={this.backButtonClicked}>
               <Text style={styles.buttonText}>
                 TAKAISIN
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.smallRedButton, { marginLeft: "5%" }]} onPress={this.signContractClicked}>
+            <TouchableOpacity style={styles.smallRedButton} onPress={this.signContractClicked}>
               <Text style={styles.buttonText}>
                 ALLEKIRJOITA
               </Text>
