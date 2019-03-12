@@ -1,7 +1,7 @@
 import React, { Dispatch } from "react";
 import { AccessToken, StoreState } from "../../../types";
-import { Text, Form, Item, Input } from "native-base";
-import { View, TouchableOpacity, Modal, TextInput } from "react-native";
+import { Text, Form } from "native-base";
+import { View, TouchableOpacity, TextInput } from "react-native";
 import { Contract, ItemGroup } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
@@ -110,7 +110,9 @@ class ContractAmount extends React.Component<Props, State> {
           MÄÄRÄ
         </Text>
         {this.props.itemGroup.category === "FRESH" &&
-          <Text style={{fontSize:18,paddingBottom:10}}>Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.</Text>
+          <Text style={{fontSize:18,paddingBottom:10}}>
+            Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.
+          </Text>
         }
         <Form>
           <Text style={this.props.styles.textSize}>Määrä</Text>
@@ -133,13 +135,16 @@ class ContractAmount extends React.Component<Props, State> {
         <ContractModal styles={this.props.styles} closeModal={() => this.setState({showPastContracts: false})} pastContracts={true} modalOpen={this.state.showPastContracts} itemGroupId={this.props.itemGroup.id || ""}/>
         <CheckBox
           checked={this.props.deliverAllChecked}
-          onPress={() => this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked)}
+          onPress={() => {
+            !this.props.isActiveContract && this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked)
+          }}
           title='Haluaisin toimittaa kaiken tilallani viljeltävän sadon tästä marjasta Pakkasmarjalle pakastettavaksi ja tuorekauppaan (lisätietoja sopimuksen kohdasta 100 % toimittajuus).'
         />
         <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>Kommentti</Text>
         <TextInput 
           multiline = {true}
           numberOfLines = {4}
+          editable={!this.props.isActiveContract}
           style={this.props.styles.textInput}
           value={this.props.quantityComment}
           onChangeText={(text:string) => this.onQuantityCommentChange(text)}

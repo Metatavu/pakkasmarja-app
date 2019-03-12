@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import PakkasmarjaApi from "../../../api";
 import { AccessToken, StoreState } from "../../../types";
 import { Text } from "native-base";
-import { View, TouchableOpacity, Picker, TextInput, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Picker, TextInput, StyleSheet, WebView, Alert } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { CheckBox } from "react-native-elements";
 import { SignAuthenticationService, Contract } from "pakkasmarja-client";
@@ -11,6 +11,7 @@ import { connect } from "react-redux";
 import BasicLayout from "../../layout/BasicLayout";
 import TopBar from "../../layout/TopBar";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import Modal from "react-native-modal";
 
 /**
  * Interface for component props
@@ -30,7 +31,9 @@ interface State {
   acceptedTerms: boolean,
   viableToSign: boolean,
   selectedSignServiceId: string,
-  ssn: string
+  ssn: string,
+  signAuthenticationUrl: string,
+  modalOpen: boolean
 };
 
 class ContractTerms extends React.Component<Props, State> {
@@ -43,7 +46,9 @@ class ContractTerms extends React.Component<Props, State> {
       acceptedTerms: false,
       viableToSign: false,
       selectedSignServiceId: "0",
-      ssn: ""
+      ssn: "",
+      signAuthenticationUrl: "",
+      modalOpen: false
     };
   }
 
@@ -56,7 +61,6 @@ class ContractTerms extends React.Component<Props, State> {
     }
 
     if (this.props.navigation.getParam('contract')) {
-      console.log(this.props.navigation.getParam('contract'));
       this.setState({ contract: this.props.navigation.getParam('contract') });
     }
 
@@ -81,12 +85,28 @@ class ContractTerms extends React.Component<Props, State> {
       return;
     }
 
-    console.log(this.state.ssn);
-    console.log(this.state.selectedSignServiceId);
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
-    const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "https://google.com" }, this.state.contract.id || "", '2019', this.state.ssn, this.state.selectedSignServiceId);
-    console.log(contractSignRequest);
+    const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "" }, this.state.contract.id || "", '2019', this.state.ssn, this.state.selectedSignServiceId);
+    
+    if (contractSignRequest && contractSignRequest.redirectUrl) {
+      this.setState({ signAuthenticationUrl: contractSignRequest.redirectUrl, modalOpen: true });
+    }
+  }
+
+  /**
+   * When signed successfully
+   */
+  private onSignSuccess = () => {
+    this.setState({ modalOpen: false });
+
+    Alert.alert(
+      'Allekirjoitus onnistui!',
+      'Palaa sopimuksiin painamalla OK.',
+      [
+        {text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})},
+      ]
+    );
   }
 
   /**
@@ -250,6 +270,18 @@ class ContractTerms extends React.Component<Props, State> {
             </TouchableOpacity>
           </View>
         </View>
+        <Modal isVisible={this.state.modalOpen} style={{ height: "100%", width: "100%" }}>
+          <WebView
+            source={{uri: this.state.signAuthenticationUrl}}
+            style={{width: "100%", height: "100%"}}
+            onNavigationStateChange={(webViewState: any) => {
+              const contractId = this.state.contract ? this.state.contract.id : null;
+              if (webViewState.url.idexOf(`contractId=${contractId}`) > 0) {
+                this.onSignSuccess;
+              }
+          }}
+          />
+        </Modal>
       </BasicLayout>
     );
   }

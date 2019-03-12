@@ -1,7 +1,7 @@
 import React, { Dispatch } from "react";
 import { AccessToken, StoreState } from "../../../types";
 import { Text } from "native-base";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import Modal from "react-native-modal";
 import { Contract } from "pakkasmarja-client";

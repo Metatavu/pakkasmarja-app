@@ -15,7 +15,6 @@ import PakkasmarjaApi from "../../../api";
 import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
-import RNFetchBlob from 'rn-fetch-blob';
 
 /**
  * Interface for component props
@@ -81,20 +80,21 @@ class ContractScreen extends React.Component<Props, State> {
       this.setState({ prices: this.props.navigation.getParam('prices') });
     }
 
-    if (this.props.navigation.getParam('contract')) {
-      this.setState({ contract: this.props.navigation.getParam('contract') });
-    }
-
     if (this.props.navigation.getParam('deliveryPlaces')) {
       this.setState({ deliveryPlaces: this.props.navigation.getParam('deliveryPlaces') });
     }
 
-    if (!this.state.contract || !this.state.contract.areaDetails) {
-      return;
+    if (this.props.navigation.getParam('contract')) {
+      const contract = this.props.navigation.getParam('contract');
+      this.setState({ contract: contract });
+ 
+      this.updateContractData("quantityComment", contract.quantityComment);
+      this.updateContractData("proposedQuantity", contract.proposedQuantity.toString());
+      this.updateContractData("areaDetailValues", contract.areaDetails);
+      this.updateContractData("deliveryPlace", contract.deliveryPlaceId.toString());
+      this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment);
+      this.updateContractData("deliverAllChecked", contract.deliverAll);
     }
-
-    const areaDetailValues = this.state.contract.areaDetails;
-    this.updateContractData("areaDetailValues", areaDetailValues);
   }
 
   /**
@@ -157,18 +157,49 @@ class ContractScreen extends React.Component<Props, State> {
    * Accept button clicked
    */
   private acceptContractClicked = async () => {
-    if (!this.props.accessToken) {
+    if (!this.props.accessToken || !this.state.contract) {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
-    const signAuthenticationServicesService = api.getSignAuthenticationServicesService(this.props.accessToken.access_token);
-    const signAuthenticationServices = await signAuthenticationServicesService.listSignAuthenticationServices();
+    const contractData = this.state.contractData;
+    const contract = this.state.contract;
 
-    this.props.navigation.navigate('ContractTerms', {
-      contract: this.state.contract,
-      authServices: signAuthenticationServices
-    });
+    contract.deliverAll = contractData.deliverAllChecked;
+    contract.deliveryPlaceId = contractData.deliveryPlace;
+    contract.deliveryPlaceComment = contractData.deliveryPlaceComment;
+    contract.proposedQuantity = contractData.proposedQuantity;
+    contract.quantityComment = contractData.quantityComment;
+
+    if (contractData.areaDetailValues && contractData.areaDetailValues.length > 0) {
+      const areaDetails: AreaDetail[] = [];
+      contractData.areaDetailValues.forEach((areaDetailObject: any) => {
+        areaDetails.push({
+          size: areaDetailObject.size,
+          species: areaDetailObject.species,
+          name: areaDetailObject.name,
+          profitEstimation: areaDetailObject.profitEstimation
+        });
+      });
+
+      contract.areaDetails = areaDetails;
+    }
+
+    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+
+    if (this.state.companyApprovalRequired && false) {
+      contract.status = "ON_HOLD";
+      const contractsService = api.getContractsService(this.props.accessToken.access_token);
+      await contractsService.updateContract(contract, contract.id || "");
+      this.props.navigation.navigate('Contracts', {});
+    } else {
+      const signAuthenticationServicesService = api.getSignAuthenticationServicesService(this.props.accessToken.access_token);
+      const signAuthenticationServices = await signAuthenticationServicesService.listSignAuthenticationServices();
+
+      this.props.navigation.navigate('ContractTerms', {
+        contract: this.state.contract,
+        authServices: signAuthenticationServices
+      });
+    }
   }
 
   /**
@@ -188,29 +219,7 @@ class ContractScreen extends React.Component<Props, State> {
 
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}`);
     const pdfService = api.getPdfService(this.props.accessToken.access_token);
-    const pdfPath = await pdfService.findPdf(this.state.contract.id, '2019');
-  }
-
-  async getPdf(token: string, id: string, type: string, format: string): Promise<any> {
-    let dirs = RNFetchBlob.fs.dirs;
-    try {
-      const url = `${REACT_APP_API_URL}/rest/v1/contracts/${id}/documents/${type}?format=${format}`;
-
-      return RNFetchBlob
-        .config({
-          path : dirs.DCIMDir + '/path-to-file.pdf'
-        })
-        .fetch('GET', url, {
-          'Authorization': `Bearer ${token}`
-        })
-        .then(async (res: any) => {
-          console.log(res);
-          return res.path();
-        })
-    } catch (e) {
-      console.log(e);
-      Promise.reject();
-    }
+    const pdfPath = await pdfService.findPdf(this.state.contract.id, new Date().getFullYear().toString());
   }
 
   /**
