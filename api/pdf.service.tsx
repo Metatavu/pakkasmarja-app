@@ -5,6 +5,12 @@ export class PDFService {
   private token: string;
   private basePath: string;
 
+  /**
+   * Constructor
+   * 
+   * @param basePath basePath 
+   * @param token token 
+   */
   constructor(basePath: string, token: string) {
     this.token = token;
     this.basePath = basePath;
@@ -13,7 +19,6 @@ export class PDFService {
   /**
    * 
    * @summary Find pdf
-   * @param token token
    * @param id id
    * @param type type
   */
