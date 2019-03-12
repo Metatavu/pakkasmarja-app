@@ -127,7 +127,7 @@ export default class ContractPrices extends React.Component<Props, State> {
             <Row>
               <Col>
                 <TouchableOpacity onPress={this.togglePastPrices}>
-                  <Text style={{ textDecorationLine: "underline", color: "blue" }}>
+                  <Text style={this.props.styles.linkStyle}>
                     Edellisvuosien takuuhinnat
                   </Text>
                 </TouchableOpacity>

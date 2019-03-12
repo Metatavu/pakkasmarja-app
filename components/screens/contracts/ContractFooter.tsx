@@ -54,14 +54,14 @@ export default class ContractFooter extends React.Component<Props, State> {
         borderColor: "red",
         borderWidth: 2
       },
-      flexView:{
+      flexView: {
         flexWrap: 'wrap',
         alignItems: 'flex-start',
         flexDirection: 'row',
       },
-      smallWhiteButtonText:{
-        color:"#e01e36",
-        fontSize:22,
+      smallWhiteButtonText: {
+        color: "#e01e36",
+        fontSize: 22,
         fontWeight: "500"
       }
     });
@@ -70,8 +70,8 @@ export default class ContractFooter extends React.Component<Props, State> {
         {
           this.props.isActiveContract &&
           <View>
-            <TouchableOpacity style={this.props.styles.bigRedButton} onPress={this.props.downloadContractPdf}>
-              <Text style={this.props.styles.buttonText}>
+            <TouchableOpacity style={{ marginBottom: 25 }} onPress={this.props.downloadContractPdf}>
+              <Text style={this.props.styles.linkStyle}>
                 Lataa sopimus PDF - muodossa.
                 </Text>
             </TouchableOpacity>

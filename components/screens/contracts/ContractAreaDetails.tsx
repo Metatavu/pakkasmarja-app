@@ -77,7 +77,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
       borderWidth: 3,
       borderRadius: 18,
       marginTop: 10,
-      textAlignVertical: "center"
+      textAlign: "center"
     }
 
     return (

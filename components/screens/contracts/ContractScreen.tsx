@@ -80,7 +80,7 @@ class ContractScreen extends React.Component<Props, State> {
     if (this.props.navigation.getParam('prices')) {
       this.setState({ prices: this.props.navigation.getParam('prices') });
     }
-    
+
     if (this.props.navigation.getParam('contract')) {
       this.setState({ contract: this.props.navigation.getParam('contract') });
     }
@@ -208,7 +208,14 @@ class ContractScreen extends React.Component<Props, State> {
         padding: 15,
         paddingBottom: 20,
       },
-      readingText:{
+      linkStyle: {
+        color: "blue",
+        paddingTop: 4,
+        paddingBottom: 4,
+        marginBottom: 5,
+        fontSize: 20
+      },
+      readingText: {
         fontSize: 20
       },
       TextBold: {
@@ -228,14 +235,14 @@ class ContractScreen extends React.Component<Props, State> {
         borderRadius: 30,
         marginTop: 8,
         marginBottom: 8,
-        marginLeft:0
+        marginLeft: 0
       },
-      textWithSpace:{
-        paddingTop:7,
-        paddingBottom:7
+      textWithSpace: {
+        paddingTop: 7,
+        paddingBottom: 7
       },
-      textInput:{
-        backgroundColor:"white",
+      textInput: {
+        backgroundColor: "white",
         borderColor: "gray",
         borderWidth: 1,
         borderRadius: 4,
@@ -246,11 +253,11 @@ class ContractScreen extends React.Component<Props, State> {
         backgroundColor: "#e01e36",
         justifyContent: "center",
         alignItems: "center",
-        marginBottom:10
+        marginBottom: 10
       },
-      buttonText:{
-        color:"white",
-        fontSize:22,
+      buttonText: {
+        color: "white",
+        fontSize: 22,
         fontWeight: "500"
       }
     });
@@ -264,20 +271,20 @@ class ContractScreen extends React.Component<Props, State> {
     return (
       <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={{ backgroundColor: "#fff", paddingTop: 10 }}>
-          <ContractHeader 
-            styles={styles} 
-            itemGroup={this.state.itemGroup} 
+          <ContractHeader
+            styles={styles}
+            itemGroup={this.state.itemGroup}
           />
-          <ContractParties 
-            styles={styles} 
-            contact={this.state.contact} 
-            companyName={this.state.companyName} 
-            companyBusinessId={this.state.companyBusinessId} 
+          <ContractParties
+            styles={styles}
+            contact={this.state.contact}
+            companyName={this.state.companyName}
+            companyBusinessId={this.state.companyBusinessId}
           />
-          <ContractPrices 
-            styles={styles} 
-            itemGroup={this.state.itemGroup} 
-            prices={this.state.prices} 
+          <ContractPrices
+            styles={styles}
+            itemGroup={this.state.itemGroup}
+            prices={this.state.prices}
           />
           <ContractAmount
             styles={styles}
@@ -291,15 +298,15 @@ class ContractScreen extends React.Component<Props, State> {
             quantityComment={this.state.contractData.quantityComment}
             deliverAllChecked={this.state.contractData.deliverAllChecked}
           />
-          <ContractAreaDetails 
-            styles={styles} 
+          <ContractAreaDetails
+            styles={styles}
             itemGroup={this.state.itemGroup}
             areaDetails={this.state.contract.areaDetails}
             areaDetailValues={this.state.contractData.areaDetailValues}
             isActiveContract={this.state.contract.status === "APPROVED"}
             onUserInputChange={this.updateContractData}
           />
-          <ContractDeliveryPlace 
+          <ContractDeliveryPlace
             styles={styles}
             onUserInputChange={this.updateContractData}
             deliveryPlaces={this.state.deliveryPlaces}
@@ -307,7 +314,7 @@ class ContractScreen extends React.Component<Props, State> {
             deliveryPlaceComment={this.state.contractData.deliveryPlaceComment}
             isActiveContract={this.state.contract.status === "APPROVED"}
           />
-          <ContractFooter 
+          <ContractFooter
             isActiveContract={this.state.contract.status === "APPROVED"}
             goBack={this.goBackClicked}
             acceptContract={this.acceptContractClicked}

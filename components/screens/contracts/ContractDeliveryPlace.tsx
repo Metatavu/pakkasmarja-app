@@ -10,8 +10,8 @@ import { Contract, DeliveryPlace } from "pakkasmarja-client";
 interface Props {
   contract?: Contract,
   deliveryPlaces?: DeliveryPlace[],
-  styles?:any,
-  onUserInputChange: (key:any, value:any) => void,
+  styles?: any,
+  onUserInputChange: (key: any, value: any) => void,
   selectedPlace: string,
   deliveryPlaceComment: string,
   isActiveContract: boolean
@@ -68,40 +68,50 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
           <Text style={this.props.styles.ContentHeader}>
             Toimituspaikka
           </Text>
-          <Picker
-            selectedValue={this.props.selectedPlace}
-            enabled={!this.props.isActiveContract}
-            style={{height: 50, width: "100%", backgroundColor:"white"}}
-            onValueChange={(itemValue, itemIndex) =>
-              this.props.onUserInputChange("deliveryPlace", itemValue)
-            }>
-            {
-              this.props.deliveryPlaces && this.props.deliveryPlaces.map((deliveryPlace) => {
-                return (
-                  <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace.id} />
-                );
-              })
-            }
-          </Picker>
+          <View style={{
+            height: 50,
+            width: "100%",
+            backgroundColor: 'white',
+            borderColor: "grey",
+            borderWidth: 1,
+            borderRadius: 4
+            
+          }}>
+            <Picker
+              selectedValue={this.props.selectedPlace}
+              enabled={!this.props.isActiveContract}
+              style={{height:50,width:"100%", color:"black"}}
+              onValueChange={(itemValue, itemIndex) =>
+                this.props.onUserInputChange("deliveryPlace", itemValue)
+              }>
+              {
+                this.props.deliveryPlaces && this.props.deliveryPlaces.map((deliveryPlace) => {
+                  return (
+                    <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace.id} />
+                  );
+                })
+              }
+            </Picker>
+          </View>
         </View>
         <View>
-          { 
-            this.state.proposedDeliveryPlace && 
-              <Text>
-                {`Pakkasmarjan ehdotus: ${this.state.proposedDeliveryPlace}`}
-              </Text>
+          {
+            this.state.proposedDeliveryPlace &&
+            <Text>
+              {`Pakkasmarjan ehdotus: ${this.state.proposedDeliveryPlace}`}
+            </Text>
           }
         </View>
         <View>
-        <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>Kommentti</Text>
-        <TextInput 
-          multiline = {true}
-          numberOfLines = {4}
-          editable={!this.props.isActiveContract}
-          style={this.props.styles.textInput}
-          value={this.props.deliveryPlaceComment}
-          onChangeText={(text: string) => this.onDeliveryPlaceChange(text)}
-        />
+          <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>Kommentti</Text>
+          <TextInput
+            multiline={true}
+            numberOfLines={4}
+            editable={!this.props.isActiveContract}
+            style={this.props.styles.textInput}
+            value={this.props.deliveryPlaceComment}
+            onChangeText={(text: string) => this.onDeliveryPlaceChange(text)}
+          />
         </View>
       </View>
     );

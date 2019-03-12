@@ -85,7 +85,7 @@ class ContractTerms extends React.Component<Props, State> {
     console.log(this.state.selectedSignServiceId);
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
-    const contractSignRequest = await contractsService.createContractDocumentSignRequest({redirectUrl: "https://google.com"}, this.state.contract.id || "", '2019', this.state.ssn, this.state.selectedSignServiceId);
+    const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "https://google.com" }, this.state.contract.id || "", '2019', this.state.ssn, this.state.selectedSignServiceId);
     console.log(contractSignRequest);
   }
 
@@ -119,19 +119,14 @@ class ContractTerms extends React.Component<Props, State> {
    */
   public render() {
     const styles = StyleSheet.create({
-      BlueContentView: {
-        padding: 15,
-        backgroundColor: "#dae7fa",
-        paddingTop: 35,
-        paddingBottom: 20,
-        marginBottom: 15
-      },
       WhiteContentView: {
         padding: 15,
         paddingBottom: 20,
       },
-      readingText:{
-        fontSize: 20
+      Text: {
+        fontSize: 20,
+        paddingTop: 7,
+        paddingBottom: 7
       },
       TextBold: {
         fontWeight: "bold"
@@ -142,55 +137,62 @@ class ContractTerms extends React.Component<Props, State> {
         paddingBottom: 20
       },
       InputStyle: {
-        height: 40,
+        height: 50,
         width: "100%",
         borderColor: "red",
         backgroundColor: "white",
         borderWidth: 2.5,
-        borderRadius: 30,
+        borderRadius: 35,
         marginTop: 8,
-        marginBottom: 8,
-        marginLeft:0
+        marginBottom: 15
       },
-      textWithSpace:{
-        paddingTop:7,
-        paddingBottom:7
-      },
-      textInput:{
-        backgroundColor:"white",
+      textInput: {
+        backgroundColor: "white",
         borderColor: "gray",
         borderWidth: 1,
         borderRadius: 4,
       },
-      bigRedButton: {
-        width: "100%",
-        height: 45,
+      smallRedButton: {
+        width: "45%",
+        height: 50,
         backgroundColor: "#e01e36",
         justifyContent: "center",
         alignItems: "center",
-        marginBottom:10
+        marginBottom: 5
       },
-      buttonText:{
-        color:"white",
-        fontSize:22,
+      buttonText: {
+        color: "white",
+        fontSize: 22,
         fontWeight: "500"
+      },
+      flexView: {
+        flexWrap: 'wrap',
+        alignItems: 'flex-start',
+        flexDirection: 'row',
+      },
+      linkStyle: {
+        color: "blue",
+        paddingTop: 4,
+        paddingBottom: 4,
+        marginBottom: 5,
+        fontSize: 20
       }
     });
 
     return (
       <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View>
+        <View style={styles.WhiteContentView}>
           <View>
-            <Text>
+            <Text style={styles.ContentHeader}>
               Sopimus
             </Text>
-            <Text>
+            <Text style={styles.Text}>
               {`Satokautta ${this.state.contract ? this.state.contract.year : ""} koskeva sopimus`}
             </Text>
           </View>
           <View>
-            <TouchableOpacity style={styles.bigRedButton} onPress={this.downloadContractPdfClicked}>
-              <Text style={styles.buttonText}>
+            <TouchableOpacity onPress={this.downloadContractPdfClicked}>
+              <Text style={styles.linkStyle}>
                 Lataa sopimus PDF - muodossa.
                 </Text>
             </TouchableOpacity>
@@ -208,35 +210,46 @@ class ContractTerms extends React.Component<Props, State> {
             />
           </View>
           <View>
-            <Picker
-              selectedValue={this.state.selectedSignServiceId}
-              style={{height: 50, width: "100%", backgroundColor:"white"}}
-              onValueChange={(itemValue) =>
-                this.setState({ selectedSignServiceId: itemValue })
-              }>
-              {
-                this.state.authServices && this.state.authServices.map((authService) => {
-                  return (
-                    <Picker.Item key={authService.identifier} label={authService.name || ""} value={authService.identifier} />
-                  );
-                })
-              }
-            </Picker>
+            <Text style={[styles.Text, styles.TextBold]}>Tunnistautumispalvelu:</Text>
+            <View style={{
+              height: 50,
+              width: "100%",
+              backgroundColor: 'white',
+              borderColor: "red",
+              borderWidth: 2.5,
+              borderRadius: 35
+            }}>
+              <Picker
+                selectedValue={this.state.selectedSignServiceId}
+                style={{height:50,width:"100%",color:"black"}}
+                onValueChange={(itemValue) =>
+                  this.setState({ selectedSignServiceId: itemValue })
+                }>
+                {
+                  this.state.authServices && this.state.authServices.map((authService) => {
+                    return (
+                      <Picker.Item key={authService.identifier} label={authService.name || ""} value={authService.identifier} />
+                    );
+                  })
+                }
+              </Picker>
+            </View>
           </View>
           <View>
-            <Text>Henkilötunnus</Text>
-            <TextInput 
+            <Text style={[styles.Text, styles.TextBold]}>Henkilötunnus:</Text>
+            <TextInput
+              style={styles.InputStyle}
               value={this.state.ssn}
               onChangeText={(text: string) => this.setState({ ssn: text })}
             />
           </View>
-          <View>
-            <TouchableOpacity style={[styles.bigRedButton, { marginLeft: "5%" }]} onPress={this.backButtonClicked}>
+          <View style={styles.flexView}>
+            <TouchableOpacity style={[styles.smallRedButton, { marginRight: "5%" }]} onPress={this.backButtonClicked}>
               <Text style={styles.buttonText}>
                 TAKAISIN
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.bigRedButton} onPress={this.signContractClicked}>
+            <TouchableOpacity style={[styles.smallRedButton, { marginLeft: "5%" }]} onPress={this.signContractClicked}>
               <Text style={styles.buttonText}>
                 ALLEKIRJOITA
               </Text>
