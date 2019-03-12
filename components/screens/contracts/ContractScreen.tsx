@@ -187,9 +187,31 @@ class ContractScreen extends React.Component<Props, State> {
     }
 
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
-    const contractsService = api.getContractsService(this.props.accessToken.access_token);
+    const pdfService = api.getPdfService(this.props.accessToken.access_token);
+    const pdfPath = await pdfService.findPdf(this.state.contract.id, '2019');
+    console.log(pdfPath);
+  }
 
-    const filename = `${new Date().getTime()}.pdf`;
+  async getPdf(token: string, id: string, type: string, format: string): Promise<any> {
+    let dirs = RNFetchBlob.fs.dirs;
+    try {
+      const url = `${REACT_APP_API_URL}/rest/v1/contracts/${id}/documents/${type}?format=${format}`;
+
+      return RNFetchBlob
+        .config({
+          path : dirs.DCIMDir + '/path-to-file.pdf'
+        })
+        .fetch('GET', url, {
+          'Authorization': `Bearer ${token}`
+        })
+        .then(async (res: any) => {
+          console.log(res);
+          return res.path();
+        })
+    } catch (e) {
+      console.log(e);
+      Promise.reject();
+    }
   }
 
   /**

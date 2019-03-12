@@ -83,16 +83,21 @@ export default class ContractFooter extends React.Component<Props, State> {
               TAKAISIN
               </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.smallWhiteButton, { marginLeft: "5%" }]} onPress={this.props.declineContract}>
-            <Text style={styles.smallWhiteButtonText}>
-              EN HYVÄKSY
+        {
+          !this.props.isActiveContract && 
+          <View>
+            <TouchableOpacity style={[styles.smallWhiteButton, { marginLeft: "5%" }]} onPress={this.props.declineContract}>
+              <Text style={styles.smallWhiteButtonText}>
+                EN HYVÄKSY
+                </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={this.props.styles.bigRedButton} onPress={this.props.acceptContract}>
+              <Text style={this.props.styles.buttonText}>
+                {this.props.approveButtonText}
               </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={this.props.styles.bigRedButton} onPress={this.props.acceptContract}>
-            <Text style={this.props.styles.buttonText}>
-              {this.props.approveButtonText}
-            </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        }
         </View>
       </View>
     );

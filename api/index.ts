@@ -2,6 +2,7 @@
 import { AccessToken } from "../types";
 import { API_URL } from 'react-native-dotenv';
 import Api from "pakkasmarja-client";
+import { PDFService } from "./pdf.service";
 
 export default class PakkasmarjaApi {
 
@@ -64,6 +65,15 @@ export default class PakkasmarjaApi {
    */
   getSignAuthenticationServicesService(token: string) {
     return this.getApi().getSignAuthenticationServicesService(token);
+  }
+
+  /**
+   * Get pdf service
+   * @param token token
+   * @param basePath basePath
+   */
+  getPdfService(token: string) {
+    return new PDFService(this.basePath, token);
   }
   
 }
