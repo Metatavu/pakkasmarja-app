@@ -30,7 +30,7 @@ interface State {
   itemGroup?: ItemGroup;
   itemGroups: ItemGroup[];
   prices?: Price[],
-  deliveryPlaces? : DeliveryPlace[],
+  deliveryPlaces?: DeliveryPlace[],
   proposeContractModalOpen: boolean,
   proposeContractModalType: string,
   selectedBerry: string,
@@ -163,7 +163,7 @@ class ContractsScreen extends React.Component<Props, State> {
     await this.findContractContact(contract);
     await this.findPrices(contract);
     await this.getDeliveryPlaces();
-    
+
     this.setState({ bool: false });
     this.props.navigation.navigate('Contract', {
       contact: this.state.contact,
@@ -248,9 +248,9 @@ class ContractsScreen extends React.Component<Props, State> {
               Pakastemarjat
             </Text>
           </View>
-          <ContractAmountTable 
-            onContractClick={this.handleContractClick} 
-            contracts={this.state.frozenContracts} 
+          <ContractAmountTable
+            onContractClick={this.handleContractClick}
+            contracts={this.state.frozenContracts}
             type="FROZEN"
             onProposeNewContractClick={this.onProposeNewContractClick}
           />
@@ -261,9 +261,9 @@ class ContractsScreen extends React.Component<Props, State> {
               Tuoremarjat
             </Text>
           </View>
-          <ContractAmountTable 
-            onContractClick={this.handleContractClick} 
-            contracts={this.state.freshContracts} 
+          <ContractAmountTable
+            onContractClick={this.handleContractClick}
+            contracts={this.state.freshContracts}
             type="FRESH"
             onProposeNewContractClick={this.onProposeNewContractClick}
           />

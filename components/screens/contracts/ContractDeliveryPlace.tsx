@@ -72,10 +72,9 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
             height: 50,
             width: "100%",
             backgroundColor: 'white',
-            borderColor: "grey",
+            borderColor: "red",
             borderWidth: 1,
             borderRadius: 4
-            
           }}>
             <Picker
               selectedValue={this.props.selectedPlace}

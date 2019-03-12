@@ -147,8 +147,9 @@ class ContractTerms extends React.Component<Props, State> {
         marginBottom: 15
       },
       textInput: {
+        height:40,
         backgroundColor: "white",
-        borderColor: "gray",
+        borderColor: "red",
         borderWidth: 1,
         borderRadius: 4,
       },

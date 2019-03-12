@@ -76,22 +76,16 @@ class ContractModal extends React.Component<Props, State> {
    */
   public render() {
     const styles = StyleSheet.create({
-      BlueContentView: {
-        height: "50%",
+      modalView: {
+        backgroundColor:"white",
+        height:470,
         padding: 15,
-        backgroundColor: "#dae7fa",
-        paddingBottom: 20,
         marginBottom: 15
       },
       headerRow: {
-        paddingBottom: 20,
-        marginBottom: 10,
+        paddingBottom: 10,
         borderBottomColor: "#000000",
         borderBottomWidth: 1
-      },
-      row: {
-        paddingBottom: 2,
-        paddingTop: 2
       },
       bigRedButton: {
         width: "100%",
@@ -109,8 +103,8 @@ class ContractModal extends React.Component<Props, State> {
     });
     return (
       <View style={{ marginTop: 22 }}>
-        <Modal isVisible={this.props.modalOpen} style={{ height: "60%" }}>
-          <View style={styles.BlueContentView}>
+        <Modal isVisible={this.props.modalOpen}>
+          <View style={styles.modalView}>
             <Grid>
               <Row style={styles.headerRow}>
                 <Col><Text>Vuosi</Text></Col>
@@ -120,7 +114,7 @@ class ContractModal extends React.Component<Props, State> {
               {
                 this.state.contracts.map((contract) => {
                   return (
-                    <Row style={styles.row} key={contract.itemGroupId}>
+                    <Row key={contract.itemGroupId}>
                       <Col><Text>{contract.year}</Text></Col>
                       <Col><Text>{contract.contractQuantity}</Text></Col>
                       <Col><Text>{contract.deliveredQuantity}</Text></Col>

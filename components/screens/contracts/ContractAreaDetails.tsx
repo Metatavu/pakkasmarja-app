@@ -74,7 +74,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
       height: 40,
       borderColor: "red",
       backgroundColor: "white",
-      borderWidth: 1.5,
+      borderWidth: 1,
       borderRadius: 4,
       marginTop: 10,
       textAlign: "center"
