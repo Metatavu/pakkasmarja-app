@@ -2,22 +2,26 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicLayout from "../../layout/BasicLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, ContractModel } from "../../../types";
+import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
-import { View, TouchableHighlight, StyleSheet } from "react-native";
-//import Api from "../../../api";
-import { Col, Row, Grid } from "react-native-easy-grid";
+import { View, StyleSheet } from "react-native";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
-import { Contract, Contact, Address, Price, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
+import { Contract, Contact, Price, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import ContractAmountTable from "./ContractAmountTable";
 
-export interface Props {
+/**
+ * Component props
+ */
+interface Props {
   navigation: any,
   accessToken?: AccessToken
 };
 
+/**
+ * Component state
+ */
 interface State {
   freshContracts: Contract[];
   frozenContracts: Contract[];
@@ -30,6 +34,11 @@ interface State {
 
 class ContractsScreen extends React.Component<Props, State> {
 
+  /**
+   * Constructor
+   * 
+   * @param props props
+   */
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -49,8 +58,8 @@ class ContractsScreen extends React.Component<Props, State> {
 
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
-    const frozenContracts = await contractsService.listContracts("application/json", true, "FROZEN");
-    const freshContracts = await contractsService.listContracts("application/json", true, "FRESH");
+    const frozenContracts = await contractsService.listContracts("application/json", false, "FROZEN");
+    const freshContracts = await contractsService.listContracts("application/json", false, "FRESH");
 
     this.setState({ frozenContracts: frozenContracts, freshContracts: freshContracts });
   }
@@ -72,10 +81,10 @@ class ContractsScreen extends React.Component<Props, State> {
   }
 
   /**
- * Find prices
- * 
- * @param contract contract
- */
+   * Find prices
+   * 
+   * @param contract contract
+   */
   private findPrices = async (contract: Contract) => {
     if (!this.props.accessToken || !contract.itemGroupId) {
       return;
@@ -154,8 +163,10 @@ class ContractsScreen extends React.Component<Props, State> {
     />
   };
 
-
-  render() {
+  /**
+   * Render method
+   */
+  public render() {
     const styles = StyleSheet.create({
       headerView: {
         backgroundColor: "#E51D2A",

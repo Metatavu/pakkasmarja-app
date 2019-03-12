@@ -1,9 +1,8 @@
 import React from "react";
-import { Text, List, ListItem, Input } from "native-base";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { Text, Input } from "native-base";
+import { View, TouchableOpacity } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { AreaDetail, ItemGroup } from "pakkasmarja-client";
-import { any } from "prop-types";
 
 /**
  * Interface for component props
@@ -61,7 +60,12 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
   }
 
   /**
-   * Get area details row
+   * Render area details row
+   * 
+   * @param index index
+   * @param name name
+   * @param size size
+   * @param species species
    */
   private renderAreaDetailsRow = (index: number, name?: string, size?: number, species?: string) => {
     const minimumEstimation = this.props.itemGroup ? this.props.itemGroup.minimumProfitEstimation : null;
@@ -77,7 +81,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     }
 
     return (
-      <Row>
+      <Row key={index}>
         <Col>
           {this.renderInputField(index, "name", !this.props.isActiveContract, "default", name || "", style)}
         </Col>
@@ -99,6 +103,13 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
 
   /**
    * Render input field
+   * 
+   * @param index index
+   * @param key key
+   * @param editable editable
+   * @param keyboardType keyboardType
+   * @param value value
+   * @param style style
    */
   private renderInputField = (index: number, key: string, editable: boolean, keyboardType: any, value: string, style: any) => {
     return (
@@ -114,7 +125,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
   }
 
   /**
-   * Component did mount
+   * Component did mount life cycle method
    */
   public componentDidMount = () => {
     if (this.props.areaDetailValues.length <= 0) {
@@ -127,7 +138,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
   }
 
   /**
-   * Updates profit text
+   * Render profit text
    */
   private renderProfitTextElements = () => {
     if (!this.props.itemGroup || this.props.areaDetailValues.length <= 0) {
@@ -173,7 +184,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
   /**
    * Create empty area detail
    */
-  createEmptyAreaDetail = () => {
+  private createEmptyAreaDetail = () => {
     const areaDetails: any = this.props.areaDetailValues;
     areaDetails.push({
       name: "",
@@ -186,6 +197,10 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
 
   /**
    * Handle input change
+   * 
+   * @param index index
+   * @param key key
+   * @param value value
    */
   private handleInputChange = (index: number, key: string, value: any) => {
     const areaDetails: any = this.props.areaDetailValues;
@@ -201,6 +216,9 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     }
   }
 
+  /**
+   * Render method
+   */
   public render() {
     return (
       <View>

@@ -3,10 +3,11 @@ import { Text, List, ListItem } from "native-base";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { ItemGroup, Price } from "pakkasmarja-client";
+
 /**
  * Interface for component props
  */
-export interface Props {
+interface Props {
   itemGroup: ItemGroup,
   prices?: Price[],
   styles?: any
@@ -44,19 +45,23 @@ export default class ContractPrices extends React.Component<Props, State> {
   /**
    * Format prices text
    */
-  private formatPricesText = () => {
+  private renderPricesText = () => {
     if (!this.props.itemGroup) {
-      return;
+      return <Text></Text>;
     }
-    return `Ostettavien marjojen (${this.props.itemGroup.displayName}) takuuhinnat satokaudella ${new Date().getFullYear()}`;
+    return (
+      <Text>
+        {`Ostettavien marjojen (${this.props.itemGroup.displayName}) takuuhinnat satokaudella ${new Date().getFullYear()}`}
+      </Text>
+    );
   }
 
   /**
    * Get item details
    */
-  private getItemDetails = () => {
+  private renderItemDetails = () => {
     if (!this.props.itemGroup) {
-      return;
+      return <View></View>;
     }
 
     switch (this.props.itemGroup.name) {
@@ -91,6 +96,9 @@ export default class ContractPrices extends React.Component<Props, State> {
     }
   }
 
+  /**
+   * Render method
+   */
   public render() {
     const styles = StyleSheet.create({
       listItem:{
@@ -104,14 +112,12 @@ export default class ContractPrices extends React.Component<Props, State> {
           <Text style={this.props.styles.ContentHeader}>
             Takuuhinnat
           </Text>
-          <Text>
-            {this.formatPricesText}
-          </Text>
+            {this.renderPricesText()}
           <Grid>
             {
               this.props.prices && this.props.prices.filter(price => price.year === new Date().getFullYear()).map((activePrice) => {
                 return (
-                  <Row>
+                  <Row key={activePrice.id}>
                     <Col><Text>{activePrice.group}</Text></Col>
                     <Col><Text>{`${activePrice.price} ${activePrice.unit}`}</Text></Col>
                   </Row>
@@ -130,7 +136,7 @@ export default class ContractPrices extends React.Component<Props, State> {
             {
               this.props.prices && this.state.showPastPrices && this.props.prices.filter(price => price.year !== new Date().getFullYear()).map((activePrice) => {
                 return (
-                  <Row >
+                  <Row key={activePrice.id}>
                     <Col><Text>{activePrice.group}</Text></Col>
                     <Col><Text>{`${activePrice.price} ${activePrice.unit}`}</Text></Col>
                   </Row>
@@ -138,7 +144,7 @@ export default class ContractPrices extends React.Component<Props, State> {
               })
             }
           </Grid>
-          {this.getItemDetails()}
+          {this.renderItemDetails()}
         </View>
       );
     }

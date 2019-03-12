@@ -45,7 +45,7 @@ class MqttConnector extends React.Component<Props, State> {
    * @param prevState previous state
    */
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    if (this.props.accessToken !== prevProps.accessToken) {
+    /*if (this.props.accessToken !== prevProps.accessToken) {
       this.setState({
         options: await this.getConnectionOptions()
       });
@@ -57,23 +57,23 @@ class MqttConnector extends React.Component<Props, State> {
       if (this.state.options) {
         this.connection.connect(this.state.options);
       }
-    }
+    }*/
   }
 
   /**
    * Component will unmount life-cycle event
    */
   public componentWillUnmount() {
-    this.connection.disconnect();
+    //this.connection.disconnect();
   }
 
   /**
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    this.setState({
+    /*this.setState({
       options: await this.getConnectionOptions()
-    });
+    });*/
   }
 
   /**
@@ -89,7 +89,7 @@ class MqttConnector extends React.Component<Props, State> {
    * Loads MQTT connection options from the server
    */
   private async getConnectionOptions(): Promise<MqttConfig | undefined> {
-    if (!this.props.accessToken) {
+    /*if (!this.props.accessToken) {
       return undefined;
     }
 
@@ -97,7 +97,7 @@ class MqttConnector extends React.Component<Props, State> {
       headers: {
         "Authorization": `Bearer ${this.props.accessToken.access_token}`
       }
-    })).json();
+    })).json();*/
   }
 }
 

@@ -1,15 +1,13 @@
 import React from "react";
-import { Contact } from "pakkasmarja-client";
 import { Text } from "native-base";
-import { View, StyleSheet, Picker, TextInput } from "react-native";
-import { Col, Row, Grid } from "react-native-easy-grid";
+import { View, Picker, TextInput } from "react-native";
 import { Contract, DeliveryPlace } from "pakkasmarja-client";
 
 
 /**
  * Interface for component props
  */
-export interface Props {
+interface Props {
   contract?: Contract,
   deliveryPlaces?: DeliveryPlace[],
   styles?:any,
@@ -36,7 +34,10 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
     };
   }
 
-  componentDidMount = () => {
+  /**
+   * Component did mount life cycle event
+   */
+  public componentDidMount = () => {
     if (!this.props.deliveryPlaces || !this.props.contract || !this.props.contract.deliveryPlaceId) {
       return;
     }
@@ -49,9 +50,11 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
 
   /**
    * On delivery place comment change
+   * 
+   * @param value value
    */
-  onDeliveryPlaceChange = (event: any) => {
-    this.props.onUserInputChange("deliveryPlaceComment", event.currentTarget.value);
+  onDeliveryPlaceChange = (value: string) => {
+    this.props.onUserInputChange("deliveryPlaceComment", value);
   }
 
 
@@ -59,7 +62,6 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
    * Render method for contract parties component
    */
   public render() {
-    
     return (
       <View style={this.props.styles.BlueContentView}>
         <View>
@@ -76,7 +78,7 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
             {
               this.props.deliveryPlaces && this.props.deliveryPlaces.map((deliveryPlace) => {
                 return (
-                  <Picker.Item label={deliveryPlace.name || ""} value={deliveryPlace.id} />
+                  <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace.id} />
                 );
               })
             }
@@ -98,7 +100,7 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
           editable={!this.props.isActiveContract}
           style={this.props.styles.textInput}
           value={this.props.deliveryPlaceComment}
-          onChange={this.onDeliveryPlaceChange}
+          onChangeText={(text: string) => this.onDeliveryPlaceChange(text)}
         />
         </View>
       </View>

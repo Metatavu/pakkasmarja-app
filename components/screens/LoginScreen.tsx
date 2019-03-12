@@ -84,22 +84,7 @@ class LoginScreen extends React.Component<Props, State> {
    */
   sendLogin = (event: any) => {
     const loginData = this.state.loginDetails;
-
-    const accessToken: AccessToken = {
-      created: new Date(),
-      access_token: "string",
-      expires_in: 999999999,
-      refresh_token: 999999999,
-      refresh_expires_in: 9999999999,
-      url: "http://localhost",
-      client_id: "string",
-      realmId: "pm",
-      firstName: "string",
-      lastName: "string"
-    };
-    this.props.onAccessTokenUpdate(accessToken);
-    this.props.navigation.navigate("Main");
-    /*Auth.login({
+    Auth.login({
       clientId: REACT_APP_AUTH_RESOURCE,
       url: `${REACT_APP_AUTH_SERVER_URL}/realms/${REACT_APP_AUTH_REALM}/protocol/openid-connect/token`,
       username: loginData.username || REACT_APP_DEFAULT_USER,
@@ -113,7 +98,7 @@ class LoginScreen extends React.Component<Props, State> {
       } else {
         // TODO: Handle error
       }
-    })*/
+    })
   }
 
   /**

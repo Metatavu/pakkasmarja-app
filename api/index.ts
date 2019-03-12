@@ -56,5 +56,14 @@ export default class PakkasmarjaApi {
   getDeliveryPlacesService(token: string) {
     return this.getApi().getDeliveryPlacesService(token);
   }
+
+   /**
+   * Returns sign authentication services service
+   * 
+   * @param token token
+   */
+  getSignAuthenticationServicesService(token: string) {
+    return this.getApi().getSignAuthenticationServicesService(token);
+  }
   
 }

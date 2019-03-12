@@ -1,28 +1,31 @@
-import React, { Dispatch } from "react";
-import { connect } from "react-redux";
-import BasicLayout from "../../layout/BasicLayout";
+import React from "react";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, ContractModel } from "../../../types";
-import * as actions from "../../../actions";
 import { Text } from "native-base";
 import { View, TouchableHighlight, StyleSheet } from "react-native";
-//import Api from "../../../api";
 import { Col, Row, Grid } from "react-native-easy-grid";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
-import { Contract, Contact, Address, Price, ItemGroup } from "pakkasmarja-client";
-import PakkasmarjaApi from "../../../api";
+import { Contract } from "pakkasmarja-client";
 
-
-export interface Props {
+/**
+ * Component props
+ */
+interface Props {
   contracts: Contract[],
   onContractClick: (contract: Contract) => void;
 };
 
+/**
+ * Component state
+ */
 interface State {
 };
 
 export default class ContractAmountTable extends React.Component<Props, State> {
 
+  /**
+   * Constructor 
+   * 
+   * @param props 
+   */
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -48,7 +51,10 @@ export default class ContractAmountTable extends React.Component<Props, State> {
     />
   };
 
-  render() {
+  /**
+   * Render method
+   */
+  public render() {
     const styles = StyleSheet.create({
       BlueContentView: {
         padding: 15,
@@ -69,24 +75,24 @@ export default class ContractAmountTable extends React.Component<Props, State> {
     });
     return (
       <View style={styles.BlueContentView}>
-            <Grid style={{ padding: 10 }}>
-              <Row style={styles.headerRow}>
-                <Col></Col>
-                <Col><Text>Sovittu KG</Text></Col>
-                <Col><Text>Toteutunut KG</Text></Col>
-              </Row>
-              {this.props.contracts.filter(contract => contract.status !== "TERMINATED").map((contract) => {
-                return (
-                  <TouchableHighlight key={contract.id} onPress={() => { this.props.onContractClick(contract) }}>
-                    <Row style={styles.row}>
-                      <Col><Text style={{ fontSize: 20, fontWeight:"bold" }}>Mustikka</Text></Col>
-                      <Col><Text style={{ fontSize: 20 }}>{contract.contractQuantity}</Text></Col>
-                      <Col><Text style={{ fontSize: 20 }}>{contract.deliveredQuantity}</Text></Col>
-                    </Row>
-                  </TouchableHighlight>
-                );
-              })}
-            </Grid>
+        <Grid style={{ padding: 10 }}>
+          <Row style={styles.headerRow}>
+            <Col></Col>
+            <Col><Text>Sovittu KG</Text></Col>
+            <Col><Text>Toteutunut KG</Text></Col>
+          </Row>
+          {this.props.contracts.filter(contract => contract.status !== "TERMINATED").map((contract) => {
+            return (
+              <TouchableHighlight key={contract.id} onPress={() => { this.props.onContractClick(contract) }}>
+                <Row style={styles.row}>
+                  <Col><Text style={{ fontSize: 20, fontWeight:"bold" }}>Mustikka</Text></Col>
+                  <Col><Text style={{ fontSize: 20 }}>{contract.contractQuantity}</Text></Col>
+                  <Col><Text style={{ fontSize: 20 }}>{contract.deliveredQuantity}</Text></Col>
+                </Row>
+              </TouchableHighlight>
+            );
+          })}
+        </Grid>
       </View>
     );
   }

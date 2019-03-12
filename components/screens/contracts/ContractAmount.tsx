@@ -1,8 +1,7 @@
 import React, { Dispatch } from "react";
-import { Contact, Price, ContractModel, AccessToken, StoreState } from "../../../types";
-import { Text, Form, Item, Label, Input } from "native-base";
-import { View, TouchableOpacity, Modal, TextInput, StyleSheet } from "react-native";
-import { Col, Row, Grid } from "react-native-easy-grid";
+import { AccessToken, StoreState } from "../../../types";
+import { Text, Form, Item, Input } from "native-base";
+import { View, TouchableOpacity, Modal, TextInput } from "react-native";
 import { Contract, ItemGroup } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
@@ -15,7 +14,7 @@ import { CheckBox } from "react-native-elements";
 /**
  * Interface for component props
  */
-export interface Props {
+interface Props {
   itemGroup: ItemGroup,
   category: string,
   contract: Contract,
@@ -23,6 +22,7 @@ export interface Props {
   accessToken?: AccessToken,
   onUserInputChange: (key:any, value:any) => void,
   proposedAmount: string,
+  contractAmount?: number,
   quantityComment: string,
   deliverAllChecked: boolean,
   styles?: any
@@ -49,12 +49,6 @@ class ContractAmount extends React.Component<Props, State> {
   }
 
   /**
-   * Component did mount
-   */
-  public componentDidMount = () => {
-  }
-
-  /**
    * Load past contracts
    */
   private loadPastContracts = async () => {
@@ -69,7 +63,7 @@ class ContractAmount extends React.Component<Props, State> {
   }
 
   /**
-   * Toggle display of past prices
+   * Toggle display of past contracts
    */
   private togglePastContracts = async () => {
     if (this.state.showPastContracts) {
@@ -82,22 +76,34 @@ class ContractAmount extends React.Component<Props, State> {
 
   /**
    * On amount change
+   * 
+   * @param value value
    */
-  private onAmountChange = (event: any) => {
-    this.props.onUserInputChange("proposedQuantity", event.currentTarget.value);
+  private onAmountChange = (value: string) => {
+    this.props.onUserInputChange("proposedQuantity", value);
   }
 
   /**
    * On quantity comment change
+   * 
+   * @param value value
    */
-  private onQuantityCommentChange = (event: any) => {
-    this.props.onUserInputChange("quantityComment", event.currentTarget.value);
+  private onQuantityCommentChange = (value: string) => {
+    this.props.onUserInputChange("quantityComment", value);
   }
 
   /**
    * Render method for contract amount component
    */
   public render() {
+    let quantityValue = "0";
+
+    if (this.props.contractAmount && !this.props.proposedAmount) {
+      quantityValue = this.props.contractAmount.toString();
+    } else {
+      quantityValue = this.props.proposedAmount;
+    }
+
     return (
       <View style={this.props.styles.BlueContentView}>
         <Text style={this.props.styles.ContentHeader}>
@@ -108,15 +114,13 @@ class ContractAmount extends React.Component<Props, State> {
         }
         <Form>
           <Text style={this.props.styles.readingText}>Määrä</Text>
-          <Item>
-            <Input 
-              style={this.props.styles.InputStyle}
-              editable={this.props.isActiveContract}
-              keyboardType="numeric"
-              value={this.props.proposedAmount}
-              onChange={this.onAmountChange}
-            />
-          </Item>
+          <TextInput 
+            style={this.props.styles.InputStyle}
+            editable={!this.props.isActiveContract}
+            keyboardType="numeric"
+            value={quantityValue}
+            onChangeText={(text: string) => this.onAmountChange(text)}
+          />
         </Form>
         <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>
           {`Pakkasmarjan ehdotus: ${this.props.contract.contractQuantity} kg`}
@@ -138,7 +142,7 @@ class ContractAmount extends React.Component<Props, State> {
           numberOfLines = {4}
           style={this.props.styles.textInput}
           value={this.props.quantityComment}
-          onChange={this.onQuantityCommentChange}
+          onChangeText={(text:string) => this.onQuantityCommentChange(text)}
         />
       </View>
     );

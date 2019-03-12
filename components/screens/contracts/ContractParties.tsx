@@ -1,13 +1,13 @@
 import React from "react";
 import { Contact } from "pakkasmarja-client";
 import { Text } from "native-base";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 
 /**
  * Interface for component props
  */
-export interface Props {
+interface Props {
   contact: Contact,
   companyName: string,
   companyBusinessId: string,
@@ -33,16 +33,20 @@ export default class ContractParties extends React.Component<Props, State> {
   /**
    * Format farmer party details text
    */
-  private formatFarmerPartyDetails = () => {
+  private renderFarmerPartyDetails = () => {
     if (!this.props.contact) {
-      return;
+      return <Text></Text>;
     }
 
     if (this.props.contact.companyName) {
-      return this.props.contact.companyName;
+      return <Text>{this.props.contact.companyName}</Text>;
     }
 
-    return `${this.props.contact.firstName} ${this.props.contact.lastName}`;
+    return (
+      <Text>
+        {`${this.props.contact.firstName} ${this.props.contact.lastName}`}
+      </Text>
+    );
   }
 
   /**
@@ -61,7 +65,7 @@ export default class ContractParties extends React.Component<Props, State> {
           </Row>
           <Row>
             <Col>
-              <Text>{this.formatFarmerPartyDetails}</Text>
+              {this.renderFarmerPartyDetails()}
             </Col>
             <Col>
               <Text>{this.props.companyName}</Text>

@@ -1,6 +1,5 @@
-import React from "react";
-import { Text } from "native-base";
-import { View, StyleSheet } from "react-native";
+import React, { Dispatch } from "react";
+import { View, StyleSheet, PermissionsAndroid } from "react-native";
 import BasicLayout from "../../layout/BasicLayout";
 import TopBar from "../../layout/TopBar";
 import ContractPrices from "./ContractPrices";
@@ -11,12 +10,19 @@ import ContractAreaDetails from "./ContractAreaDetails";
 import ContractDeliveryPlace from "./ContractDeliveryPlace";
 import ContractFooter from "./ContractFooter";
 import { Contract, ItemGroup, Price, Contact, AreaDetail, DeliveryPlace } from "pakkasmarja-client";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
+import PakkasmarjaApi from "../../../api";
+import { AccessToken, StoreState } from "../../../types";
+import * as actions from "../../../actions";
+import { connect } from "react-redux";
+import RNFetchBlob from 'rn-fetch-blob';
 
 /**
  * Interface for component props
  */
 interface Props {
-  navigation: any
+  navigation: any,
+  accessToken?: AccessToken
 };
 
 /**
@@ -32,10 +38,11 @@ interface State {
   companyName: string,
   companyBusinessId: string,
   showPastPrices: boolean,
+  companyApprovalRequired: boolean
   contractData: any,
 };
 
-export default class ContractScreen extends React.Component<Props, State> {
+class ContractScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
@@ -46,6 +53,7 @@ export default class ContractScreen extends React.Component<Props, State> {
       companyName: "Pakkasmarja Oy",
       companyBusinessId: "0434204-0",
       showPastPrices: false,
+      companyApprovalRequired: false,
       contractData: {
         proposedQuantity: "",
         deliverAllChecked: false,
@@ -97,6 +105,27 @@ export default class ContractScreen extends React.Component<Props, State> {
     contractData[key] = value;
 
     this.setState({ contractData: contractData });
+    this.checkIfCompanyApprovalNeeded();
+  }
+
+  /**
+   * Checks if company needs to approve changes made by user
+   */
+  private checkIfCompanyApprovalNeeded = () => {
+    if (!this.state.contract) {
+      return;
+    }
+
+    const contractQuantity = this.state.contract.contractQuantity;
+    const currentQuantity = this.state.contractData.proposedQuantity;
+    const contractPlaceId = this.state.contract.deliveryPlaceId;
+    const currentContractPlaceId = this.state.contractData.deliveryPlace;
+
+    if (contractQuantity != currentQuantity || contractPlaceId != currentContractPlaceId) {
+      this.setState({ companyApprovalRequired: true });
+    } else {
+      this.setState({ companyApprovalRequired: false });
+    }
   }
 
   static navigationOptions = {
@@ -127,8 +156,19 @@ export default class ContractScreen extends React.Component<Props, State> {
   /**
    * Accept button clicked
    */
-  private acceptContractClicked = () => {
-    console.log("Accepted", this.state.contractData)!
+  private acceptContractClicked = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const signAuthenticationServicesService = api.getSignAuthenticationServicesService(this.props.accessToken.access_token);
+    const signAuthenticationServices = await signAuthenticationServicesService.listSignAuthenticationServices();
+
+    this.props.navigation.navigate('ContractTerms', {
+      contract: this.state.contract,
+      authServices: signAuthenticationServices
+    });
   }
 
   /**
@@ -141,8 +181,15 @@ export default class ContractScreen extends React.Component<Props, State> {
   /**
    * Download contract as pdf
    */
-  private downloadContractPdfClicked = () => {
-    console.log("Download");
+  private downloadContractPdfClicked = async () => {
+    if (!this.props.accessToken || !this.state.contract || !this.state.contract.id) {
+      return;
+    }
+
+    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const contractsService = api.getContractsService(this.props.accessToken.access_token);
+
+    const filename = `${new Date().getTime()}.pdf`;
   }
 
   /**
@@ -217,9 +264,21 @@ export default class ContractScreen extends React.Component<Props, State> {
     return (
       <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={{ backgroundColor: "#fff", paddingTop: 10 }}>
-          <ContractHeader styles={styles} itemGroup={this.state.itemGroup} />
-          <ContractParties styles={styles} contact={this.state.contact} companyName={this.state.companyName} companyBusinessId={this.state.companyBusinessId} />
-          <ContractPrices styles={styles} itemGroup={this.state.itemGroup} prices={this.state.prices} />
+          <ContractHeader 
+            styles={styles} 
+            itemGroup={this.state.itemGroup} 
+          />
+          <ContractParties 
+            styles={styles} 
+            contact={this.state.contact} 
+            companyName={this.state.companyName} 
+            companyBusinessId={this.state.companyBusinessId} 
+          />
+          <ContractPrices 
+            styles={styles} 
+            itemGroup={this.state.itemGroup} 
+            prices={this.state.prices} 
+          />
           <ContractAmount
             styles={styles}
             itemGroup={this.state.itemGroup}
@@ -227,6 +286,7 @@ export default class ContractScreen extends React.Component<Props, State> {
             isActiveContract={this.state.contract.status === "APPROVED"}
             category={this.state.itemGroup.category || ""}
             onUserInputChange={this.updateContractData}
+            contractAmount={this.state.contract.contractQuantity}
             proposedAmount={this.state.contractData.proposedQuantity}
             quantityComment={this.state.contractData.quantityComment}
             deliverAllChecked={this.state.contractData.deliverAllChecked}
@@ -253,6 +313,7 @@ export default class ContractScreen extends React.Component<Props, State> {
             acceptContract={this.acceptContractClicked}
             declineContract={this.declineContractClicked}
             downloadContractPdf={this.downloadContractPdfClicked}
+            approveButtonText={this.state.companyApprovalRequired ? "EHDOTA MUUTOSTA" : "HYVÄKSYN"}
             styles={styles}
           />
         </View>
@@ -260,3 +321,27 @@ export default class ContractScreen extends React.Component<Props, State> {
     );
   }
 }
+
+/**
+ * Redux mapper for mapping store state to component props
+ * 
+ * @param state store state
+ */
+function mapStateToProps(state: StoreState) {
+  return {
+    accessToken: state.accessToken
+  };
+}
+
+/**
+ * Redux mapper for mapping component dispatches 
+ * 
+ * @param dispatch dispatch method
+ */
+function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
+  return {
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(ContractScreen);

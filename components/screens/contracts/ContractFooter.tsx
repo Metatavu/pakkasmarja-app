@@ -1,18 +1,17 @@
 import React from "react";
-import { Contact } from "pakkasmarja-client";
 import { Text } from "native-base";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { Col, Row, Grid } from "react-native-easy-grid";
 
 /**
  * Interface for component props
  */
-export interface Props {
+interface Props {
   isActiveContract: boolean,
   goBack: () => void,
   acceptContract: () => void,
   declineContract: () => void,
   downloadContractPdf: () => void,
+  approveButtonText: string,
   styles?: any
 };
 
@@ -91,8 +90,8 @@ export default class ContractFooter extends React.Component<Props, State> {
           </TouchableOpacity>
           <TouchableOpacity style={this.props.styles.bigRedButton} onPress={this.props.acceptContract}>
             <Text style={this.props.styles.buttonText}>
-              HYVÄKSYN
-              </Text>
+              {this.props.approveButtonText}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

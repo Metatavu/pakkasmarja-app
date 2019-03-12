@@ -6,7 +6,7 @@ import { View, StyleSheet } from "react-native";
 /**
  * Interface for component props
  */
-export interface Props {
+interface Props {
   itemGroup: ItemGroup
   styles ?:any
 };

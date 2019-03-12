@@ -4,6 +4,7 @@ import LoginScreen from "./components/screens/LoginScreen";
 import MainScreen from "./components/screens/MainScreen";
 import ContractsScreen from "./components/screens/contracts/ContractsScreen";
 import ContractScreen from "./components/screens/contracts/ContractScreen";
+import ContractTerms from "./components/screens/contracts/ContractTerms";
 import { createStore } from 'redux';
 import { StoreState } from "./types";
 import { AppAction } from "./actions";
@@ -24,7 +25,8 @@ const RootStack = createStackNavigator({
   Main: MainScreen,
   Login: LoginScreen,
   Contracts: ContractsScreen,
-  Contract: ContractScreen
+  Contract: ContractScreen,
+  ContractTerms: ContractTerms
 }, {
   defaultNavigationOptions: {
     headerStyle: {
