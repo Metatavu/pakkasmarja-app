@@ -1,7 +1,7 @@
 import React from "react";
 import TopBar from "../../layout/TopBar";
 import { Text } from "native-base";
-import { View, TouchableHighlight, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { Contract } from "pakkasmarja-client";
 
@@ -9,8 +9,10 @@ import { Contract } from "pakkasmarja-client";
  * Component props
  */
 interface Props {
-  contracts: Contract[],
+  contracts: Contract[];
   onContractClick: (contract: Contract) => void;
+  type: string;
+  onProposeNewContractClick: (type: string) => void;
 };
 
 /**
@@ -52,6 +54,13 @@ export default class ContractAmountTable extends React.Component<Props, State> {
   };
 
   /**
+   * On propose new contract click
+   */
+  proposeNewContractClick = () => {
+
+  }
+
+  /**
    * Render method
    */
   public render() {
@@ -74,25 +83,34 @@ export default class ContractAmountTable extends React.Component<Props, State> {
       }
     });
     return (
-      <View style={styles.BlueContentView}>
-        <Grid style={{ padding: 10 }}>
-          <Row style={styles.headerRow}>
-            <Col></Col>
-            <Col><Text>Sovittu KG</Text></Col>
-            <Col><Text>Toteutunut KG</Text></Col>
-          </Row>
-          {this.props.contracts.filter(contract => contract.status !== "TERMINATED").map((contract) => {
-            return (
-              <TouchableHighlight key={contract.id} onPress={() => { this.props.onContractClick(contract) }}>
-                <Row style={styles.row}>
-                  <Col><Text style={{ fontSize: 20, fontWeight:"bold" }}>Mustikka</Text></Col>
-                  <Col><Text style={{ fontSize: 20 }}>{contract.contractQuantity}</Text></Col>
-                  <Col><Text style={{ fontSize: 20 }}>{contract.deliveredQuantity}</Text></Col>
-                </Row>
-              </TouchableHighlight>
-            );
-          })}
-        </Grid>
+      <View>
+        <View style={styles.BlueContentView}>
+          <Grid style={{ padding: 10 }}>
+            <Row style={styles.headerRow}>
+              <Col></Col>
+              <Col><Text>Sovittu KG</Text></Col>
+              <Col><Text>Toteutunut KG</Text></Col>
+            </Row>
+            {this.props.contracts.filter(contract => contract.status !== "TERMINATED").map((contract) => {
+              return (
+                <TouchableOpacity key={contract.id} onPress={() => { this.props.onContractClick(contract) }}>
+                  <Row style={styles.row}>
+                    <Col><Text style={{ fontSize: 20, fontWeight:"bold" }}>Mustikka</Text></Col>
+                    <Col><Text style={{ fontSize: 20 }}>{contract.contractQuantity}</Text></Col>
+                    <Col><Text style={{ fontSize: 20 }}>{contract.deliveredQuantity}</Text></Col>
+                  </Row>
+                </TouchableOpacity>
+              );
+            })}
+          </Grid>
+        </View>
+        <TouchableOpacity onPress={() => this.props.onProposeNewContractClick(this.props.type)}>
+            <Text>
+              {
+                this.props.type === "FROZEN" ? "Ehdota uutta pakastesopimusta" : "Ehdota uutta tuoresopimusta"
+              }
+            </Text>
+          </TouchableOpacity>
       </View>
     );
   }

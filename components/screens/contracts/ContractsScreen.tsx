@@ -10,6 +10,7 @@ import { REACT_APP_API_URL } from 'react-native-dotenv';
 import { Contract, Contact, Price, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import ContractAmountTable from "./ContractAmountTable";
+import ContractProposalModal from "./ContractProposalModal";
 
 /**
  * Component props
@@ -27,8 +28,14 @@ interface State {
   frozenContracts: Contract[];
   contact?: Contact;
   itemGroup?: ItemGroup;
+  itemGroups: ItemGroup[];
   prices?: Price[],
   deliveryPlaces? : DeliveryPlace[],
+  proposeContractModalOpen: boolean,
+  proposeContractModalType: string,
+  selectedBerry: string,
+  proposedContractQuantity: string,
+  proposedContractQuantityComment: string
   bool: boolean;
 };
 
@@ -44,7 +51,13 @@ class ContractsScreen extends React.Component<Props, State> {
     this.state = {
       freshContracts: [],
       frozenContracts: [],
-      bool: true
+      bool: true,
+      proposeContractModalOpen: false,
+      proposeContractModalType: "FROZEN",
+      itemGroups: [],
+      selectedBerry: "",
+      proposedContractQuantity: "",
+      proposedContractQuantityComment: ""
     };
   }
 
@@ -112,6 +125,22 @@ class ContractsScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Load item groups 
+   * 
+   * @param itemGroupId itemGroupId
+   */
+  private loadItemGroups = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
+    const itemGroups = await itemGroupService.listItemGroups();
+    this.setState({ itemGroups: itemGroups });
+  }
+
+  /**
    * Get delivery places
    */
   private getDeliveryPlaces = async () => {
@@ -164,6 +193,23 @@ class ContractsScreen extends React.Component<Props, State> {
   };
 
   /**
+   * On propose new contract clicked
+   * 
+   * @param type type
+   */
+  onProposeNewContractClick = async (type: string) => {
+    await this.loadItemGroups();
+    this.setState({ proposeContractModalOpen: true, proposeContractModalType: type });
+  }
+
+  /**
+   * On contract proposal clicked
+   */
+  onContractProposalClick = async (type: string) => {
+    //TODO: Implement when chat messages are ready
+  }
+
+  /**
    * Render method
    */
   public render() {
@@ -202,7 +248,12 @@ class ContractsScreen extends React.Component<Props, State> {
               Pakastemarjat
             </Text>
           </View>
-          <ContractAmountTable onContractClick={this.handleContractClick} contracts={this.state.frozenContracts} />
+          <ContractAmountTable 
+            onContractClick={this.handleContractClick} 
+            contracts={this.state.frozenContracts} 
+            type="FROZEN"
+            onProposeNewContractClick={this.onProposeNewContractClick}
+          />
         </View>
         <View>
           <View style={styles.titleView}>
@@ -210,9 +261,25 @@ class ContractsScreen extends React.Component<Props, State> {
               Tuoremarjat
             </Text>
           </View>
-          <ContractAmountTable onContractClick={this.handleContractClick} contracts={this.state.freshContracts} />
+          <ContractAmountTable 
+            onContractClick={this.handleContractClick} 
+            contracts={this.state.freshContracts} 
+            type="FRESH"
+            onProposeNewContractClick={this.onProposeNewContractClick}
+          />
         </View>
-
+        <ContractProposalModal
+          modalOpen={this.state.proposeContractModalOpen}
+          itemGroups={this.state.itemGroups}
+          closeModal={() => this.setState({ proposeContractModalOpen: false })}
+          onSelectedBerryChange={(value: string) => this.setState({ selectedBerry: value })}
+          onQuantityChange={(value: string) => this.setState({ proposedContractQuantity: value })}
+          onQuantityCommentChange={(value: string) => this.setState({ proposedContractQuantityComment: value })}
+          quantityComment={this.state.proposedContractQuantityComment}
+          selectedBerry={this.state.selectedBerry}
+          quantity={this.state.proposedContractQuantity}
+          sendContractProposalClicked={(type: string) => this.onContractProposalClick(type)}
+        />
       </BasicLayout>
     );
   }
