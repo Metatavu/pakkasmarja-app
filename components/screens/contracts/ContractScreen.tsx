@@ -186,7 +186,7 @@ class ContractScreen extends React.Component<Props, State> {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}`);
     const pdfService = api.getPdfService(this.props.accessToken.access_token);
     const pdfPath = await pdfService.findPdf(this.state.contract.id, '2019');
     console.log(pdfPath);
