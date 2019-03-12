@@ -75,7 +75,7 @@ export default class ContractAmountTable extends React.Component<Props, State> {
     });
     return (
       <View style={styles.BlueContentView}>
-        <Grid style={{ padding: 10 }}>
+        <Grid>
           <Row style={styles.headerRow}>
             <Col></Col>
             <Col><Text>Sovittu KG</Text></Col>

@@ -103,7 +103,7 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
           }
         </View>
         <View>
-          <Text style={[this.props.styles.textWithSpace, this.props.styles.readingText]}>Kommentti</Text>
+          <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>Kommentti</Text>
           <TextInput
             multiline={true}
             numberOfLines={4}

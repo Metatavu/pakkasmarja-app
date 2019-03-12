@@ -237,7 +237,7 @@ class ContractScreen extends React.Component<Props, State> {
         marginBottom: 5,
         fontSize: 20
       },
-      readingText: {
+      textSize: {
         fontSize: 20
       },
       TextBold: {
@@ -253,8 +253,8 @@ class ContractScreen extends React.Component<Props, State> {
         width: "100%",
         borderColor: "red",
         backgroundColor: "white",
-        borderWidth: 2.5,
-        borderRadius: 30,
+        borderWidth: 1.5,
+        borderRadius: 4,
         marginTop: 8,
         marginBottom: 8,
         marginLeft: 0

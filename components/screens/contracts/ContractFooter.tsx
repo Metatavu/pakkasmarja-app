@@ -37,7 +37,7 @@ export default class ContractFooter extends React.Component<Props, State> {
   public render() {
     const styles = StyleSheet.create({
       smallRedButton: {
-        width: "45%",
+        width: "47%",
         height: 50,
         backgroundColor: "#e01e36",
         justifyContent: "center",
@@ -45,7 +45,7 @@ export default class ContractFooter extends React.Component<Props, State> {
         marginBottom: 20
       },
       smallWhiteButton: {
-        width: "45%",
+        width: "47%",
         height: 50,
         backgroundColor: "white",
         justifyContent: "center",
@@ -55,9 +55,10 @@ export default class ContractFooter extends React.Component<Props, State> {
         borderWidth: 2
       },
       flexView: {
-        flexWrap: 'wrap',
-        alignItems: 'flex-start',
+        flex: 1,
         flexDirection: 'row',
+        justifyContent: 'space-between'
+
       },
       smallWhiteButtonText: {
         color: "#e01e36",
@@ -75,22 +76,28 @@ export default class ContractFooter extends React.Component<Props, State> {
                 Lataa sopimus PDF - muodossa.
                 </Text>
             </TouchableOpacity>
+            <TouchableOpacity style={this.props.styles.bigRedButton} onPress={this.props.goBack}>
+              <Text style={this.props.styles.buttonText}>
+                TAKAISIN
+              </Text>
+            </TouchableOpacity>
           </View>
         }
-        <View style={styles.flexView}>
-          <TouchableOpacity style={[styles.smallRedButton, { marginRight: "5%" }]} onPress={this.props.goBack}>
-            <Text style={this.props.styles.buttonText}>
-              TAKAISIN
-              </Text>
-          </TouchableOpacity>
         {
-          !this.props.isActiveContract && 
+          !this.props.isActiveContract &&
           <View>
-            <TouchableOpacity style={[styles.smallWhiteButton, { marginLeft: "5%" }]} onPress={this.props.declineContract}>
-              <Text style={styles.smallWhiteButtonText}>
-                EN HYVÄKSY
+            <View style={styles.flexView}>
+              <TouchableOpacity style={styles.smallRedButton} onPress={this.props.goBack}>
+                <Text style={this.props.styles.buttonText}>
+                  TAKAISIN
+              </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.smallWhiteButton} onPress={this.props.declineContract}>
+                <Text style={styles.smallWhiteButtonText}>
+                  EN HYVÄKSY
                 </Text>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity style={this.props.styles.bigRedButton} onPress={this.props.acceptContract}>
               <Text style={this.props.styles.buttonText}>
                 {this.props.approveButtonText}
@@ -98,7 +105,7 @@ export default class ContractFooter extends React.Component<Props, State> {
             </TouchableOpacity>
           </View>
         }
-        </View>
+
       </View>
     );
   }

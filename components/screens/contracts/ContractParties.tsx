@@ -39,11 +39,11 @@ export default class ContractParties extends React.Component<Props, State> {
     }
 
     if (this.props.contact.companyName) {
-      return <Text>{this.props.contact.companyName}</Text>;
+      return <Text style={this.props.styles.textSize}>{this.props.contact.companyName}</Text>;
     }
 
     return (
-      <Text>
+      <Text style={this.props.styles.textSize}>
         {`${this.props.contact.firstName} ${this.props.contact.lastName}`}
       </Text>
     );
@@ -60,16 +60,16 @@ export default class ContractParties extends React.Component<Props, State> {
         </Text>
         <Grid>
           <Row>
-            <Col><Text style={this.props.styles.TextBold}>Viljelijä</Text></Col>
-            <Col><Text style={this.props.styles.TextBold}>Yhtiö</Text></Col>
+            <Col><Text style={[this.props.styles.TextBold, this.props.styles.textSize]}>Viljelijä</Text></Col>
+            <Col><Text style={[this.props.styles.TextBold, this.props.styles.textSize]}>Yhtiö</Text></Col>
           </Row>
           <Row>
             <Col>
               {this.renderFarmerPartyDetails()}
             </Col>
             <Col>
-              <Text>{this.props.companyName}</Text>
-              <Text>{this.props.companyBusinessId}</Text>
+              <Text style={this.props.styles.textSize}>{this.props.companyName}</Text>
+              <Text style={this.props.styles.textSize}>{this.props.companyBusinessId}</Text>
             </Col>
           </Row>
         </Grid>
