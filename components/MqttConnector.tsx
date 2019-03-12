@@ -64,7 +64,7 @@ class MqttConnector extends React.Component<Props, State> {
    * Component will unmount life-cycle event
    */
   public componentWillUnmount() {
-    //this.connection.disconnect();
+    this.connection.disconnect();
   }
 
   /**
