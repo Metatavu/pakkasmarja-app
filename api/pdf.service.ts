@@ -1,5 +1,4 @@
 import RNFetchBlob from 'rn-fetch-blob';
-import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 export class PDFService {
 
@@ -10,7 +9,6 @@ export class PDFService {
     this.token = token;
     this.basePath = basePath;
   }
-
 
   /**
    * 
@@ -37,5 +35,6 @@ export class PDFService {
       console.log(e);
       Promise.reject();
     }
+  }
 
 }
