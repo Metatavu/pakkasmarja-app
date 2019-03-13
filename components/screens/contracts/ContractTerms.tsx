@@ -173,16 +173,6 @@ class ContractTerms extends React.Component<Props, State> {
       showMenu={true}
       showHeader={false}
       showUser={true}
-      secondaryNavItems={[{
-        "text": "Secondary 1",
-        "link": "/secondary"
-      }, {
-        "text": "Secondary 2",
-        "link": "/secondary"
-      }, {
-        "text": "Secondary 3",
-        "link": "/secondary"
-      }]}
     />
   };
 
