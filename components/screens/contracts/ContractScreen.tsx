@@ -13,9 +13,10 @@ import ContractRejectModal from "./ContractRejectModal";
 import { Contract, ItemGroup, Price, Contact, AreaDetail, DeliveryPlace } from "pakkasmarja-client";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import PakkasmarjaApi from "../../../api";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, ContractData, ContractDataKey } from "../../../types";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -39,10 +40,13 @@ interface State {
   companyBusinessId: string,
   showPastPrices: boolean,
   companyApprovalRequired: boolean
-  contractData: any,
+  contractData: ContractData,
   rejectModalOpen: boolean
 };
 
+/**
+ * Class for contract screen component
+ */
 class ContractScreen extends React.Component<Props, State> {
 
   /**
@@ -58,11 +62,11 @@ class ContractScreen extends React.Component<Props, State> {
       rejectModalOpen: false,
       contractData: {
         rejectComment: "",
-        proposedQuantity: "",
+        proposedQuantity: 0,
         deliverAllChecked: false,
         quantityComment: "",
         areaDetailValues: [],
-        deliveryPlace: "",
+        deliveryPlaceId: "",
         deliveryPlaceComment: ""
       }
     };
@@ -95,7 +99,7 @@ class ContractScreen extends React.Component<Props, State> {
       this.updateContractData("quantityComment", contract.quantityComment);
       this.updateContractData("proposedQuantity", contract.proposedQuantity.toString());
       this.updateContractData("areaDetailValues", contract.areaDetails);
-      this.updateContractData("deliveryPlace", contract.deliveryPlaceId.toString());
+      this.updateContractData("deliveryPlaceId", contract.deliveryPlaceId.toString());
       this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment);
       this.updateContractData("deliverAllChecked", contract.deliverAll);
     }
@@ -107,7 +111,7 @@ class ContractScreen extends React.Component<Props, State> {
    * @param key key
    * @param value value
    */
-  private updateContractData = (key: string, value: boolean | string | AreaDetail[]) => {
+  private updateContractData = (key: ContractDataKey, value: boolean | string | AreaDetail[]) => {
     const contractData = this.state.contractData;
     contractData[key] = value;
 
@@ -126,7 +130,7 @@ class ContractScreen extends React.Component<Props, State> {
     const contractQuantity = this.state.contract.contractQuantity;
     const currentQuantity = this.state.contractData.proposedQuantity;
     const contractPlaceId = this.state.contract.deliveryPlaceId;
-    const currentContractPlaceId = this.state.contractData.deliveryPlace;
+    const currentContractPlaceId = this.state.contractData.deliveryPlaceId;
 
     if (contractQuantity != currentQuantity || contractPlaceId != currentContractPlaceId) {
       this.setState({ companyApprovalRequired: true });
@@ -172,7 +176,7 @@ class ContractScreen extends React.Component<Props, State> {
     const contract = this.state.contract;
 
     contract.deliverAll = contractData.deliverAllChecked;
-    contract.deliveryPlaceId = contractData.deliveryPlace;
+    contract.deliveryPlaceId = contractData.deliveryPlaceId;
     contract.deliveryPlaceComment = contractData.deliveryPlaceComment;
     contract.proposedQuantity = contractData.proposedQuantity;
     contract.quantityComment = contractData.quantityComment;
@@ -191,7 +195,7 @@ class ContractScreen extends React.Component<Props, State> {
       contract.areaDetails = areaDetails;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
     
     if (this.state.companyApprovalRequired) {
@@ -243,71 +247,6 @@ class ContractScreen extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    const styles = StyleSheet.create({
-      BlueContentView: {
-        padding: 15,
-        backgroundColor: "#dae7fa",
-        paddingTop: 35,
-        paddingBottom: 20,
-        marginBottom: 15
-      },
-      WhiteContentView: {
-        padding: 15,
-        paddingBottom: 20,
-      },
-      linkStyle: {
-        color: "blue",
-        paddingTop: 4,
-        paddingBottom: 4,
-        marginBottom: 5,
-        fontSize: 20
-      },
-      textSize: {
-        fontSize: 20
-      },
-      TextBold: {
-        fontWeight: "bold"
-      },
-      ContentHeader: {
-        fontWeight: "bold",
-        fontSize: 25,
-        paddingBottom: 20
-      },
-      InputStyle: {
-        height: 40,
-        width: "100%",
-        borderColor: "red",
-        backgroundColor: "white",
-        borderWidth: 1.5,
-        borderRadius: 4,
-        marginTop: 8,
-        marginBottom: 8,
-        marginLeft: 0
-      },
-      textWithSpace: {
-        paddingTop: 7,
-        paddingBottom: 7
-      },
-      textInput: {
-        backgroundColor: "white",
-        borderColor: "red",
-        borderWidth: 1,
-        borderRadius: 4,
-      },
-      bigRedButton: {
-        width: "100%",
-        height: 45,
-        backgroundColor: "#e01e36",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 10
-      },
-      buttonText: {
-        color: "white",
-        fontSize: 22,
-        fontWeight: "500"
-      }
-    });
     if (!this.state.itemGroup || !this.state.contact || !this.state.contract) {
       return (
         <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
@@ -323,7 +262,6 @@ class ContractScreen extends React.Component<Props, State> {
             itemGroup={this.state.itemGroup}
           />
           <ContractParties
-            styles={styles}
             contact={this.state.contact}
             companyName={this.state.companyName}
             companyBusinessId={this.state.companyBusinessId}
@@ -346,7 +284,6 @@ class ContractScreen extends React.Component<Props, State> {
             deliverAllChecked={this.state.contractData.deliverAllChecked}
           />
           <ContractAreaDetails
-            styles={styles}
             itemGroup={this.state.itemGroup}
             areaDetails={this.state.contract.areaDetails}
             areaDetailValues={this.state.contractData.areaDetailValues}
@@ -354,10 +291,9 @@ class ContractScreen extends React.Component<Props, State> {
             onUserInputChange={this.updateContractData}
           />
           <ContractDeliveryPlace
-            styles={styles}
             onUserInputChange={this.updateContractData}
             deliveryPlaces={this.state.deliveryPlaces}
-            selectedPlace={this.state.contractData.deliveryPlace}
+            selectedPlace={this.state.contractData.deliveryPlaceId}
             deliveryPlaceComment={this.state.contractData.deliveryPlaceComment}
             isActiveContract={this.state.contract.status === "APPROVED"}
           />
@@ -368,14 +304,12 @@ class ContractScreen extends React.Component<Props, State> {
             declineContract={this.declineContractClicked}
             downloadContractPdf={this.downloadContractPdfClicked}
             approveButtonText={this.state.companyApprovalRequired ? "EHDOTA MUUTOSTA" : "HYVÄKSYN"}
-            styles={styles}
           />
           <ContractRejectModal 
             onUserInputChange={this.updateContractData}
             rejectComment={this.state.contractData.rejectComment}
             modalOpen={this.state.rejectModalOpen}
             closeModal={() => this.setState({ rejectModalOpen: false })}
-            styles={styles}
             contract={this.state.contract}
             contractRejected={() => this.props.navigation.navigate('Contracts', {})}
           />

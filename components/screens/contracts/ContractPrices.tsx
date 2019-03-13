@@ -4,6 +4,7 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { ItemGroup, Price } from "pakkasmarja-client";
 import ContractPriceModal from "./ContractPriceModal";
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -40,7 +41,7 @@ export default class ContractPrices extends React.Component<Props, State> {
       return <Text></Text>;
     }
     return (
-      <Text style={this.props.styles.textSize}>
+      <Text style={styles.textSize}>
         {`Ostettavien marjojen (${this.props.itemGroup.displayName}) takuuhinnat satokaudella ${new Date().getFullYear()}`}
       </Text>
     );
@@ -90,16 +91,10 @@ export default class ContractPrices extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    const styles = StyleSheet.create({
-      listItem: {
-        paddingLeft: 0,
-        marginLeft: 0
-      }
-    });
     if (this.props.itemGroup && this.props.itemGroup.category === "FROZEN") {
       return (
-        <View style={this.props.styles.WhiteContentView}>
-          <Text style={this.props.styles.ContentHeader}>
+        <View style={styles.WhiteContentView}>
+          <Text style={styles.ContentHeader}>
             TAKUUHINNAT
           </Text>
           <View style={{flex:1}}>
@@ -119,7 +114,7 @@ export default class ContractPrices extends React.Component<Props, State> {
             <Row>
               <Col>
                 <TouchableOpacity onPress={() => this.setState({showPastPrices: !this.state.showPastPrices})}>
-                  <Text style={this.props.styles.linkStyle}>
+                  <Text style={styles.linkStyle}>
                     Edellisvuosien takuuhinnat
                   </Text>
                 </TouchableOpacity>
@@ -138,7 +133,7 @@ export default class ContractPrices extends React.Component<Props, State> {
           </Grid>
           <ContractPriceModal 
             prices={this.props.prices}
-            styles={this.props.styles} 
+            styles={styles} 
             closeModal={() => this.setState({showPastPrices: false})} 
             modalOpen={this.state.showPastPrices}
           />
@@ -147,8 +142,8 @@ export default class ContractPrices extends React.Component<Props, State> {
       );
     }
     return (
-      <View style={this.props.styles.WhiteContentView}>
-        <Text style={this.props.styles.ContentHeader}>Tuotemarjojen hinnottelu</Text>
+      <View style={styles.WhiteContentView}>
+        <Text style={styles.ContentHeader}>Tuotemarjojen hinnottelu</Text>
         <List>
           <ListItem style={styles.listItem}><Text> Vähimmäislaatuvaatimukset täyttävästä tuoremarjasta yhtiö maksaa päivän hinnan.</Text></ListItem>
           <ListItem style={styles.listItem}><Text> Yhtiö voi huomioida max. 0,20 eur Alv 0%/ kg -suuruisella bonuksella BONUS-laatuiset marjat.</Text></ListItem>

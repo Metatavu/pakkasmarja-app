@@ -3,6 +3,8 @@ import { Text, Input } from "native-base";
 import { View, TouchableOpacity } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { AreaDetail, ItemGroup } from "pakkasmarja-client";
+import { styles } from "./styles";
+import { KeyboardType } from "../../../types";
 
 /**
  * Interface for component props
@@ -12,8 +14,7 @@ interface Props {
   areaDetails?: AreaDetail[],
   areaDetailValues: AreaDetail[],
   isActiveContract: boolean,
-  onUserInputChange: (key: any, value: any) => void,
-  styles?: any
+  onUserInputChange: (key: any, value: any) => void
 };
 
 /**
@@ -112,7 +113,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
    * @param value value
    * @param style style
    */
-  private renderInputField = (index: number, key: string, editable: boolean, keyboardType: any, value: string, style: any) => {
+  private renderInputField = (index: number, key: string, editable: boolean, keyboardType: KeyboardType, value: string, style: any) => {
     return (
       <Input
         key={index}
@@ -179,10 +180,10 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
     if (minimumProfit) {
       return (
         <View>
-          <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>
+          <Text style={[styles.textWithSpace, styles.textSize]}>
             {`Lohkoja yhteensä ${blocks} kpl. Pinta-alaa yhteensä ${totalHectares} ha.`}
           </Text>
-          <Text style={[{ color: totalProfit < minimumProfit ? "red" : "black" }, this.props.styles.textSize]}>
+          <Text style={[{ color: totalProfit < minimumProfit ? "red" : "black" }, styles.textSize]}>
             {`Minimisopimusmäärä on ${totalProfit} kg, perustuen hehtaarikohtaiseen toimitusmääräminimiin 500 kg / ha. Lisätietoja sopimuksen kohdasta Sopimuksen mukaiset toimitusmäärät, takuuhinnat ja bonus satokaudella ${(new Date()).getFullYear()}`}
           </Text>
         </View>
@@ -203,11 +204,11 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
    * @param key key
    * @param value value
    */
-  private handleInputChange = (index: number, key: string, value: any) => {
+  private handleInputChange = (index: number, key: string, value: string | number) => {
     const areaDetails: any = this.props.areaDetailValues;
 
     if (areaDetails.length <= 0) {
-      let areaDetail: any = {};
+      const areaDetail: any = {};
       areaDetail[key] = value;
       areaDetails.push(areaDetail);
       this.props.onUserInputChange("areaDetailValues", areaDetails);
@@ -223,8 +224,8 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
   public render() {
     return (
       <View>
-        <View style={this.props.styles.BlueContentView}>
-          <Text style={this.props.styles.ContentHeader}>TUOTANNOSSA OLEVAT HEHTAARIT</Text>
+        <View style={styles.BlueContentView}>
+          <Text style={styles.ContentHeader}>TUOTANNOSSA OLEVAT HEHTAARIT</Text>
           <Grid>
             {
               this.renderAreaDetailHeaders()
@@ -239,14 +240,14 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
           </Grid>
           {
             !this.props.isActiveContract &&
-              <TouchableOpacity style={[this.props.styles.bigRedButton, {marginTop:25}]} onPress={this.createEmptyAreaDetail}>
-                <Text style={this.props.styles.buttonText}>
+              <TouchableOpacity style={[styles.bigRedButton, {marginTop:25}]} onPress={this.createEmptyAreaDetail}>
+                <Text style={styles.buttonText}>
                   LISÄÄ RIVI
                 </Text>
               </TouchableOpacity>
           }
         </View>
-        <View style={this.props.styles.WhiteContentView}>
+        <View style={styles.WhiteContentView}>
           {
             this.renderProfitTextElements()
           }

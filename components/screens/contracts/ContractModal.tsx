@@ -1,14 +1,14 @@
 import React, { Dispatch } from "react";
 import { AccessToken, StoreState } from "../../../types";
 import { Text } from "native-base";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import Modal from "react-native-modal";
 import { Contract } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -18,8 +18,7 @@ interface Props {
   itemGroupId?: string,
   pastContracts: boolean
   accessToken?: AccessToken,
-  closeModal: () => void,
-  styles?: any
+  closeModal: () => void
 };
 
 /**
@@ -50,7 +49,7 @@ class ContractModal extends React.Component<Props, State> {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
 
     const contracts = await contractsService.listContracts("application/json", true, undefined, this.props.itemGroupId);
@@ -75,32 +74,6 @@ class ContractModal extends React.Component<Props, State> {
    * Render method for contract modal component
    */
   public render() {
-    const styles = StyleSheet.create({
-      modalView: {
-        backgroundColor:"white",
-        height:470,
-        padding: 15,
-        marginBottom: 15
-      },
-      headerRow: {
-        paddingBottom: 10,
-        borderBottomColor: "#000000",
-        borderBottomWidth: 1
-      },
-      bigRedButton: {
-        width: "100%",
-        height: 45,
-        backgroundColor: "#e01e36",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 10
-      },
-      buttonText: {
-        color: "white",
-        fontSize: 22,
-        fontWeight: "500"
-      }
-    });
     return (
       <View style={{ marginTop: 22 }}>
         <Modal isVisible={this.props.modalOpen}>

@@ -1,14 +1,13 @@
 import React, { Dispatch } from "react";
 import TopBar from "../../layout/TopBar";
 import { Text } from "native-base";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
-import { Contract } from "pakkasmarja-client";
-import PakkasmarjaApi from "../../../api";
+import { Contract, ItemGroup } from "pakkasmarja-client";
 import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import { connect } from "react-redux";
 import * as actions from "../../../actions";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
+import { styles } from "./styles";
 
 /**
  * Component props
@@ -59,18 +58,81 @@ class ContractAmountTable extends React.Component<Props, State> {
   };
 
   /**
-   * Get item group 
-   * 
-   * @param itemGroupId itemGroupId
+   * Render rows
    */
-  private getItemGroup = async (itemGroupId: any) => {
-    if (!this.props.accessToken) {
-      return;
+  private renderRows = () => {
+    const contractsNotTerminated = this.props.contractTableDatas.filter(contractTableData => contractTableData.contract.status !== "TERMINATED");
+    
+    return contractsNotTerminated.map((contractTableData) => {
+      const contractStatus = contractTableData.contract.status;
+
+      return (
+        <TouchableOpacity key={contractTableData.contract.id} onPress={() => { this.props.onContractClick(contractTableData.contract) }}>
+          {
+            contractStatus !== "APPROVED" ? 
+              this.renderNotApproved(contractStatus, contractTableData.itemGroup) :
+              this.renderApproved(contractTableData.contract, contractTableData.itemGroup)
+          }
+        </TouchableOpacity>
+      );
+    });
+  }
+
+  /**
+   * Render not apporoved row
+   * 
+   * @param contract contract
+   * @param itemGroup itemGroup
+   */
+  private renderApproved = (contract: Contract, itemGroup?: ItemGroup) => {
+    if (!contract || !contract.contractQuantity || !contract.deliveredQuantity) {
+      return <Row></Row>;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
-    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
-    return await itemGroupService.findItemGroup(itemGroupId);
+    return (
+      <Row style={styles.row}>
+        {this.renderColumn(itemGroup && itemGroup.displayName ? itemGroup.displayName : "-")}
+        {this.renderColumn(contract.contractQuantity.toString()) }
+        {this.renderColumn(contract.deliveredQuantity.toString()) }
+      </Row>
+    );
+  }
+
+  /**
+   * Render not apporoved row
+   * 
+   * @param status status
+   * @param itemGroup itemGroup
+   */
+  private renderNotApproved = (status: string, itemGroup?: ItemGroup) => {
+    const infoText = this.getInfoTextByStatus(status);
+
+    return (
+      <Row style={styles.row}>
+        {this.renderColumn(itemGroup && itemGroup.displayName ? itemGroup.displayName : "-")}
+        {this.renderColumn(infoText)}
+        {this.renderColumn("", {width: 1})}
+      </Row>
+    );
+  }
+
+  /**
+   * Get info text by status
+   * 
+   * @param status status
+   * @return info text
+   */
+  private getInfoTextByStatus = (status: string) => {
+    switch (status) {
+      case "ON_HOLD":
+        return "Pakkasmarjan tarkistettavana";
+      case "DRAFT":
+        return "Tarkasta ehdotus";
+      case "REJECTED":
+        return "Hylätty";
+      default:
+        return "";
+    }
   }
 
   /**
@@ -93,41 +155,6 @@ class ContractAmountTable extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    const styles = StyleSheet.create({
-      BlueContentView: {
-        padding: 15,
-        backgroundColor: "#dae7fa",
-        paddingBottom: 20,
-        marginBottom: 15
-      },
-      WhiteContentView: {
-        padding: 15,
-        paddingBottom: 20,
-      },
-      headerRow: {
-        paddingBottom: 5,
-        marginBottom: 20,
-        borderBottomColor: "#000000",
-        borderBottomWidth: 1
-      },
-      row: {
-        paddingBottom: 12,
-        paddingTop: 12,
-      },
-      bigRedButton: {
-        width: "100%",
-        height: 45,
-        backgroundColor: "#e01e36",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 10
-      },
-      buttonText: {
-        color: "white",
-        fontSize: 22,
-        fontWeight: "500"
-      }
-    });
     return (
       <View>
         <View style={styles.BlueContentView}>
@@ -137,42 +164,7 @@ class ContractAmountTable extends React.Component<Props, State> {
               <Col><Text>Sovittu KG</Text></Col>
               <Col><Text>Toteutunut KG</Text></Col>
             </Row>
-            {
-              this.props.contractTableDatas.filter(contractTableData => contractTableData.contract.status !== "TERMINATED").map((contractTableData) => {
-                return (
-                  <TouchableOpacity key={contractTableData.contract.id} onPress={() => { this.props.onContractClick(contractTableData.contract) }}>
-                    <Row style={styles.row}>
-                      {
-                        this.renderColumn(contractTableData.itemGroup && contractTableData.itemGroup.displayName ? contractTableData.itemGroup.displayName : "-")
-                      }
-                      {
-                        contractTableData.contract.status !== "APPROVED" && contractTableData.contract.status === "ON_HOLD" &&
-                          this.renderColumn("Pakkasmarjan tarkistettavana")
-                      }
-                      {
-                        contractTableData.contract.status !== "APPROVED" && contractTableData.contract.status === "DRAFT" &&
-                          this.renderColumn("Tarkasta ehdotus")
-                      }
-                      {
-                        contractTableData.contract.status !== "APPROVED" && contractTableData.contract.status === "REJECTED" &&
-                          this.renderColumn("Hylätty")
-                      }
-                      {
-                        contractTableData.contract.status !== "APPROVED" &&
-                          this.renderColumn("", {width: 1})
-                      }
-                      { 
-                        contractTableData.contract.status === "APPROVED" &&  contractTableData.contract.contractQuantity &&
-                          this.renderColumn(contractTableData.contract.contractQuantity.toString()) 
-                      }
-                      { 
-                        contractTableData.contract.status === "APPROVED" &&  contractTableData.contract.deliveredQuantity &&
-                          this.renderColumn(contractTableData.contract.deliveredQuantity.toString())
-                      }
-                    </Row>
-                  </TouchableOpacity>
-                );
-              })}
+            {this.renderRows()}
           </Grid>
         </View>
         <View style={styles.WhiteContentView}>

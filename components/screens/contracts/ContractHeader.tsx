@@ -1,7 +1,8 @@
 import React from "react";
 import { ItemGroup } from "pakkasmarja-client";
 import { Text } from "native-base";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -31,34 +32,13 @@ export default class ContractHeader extends React.Component<Props, State> {
    * Render method for contract header component
    */
   public render() {
-    const styles = StyleSheet.create({
-      ContractHeaderTitle: {
-        fontFamily: "Sans Serif",
-        padding:15,
-        fontWeight:"bold",
-        color: "#e01e36",
-        fontSize: 24,
-      },
-      ContentView:{
-        padding: 15,
-        backgroundColor: "#dae7fa",
-        paddingTop: 35,
-        paddingBottom: 20,
-        marginBottom: 15
-      },
-      ContentText:{
-        fontSize: 20,
-        lineHeight: 25,
-        fontWeight:"bold"
-      }
-    });
     return (
       <View style={{marginBottom: 10}}>
-        <Text style={styles.ContractHeaderTitle}>
+        <Text style={styles.contractHeaderTitle}>
           { this.props.itemGroup.displayName}
         </Text>
-        <View style={this.props.styles.BlueContentView}>
-          <Text style={styles.ContentText}>
+        <View style={styles.BlueContentView}>
+          <Text style={styles.contentText}>
             {this.props.itemGroup.category === "FROZEN" ? 
               `Pakkasmarja Oy:n ja viljelijän sopimus pakastukseen toimitettavista marjoista ja niiden hinnoista satokaudella ${new Date().getFullYear()}`
               :

@@ -4,6 +4,7 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import Modal from "react-native-modal";
 import { Price } from "pakkasmarja-client";
+import { styles  } from "./styles";
 
 /**
  * Interface for component props
@@ -44,32 +45,6 @@ export default class ContractPriceModal extends React.Component<Props, State> {
    * Render method for contract modal component
    */
   public render() {
-    const styles = StyleSheet.create({
-      modalView: {
-        backgroundColor:"white",
-        height:470,
-        padding: 15,
-        marginBottom: 15
-      },
-      headerRow: {
-        paddingBottom: 10,
-        borderBottomColor: "#000000",
-        borderBottomWidth: 1
-      },
-      bigRedButton: {
-        width: "100%",
-        height: 45,
-        backgroundColor: "#e01e36",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 10
-      },
-      buttonText: {
-        color: "white",
-        fontSize: 22,
-        fontWeight: "500"
-      }
-    });
     return (
       <View style={{ marginTop: 22 }}>
         <Modal isVisible={this.props.modalOpen}>

@@ -12,6 +12,7 @@ import BasicLayout from "../../layout/BasicLayout";
 import TopBar from "../../layout/TopBar";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import Modal from "react-native-modal";
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -64,7 +65,7 @@ class ContractTerms extends React.Component<Props, State> {
       this.setState({ contract: this.props.navigation.getParam('contract') });
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const signAuthenticationServicesService = api.getSignAuthenticationServicesService(this.props.accessToken.access_token);
     const signAuthenticationServices = await signAuthenticationServicesService.listSignAuthenticationServices();
     this.setState({ authServices: signAuthenticationServices });
@@ -99,7 +100,7 @@ class ContractTerms extends React.Component<Props, State> {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
     const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "" }, this.state.contract.id || "", '2019', this.state.ssn, this.state.selectedSignServiceId);
 
@@ -152,69 +153,6 @@ class ContractTerms extends React.Component<Props, State> {
    * Render method for contract modal component
    */
   public render() {
-    const styles = StyleSheet.create({
-      WhiteContentView: {
-        padding: 15,
-        paddingBottom: 20,
-      },
-      Text: {
-        fontSize: 20,
-        paddingTop: 7,
-        paddingBottom: 7
-      },
-      TextBold: {
-        fontWeight: "bold"
-      },
-      ContentHeader: {
-        fontWeight: "bold",
-        fontSize: 25,
-        paddingBottom: 20
-      },
-      InputStyle: {
-        height: 50,
-        width: "100%",
-        borderColor: "red",
-        backgroundColor: "white",
-        borderWidth: 1.5,
-        borderRadius: 4,
-        marginTop: 8,
-        marginBottom: 15
-      },
-      textInput: {
-        height:40,
-        backgroundColor: "white",
-        borderColor: "red",
-        borderWidth: 1,
-        borderRadius: 4,
-      },
-      smallRedButton: {
-        width: "47%",
-        height: 50,
-        backgroundColor: "#e01e36",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 5
-      },
-      buttonText: {
-        color: "white",
-        fontSize: 22,
-        fontWeight: "500"
-      },
-      linkStyle: {
-        color: "blue",
-        paddingTop: 4,
-        paddingBottom: 4,
-        marginBottom: 5,
-        fontSize: 20
-      }, 
-      flexView: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'space-between'
-
-      }
-    });
-
     return (
       <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={styles.WhiteContentView}>

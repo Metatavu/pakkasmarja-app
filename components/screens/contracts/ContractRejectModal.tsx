@@ -5,9 +5,9 @@ import { View, TouchableOpacity, StyleSheet, TextInput } from "react-native";
 import Modal from "react-native-modal";
 import { Contract } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -58,7 +58,7 @@ class ContractRejectModal extends React.Component<Props, State> {
     }
 
     const contract = this.props.contract;
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
 
     contract.status = "REJECTED";
@@ -71,58 +71,6 @@ class ContractRejectModal extends React.Component<Props, State> {
    * Render method for contract modal component
    */
   public render() {
-    const styles = StyleSheet.create({
-      modalView: {
-        backgroundColor:"white",
-        height: 300,
-        padding: 15,
-        marginBottom: 15
-      },
-      headerContainer: {
-        paddingBottom: 10,
-        borderBottomColor: "#000000",
-        borderBottomWidth: 1
-      },
-      buttonsContainer: {
-        width: "100%",
-        flex: 1,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 60
-      },
-      redButton: {
-        width: "45%",
-        height: 55,
-        backgroundColor: "#e01e36",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 10,
-      },
-      whiteButton: {
-        width: "45%",
-        height: 55,
-        backgroundColor: "#fff",
-        borderColor: "#e01e36",
-        borderWidth: 3,
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 10,
-      },
-      redButtonText: {
-        color: "white",
-        textAlign: "center",
-        fontSize: 22,
-        fontWeight: "500"
-      },
-      whiteButtonText: {
-        color: "black",
-        fontSize: 22,
-        fontWeight: "500"
-      },
-      text: {
-        fontWeight: "bold"
-      }
-    });
     return (
       <View style={{ marginTop: 22 }}>
         <Modal isVisible={this.props.modalOpen}>
@@ -135,7 +83,7 @@ class ContractRejectModal extends React.Component<Props, State> {
               <TextInput 
                 multiline = {true}
                 numberOfLines = {4}
-                style={this.props.styles.textInput}
+                style={styles.textInput}
                 value={this.props.rejectComment}
                 onChangeText={(text:string) => this.props.onUserInputChange("rejectComment", text)}
               />

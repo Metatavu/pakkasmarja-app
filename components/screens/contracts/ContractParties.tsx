@@ -3,6 +3,7 @@ import { Contact } from "pakkasmarja-client";
 import { Text } from "native-base";
 import { View } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -10,8 +11,7 @@ import { Col, Row, Grid } from "react-native-easy-grid";
 interface Props {
   contact: Contact,
   companyName: string,
-  companyBusinessId: string,
-  styles?:any
+  companyBusinessId: string
 };
 
 /**
@@ -40,14 +40,14 @@ export default class ContractParties extends React.Component<Props, State> {
 
     if (this.props.contact.companyName) {
       return (
-        <Text style={this.props.styles.textSize}>
+        <Text style={styles.textSize}>
           {this.props.contact.companyName}
         </Text>
       );
     }
 
     return (
-      <Text style={this.props.styles.textSize}>
+      <Text style={styles.textSize}>
         {`${this.props.contact.firstName} ${this.props.contact.lastName}`}
       </Text>
     );
@@ -58,22 +58,22 @@ export default class ContractParties extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <View style={this.props.styles.WhiteContentView}>
-        <Text style={this.props.styles.ContentHeader}>
+      <View style={styles.WhiteContentView}>
+        <Text style={styles.ContentHeader}>
           OSAPUOLET
         </Text>
         <Grid>
           <Row>
-            <Col><Text style={[this.props.styles.TextBold, this.props.styles.textSize]}>Viljelijä</Text></Col>
-            <Col><Text style={[this.props.styles.TextBold, this.props.styles.textSize]}>Yhtiö</Text></Col>
+            <Col><Text style={[styles.TextBold, styles.textSize]}>Viljelijä</Text></Col>
+            <Col><Text style={[styles.TextBold, styles.textSize]}>Yhtiö</Text></Col>
           </Row>
           <Row>
             <Col>
               {this.renderFarmerPartyDetails()}
             </Col>
             <Col>
-              <Text style={this.props.styles.textSize}>{this.props.companyName}</Text>
-              <Text style={this.props.styles.textSize}>{this.props.companyBusinessId}</Text>
+              <Text style={styles.textSize}>{this.props.companyName}</Text>
+              <Text style={styles.textSize}>{this.props.companyBusinessId}</Text>
             </Col>
           </Row>
         </Grid>

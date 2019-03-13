@@ -1,8 +1,9 @@
 import React from "react";
 import { Text } from "native-base";
-import { View, TouchableOpacity, StyleSheet, Picker, TextInput } from "react-native";
+import { View, TouchableOpacity, Picker, TextInput } from "react-native";
 import Modal from "react-native-modal";
 import { ItemGroup } from "pakkasmarja-client";
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -50,68 +51,10 @@ export default class ContractProposalModal extends React.Component<Props, State>
    * Render method for contract modal component
    */
   public render() {
-    const styles = StyleSheet.create({
-      modalView: {
-        backgroundColor: "white",
-        height: 470,
-        padding: 15,
-        paddingBottom: 20,
-        marginBottom: 15
-      },
-      contentHeader: {
-        fontWeight: "bold",
-        fontSize: 25,
-        paddingBottom: 20
-      },
-      Text: {
-        fontSize: 20,
-        paddingTop: 7,
-        paddingBottom: 7
-      },
-      smallRedButton: {
-        width: "47%",
-        height: 50,
-        backgroundColor: "#e01e36",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 20
-      },
-      smallWhiteButton: {
-        width: "47%",
-        height: 50,
-        backgroundColor: "white",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 20,
-        borderColor: "red",
-        borderWidth: 2
-      },
-      flexView: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'space-between'
-      },
-      smallWhiteButtonText: {
-        color: "#e01e36",
-        fontSize: 22,
-        fontWeight: "500"
-      },
-      buttonText: {
-        color: "white",
-        fontSize: 22,
-        fontWeight: "500"
-      },
-      textInput: {
-        backgroundColor: "white",
-        borderColor: "red",
-        borderWidth: 1,
-        borderRadius: 4,
-      }
-    });
     return (
       <View style={{ marginTop: 22 }}>
         <Modal isVisible={this.props.modalOpen}>
-          <View style={styles.modalView}>
+          <View style={styles.proposalModalView}>
             <View>
               <Text style={styles.contentHeader}>
                 Ehdota sopimusta jostain muusta marjasta

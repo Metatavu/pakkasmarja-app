@@ -3,13 +3,11 @@ import { AccessToken, StoreState } from "../../../types";
 import { Text, Form } from "native-base";
 import { View, TouchableOpacity, TextInput } from "react-native";
 import { Contract, ItemGroup } from "pakkasmarja-client";
-import PakkasmarjaApi from "../../../api";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import ContractModal from "./ContractModal";
 import { CheckBox } from "react-native-elements";
-
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -21,7 +19,7 @@ interface Props {
   isActiveContract: boolean,
   accessToken?: AccessToken,
   onUserInputChange: (key:any, value:any) => void,
-  proposedAmount: string,
+  proposedAmount: number,
   contractAmount?: number,
   quantityComment: string,
   deliverAllChecked: boolean,
@@ -70,18 +68,18 @@ class ContractAmount extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    let quantityValue = "0";
+    let quantityValue = 0;
 
     if (this.props.contractAmount && !this.props.proposedAmount) {
-      quantityValue = this.props.contractAmount.toString();
+      quantityValue = this.props.contractAmount;
     } else {
       quantityValue = this.props.proposedAmount;
     }
 
     return (
-      <View style={this.props.styles.BlueContentView}>
+      <View style={styles.BlueContentView}>
         <View>
-          <Text style={this.props.styles.ContentHeader}>
+          <Text style={styles.ContentHeader}>
             MÄÄRÄ
           </Text>
         </View>
@@ -95,27 +93,26 @@ class ContractAmount extends React.Component<Props, State> {
         </View>
         <View>
           <Form>
-            <Text style={this.props.styles.textSize}>Määrä</Text>
+            <Text style={styles.textSize}>Määrä</Text>
             <TextInput 
-              style={this.props.styles.InputStyle}
+              style={styles.InputStyle}
               editable={!this.props.isActiveContract}
               keyboardType="numeric"
-              value={quantityValue}
+              value={quantityValue.toString()}
               onChangeText={(text: string) => this.onAmountChange(text)}
             />
           </Form>
         </View>
         <View>
-          <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>
+          <Text style={[styles.textWithSpace, styles.textSize]}>
             {`Pakkasmarjan ehdotus: ${this.props.contract.contractQuantity} kg`}
           </Text>
           <TouchableOpacity onPress={() => this.setState({ showPastContracts: !this.state.showPastContracts })}>
-            <Text style={this.props.styles.linkStyle}>
+            <Text style={styles.linkStyle}>
               Edellisten vuosien sopimusmäärät ja toimitusmäärät
             </Text>
           </TouchableOpacity>
-          <ContractModal
-            styles={this.props.styles} 
+          <ContractModal 
             closeModal={() => this.setState({showPastContracts: false})} 
             pastContracts={true} 
             modalOpen={this.state.showPastContracts} 
@@ -132,12 +129,12 @@ class ContractAmount extends React.Component<Props, State> {
           />
         </View>
         <View>
-          <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>Kommentti</Text>
+          <Text style={[styles.textWithSpace, styles.textSize]}>Kommentti</Text>
           <TextInput 
             multiline = {true}
             numberOfLines = {4}
             editable={!this.props.isActiveContract}
-            style={this.props.styles.textInput}
+            style={styles.textInput}
             value={this.props.quantityComment}
             onChangeText={(text:string) => this.onQuantityCommentChange(text)}
           />

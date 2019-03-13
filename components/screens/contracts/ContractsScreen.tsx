@@ -6,11 +6,11 @@ import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
 import { View, StyleSheet, ActivityIndicator, Alert } from "react-native";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
 import { Contract, Contact, Price, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import ContractAmountTable from "./ContractAmountTable";
 import ContractProposalModal from "./ContractProposalModal";
+import { styles } from "./styles";
 
 /**
  * Component props
@@ -71,7 +71,7 @@ class ContractsScreen extends React.Component<Props, State> {
 
     this.setState({ loading: true });
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
     const frozenContracts = await contractsService.listContracts("application/json", false, "FROZEN");
     const freshContracts = await contractsService.listContracts("application/json", false, "FRESH");
@@ -124,7 +124,7 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const contactsService = api.getContactsService(this.props.accessToken.access_token);
     const contact = await contactsService.findContact(contract.contactId);
     this.setState({ contact: contact });
@@ -140,7 +140,7 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const contactsService = api.getItemGroupsService(this.props.accessToken.access_token);
     const prices = await contactsService.listItemGroupPrices(contract.itemGroupId);
     this.setState({ prices: prices });
@@ -156,7 +156,7 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
     return await itemGroupService.findItemGroup(itemGroupId);
   }
@@ -171,7 +171,7 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
     const itemGroups = await itemGroupService.listItemGroups();
     this.setState({ itemGroups: itemGroups });
@@ -185,7 +185,7 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}/rest/v1`);
+    const api = new PakkasmarjaApi();
     const deliveryPlacesService = api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
     this.setState({ deliveryPlaces: deliveryPlaces });
@@ -281,31 +281,6 @@ class ContractsScreen extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    const styles = StyleSheet.create({
-      headerView: {
-        backgroundColor: "#E51D2A",
-        padding: 10
-      },
-      headerText: {
-        color: "#fff",
-        fontWeight: "bold",
-        fontSize: 25
-      },
-      titleView: {
-        backgroundColor: "#fff",
-        padding: 10
-      },
-      titleText: {
-        color: "#000000",
-        fontWeight: "bold",
-        fontSize: 25,
-        textAlign: "center"
-      },
-      loaderContainer: {
-        paddingTop: 30
-      }
-    });
-
     if (this.state.loading) {
       return (
         <View style={styles.loaderContainer}>

@@ -2,7 +2,7 @@ import React from "react";
 import { Text } from "native-base";
 import { View, Picker, TextInput } from "react-native";
 import { Contract, DeliveryPlace } from "pakkasmarja-client";
-
+import { styles } from "./styles";
 
 /**
  * Interface for component props
@@ -53,7 +53,7 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
    * 
    * @param value value
    */
-  onDeliveryPlaceChange = (value: string) => {
+  private onDeliveryPlaceChange = (value: string) => {
     this.props.onUserInputChange("deliveryPlaceComment", value);
   }
 
@@ -63,9 +63,9 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
    */
   public render() {
     return (
-      <View style={this.props.styles.BlueContentView}>
+      <View style={styles.BlueContentView}>
         <View>
-          <Text style={this.props.styles.ContentHeader}>
+          <Text style={styles.ContentHeader}>
             Toimituspaikka
           </Text>
           <View style={{
@@ -102,12 +102,12 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
           }
         </View>
         <View>
-          <Text style={[this.props.styles.textWithSpace, this.props.styles.textSize]}>Kommentti</Text>
+          <Text style={[styles.textWithSpace, styles.textSize]}>Kommentti</Text>
           <TextInput
             multiline={true}
             numberOfLines={4}
             editable={!this.props.isActiveContract}
-            style={this.props.styles.textInput}
+            style={styles.textInput}
             value={this.props.deliveryPlaceComment}
             onChangeText={(text: string) => this.onDeliveryPlaceChange(text)}
           />
