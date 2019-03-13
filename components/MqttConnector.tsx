@@ -93,8 +93,7 @@ class MqttConnector extends React.Component<Props, State> {
       return undefined;
     }
 
-    const url = `${REACT_APP_API_URL}/mqtt/connection`;
-    return (await fetch(url, {
+    return (await fetch(`${REACT_APP_API_URL}/mqtt/connection`, {
       headers: {
         "Authorization": `Bearer ${this.props.accessToken.access_token}`
       }

@@ -97,7 +97,7 @@ class LoginScreen extends React.Component<Props, State> {
       } else {
         // TODO: Handle error
       }
-    });
+    })
   }
 
   /**
@@ -133,7 +133,7 @@ class LoginScreen extends React.Component<Props, State> {
       }
     });
     return (
-      <BasicLayout backgroundColor="#fff" displayFooter={false}>
+      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={false}>
         <Form>
           <Item>
             <Label style={styles.label} >{strings.loginScreenUsernameLabel}</Label>

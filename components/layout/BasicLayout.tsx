@@ -5,7 +5,8 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 export interface Props {
  backgroundColor: string,
- displayFooter?: boolean
+ displayFooter?: boolean,
+ navigation: any
 }
 
 interface State {
@@ -19,10 +20,19 @@ export default class BasicLayout extends React.Component<Props, State> {
     this.state = {};
   }
 
+  /**
+   * Handles click on one of the bottom navigation links
+   * 
+   * @param screen target screen
+   */
+  private handleClick = (screen: string) => {
+    this.props.navigation.navigate(screen);
+  }
+
   render() {
     const styles = StyleSheet.create({
       container: {
-        backgroundColor: this.props.backgroundColor
+        backgroundColor: this.props.backgroundColor,
       },
       footer: {
         height: 60,
@@ -71,14 +81,14 @@ export default class BasicLayout extends React.Component<Props, State> {
                 <Text>Text</Text>
               </View>
             </TouchableHighlight>
-            <TouchableHighlight>
+            <TouchableHighlight onPress={() => this.handleClick("Contracts")}>
               <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
                 <Icon
                   name='user'
                   color='#000000'
                   size={30}
                 />
-                <Text>Text</Text>
+                <Text>Sopimukset</Text>
               </View>
             </TouchableHighlight>
           </View>

@@ -37,14 +37,9 @@ export default class MainScreen extends React.Component<Props, State> {
     />
   };
 
-  componentDidMount() {
-    this.props.navigation.addListener("willFocus", () => console.log("asd"));
-    this.props.navigation.addListener("willBlur", () => console.log("qqq"));
-  }
-
   render() {
     return (
-      <BasicLayout backgroundColor="#fff" displayFooter={true}>
+      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <Text style={{fontSize: 30}}>Main scroll view</Text>
         <Text style={{fontSize: 30}}>Main scroll view</Text>
         <Text style={{fontSize: 30}}>Main scroll view</Text>
