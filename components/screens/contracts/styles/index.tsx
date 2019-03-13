@@ -57,6 +57,12 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 4,
   },
+  textAreaInput: {
+    backgroundColor: "white",
+    borderColor: "red",
+    borderWidth: 1,
+    borderRadius: 4,
+  },
   smallRedButton: {
     width: "47%",
     height: 50,

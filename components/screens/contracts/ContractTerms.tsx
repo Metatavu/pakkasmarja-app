@@ -1,6 +1,6 @@
 import React, { Dispatch } from "react";
 import PakkasmarjaApi from "../../../api";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, ModalButton } from "../../../types";
 import { Text } from "native-base";
 import { View, TouchableOpacity, Picker, TextInput, StyleSheet, WebView, Alert } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
@@ -85,13 +85,10 @@ class ContractTerms extends React.Component<Props, State> {
     const pdfService = api.getPdfService(this.props.accessToken.access_token);
     const pdfPath = await pdfService.findPdf(this.state.contract.id, new Date().getFullYear().toString());
 
-    Alert.alert(
-      'Lataus onnistui!',
-      `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`,
-      [
-        {text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})},
-      ]
-    );
+    const header = "Lataus onnistui!";
+    const content = `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`;
+    const buttons = [{text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})}];
+    this.displayAlert(header, content, buttons);
   }
 
   /**
@@ -102,13 +99,54 @@ class ContractTerms extends React.Component<Props, State> {
       return;
     }
 
+    if (!this.state.acceptedTerms) {
+      const header = "Allekirjoitus epäonnistui";
+      const content = "Sinun tulee hyväksyä sopimusehdot ennen allekirjotusta.";
+      const buttons = [{text: 'OK', onPress: () => {}}];
+      this.displayAlert(header, content, buttons);
+      return;
+    }
+
+    if (!this.state.viableToSign) {
+      const header = "Allekirjoitus epäonnistui";
+      const content = "Sinun tulee olla viljelijän puolesta edustuskelpoinen.";
+      const buttons = [{text: 'OK', onPress: () => {}}];
+      this.displayAlert(header, content, buttons);
+      return;
+    }
+
+    if (!this.state.ssn) {
+      const header = "Allekirjoitus epäonnistui";
+      const content = "Sinun tulee antaa henkilötunnus.";
+      const buttons = [{text: 'OK', onPress: () => {}}];
+      this.displayAlert(header, content, buttons);
+      return;
+    }
+
     const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
     const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "" }, this.state.contract.id || "", this.state.type, this.state.ssn, this.state.selectedSignServiceId);
-
+    
     if (contractSignRequest && contractSignRequest.redirectUrl) {
       this.setState({ signAuthenticationUrl: contractSignRequest.redirectUrl, modalOpen: true });
+    } else {
+      const header = "Allekirjoitus epäonnistui";
+      const content = "Jotain meni pieleen. Varmista, että olet valinnut tunnistautumispalvelun ja henkilötunnus on oikeassa muodossa.";
+      const buttons = [{text: 'OK', onPress: () => {}}];
+      this.displayAlert(header, content, buttons);
+      return;
     }
+  }
+
+  /**
+   * Display alert
+   */
+  private displayAlert = (header: string, content: string, buttons: ModalButton[]) => {
+    Alert.alert(
+      header,
+      content,
+      buttons
+    );
   }
 
   /**
@@ -117,13 +155,10 @@ class ContractTerms extends React.Component<Props, State> {
   private onSignSuccess = () => {
     this.setState({ modalOpen: false });
 
-    Alert.alert(
-      'Allekirjoitus onnistui!',
-      'Palaa sopimuksiin painamalla OK.',
-      [
-        {text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})},
-      ]
-    );
+    const header = "Allekirjoitus onnistui!";
+    const content = "Palaa sopimuksiin painamalla OK.";
+    const buttons = [{text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})}];
+    this.displayAlert(header, content, buttons);
   }
 
   /**

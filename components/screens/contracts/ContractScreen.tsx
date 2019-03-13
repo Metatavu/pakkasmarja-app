@@ -293,7 +293,7 @@ class ContractScreen extends React.Component<Props, State> {
           <ContractDeliveryPlace
             onUserInputChange={this.updateContractData}
             deliveryPlaces={this.state.deliveryPlaces}
-            selectedPlace={this.state.contractData.deliveryPlaceId}
+            selectedPlaceId={this.state.contractData.deliveryPlaceId}
             deliveryPlaceComment={this.state.contractData.deliveryPlaceComment}
             isActiveContract={this.state.contract.status === "APPROVED"}
           />

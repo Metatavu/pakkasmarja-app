@@ -12,7 +12,7 @@ interface Props {
   deliveryPlaces?: DeliveryPlace[],
   styles?: any,
   onUserInputChange: (key: any, value: any) => void,
-  selectedPlace: string,
+  selectedPlaceId: string,
   deliveryPlaceComment: string,
   isActiveContract: boolean
 };
@@ -77,11 +77,11 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
             borderRadius: 4
           }}>
             <Picker
-              selectedValue={this.props.selectedPlace}
+              selectedValue={this.props.selectedPlaceId}
               enabled={!this.props.isActiveContract}
               style={{height:50,width:"100%", color:"black"}}
               onValueChange={(itemValue, itemIndex) =>
-                this.props.onUserInputChange("deliveryPlace", itemValue)
+                this.props.onUserInputChange("deliveryPlaceId", itemValue)
               }>
               {
                 this.props.deliveryPlaces && this.props.deliveryPlaces.map((deliveryPlace) => {
@@ -107,7 +107,7 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
             multiline={true}
             numberOfLines={4}
             editable={!this.props.isActiveContract}
-            style={styles.textInput}
+            style={styles.textAreaInput}
             value={this.props.deliveryPlaceComment}
             onChangeText={(text: string) => this.onDeliveryPlaceChange(text)}
           />

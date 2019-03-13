@@ -55,3 +55,11 @@ export interface ContractData {
  * Type for contract data key
  */
 export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAllChecked" | "quantityComment" | "areaDetailValues" | "deliveryPlaceId" | "deliveryPlaceComment";
+
+/**
+ * Interface for modal buttons
+ */
+export interface ModalButton {
+  text: string,
+  onPress: () => void
+}

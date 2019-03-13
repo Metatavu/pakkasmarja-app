@@ -76,46 +76,31 @@ class ContractsScreen extends React.Component<Props, State> {
     const frozenContracts = await contractsService.listContracts("application/json", false, "FROZEN");
     const freshContracts = await contractsService.listContracts("application/json", false, "FRESH");
 
-    await this.asyncContractForeach(freshContracts, async (contract: Contract) => {
-      const freshContracts: ContractTableData[] = this.state.freshContracts;
-      if (contract.itemGroupId) {
-        const itemGroup = await this.findItemGroupById(contract.itemGroupId);
-        freshContracts.push({
-          contract: contract,
-          itemGroup: itemGroup
-        });
-      }
+    await this.loadItemGroups();
 
-      this.setState({ freshContracts: freshContracts });
-    });
-
-    await this.asyncContractForeach(frozenContracts, async (contract: Contract) => {
-      if (!contract.itemGroupId) {
-        return;
-      }
-      const frozenContracts: ContractTableData[] = this.state.frozenContracts;
-      const itemGroup = await this.findItemGroupById(contract.itemGroupId);
-      frozenContracts.push({
-        contract: contract,
+    frozenContracts.forEach((frozenContract) => {
+      const frozenContractsState: ContractTableData[] = this.state.frozenContracts;
+      const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === frozenContract.itemGroupId);
+      frozenContractsState.push({
+        contract: frozenContract,
         itemGroup: itemGroup
       });
 
-      this.setState({ frozenContracts: frozenContracts });
+      this.setState({ frozenContracts: frozenContractsState });
+    });
+
+    freshContracts.forEach((freshContract) => {
+      const freshContractsState: ContractTableData[] = this.state.freshContracts;
+      const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === freshContract.itemGroupId);
+      freshContractsState.push({
+        contract: freshContract,
+        itemGroup: itemGroup
+      });
+      
+      this.setState({ freshContracts: freshContractsState });
     });
 
     this.setState({ loading: false });
-  }
-
-  /**
-   * Async foreach method
-   * 
-   * @param array array
-   * @param callback callback
-   */
-  private asyncContractForeach = async (array: Contract[], callback: any) => {
-    for (let index = 0; index < array.length; index++) {
-      await callback(array[index], index, array);
-    }
   }
 
   /**
@@ -260,7 +245,6 @@ class ContractsScreen extends React.Component<Props, State> {
    * @param type type
    */
   private onProposeNewContractClick = async (type: string) => {
-    await this.loadItemGroups();
     this.setState({ proposeContractModalOpen: true, proposeContractModalType: type });
   }
 
