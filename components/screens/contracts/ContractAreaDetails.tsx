@@ -24,6 +24,9 @@ interface State {
   minimumProfit: number
 };
 
+/**
+ * Contract area details component class
+ */
 export default class ContractAreaDetails extends React.Component<Props, State> {
 
   /**

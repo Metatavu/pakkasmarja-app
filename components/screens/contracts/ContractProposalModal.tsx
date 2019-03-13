@@ -29,6 +29,9 @@ interface State {
   modalOpen: boolean,
 };
 
+/**
+ * Contract proposal modal component class
+ */
 export default class ContractProposalModal extends React.Component<Props, State> {
   /**
    * Constructor

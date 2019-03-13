@@ -26,6 +26,9 @@ interface Props {
 interface State {
 };
 
+/**
+ * Contract amount table component class
+ */
 class ContractAmountTable extends React.Component<Props, State> {
 
   /**

@@ -18,6 +18,9 @@ interface Props {
 interface State {
 };
 
+/**
+ * Contract header component class
+ */
 export default class ContractHeader extends React.Component<Props, State> {
   /**
    * Constructor

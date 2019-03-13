@@ -1,5 +1,8 @@
 import { StyleSheet } from "react-native";
 
+/**
+ * Styles
+ */
 export const styles = StyleSheet.create({
   headerView: {
     backgroundColor: "#E51D2A",

@@ -38,6 +38,9 @@ interface State {
   type: string
 };
 
+/**
+ * Contract terms component class
+ */
 class ContractTerms extends React.Component<Props, State> {
   /**
    * Constructor
@@ -83,7 +86,7 @@ class ContractTerms extends React.Component<Props, State> {
 
     const api = new PakkasmarjaApi(`${REACT_APP_API_URL}`);
     const pdfService = api.getPdfService(this.props.accessToken.access_token);
-    const pdfPath = await pdfService.findPdf(this.state.contract.id, new Date().getFullYear().toString());
+    const pdfPath = await pdfService.findPdf(this.state.contract.id, new Date().getFullYear().toString(), `${new Date().toLocaleDateString()}.pdf`);
 
     const header = "Lataus onnistui!";
     const content = `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`;

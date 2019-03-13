@@ -27,7 +27,7 @@ export default class PakkasmarjaApi {
    * 
    * @param token token
    */
-  getContractsService(token: string) {
+  public getContractsService(token: string) {
     return this.getApi().getContractsService(token);
   }
 
@@ -36,7 +36,7 @@ export default class PakkasmarjaApi {
    * 
    * @param token token
    */
-  getContactsService(token: string) {
+  public getContactsService(token: string) {
     return this.getApi().getContactsService(token);
   }
 
@@ -45,7 +45,7 @@ export default class PakkasmarjaApi {
    * 
    * @param token token
    */
-  getItemGroupsService(token: string) {
+  public getItemGroupsService(token: string) {
     return this.getApi().getItemGroupsService(token);
   }
 
@@ -54,7 +54,7 @@ export default class PakkasmarjaApi {
    * 
    * @param token token
    */
-  getDeliveryPlacesService(token: string) {
+  public getDeliveryPlacesService(token: string) {
     return this.getApi().getDeliveryPlacesService(token);
   }
 
@@ -63,7 +63,7 @@ export default class PakkasmarjaApi {
    * 
    * @param token token
    */
-  getSignAuthenticationServicesService(token: string) {
+  public getSignAuthenticationServicesService(token: string) {
     return this.getApi().getSignAuthenticationServicesService(token);
   }
 
@@ -72,7 +72,7 @@ export default class PakkasmarjaApi {
    * @param token token
    * @param basePath basePath
    */
-  getPdfService(token: string) {
+  public getPdfService(token: string) {
     return new PDFService(this.basePath, token);
   }
   

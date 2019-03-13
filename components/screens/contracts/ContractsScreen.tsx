@@ -39,6 +39,9 @@ interface State {
   loading: boolean
 };
 
+/**
+ * Contracts screen component class
+ */
 class ContractsScreen extends React.Component<Props, State> {
 
   /**

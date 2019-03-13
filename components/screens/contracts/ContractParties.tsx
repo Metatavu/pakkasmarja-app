@@ -20,6 +20,9 @@ interface Props {
 interface State {
 };
 
+/**
+ * Contract parties component class
+ */
 export default class ContractParties extends React.Component<Props, State> {
   /**
    * Constructor

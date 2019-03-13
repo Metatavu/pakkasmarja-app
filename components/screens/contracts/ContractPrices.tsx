@@ -22,6 +22,9 @@ interface State {
   showPastPrices: boolean
 };
 
+/**
+ * Contract prices component class
+ */
 export default class ContractPrices extends React.Component<Props, State> {
   /**
    * Constructor

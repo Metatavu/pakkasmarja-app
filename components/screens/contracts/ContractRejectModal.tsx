@@ -31,6 +31,9 @@ interface State {
   modalOpen: boolean,
 };
 
+/**
+ * Contract reject modal component class
+ */
 class ContractRejectModal extends React.Component<Props, State> {
   /**
    * Constructor
@@ -102,7 +105,6 @@ class ContractRejectModal extends React.Component<Props, State> {
     );
   }
 }
-
 
 /**
  * Redux mapper for mapping store state to component props

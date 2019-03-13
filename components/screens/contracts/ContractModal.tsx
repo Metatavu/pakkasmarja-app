@@ -29,6 +29,9 @@ interface State {
   contracts: Contract[]
 };
 
+/**
+ * Contract modal component class
+ */
 class ContractModal extends React.Component<Props, State> {
   /**
    * Constructor
