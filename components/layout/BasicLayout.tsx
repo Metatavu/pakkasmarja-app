@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Content, Toast, Spinner } from "native-base";
+import { Toast, Spinner } from "native-base";
 import { StyleSheet, View, ScrollView, Text, TouchableHighlight } from "react-native";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import strings from "../../localization/strings";
@@ -97,7 +97,7 @@ export default class BasicLayout extends React.Component<Props, State> {
                 <Text>{strings.deliveriesFooterLink}</Text>
               </View>
             </TouchableHighlight>
-            <TouchableHighlight>
+            <TouchableHighlight onPress={() => this.goToScreen("Contracts")}>
               <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
                 <Icon
                   name='user'

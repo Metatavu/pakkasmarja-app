@@ -97,7 +97,7 @@ class LoginScreen extends React.Component<Props, State> {
       } else {
         // TODO: Handle error
       }
-    });
+    })
   }
 
   /**
