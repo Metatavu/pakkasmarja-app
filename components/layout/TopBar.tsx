@@ -17,6 +17,7 @@ interface Props {
   textColor?: string
   accessToken?: AccessToken
   secondaryNavItems?: any
+  navigation?: any
 }
 
 /**
@@ -43,7 +44,7 @@ class TopBar extends React.Component<Props, State> {
   /**
    * Component render method
    */
-  render() {
+  public render() {
     return (
       <View style={{flex: 1}}>
         <View style={{height: 100}}>
@@ -66,15 +67,21 @@ class TopBar extends React.Component<Props, State> {
             
           </View>
           <View style={{flex: 1, flexDirection: "row", paddingLeft: 10, paddingRight: 10, alignItems: "center", justifyContent: "space-between"}}>
-            {this.props.secondaryNavItems.map((navItem: any) => {
+            {this.props.secondaryNavItems.map((navItem: any, index: number) => {
               return (
-                <Text style={{color: "#fff", fontWeight: "bold"}}>{navItem.text}</Text>
+                <TouchableHighlight onPress={() => this.navigateTo(navItem.link)} key={index}>
+                  <Text style={{color: "#fff", fontWeight: navItem.active ? "bold" : "normal"}}>{navItem.text}</Text>
+                </TouchableHighlight>
               );
             })}
           </View>
         </View>
       </View>
     );
+  }
+
+  private navigateTo(screen: string) {
+    this.props.navigation && this.props.navigation.navigate(screen);
   }
 }
 

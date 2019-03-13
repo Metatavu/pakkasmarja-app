@@ -21,5 +21,6 @@ export interface AccessToken {
   client_id: string
   realmId: string,
   firstName: string,
-  lastName: string
+  lastName: string,
+  userId: string
 }

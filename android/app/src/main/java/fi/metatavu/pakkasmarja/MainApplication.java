@@ -1,4 +1,4 @@
-package com.famifarm;
+package fi.metatavu.pakkasmarja;
 
 import android.app.Application;
 

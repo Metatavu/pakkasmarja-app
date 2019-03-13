@@ -9,6 +9,10 @@ import { reducer } from "./reducers";
 import { Provider } from "react-redux";
 import AuthRefresh from "./components/AuthRefresh";
 import MqttConnector from "./components/MqttConnector";
+import ChatScreen from "./components/screens/ChatScreen";
+import ChatListScreen from "./components/screens/ChatListScreen";
+import QuestionListScreen from "./components/screens/QuestionListScreen";
+import ChatThreadListScreen from "./components/screens/ChatThreadListScreen";
 
 interface State {
   authenticated: boolean
@@ -20,7 +24,11 @@ const store = createStore<StoreState, AppAction, any, any>(reducer as any, inita
 
 const RootStack = createStackNavigator({
   Main: MainScreen,
-  Login: LoginScreen
+  Login: LoginScreen,
+  Chat: ChatScreen,
+  ChatList: ChatListScreen,
+  QuestionList: QuestionListScreen,
+  ChatThreadList: ChatThreadListScreen
 }, {
   defaultNavigationOptions: {
     headerStyle: {

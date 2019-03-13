@@ -2,5 +2,15 @@
   "loginScreenHeader": "Login",
   "loginScreenUsernameLabel": "Username",
   "loginScreenPasswordLabel": "Password",
-  "loginScreenLoginButton": "Login"
+  "loginScreenLoginButton": "Login",
+
+  "errorCommunicatingWithServer": "Error communicating with server, try again later.",
+  "questionsNavHeader": "Questions",
+  "chatsNavHeader": "Group chat",
+  "errorFindingChatThread": "Error finding chat.",
+
+  "newsFooterLink": "News",
+  "messagingFooterLink": "Messages",
+  "deliveriesFooterLink": "Deliveries",
+  "contractsFooterLink": "Contracts"
 }
