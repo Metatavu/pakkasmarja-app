@@ -34,7 +34,8 @@ interface State {
   selectedSignServiceId: string,
   ssn: string,
   signAuthenticationUrl: string,
-  modalOpen: boolean
+  modalOpen: boolean,
+  type: string
 };
 
 class ContractTerms extends React.Component<Props, State> {
@@ -49,7 +50,8 @@ class ContractTerms extends React.Component<Props, State> {
       selectedSignServiceId: "0",
       ssn: "",
       signAuthenticationUrl: "",
-      modalOpen: false
+      modalOpen: false,
+      type: "2019"
     };
   }
 
@@ -102,7 +104,7 @@ class ContractTerms extends React.Component<Props, State> {
 
     const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
-    const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "" }, this.state.contract.id || "", '2019', this.state.ssn, this.state.selectedSignServiceId);
+    const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "" }, this.state.contract.id || "", this.state.type, this.state.ssn, this.state.selectedSignServiceId);
 
     if (contractSignRequest && contractSignRequest.redirectUrl) {
       this.setState({ signAuthenticationUrl: contractSignRequest.redirectUrl, modalOpen: true });

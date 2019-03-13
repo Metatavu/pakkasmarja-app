@@ -45,10 +45,10 @@ class TopBar extends React.Component<Props, State> {
    */
   render() {
     return (
-      <View style={{flex: 1}}>
-        <View style={{height: 100}}>
-          <View style={{flex: 1, flexDirection: "row", paddingLeft: 10, paddingTop: 5, paddingRight: 10, alignItems: "center", justifyContent: "space-between"}}>
-            <TouchableHighlight style={{paddingLeft: 10}}>
+      <View style={{ flex: 1 }}>
+        <View style={{ height: 100 }}>
+          <View style={{ flex: 1, flexDirection: "row", paddingLeft: 10, paddingTop: 5, paddingRight: 10, alignItems: "center", justifyContent: "space-between" }}>
+            <TouchableHighlight style={{ paddingLeft: 10 }}>
               <Icon
                 name='cog'
                 color='#fff'
@@ -56,22 +56,27 @@ class TopBar extends React.Component<Props, State> {
               />
             </TouchableHighlight>
 
-            <TouchableHighlight style={{paddingRight: 10}}>
+            <TouchableHighlight style={{ paddingRight: 10 }}>
               <Icon
                 name='user'
                 color='#fff'
                 size={30}
               />
             </TouchableHighlight>
-            
+
           </View>
-          <View style={{flex: 1, flexDirection: "row", paddingLeft: 10, paddingRight: 10, alignItems: "center", justifyContent: "space-between"}}>
-            {this.props.secondaryNavItems.map((navItem: any) => {
-              return (
-                <Text key={navItem.text} style={{color: "#fff", fontWeight: "bold"}}>{navItem.text}</Text>
-              );
-            })}
-          </View>
+          {
+            this.props.secondaryNavItems ?
+              <View style={{ flex: 1, flexDirection: "row", paddingLeft: 10, paddingRight: 10, alignItems: "center", justifyContent: "space-between" }}>
+                {this.props.secondaryNavItems.map((navItem: any) => {
+                  return (
+                    <Text key={navItem.text} style={{ color: "#fff", fontWeight: "bold" }}>{navItem.text}</Text>
+                  );
+                })}
+              </View>
+              :
+              null
+          }
         </View>
       </View>
     );
@@ -95,7 +100,7 @@ function mapStateToProps(state: StoreState) {
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
-  return { };
+  return {};
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(TopBar);

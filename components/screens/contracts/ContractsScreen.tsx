@@ -64,7 +64,7 @@ class ContractsScreen extends React.Component<Props, State> {
   /**
    * Component did mount life-cycle event
    */
-  async componentDidMount() {
+  public async componentDidMount() {
     if (!this.props.accessToken) {
       return;
     }
@@ -78,24 +78,28 @@ class ContractsScreen extends React.Component<Props, State> {
 
     await this.asyncContractForeach(freshContracts, async (contract: Contract) => {
       const freshContracts: ContractTableData[] = this.state.freshContracts;
-      const itemGroup = await this.getItemGroup(contract.itemGroupId);
+      if (contract.itemGroupId) {
+        const itemGroup = await this.findItemGroupById(contract.itemGroupId);
+        freshContracts.push({
+          contract: contract,
+          itemGroup: itemGroup
+        });
+      }
 
-      freshContracts.push({
-        contract: contract,
-        itemGroup: itemGroup
-      });
-      
       this.setState({ freshContracts: freshContracts });
     });
 
     await this.asyncContractForeach(frozenContracts, async (contract: Contract) => {
+      if (!contract.itemGroupId) {
+        return;
+      }
       const frozenContracts: ContractTableData[] = this.state.frozenContracts;
-      const itemGroup = await this.getItemGroup(contract.itemGroupId);
+      const itemGroup = await this.findItemGroupById(contract.itemGroupId);
       frozenContracts.push({
         contract: contract,
         itemGroup: itemGroup
       });
-      
+
       this.setState({ frozenContracts: frozenContracts });
     });
 
@@ -119,7 +123,7 @@ class ContractsScreen extends React.Component<Props, State> {
    * 
    * @param contract contract
    */
-  private findContractContact = async (contract: Contract) => {
+  private loadContractContact = async (contract: Contract) => {
     if (!this.props.accessToken || !contract.contactId) {
       return;
     }
@@ -131,11 +135,11 @@ class ContractsScreen extends React.Component<Props, State> {
   }
 
   /**
-   * Find prices
+   * load prices
    * 
    * @param contract contract
    */
-  private findPrices = async (contract: Contract) => {
+  private loadPrices = async (contract: Contract) => {
     if (!this.props.accessToken || !contract.itemGroupId) {
       return;
     }
@@ -151,7 +155,7 @@ class ContractsScreen extends React.Component<Props, State> {
    * 
    * @param itemGroupId itemGroupId
    */
-  private getItemGroup = async (itemGroupId: any) => {
+  private findItemGroupById = async (itemGroupId: string) => {
     if (!this.props.accessToken) {
       return;
     }
@@ -180,7 +184,7 @@ class ContractsScreen extends React.Component<Props, State> {
   /**
    * Get delivery places
    */
-  private findDeliveryPlaces = async () => {
+  private loadDeliveryPlaces = async () => {
     if (!this.props.accessToken) {
       return;
     }
@@ -196,7 +200,7 @@ class ContractsScreen extends React.Component<Props, State> {
    * 
    * @param status status
    */
-  private cannotOpenContractAlert = (status: string) => {
+  private displayOpenContractAlert = (status: string) => {
     let infoText = "";
 
     if (status === "REJECTED") {
@@ -204,12 +208,12 @@ class ContractsScreen extends React.Component<Props, State> {
     } else if (status === "ON_HOLD") {
       infoText = "Sopimus on pakkasmarjalla tarkistettavana.";
     }
-    
+
     Alert.alert(
       'Sopimusta ei voida avata',
       infoText,
       [
-        {text: 'OK', onPress: () => {}},
+        { text: 'OK', onPress: () => { } },
       ]
     );
   }
@@ -220,17 +224,17 @@ class ContractsScreen extends React.Component<Props, State> {
    * @param contract contract
    */
   private handleContractClick = async (contract: Contract) => {
-    if (contract.status === "REJECTED" || contract.status === "ON_HOLD") {
-      this.cannotOpenContractAlert(contract.status);
+    if (contract.status === "REJECTED" || contract.status === "ON_HOLD" || !contract.itemGroupId) {
+      this.displayOpenContractAlert(contract.status);
       return;
     }
     this.setState({ loading: true });
 
-    await this.findContractContact(contract);
-    await this.findPrices(contract);
-    await this.findDeliveryPlaces();
-    const itemGroup = await this.getItemGroup(contract.itemGroupId);
-    
+    await this.loadContractContact(contract);
+    await this.loadPrices(contract);
+    await this.loadDeliveryPlaces();
+    const itemGroup = await this.findItemGroupById(contract.itemGroupId);
+
     this.setState({ loading: false });
 
     this.props.navigation.navigate('Contract', {
@@ -247,16 +251,6 @@ class ContractsScreen extends React.Component<Props, State> {
       showMenu={true}
       showHeader={false}
       showUser={true}
-      secondaryNavItems={[{
-        "text": "Secondary 1",
-        "link": "/secondary"
-      }, {
-        "text": "Secondary 2",
-        "link": "/secondary"
-      }, {
-        "text": "Secondary 3",
-        "link": "/secondary"
-      }]}
     />
   };
 
@@ -265,7 +259,7 @@ class ContractsScreen extends React.Component<Props, State> {
    * 
    * @param type type
    */
-  onProposeNewContractClick = async (type: string) => {
+  private onProposeNewContractClick = async (type: string) => {
     await this.loadItemGroups();
     this.setState({ proposeContractModalOpen: true, proposeContractModalType: type });
   }
@@ -273,7 +267,7 @@ class ContractsScreen extends React.Component<Props, State> {
   /**
    * On contract proposal clicked
    */
-  onContractProposalClick = async () => {
+  private onContractProposalClick = async () => {
     //TODO: Implement when chat messages are ready
   }
 
