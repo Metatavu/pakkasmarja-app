@@ -1,5 +1,5 @@
 
-import Api from "pakkasmarja-client";
+import Api from "../node_modules/pakkasmarja-client";
 import { PDFService } from "./pdf.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 export * from './pdf.service';
@@ -7,7 +7,7 @@ export * from './pdf.service';
 export default class PakkasmarjaApi {
 
   private basePath: string;
-
+  
   /**
    * Constructor
    * 
@@ -56,6 +56,14 @@ export default class PakkasmarjaApi {
    */
   public getDeliveryPlacesService(token: string) {
     return this.getApi().getDeliveryPlacesService(token);
+  }
+  
+  /**
+   * Get news article service
+   * @param token token
+   */
+  public getNewsArticlesService(token: string) {
+    return this.getApi().getNewsArticlesService(token);
   }
 
    /**
