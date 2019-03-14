@@ -67,7 +67,7 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
         {this.props.children}
         {this.props.displayFooter && 
           <View style={styles.footer}>
-            <TouchableHighlight>
+            <TouchableHighlight onPress={() => this.goToScreen("News")}>
               <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
                 <Icon
                   name='user'

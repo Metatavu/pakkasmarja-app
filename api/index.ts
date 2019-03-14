@@ -9,7 +9,7 @@ export * from './pdf.service';
 export default class PakkasmarjaApi {
 
   private basePath: string;
-
+  
   /**
    * Constructor
    * 
@@ -60,6 +60,17 @@ export default class PakkasmarjaApi {
    */
   public getDeliveryPlacesService(token: string) {
     return this.getApi().getDeliveryPlacesService(token);
+  }
+  
+  /**
+   * Returns news article service
+   * 
+   * @param token token
+   * 
+   * @return News article service
+   */
+  public getNewsArticlesService(token: string) {
+    return this.getApi().getNewsArticlesService(token);
   }
 
    /**
