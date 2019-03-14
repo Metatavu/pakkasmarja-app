@@ -62,6 +62,8 @@ export default class PakkasmarjaApi {
    * Returns news article service
    * 
    * @param token token
+   * 
+   * @return News article service
    */
   public getNewsArticlesService(token: string) {
     return this.getApi().getNewsArticlesService(token);
