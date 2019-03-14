@@ -52,16 +52,6 @@ class NewsListScreen extends React.Component<Props, State> {
       showMenu={true}
       showHeader={false}
       showUser={true}
-      secondaryNavItems={[{
-        "text": "UUSIMMAT",
-        "link": "/secondary"
-      }, {
-        "text": "TAPAHTUMAT",
-        "link": "/secondary"
-      }, {
-        "text": "UUTISET",
-        "link": "/secondary"
-      }]}
     />
   };
 
@@ -69,29 +59,28 @@ class NewsListScreen extends React.Component<Props, State> {
    * Component did mount
    */
   public async componentDidMount() {
-
     if (!this.props.accessToken) {
       return;
     }
+
     const Api = new PakkasmarjaApi();
     const newsArticleService = await Api.getNewsArticlesService(this.props.accessToken.access_token);
-    await newsArticleService.listNewsArticles().then((newsArticles) => {
-      this.setState({ newsArticles: newsArticles })
-    });
+    const newsArticles = await newsArticleService.listNewsArticles();
+    this.setState({ newsArticles: newsArticles });
   }
 
   /**
    * Handles list item click
    */
-  private handleClick = (newsArticle: NewsArticle) => {
+  private handleListItemClick = (newsArticle: NewsArticle) => {
     this.props.navigation.navigate('NewsArticle', {
       newsArticle: newsArticle
     });
   }
 
   /**
- * Component render method
- */
+   * Component render method
+   */
   public render() {
     return (
       <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
@@ -110,7 +99,7 @@ class NewsListScreen extends React.Component<Props, State> {
                           {newsArticle.createdAt}
                         </Moment>
                       }
-                      onPress={() => { this.handleClick(newsArticle) }}
+                      onPress={() => { this.handleListItemClick(newsArticle) }}
                     />
                   )
                 })

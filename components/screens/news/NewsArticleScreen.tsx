@@ -72,12 +72,12 @@ class NewsArticleScreen extends React.Component<Props, State> {
   }
 
   /**
- * Component render method
- */
+   * Component render method
+   */
   public render() {
     return (
       <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View style={{padding: 15 }}>
+        <View style={{ padding: 15 }}>
           <Text style={[{ fontSize: 24 }, styles.TextBold]}>{this.state.newsArticle.title}</Text>
           <Moment
             style={{ fontSize: 16, marginBottom: 15, color: "gray" }}

@@ -59,7 +59,8 @@ export default class PakkasmarjaApi {
   }
   
   /**
-   * Get news article service
+   * Returns news article service
+   * 
    * @param token token
    */
   public getNewsArticlesService(token: string) {
