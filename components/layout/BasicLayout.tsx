@@ -51,14 +51,14 @@ export default class BasicLayout extends React.Component<Props, State> {
         </ScrollView>
         {this.props.displayFooter && 
           <View style={styles.footer}>
-            <TouchableHighlight>
+            <TouchableHighlight onPress={()=>this.handleClick("News")}>
               <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
                 <Icon
                   name='user'
                   color='#000000'
                   size={30}
                 />
-                <Text>Text</Text>
+                <Text>Ajankohtaista</Text>
               </View>
             </TouchableHighlight>
             <TouchableHighlight>

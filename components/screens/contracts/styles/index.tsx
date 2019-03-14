@@ -220,5 +220,8 @@ export const styles = StyleSheet.create({
   row: {
     paddingBottom: 12,
     paddingTop: 12,
+  },
+  newsContainer:{
+    paddingVertical: 20
   }
 });
