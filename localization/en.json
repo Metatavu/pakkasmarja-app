@@ -12,5 +12,6 @@
   "newsFooterLink": "News",
   "messagingFooterLink": "Messages",
   "deliveriesFooterLink": "Deliveries",
-  "contractsFooterLink": "Contracts"
+  "contractsFooterLink": "Contracts",
+  "noTitleAvailable": "No title"
 }

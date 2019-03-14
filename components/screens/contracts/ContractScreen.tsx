@@ -1,6 +1,6 @@
 import React, { Dispatch } from "react";
-import { View, StyleSheet, Alert } from "react-native";
-import BasicLayout from "../../layout/BasicLayout";
+import { View, Alert } from "react-native";
+import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import ContractPrices from "./ContractPrices";
 import ContractHeader from "./ContractHeader";
@@ -239,13 +239,13 @@ class ContractScreen extends React.Component<Props, State> {
   public render() {
     if (!this.state.itemGroup || !this.state.contact || !this.state.contract) {
       return (
-        <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        </BasicLayout>
+        <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+        </BasicScrollLayout>
       );
     }
 
     return (
-      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={{ backgroundColor: "#fff", paddingTop: 10 }}>
           <ContractHeader
             styles={styles}
@@ -304,7 +304,7 @@ class ContractScreen extends React.Component<Props, State> {
             contractRejected={() => this.props.navigation.navigate('Contracts', {})}
           />
         </View>
-      </BasicLayout>
+      </BasicScrollLayout>
     );
   }
 }

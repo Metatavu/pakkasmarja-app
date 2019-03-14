@@ -1,6 +1,5 @@
 import React, { Dispatch } from "react";
 import { connect } from "react-redux";
-import BasicLayout from "../layout/BasicLayout";
 import Auth from "../../utils/Auth";
 import { Text, Form, Item, Input, Label, Button } from 'native-base';
 import { REACT_APP_AUTH_SERVER_URL, REACT_APP_AUTH_RESOURCE, REACT_APP_AUTH_REALM, REACT_APP_DEFAULT_USER, REACT_APP_DEFAULT_PASSWORD } from 'react-native-dotenv';
@@ -8,6 +7,7 @@ import { AccessToken, StoreState } from "../../types";
 import * as actions from "../../actions";
 import strings from "../../localization/strings";
 import { StyleSheet } from "react-native";
+import BasicScrollLayout from "../layout/BasicScrollLayout";
 
 /**
  * Login details
@@ -84,6 +84,7 @@ class LoginScreen extends React.Component<Props, State> {
    */
   sendLogin = (event: any) => {
     const loginData = this.state.loginDetails;
+
     Auth.login({
       clientId: REACT_APP_AUTH_RESOURCE,
       url: `${REACT_APP_AUTH_SERVER_URL}/realms/${REACT_APP_AUTH_REALM}/protocol/openid-connect/token`,
@@ -93,11 +94,11 @@ class LoginScreen extends React.Component<Props, State> {
     }).then(async (accessToken) => {
       if (accessToken) {
         this.props.onAccessTokenUpdate(accessToken);
-        this.props.navigation.navigate("Main");
+        this.props.navigation.replace("Main");
       } else {
         // TODO: Handle error
       }
-    })
+    });
   }
 
   /**
@@ -133,7 +134,7 @@ class LoginScreen extends React.Component<Props, State> {
       }
     });
     return (
-      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={false}>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={false}>
         <Form>
           <Item>
             <Label style={styles.label} >{strings.loginScreenUsernameLabel}</Label>
@@ -145,7 +146,7 @@ class LoginScreen extends React.Component<Props, State> {
           </Item>
         </Form>
         <Button style={styles.button} onPress={this.sendLogin} block><Text style={styles.buttonText}>{strings.loginScreenLoginButton}</Text></Button>
-      </BasicLayout>
+      </BasicScrollLayout>
     );
   }
 }

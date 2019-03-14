@@ -7,8 +7,7 @@ import strings from "../../localization/strings";
 /**
  * Component properties
  */
-interface Props {
-  backgroundColor: string,
+export interface BasicLayoutProps {
   loading?: boolean,
   displayFooter?: boolean
   errorMsg?: string,
@@ -34,14 +33,17 @@ const styles = StyleSheet.create({
   }
 });
 
-export default class BasicLayout extends React.Component<Props, State> {
+/**
+ * Basic layout component
+ */
+export default class BasicLayout extends React.Component<BasicLayoutProps, State> {
 
-  constructor(props: Props) {
+  constructor(props: BasicLayoutProps) {
     super(props);
     this.state = {};
   }
 
-  public componentDidUpdate(prevProps: Props) {
+  public componentDidUpdate = (prevProps: BasicLayoutProps) => {
     if (this.props.errorMsg && this.props.errorMsg != prevProps.errorMsg) {
       Toast.show({
         text: this.props.errorMsg,
@@ -62,9 +64,7 @@ export default class BasicLayout extends React.Component<Props, State> {
 
     return (
       <View style={{flex: 1}}>
-        <ScrollView style={{backgroundColor: this.props.backgroundColor}}>
-          {this.props.children}
-        </ScrollView>
+        {this.props.children}
         {this.props.displayFooter && 
           <View style={styles.footer}>
             <TouchableHighlight>
@@ -77,7 +77,7 @@ export default class BasicLayout extends React.Component<Props, State> {
                 <Text>{strings.newsFooterLink}</Text>
               </View>
             </TouchableHighlight>
-            <TouchableHighlight onPress={() => this.goToScreen("ChatList")}>
+            <TouchableHighlight onPress={() => this.goToScreen("ChatsList")}>
               <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
                 <Icon
                   name='user'
@@ -113,6 +113,9 @@ export default class BasicLayout extends React.Component<Props, State> {
     );
   }
 
+  /**
+   * Navigates to screen
+   */
   private goToScreen = (screen: string) => {
     this.props.navigation.navigate(screen);
   }

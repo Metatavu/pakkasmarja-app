@@ -17,6 +17,7 @@ export interface Strings extends LocalizedStringsMethods {
   deliveriesFooterLink: string
   contractsFooterLink: string
 
+  noTitleAvailable: string
 }
 
 const strings: Strings = new LocalizedStrings({

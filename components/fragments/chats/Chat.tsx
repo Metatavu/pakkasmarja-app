@@ -1,20 +1,21 @@
 import React, { Dispatch } from "react";
-import BasicLayout from "../layout/BasicLayout";
-import TopBar from "../layout/TopBar";
 import { GiftedChat, IChatMessage, IMessage } from 'react-native-gifted-chat'
 import { connect } from "react-redux";
-import { AccessToken, StoreState } from "../../types";
-import * as actions from "../../actions";
-import Api, { ChatMessage } from "pakkasmarja-client";
-import strings from "../../localization/strings";
-
+import { AccessToken, StoreState } from "../../../types";
+import * as actions from "../../../actions";
+import { ChatMessage } from "pakkasmarja-client";
+import strings from "../../../localization/strings";
+import PakkasmarjaApi from "../../../api";
+import { View, Spinner, Fab, Icon, Container } from "native-base";
 
 /**
  * Component properties
  */
 interface Props {
-  navigation: any,
   accessToken?: AccessToken
+  threadId: number
+  onError?: (errorMsg: string) => void
+  onBackClick?: () => void
 };
 
 /**
@@ -22,14 +23,13 @@ interface Props {
  */
 interface State {
   messages: IChatMessage[],
-  loading: boolean,
-  errorMsg?: string
+  loading: boolean
 };
 
 /**
- * Component for displaying chat screen
+ * Component for displaying chat
  */
-class ChatScreen extends React.Component<Props, State> {
+class Chat extends React.Component<Props, State> {
 
   /**
    * Constructor
@@ -45,44 +45,25 @@ class ChatScreen extends React.Component<Props, State> {
   }
 
   /**
-   * Navigation options property
-   */
-  static navigationOptions = {
-    headerTitle: <TopBar 
-      showMenu={true} 
-      showHeader={false} 
-      showUser={true} 
-      secondaryNavItems={[{
-        "text": strings.chatsNavHeader, 
-        "link": "ChatList"
-      },{
-        "text": strings.questionsNavHeader, 
-        "link": "QuestionList"
-      }]}
-    />
-  };
-
-  /**
    * Component did mount life cycle method
    */
   public componentDidMount = async () => {
-    const { navigation, accessToken } = this.props;
-    const threadId = navigation.getParam("threadId");
+    const { threadId, accessToken } = this.props;
     if (!accessToken || !threadId) {
       return;
     }
 
     this.setState({loading: true});
     try {
-      const chatMessages = await Api.getChatMessagesService(accessToken.access_token).listChatMessages(threadId); //TODO: limit
+      const chatMessages = await new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).listChatMessages(threadId); //TODO: limit
       //TODO: create mqtt listener and update messages as they arrive.
       this.setState({
         messages: this.translateMessages(chatMessages),
         loading: false
       });
     } catch(e) {
+      this.props.onError && this.props.onError(strings.errorCommunicatingWithServer);
       this.setState({
-        errorMsg: strings.errorCommunicatingWithServer,
         loading: false
       })
     }
@@ -96,8 +77,16 @@ class ChatScreen extends React.Component<Props, State> {
       return null; //TODO: handle
     }
 
+    if (this.state.loading) {
+      return (
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+          <Spinner color="red" />
+        </View>
+      );
+    }
+
     return (
-      <BasicLayout errorMsg={this.state.errorMsg} navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <Container>
         <GiftedChat
           messages={this.state.messages}
           onSend={this.onSend}
@@ -106,7 +95,16 @@ class ChatScreen extends React.Component<Props, State> {
             name: `${this.props.accessToken.firstName} ${this.props.accessToken.lastName}` //TODO: display name?
           }}
         />
-      </BasicLayout>
+        {this.props.onBackClick && (
+          <Fab
+            containerStyle={{ }}
+            style={{ backgroundColor: '#E51D2A' }}
+            position="topRight"
+            onPress={() => this.props.onBackClick && this.props.onBackClick()}>
+            <Icon name="arrow-back" />
+          </Fab>
+        )}
+      </Container>
     );
   }
 
@@ -127,9 +125,7 @@ class ChatScreen extends React.Component<Props, State> {
         }
       });
     } catch(e) {
-      this.setState({
-        errorMsg: strings.errorCommunicatingWithServer
-      });
+      this.props.onError && this.props.onError(strings.errorCommunicatingWithServer);
     }
   }
 
@@ -165,13 +161,12 @@ class ChatScreen extends React.Component<Props, State> {
    * @param message message to upload
    */
   private uploadMessage = (message: IMessage) : Promise<ChatMessage> => {
-    const { navigation, accessToken } = this.props;
-    const threadId = navigation.getParam("threadId");
+    const { threadId, accessToken } = this.props;
     if (!accessToken || !threadId) {
       return Promise.reject();
     }
 
-    return Api.getChatMessagesService(accessToken.access_token).createChatMessage({
+    return new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).createChatMessage({
       contents: message.text,
       threadId: threadId,
       userId: message.user._id
@@ -199,4 +194,4 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {};
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ChatScreen);
+export default connect(mapStateToProps, mapDispatchToProps)(Chat);

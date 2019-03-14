@@ -12,5 +12,6 @@
   "newsFooterLink": "Ajankohtaista",
   "messagingFooterLink": "Viestit",
   "deliveriesFooterLink": "Toimitukset",
-  "contractsFooterLink": "Sopimukset"
+  "contractsFooterLink": "Sopimukset",
+  "noTitleAvailable": "Ei otsikkoa"
 }

@@ -1,11 +1,11 @@
 import React, { Dispatch } from "react";
 import { connect } from "react-redux";
-import BasicLayout from "../../layout/BasicLayout";
+import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
-import { View, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, ActivityIndicator, Alert } from "react-native";
 import { Contract, Contact, Price, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import ContractAmountTable from "./ContractAmountTable";
@@ -271,7 +271,7 @@ class ContractsScreen extends React.Component<Props, State> {
     }
 
     return (
-      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={styles.headerView}>
           <Text style={styles.headerText}>
             Viljely- ja ostosopimukset
@@ -315,7 +315,7 @@ class ContractsScreen extends React.Component<Props, State> {
           quantity={this.state.proposedContractQuantity}
           sendContractProposalClicked={() => this.onContractProposalClick()}
         />
-      </BasicLayout>
+      </BasicScrollLayout>
     );
   }
 }
