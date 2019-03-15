@@ -1,5 +1,4 @@
 import LocalizedStrings, { LocalizedStringsMethods } from 'localized-strings';
-import { LocalizedEntry } from "famifarm-typescript-models";
 
 /**
  * Helper class for using localized values
@@ -13,7 +12,7 @@ export default class LocalizedUtils {
    * @param locale Locale
    * @returns value
    */
-  public static getLocalizedValue(entry?: LocalizedEntry, locale?: string): string {
+  public static getLocalizedValue(entry?: any, locale?: string): string {
     if (!entry) {
       return "";
     }

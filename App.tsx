@@ -14,6 +14,8 @@ import { reducer } from "./reducers";
 import { Provider } from "react-redux";
 import AuthRefresh from "./components/AuthRefresh";
 import MqttConnector from "./components/MqttConnector";
+import ChatsListScreen from "./components/screens/chats/ChatsListScreen";
+import { Root } from "native-base";
 
 interface State {
   authenticated: boolean
@@ -26,6 +28,7 @@ const store = createStore<StoreState, AppAction, any, any>(reducer as any, inita
 const RootStack = createStackNavigator({
   Main: MainScreen,
   Login: LoginScreen,
+  ChatsList: ChatsListScreen,
   Contracts: ContractsScreen,
   Contract: ContractScreen,
   ContractTerms: ContractTerms,
@@ -35,7 +38,7 @@ const RootStack = createStackNavigator({
   defaultNavigationOptions: {
     headerStyle: {
       backgroundColor: "#E51D2A",
-      height: 100
+      height: 70
     },
   },
   initialRouteName: "Login"
@@ -54,12 +57,14 @@ export default class App extends React.Component<any, State> {
 
   render() {
     return (
-      <Provider store={store}>
-        <MqttConnector>
-          <AppContainer />
-        </MqttConnector>
-        <AuthRefresh />
-      </Provider>
+      <Root>
+        <Provider store={store}>
+          <MqttConnector>
+            <AppContainer />
+          </MqttConnector>
+          <AuthRefresh />
+        </Provider>
+      </Root>
     );
   }
 }

@@ -1,9 +1,11 @@
-
-import Api from "../node_modules/pakkasmarja-client";
+import Api from "pakkasmarja-client";
 import { PDFService } from "./pdf.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 export * from './pdf.service';
 
+/**
+ * Wrapper for api client
+ */
 export default class PakkasmarjaApi {
 
   private basePath: string;
@@ -16,6 +18,8 @@ export default class PakkasmarjaApi {
   constructor(basePath?: string) {
     this.basePath = basePath ? basePath : `${REACT_APP_API_URL}/rest/v1`;
   }
+
+
 
   private getApi() {
     Api.configure(this.basePath);
@@ -76,6 +80,33 @@ export default class PakkasmarjaApi {
    */
   public getSignAuthenticationServicesService(token: string) {
     return this.getApi().getSignAuthenticationServicesService(token);
+  }
+
+  /**
+   * Returns chat groups service
+   * 
+   * @param token token
+   */
+  public getChatGroupsService(token: string) {
+    return this.getApi().getChatGroupsService(token);
+  }
+
+  /**
+   * Returns chat threads service
+   * 
+   * @param token token
+   */
+  public getChatThreadsService(token: string) {
+    return this.getApi().getChatThreadsService(token);
+  }
+
+  /**
+   * Returns chat messages service
+   * 
+   * @param token token
+   */
+  public getChatMessagesService(token: string) {
+    return this.getApi().getChatMessagesService(token);
   }
 
   /**

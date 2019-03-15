@@ -1,8 +1,7 @@
 import React from "react";
-import BasicLayout from "../layout/BasicLayout";
 import TopBar from "../layout/TopBar";
 import { Text } from "native-base";
-import { View } from "react-native";
+import BasicScrollLayout from "../layout/BasicScrollLayout";
 
 export interface Props {
   navigation: any
@@ -39,7 +38,7 @@ export default class MainScreen extends React.Component<Props, State> {
 
   render() {
     return (
-      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <Text style={{fontSize: 30}}>Main scroll view</Text>
         <Text style={{fontSize: 30}}>Main scroll view</Text>
         <Text style={{fontSize: 30}}>Main scroll view</Text>
@@ -61,7 +60,7 @@ export default class MainScreen extends React.Component<Props, State> {
         <Text style={{fontSize: 30}}>Main scroll view</Text>
         <Text style={{fontSize: 30}}>Main scroll view</Text>
         <Text style={{fontSize: 30}}>Main scroll view</Text>
-      </BasicLayout>
+      </BasicScrollLayout>
     );
   }
 }

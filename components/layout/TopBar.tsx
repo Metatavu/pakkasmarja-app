@@ -1,9 +1,11 @@
 import React, { Dispatch } from "react";
 import { connect } from "react-redux";
-import { Text, View, TouchableHighlight } from "react-native";
+import { View, TouchableHighlight } from "react-native";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { StoreState, AccessToken } from "../../types";
 import * as actions from "../../actions";
+import { Thumbnail } from "native-base";
+import { TOP_LOGO } from "../../static/images";
 
 /**
  * Component props
@@ -17,6 +19,7 @@ interface Props {
   textColor?: string
   accessToken?: AccessToken
   secondaryNavItems?: any
+  navigation?: any
 }
 
 /**
@@ -43,11 +46,11 @@ class TopBar extends React.Component<Props, State> {
   /**
    * Component render method
    */
-  render() {
+  public render() {
     return (
-      <View style={{ flex: 1 }}>
-        <View style={{ height: 100 }}>
-          <View style={{ flex: 1, flexDirection: "row", paddingLeft: 10, paddingTop: 5, paddingRight: 10, alignItems: "center", justifyContent: "space-between" }}>
+      <View style={{flex: 1}}>
+        <View style={{height: 70}}>
+          <View style={{flex: 1, flexDirection: "row", paddingLeft: 10, paddingRight: 10, alignItems: "center", justifyContent: "space-between"}}>
             <TouchableHighlight style={{ paddingLeft: 10 }}>
               <Icon
                 name='cog'
@@ -55,7 +58,7 @@ class TopBar extends React.Component<Props, State> {
                 size={30}
               />
             </TouchableHighlight>
-
+            <Thumbnail source={TOP_LOGO} />
             <TouchableHighlight style={{ paddingRight: 10 }}>
               <Icon
                 name='user'
@@ -63,23 +66,15 @@ class TopBar extends React.Component<Props, State> {
                 size={30}
               />
             </TouchableHighlight>
-
           </View>
-          {
-            this.props.secondaryNavItems ?
-              <View style={{ flex: 1, flexDirection: "row", paddingLeft: 10, paddingRight: 10, alignItems: "center", justifyContent: "space-between" }}>
-                {this.props.secondaryNavItems.map((navItem: any) => {
-                  return (
-                    <Text key={navItem.text} style={{ color: "#fff", fontWeight: "bold" }}>{navItem.text}</Text>
-                  );
-                })}
-              </View>
-              :
-              null
-          }
         </View>
       </View>
+
     );
+  }
+
+  private navigateTo(screen: string) {
+    this.props.navigation && this.props.navigation.navigate(screen);
   }
 }
 

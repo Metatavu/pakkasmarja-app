@@ -1,64 +1,90 @@
 import React from "react";
-import { Container, Content } from "native-base";
+import { Toast, Spinner } from "native-base";
 import { StyleSheet, View, ScrollView, Text, TouchableHighlight } from "react-native";
 import Icon from 'react-native-vector-icons/FontAwesome';
+import strings from "../../localization/strings";
 
-export interface Props {
- backgroundColor: string,
- displayFooter?: boolean,
- navigation: any
+/**
+ * Component properties
+ */
+export interface BasicLayoutProps {
+  loading?: boolean,
+  displayFooter?: boolean
+  errorMsg?: string,
+  navigation: any
 }
 
+/**
+ * Component state
+ */
 interface State {
 
 }
 
-export default class BasicLayout extends React.Component<Props, State> {
+const styles = StyleSheet.create({
+  footer: {
+    height: 60,
+    borderTopColor: "rgba(0,0,0,0.5)",
+    borderTopWidth: 2,
+    flex: 0,
+    flexDirection: "row",
+    alignItems: "center", 
+    justifyContent: "space-around"
+  }
+});
 
-  constructor(props: Props) {
+/**
+ * Basic layout component
+ */
+export default class BasicLayout extends React.Component<BasicLayoutProps, State> {
+
+  constructor(props: BasicLayoutProps) {
     super(props);
     this.state = {};
   }
 
-  /**
-   * Handles click on one of the bottom navigation links
-   * 
-   * @param screen target screen
-   */
-  private handleClick = (screen: string) => {
-    this.props.navigation.navigate(screen);
+  public componentDidUpdate = (prevProps: BasicLayoutProps) => {
+    if (this.props.errorMsg && this.props.errorMsg != prevProps.errorMsg) {
+      Toast.show({
+        text: this.props.errorMsg,
+        type: "danger"
+      });
+    }
   }
 
-  render() {
-    const styles = StyleSheet.create({
-      container: {
-        backgroundColor: this.props.backgroundColor,
-      },
-      footer: {
-        height: 60,
-        borderTopColor: "rgba(0,0,0,0.5)",
-        borderTopWidth: 2,
-        flex: 0,
-        flexDirection: "row",
-        alignItems: "center", 
-        justifyContent: "space-around"
-      }
-    });
+  public render() {
+
+    if (this.props.loading) {
+      return (
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+          <Spinner color="red" />
+        </View>
+      );
+    }
+
     return (
       <View style={{flex: 1}}>
-        <ScrollView style={styles.container}>
-          {this.props.children}
-        </ScrollView>
+        {this.props.children}
         {this.props.displayFooter && 
           <View style={styles.footer}>
-            <TouchableHighlight onPress={()=>this.handleClick("News")}>
+            <TouchableHighlight onPress={() => this.goToScreen("News")}>
               <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
                 <Icon
                   name='user'
                   color='#000000'
                   size={30}
                 />
-                <Text>Ajankohtaista</Text>
+                <Text>{strings.newsFooterLink}</Text>
+              </View>
+            </TouchableHighlight>
+            <TouchableHighlight onPress={() => this.goToScreen("ChatsList")}>
+              <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
+                <Icon
+                  name='user'
+                  color='#000000'
+                  size={30}
+                />
+                <Text>{strings.messagingFooterLink}</Text>
               </View>
             </TouchableHighlight>
             <TouchableHighlight>
@@ -68,32 +94,29 @@ export default class BasicLayout extends React.Component<Props, State> {
                   color='#000000'
                   size={30}
                 />
-                <Text>Text</Text>
+                <Text>{strings.deliveriesFooterLink}</Text>
               </View>
             </TouchableHighlight>
-            <TouchableHighlight>
+            <TouchableHighlight onPress={() => this.goToScreen("Contracts")}>
               <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
                 <Icon
                   name='user'
                   color='#000000'
                   size={30}
                 />
-                <Text>Text</Text>
-              </View>
-            </TouchableHighlight>
-            <TouchableHighlight onPress={() => this.handleClick("Contracts")}>
-              <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
-                <Icon
-                  name='user'
-                  color='#000000'
-                  size={30}
-                />
-                <Text>Sopimukset</Text>
+                <Text>{strings.contractsFooterLink}</Text>
               </View>
             </TouchableHighlight>
           </View>
         }
       </View>
     );
+  }
+
+  /**
+   * Navigates to screen
+   */
+  private goToScreen = (screen: string) => {
+    this.props.navigation.navigate(screen);
   }
 }

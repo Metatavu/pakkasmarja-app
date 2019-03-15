@@ -30,6 +30,8 @@ build/
 local.properties
 *.iml
 android/app/src/main/assets/index.android.bundle
+.project
+.settings
 
 # node.js
 #

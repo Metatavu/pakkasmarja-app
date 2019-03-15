@@ -107,7 +107,8 @@ export default class Auth {
       client_id: clientId,
       realmId: realmId,
       firstName: decodedToken.given_name,
-      lastName: decodedToken.family_name
+      lastName: decodedToken.family_name,
+      userId: decodedToken.sub
     };
   }
 

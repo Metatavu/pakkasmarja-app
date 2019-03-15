@@ -1,4 +1,4 @@
-package com.pakkasmarja;
+package fi.metatavu.pakkasmarja;
 
 import com.facebook.react.ReactActivity;
 

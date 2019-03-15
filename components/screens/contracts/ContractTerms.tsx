@@ -3,12 +3,11 @@ import PakkasmarjaApi from "../../../api";
 import { AccessToken, StoreState, ModalButton } from "../../../types";
 import { Text } from "native-base";
 import { View, TouchableOpacity, Picker, TextInput, StyleSheet, WebView, Alert } from "react-native";
-import { Col, Row, Grid } from "react-native-easy-grid";
 import { CheckBox } from "react-native-elements";
 import { SignAuthenticationService, Contract } from "pakkasmarja-client";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
-import BasicLayout from "../../layout/BasicLayout";
+import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import Modal from "react-native-modal";
@@ -184,7 +183,7 @@ class ContractTerms extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={styles.WhiteContentView}>
           <View>
             <Text style={styles.ContentHeader}>
@@ -265,7 +264,7 @@ class ContractTerms extends React.Component<Props, State> {
           }}
           />
         </Modal>
-      </BasicLayout>
+      </BasicScrollLayout>
     );
   }
 }

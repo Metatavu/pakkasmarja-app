@@ -2,5 +2,16 @@
   "loginScreenHeader": "Kirjaudu sisään",
   "loginScreenUsernameLabel": "Käyttäjätunnus",
   "loginScreenPasswordLabel": "Salasana",
-  "loginScreenLoginButton": "Kirjaudu"
+  "loginScreenLoginButton": "Kirjaudu",
+
+  "errorCommunicatingWithServer": "Virhe ladattaessa tietoja, yritä myöhemmin uudelleen.",
+  "questionsNavHeader": "Kysymykset",
+  "chatsNavHeader": "Ryhmäkeskustelu",
+  "errorFindingChatThread": "Virhe ladattaessa keskustelua.",
+
+  "newsFooterLink": "Ajankohtaista",
+  "messagingFooterLink": "Viestit",
+  "deliveriesFooterLink": "Toimitukset",
+  "contractsFooterLink": "Sopimukset",
+  "noTitleAvailable": "Ei otsikkoa"
 }
