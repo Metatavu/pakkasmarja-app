@@ -16,6 +16,16 @@ import AuthRefresh from "./components/AuthRefresh";
 import MqttConnector from "./components/MqttConnector";
 import ChatsListScreen from "./components/screens/chats/ChatsListScreen";
 import { Root } from "native-base";
+import DeliveriesScreen from "./components/screens/deliveries/DeliveriesScreen";
+import DeliveryScreen from "./components/screens/deliveries/DeliveryScreen";
+import PastDeliveriesScreen from "./components/screens/deliveries/PastDeliveriesScreen";
+import SuggestionsScreen from "./components/screens/deliveries/SuggestionsScreen";
+import WeeklyEstimationsScreen from "./components/screens/deliveries/WeeklyEstimationsScreen";
+import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDeliveriesScreen";
+import NewDelivery from "./components/screens/deliveries/NewDelivery";
+
+
+
 
 interface State {
   authenticated: boolean
@@ -33,7 +43,14 @@ const RootStack = createStackNavigator({
   Contract: ContractScreen,
   ContractTerms: ContractTerms,
   News: NewsListScreen,
-  NewsArticle: NewsArticleScreen
+  NewsArticle: NewsArticleScreen,
+  Deliveries: DeliveriesScreen,
+  Delivery: DeliveryScreen,
+  PastDeliveries: PastDeliveriesScreen,
+  Suggestions: SuggestionsScreen,
+  WeeklyEstimations: WeeklyEstimationsScreen,
+  IncomingDeliveries: IncomingDeliveriesScreen,
+  NewDelivery: NewDelivery
 }, {
   defaultNavigationOptions: {
     headerStyle: {
