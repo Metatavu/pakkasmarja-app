@@ -2,14 +2,10 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryData } from "../../../types";
+import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
-import { Text } from "native-base";
-import { View, ActivityIndicator, Alert } from "react-native";
-import { Contract } from "pakkasmarja-client";
-import PakkasmarjaApi from "../../../api";
-import { styles } from "../contracts/styles"
-import { List, ListItem } from 'react-native-elements';
+import { View, ActivityIndicator } from "react-native";
+import { styles } from "./styles.tsx";
 
 /**
  * Component props
@@ -27,7 +23,7 @@ interface State {
 };
 
 /**
- * Deliveries screen component class
+ * Past deliveries component class
  */
 class PastDeliveriesScreen extends React.Component<Props, State> {
 
@@ -74,7 +70,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
- 
+
       </BasicScrollLayout>
     );
   }

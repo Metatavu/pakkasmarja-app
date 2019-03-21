@@ -73,6 +73,17 @@ export default class PakkasmarjaApi {
     return this.getApi().getNewsArticlesService(token);
   }
 
+  /**
+   * Returns week prediction service
+   * 
+   * @param token token
+   * 
+   * @return News article service
+   */
+  public getWeekDeliveryPredictionsService(token: string) {
+    return this.getApi().getWeekDeliveryPredictionsService (token);
+  }
+
    /**
    * Returns sign authentication services service
    * 

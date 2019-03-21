@@ -10,6 +10,7 @@ import { AccessToken, StoreState } from "../../../types";
 import { NewsArticle } from "pakkasmarja-client";
 import { styles } from "../contracts/styles";
 import { Divider } from "react-native-elements";
+import BasicScrollLayout from "../../layout/BasicScrollLayout";
 
 /**
  * Component props
@@ -76,14 +77,14 @@ class NewsArticleScreen extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={{ padding: 15 }}>
           <Text style={[{ fontSize: 24 }, styles.TextBold]}>{this.state.newsArticle.title}</Text>
           <Moment
             style={{ fontSize: 16, marginBottom: 15, color: "gray" }}
             format="DD.MM.YYYY HH:mm" element={Text}
           >
-            {this.state.newsArticle.createdAt}
+            {this.state.newsArticle.createdAt ? this.state.newsArticle.createdAt.toString() : undefined}
           </Moment>
           <Divider />
         </View>
@@ -103,7 +104,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
             </html>`
           }}
         />
-      </BasicLayout>
+      </BasicScrollLayout>
     );
   }
 }

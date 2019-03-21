@@ -1,4 +1,4 @@
-import { Contract, ItemGroup, AreaDetail } from "pakkasmarja-client";
+import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction } from "pakkasmarja-client";
 
 export interface StoreState {
   accessToken?: AccessToken,
@@ -32,6 +32,14 @@ export interface AccessToken {
 export interface ContractTableData {
   contract: Contract,
   itemGroup?: ItemGroup
+}
+
+/**
+ * Interface for contract table data
+ */
+export interface WeekDeliveryPredictionTableData {
+  weekDeliveryPrediction: WeekDeliveryPrediction,
+  itemGroup: ItemGroup
 }
 
 /**

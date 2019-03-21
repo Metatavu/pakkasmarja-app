@@ -20,7 +20,9 @@ import DeliveriesScreen from "./components/screens/deliveries/DeliveriesScreen";
 import DeliveryScreen from "./components/screens/deliveries/DeliveryScreen";
 import PastDeliveriesScreen from "./components/screens/deliveries/PastDeliveriesScreen";
 import SuggestionsScreen from "./components/screens/deliveries/SuggestionsScreen";
-import WeeklyEstimationsScreen from "./components/screens/deliveries/WeeklyEstimationsScreen";
+import WeekDeliveryPredictionScreen from "./components/screens/deliveries/WeekDeliveryPredictionScreen";
+import NewWeekDeliveryPrediction from "./components/screens/deliveries/NewWeekDeliveryPrediction";
+import ViewWeekDeliveryPredictionScreen from "./components/screens/deliveries/ViewWeekDeliveryPredictionScreen"
 import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDeliveriesScreen";
 import NewDelivery from "./components/screens/deliveries/NewDelivery";
 
@@ -48,18 +50,20 @@ const RootStack = createStackNavigator({
   Delivery: DeliveryScreen,
   PastDeliveries: PastDeliveriesScreen,
   Suggestions: SuggestionsScreen,
-  WeeklyEstimations: WeeklyEstimationsScreen,
+  WeekDeliveryPrediction: WeekDeliveryPredictionScreen,
+  NewWeekDeliveryPrediction: NewWeekDeliveryPrediction,
+  ViewWeekDeliveryPrediction: ViewWeekDeliveryPredictionScreen,
   IncomingDeliveries: IncomingDeliveriesScreen,
   NewDelivery: NewDelivery
 }, {
-  defaultNavigationOptions: {
-    headerStyle: {
-      backgroundColor: "#E51D2A",
-      height: 70
+    defaultNavigationOptions: {
+      headerStyle: {
+        backgroundColor: "#E51D2A",
+        height: 70
+      },
     },
-  },
-  initialRouteName: "Login"
-});
+    initialRouteName: "Login"
+  });
 
 const AppContainer = createAppContainer(RootStack);
 

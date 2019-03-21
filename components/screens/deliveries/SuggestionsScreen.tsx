@@ -5,11 +5,8 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryData } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
-import { View, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
-import { Contract } from "pakkasmarja-client";
-import PakkasmarjaApi from "../../../api";
-import { styles } from "../contracts/styles"
-import { List, ListItem } from 'react-native-elements';
+import { View, ActivityIndicator, TouchableOpacity } from "react-native";
+import { styles } from "./styles.tsx";
 
 /**
  * Component props
@@ -28,7 +25,7 @@ interface State {
 };
 
 /**
- * Deliveries screen component class
+ * Suggestions component class
  */
 class SuggestionsScreen extends React.Component<Props, State> {
 

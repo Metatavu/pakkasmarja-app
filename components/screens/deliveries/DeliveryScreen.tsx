@@ -5,9 +5,9 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
-import { Contract } from "pakkasmarja-client";
+import { Contract, Delivery } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
-import { styles } from "../contracts/styles";
+import { styles } from "./styles.tsx";
 import { Button, Text } from 'react-native-elements';
 
 /**
@@ -23,12 +23,12 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  deliveries: DeliveryData[];
-  deliveryType: string;
+  delivery: Delivery;
+  editable: boolean;
 };
 
 /**
- * Deliveries screen component class
+ * Delivery component class
  */
 class DeliveryScreen extends React.Component<Props, State> {
 
@@ -41,8 +41,8 @@ class DeliveryScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
-      deliveries: [],
-      deliveryType: "FRESH"
+      editable: false,
+      delivery: {}
     };
   }
 
@@ -53,8 +53,12 @@ class DeliveryScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-  }
 
+    const delivery: Delivery = this.props.navigation.getParam('delivery');
+    const editable: boolean = this.props.navigation.getParam('editable');
+    this.setState({ delivery: delivery, editable: editable });
+
+  }
   static navigationOptions = {
     headerTitle: <TopBar
       showMenu={true}
@@ -77,13 +81,40 @@ class DeliveryScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-      <View>
-        <Text h1>Tulevat toimitukset</Text>
-        <Button
-          onPress={()=>{console.log("hello")}}
-          title="Uusi toimitus"
-        />
+        <View style={{ flex: 1, padding: 25 }}>
+          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>Tuote</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>{this.state.delivery.productId}</Text></View>
+          </View>
+          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>Määrä (KG)</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>{this.state.delivery.amount}</Text></View>
+          </View>
+          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>Toimituspäivä</Text></View>
+            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>{this.state.delivery.time}</Text></View>
+          </View>
+          {
+            this.state.editable &&
+            <React.Fragment>
+              <View style={[styles.center, { flex: 1, paddingVertical: 25 }]}>
+                <TouchableOpacity onPress={() => { console.log("Muokkaa napista") }}>
+                  <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
+                    <Text style={[styles.red,{ fontWeight: "bold", fontSize: 18, textDecorationLine: "underline" }]} >Muokkaa</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+              <View style={[styles.center, { flex: 1 }]}>
+                <TouchableOpacity
+                  style={[styles.begindeliveryButton, styles.center, { width: "70%", height: 60 }]}
+                  onPress={() => { console.log("Hello") }}>
+                  <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Aloita toimitus</Text>
+                </TouchableOpacity>
+              </View>
+            </React.Fragment>
+          }
         </View>
+
       </BasicScrollLayout>
     );
   }
