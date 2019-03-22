@@ -1,17 +1,23 @@
-import React from "react";
+import React, { Dispatch } from "react";
+import { connect } from "react-redux";
 import { Text } from "native-base";
+import * as actions from "../../../actions";
+import { AccessToken, StoreState } from "../../../types";
 import { View, TouchableOpacity, TextInput, Modal } from "react-native";
 import { styles } from "./styles.tsx";
 import { DeliveryNote } from "pakkasmarja-client";
+import PakkasmarjaApi from "../../../api";
 
 /**
  * Interface for component props
  */
 interface Props {
-  modalOpen: boolean,
+  accessToken?: AccessToken;
+  modalOpen: boolean;
   addDeliveryNote: (deliveryNote: DeliveryNote) => void;
   modalClose: () => void;
   deliverNoteText?: string;
+  deliveryId: string;
 };
 
 /**
@@ -19,7 +25,6 @@ interface Props {
  */
 interface State {
   modalOpen: boolean,
-
   id?: string;
   text?: string;
   image?: string;
@@ -28,7 +33,7 @@ interface State {
 /**
  * Contract proposal modal component class
  */
-export default class DeliveryNoteModal extends React.Component<Props, State> {
+class DeliveryNoteModal extends React.Component<Props, State> {
   /**
    * Constructor
    */
@@ -43,12 +48,19 @@ export default class DeliveryNoteModal extends React.Component<Props, State> {
    * Sends delivery note
    */
 
-  private sendDeliveryNote = () => {
+  private sendDeliveryNote = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
     const deliveryNote: DeliveryNote = {
-      id: "",
       text: this.state.text,
       image: this.state.image
     }
+
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+    await deliveriesService.createDeliveryNote(deliveryNote, this.props.deliveryId);
 
     this.props.addDeliveryNote(deliveryNote);
   }
@@ -118,3 +130,27 @@ export default class DeliveryNoteModal extends React.Component<Props, State> {
     );
   }
 }
+
+/**
+ * Redux mapper for mapping store state to component props
+ * 
+ * @param state store state
+ */
+function mapStateToProps(state: StoreState) {
+  return {
+    accessToken: state.accessToken
+  };
+}
+
+/**
+ * Redux mapper for mapping component dispatches 
+ * 
+ * @param dispatch dispatch method
+ */
+function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
+  return {
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(DeliveryNoteModal);

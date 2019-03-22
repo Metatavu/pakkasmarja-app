@@ -120,16 +120,21 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * Renders list items
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
-    if(!deliveryData|| ! deliveryData.product){
+    if (!deliveryData || !deliveryData.product) {
       return <Text></Text>;
     }
     const weekNumber = deliveryData.delivery.time;
-    const productName =  deliveryData.product.name ; // Onko se product.name vai product.unitName
+    const productName = deliveryData.product.name; // Onko se product.name vai product.unitName
     const productAmount = `${deliveryData.product.unitSize} G x ${deliveryData.product.units}`;
     const editable = false;
 
     return (
-      <TouchableOpacity key={deliveryData.delivery.id} style={styles.center} onPress={() => this.onListItemClick("Delivery", deliveryData, editable)}>
+      <TouchableOpacity key={deliveryData.delivery.id} style={styles.center} onPress={
+        () => this.onListItemClick("Delivery",
+          deliveryData.delivery.id,
+          deliveryData.product && deliveryData.product.id,
+          editable)
+      }>
         <View style={styles.renderCustomListItem}>
           <View style={{ flex: 2 }}>
             <View style={{ flex: 1 }}>
@@ -152,9 +157,10 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * @param screen screen
    * @param predictionTableData predictionTableData
    */
-  private onListItemClick = (screen: string, deliveryData: DeliveryProduct, editable: boolean) => {
+  private onListItemClick = (screen: string, deliveryId?: string, productId?: string, editable?: boolean) => {
     this.props.navigation.navigate(screen, {
-      deliveryData: deliveryData,
+      deliveryId: deliveryId,
+      productId: productId,
       editable: editable
     });
   }

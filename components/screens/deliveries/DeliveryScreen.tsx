@@ -5,10 +5,12 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
-import { Delivery } from "pakkasmarja-client";
+import { Delivery, Product } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
 import Moment from "react-moment";
+import PakkasmarjaApi from "../../../api";
+import { NavigationEvents } from 'react-navigation';
 
 /**
  * Component props
@@ -52,12 +54,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-
-    const deliveryData: DeliveryProduct = this.props.navigation.getParam('deliveryData');
-    const editable: boolean = this.props.navigation.getParam('editable');
-    this.setState({ editable: editable, deliveryData: deliveryData });
-    console.log(this.state.deliveryData);
-
+    this.loadData();
   }
   static navigationOptions = {
     headerTitle: <TopBar
@@ -83,6 +80,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     }
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+        <NavigationEvents onWillFocus={() => this.loadData() } />
         <View style={{ flex: 1, padding: 25 }}>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>Tuote</Text></View>
@@ -100,7 +98,7 @@ class DeliveryScreen extends React.Component<Props, State> {
             this.state.editable &&
             <React.Fragment>
               <View style={[styles.center, { flex: 1, paddingVertical: 25 }]}>
-                <TouchableOpacity onPress={() => { console.log("Muokkaa napista") }}>
+                <TouchableOpacity onPress={() => { this.props.navigation.navigate("EditDelivery", { deliveryData: this.state.deliveryData }) }}>
                   <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
                     <Text style={[styles.red, { fontWeight: "bold", fontSize: 18, textDecorationLine: "underline" }]} >Muokkaa</Text>
                   </View>
@@ -109,7 +107,7 @@ class DeliveryScreen extends React.Component<Props, State> {
               <View style={[styles.center, { flex: 1 }]}>
                 <TouchableOpacity
                   style={[styles.begindeliveryButton, styles.center, { width: "70%", height: 60 }]}
-                  onPress={() => { console.log("Hello") }}>
+                  onPress={() => { }}>
                   <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Aloita toimitus</Text>
                 </TouchableOpacity>
               </View>
@@ -118,6 +116,28 @@ class DeliveryScreen extends React.Component<Props, State> {
         </View>
       </BasicScrollLayout>
     );
+  }
+
+  /**
+   * Load data
+   */
+  private loadData = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    const deliveryId: string = this.props.navigation.getParam('deliveryId');
+    const productId: string = this.props.navigation.getParam('productId');
+    
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const productsService = Api.getProductsService(this.props.accessToken.access_token);
+    const delivery: Delivery = await deliveriesService.findDelivery(deliveryId);
+    const product: Product = await productsService.findProduct(productId);
+
+    const editable: boolean = this.props.navigation.getParam('editable');
+    const deliveryData = { delivery, product }
+
+    this.setState({ editable: editable, deliveryData: deliveryData });
   }
 }
 

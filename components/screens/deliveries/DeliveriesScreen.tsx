@@ -104,52 +104,52 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <Tabs>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"TUORETUOTTEET"}>
-            <Grid style={styles.listContainerStyle}>
+            <View style={{flex: 1, flexDirection: "column"}}>
               {
-                deliveryList.map((listItem) => (
-                  <Row style={{width: 40}}> 
-                    <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
-                      <Col>
+                deliveryList.map((listItem) => {
+                  return (
+                    <View key={listItem.screen} style={{width: "100%", flex: 1, flexDirection: "row"}}> 
+                      <View style={{width: 40, alignContent: "center", alignItems: "center"}}>
                         <Image
                           source={listItem.icon}
                         />
-                      </Col>
-                      <Col>
-                        <View style={styles.listItemContainerStyle}>
-                          <Text>
+                      </View>
+                      <View style={{width: "70%", paddingTop: 10}}>
+                        <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
+                          <Text style={{fontWeight: "bold", fontSize: 20}}>
                             {listItem.name}
                           </Text>
-                        </View>
-                      </Col>
-                    </TouchableOpacity>
-                  </Row>
-                ))
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
               }
-            </Grid>
+            </View>
           </Tab>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"PAKASTEET"}>
-            <Grid style={styles.listContainerStyle}>
+          <View style={{flex: 1, flexDirection: "column"}}>
               {
-                deliveryList.map((listItem) => (
-                  <Row style={{width: 40}}> 
-                    <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
-                      <Col>
+                deliveryList.map((listItem) => {
+                  return (
+                    <View key={listItem.screen} style={{width: "100%", flex: 1, flexDirection: "row", height: 40}}> 
+                      <View style={{width: 40, alignContent: "center", alignItems: "center"}}>
                         <Image
                           source={listItem.icon}
                         />
-                      </Col>
-                      <Col>
-                        <View style={styles.listItemContainerStyle}>
+                      </View>
+                      <View style={{width: "70%", paddingTop: 10}}>
+                        <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
                           <Text>
                             {listItem.name}
                           </Text>
-                        </View>
-                      </Col>
-                    </TouchableOpacity>
-                  </Row>
-                ))
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
               }
-            </Grid>
+            </View>
           </Tab>
         </Tabs>
       </BasicScrollLayout>

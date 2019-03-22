@@ -58,7 +58,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = Api.getProductsService(this.props.accessToken.access_token);
 
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries();
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(); // ei voi muuttaa maxResultsia, backend hajalla
     const incomingDeliveries: Delivery[] = deliveries.filter(delivery => delivery.status !== "DONE" && delivery.status !== "REJECTED");
 
     const products: Product[] = await productsService.listProducts();
@@ -68,7 +68,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       const product = products.find(product => product.id === delivery.productId);
       deliveriesAndProducts.push({
         delivery: delivery,
-        product: product 
+        product: product
       });
     });
 
@@ -117,6 +117,8 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
    * Renders elements depending on delivery status
    */
   private renderStatus = (deliveryData: DeliveryProduct) => {
+
+
     const status = deliveryData.delivery.status;
     if (status === "PROPOSAL") {
       return (
@@ -135,7 +137,14 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
         <View style={styles.center}>
           <TouchableOpacity
             style={[styles.begindeliveryButton, styles.center, { width: "100%", height: 40 }]}
-            onPress={() => { this.props.navigation.navigate("Delivery", { deliveryData: deliveryData, editable: true }) }}>
+            onPress={() => {
+              this.props.navigation.navigate("Delivery", {
+                deliveryId: deliveryData.delivery.id,
+                productId: deliveryData.product ? deliveryData.product.id : "",
+                editable: true
+              })
+            }}
+          >
             <Text style={styles.buttonText}>Aloita toimitus</Text>
           </TouchableOpacity>
         </View>
@@ -176,7 +185,6 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
               this.state.deliveryData.map((delivery) => {
-                console.log(delivery);
                 return this.renderListItems(delivery)
               })
             }

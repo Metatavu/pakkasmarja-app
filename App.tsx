@@ -25,6 +25,7 @@ import NewWeekDeliveryPrediction from "./components/screens/deliveries/NewWeekDe
 import ViewWeekDeliveryPredictionScreen from "./components/screens/deliveries/ViewWeekDeliveryPredictionScreen"
 import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDeliveriesScreen";
 import NewDelivery from "./components/screens/deliveries/NewDelivery";
+import EditDelivery from "./components/screens/deliveries/EditDelivery";
 
 
 
@@ -54,7 +55,8 @@ const RootStack = createStackNavigator({
   NewWeekDeliveryPrediction: NewWeekDeliveryPrediction,
   ViewWeekDeliveryPrediction: ViewWeekDeliveryPredictionScreen,
   IncomingDeliveries: IncomingDeliveriesScreen,
-  NewDelivery: NewDelivery
+  NewDelivery: NewDelivery,
+  EditDelivery: EditDelivery
 }, {
     defaultNavigationOptions: {
       headerStyle: {

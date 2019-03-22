@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TextInput, TouchableOpacity } from "react-native";
 import { Delivery, Product, DeliveryStatus, DeliveryQuality, DeliveryNote, DeliveryPlace } from "pakkasmarja-client";
@@ -13,7 +13,6 @@ import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
 import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
-import IncomingDeliveriesScreen from "./IncomingDeliveriesScreen";
 
 /**
  * Component props
@@ -27,30 +26,31 @@ interface Props {
  * Component state
  */
 interface State {
-  loading: boolean;
-  modalOpen: boolean;
-  datepickerVisible: boolean,
+  deliveryPlaces?: DeliveryPlace[];
+  deliveryPlace?: DeliveryPlace;
+  deliveryData?: DeliveryProduct;
   quality: DeliveryQuality;
-  status: DeliveryStatus;
   products: Product[];
-  id?: string;
+  datepickerVisible: boolean,
+  modalOpen: boolean;
+  loading: boolean;
   productId?: string;
   userId?: string;
   price: string;
   beforeTime?: string;
-  hoursTestData: number[];
+  id?: string;
   amount: number;
   time?: Date;
   selectedDate?: Date;
-  deliveryPlaces?: DeliveryPlace[];
-  deliveryPlace?: DeliveryPlace;
+
+  hoursTestData: number[];
 
 };
 
 /**
- * New delivery component class
+ * Edit delivery component class
  */
-class NewDelivery extends React.Component<Props, State> {
+class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Constructor
@@ -63,11 +63,9 @@ class NewDelivery extends React.Component<Props, State> {
       loading: false,
       datepickerVisible: false,
       modalOpen: false,
-      status: "PROPOSAL",
       quality: "NORMAL",
       amount: 0,
       price: "0",
-      selectedDate: new Date(),
 
       hoursTestData: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
 
@@ -89,8 +87,24 @@ class NewDelivery extends React.Component<Props, State> {
     const products: Product[] = await productsService.listProducts();
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
+    const deliveryData: DeliveryProduct = this.props.navigation.getParam('deliveryData');
+    this.setState({ deliveryData: deliveryData });
+    console.log(this.state.deliveryData);
 
-    this.setState({ products, deliveryPlaces, userId: this.props.accessToken.userId, productId: products[0].id, deliveryPlace: deliveryPlaces[0] });
+
+    if (deliveryData && deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
+      const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
+      this.setState({
+        products: products,
+        deliveryPlaces: deliveryPlaces,
+        userId: this.props.accessToken.userId,
+        productId: deliveryData.product.id,
+        deliveryPlace: deliveryPlace,
+        amount: deliveryData.delivery.amount,
+        selectedDate: deliveryData.delivery.time
+      });
+    }
+
   }
 
   static navigationOptions = {
@@ -198,7 +212,7 @@ class NewDelivery extends React.Component<Props, State> {
               selectedValue={this.state.deliveryPlace}
               style={{ height: 50, width: "100%" }}
               onValueChange={(itemValue, itemIndex) =>
-                this.onUserInputChange("deliveryPlace", itemValue)
+                this.onDeliveryPlaceInputChange(itemValue)
               }>
               {
                 this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
@@ -218,13 +232,13 @@ class NewDelivery extends React.Component<Props, State> {
               </TouchableOpacity>
             </View>
             <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60 }]} onPress={() => { this.handleDeliverySubmit() }}>
+              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60 }]} onPress={this.handleDeliveryUpdate}>
                 <Text style={styles.buttonText}>Tallenna</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
-        <DeliveryNoteModal deliveryId="" addDeliveryNote={this.addDeliveryNote} modalClose={() => this.setState({ modalOpen: false })} modalOpen={this.state.modalOpen} />
+        <DeliveryNoteModal deliveryId={""} addDeliveryNote={this.addDeliveryNote} modalClose={() => this.setState({ modalOpen: false })} modalOpen={this.state.modalOpen} />
       </BasicScrollLayout>
     );
   }
@@ -246,12 +260,18 @@ class NewDelivery extends React.Component<Props, State> {
     state[key] = value;
     this.setState(state);
   }
+  /**
+   * Handles new delivery data
+   */
+  private onDeliveryPlaceInputChange = (value: DeliveryPlace) => {
+    this.setState({ deliveryPlace: value });
+  }
 
   /**
-   * Handles delivery submit
+   * Handles delivery update
    */
-  private handleDeliverySubmit = async () => {
-    if (!this.props.accessToken||!this.state.deliveryPlace) {
+  private handleDeliveryUpdate = async () => {
+    if (!this.props.accessToken || !this.state.deliveryPlace || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id) {
       return;
     }
     const Api = new PakkasmarjaApi();
@@ -269,12 +289,11 @@ class NewDelivery extends React.Component<Props, State> {
       deliveryPlaceId: this.state.deliveryPlace.id
     }
 
-
-
-    const data = await deliveryService.createDelivery(delivery);
-    this.props.navigation.navigate("IncomingDeliveries");
-    
-    //KUN PAINETAAN TALLENNA NIIN LÄHETTÄÄ DELIVERYN
+    const data = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    this.props.navigation.navigate("Delivery", {
+      deliveryId: this.state.deliveryData.delivery.id,
+      productId: this.state.deliveryData.product.id
+    });
   }
 
   /**
@@ -318,4 +337,4 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(NewDelivery);
+export default connect(mapStateToProps, mapDispatchToProps)(EditDelivery);
