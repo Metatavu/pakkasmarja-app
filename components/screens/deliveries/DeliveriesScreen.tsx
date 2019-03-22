@@ -5,10 +5,11 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
 import { Tabs, Tab, Thumbnail } from "native-base";
-import { TouchableOpacity } from "react-native";
+import { TouchableOpacity, Image, View, Text } from "react-native";
 import { List, ListItem } from 'react-native-elements';
 import { styles } from './styles.tsx'
 import { PREDICTIONS_ICON, RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
+import { Col, Row, Grid } from "react-native-easy-grid";
 
 /**
  * Component props
@@ -63,6 +64,21 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Render icon
+   * 
+   * @param src icon source
+   */
+  private renderIcon = (src: any) => {
+    return (
+      <Thumbnail 
+        square 
+        style={{ maxHeight: "100%", maxWidth: "100%" }} 
+        source={src} 
+      />
+    );
+  }
+
+  /**
    * Render method
    */
   public render() {
@@ -85,42 +101,55 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
     }];
 
     return (
-
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <Tabs>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"TUORETUOTTEET"}>
-            <List containerStyle={styles.listContainerStyle}>
+            <Grid style={styles.listContainerStyle}>
               {
                 deliveryList.map((listItem) => (
-                  <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
-                    <ListItem
-                      key={listItem.name}
-                      containerStyle={styles.listItemContainerStyle}
-                      titleStyle={[styles.listItemTitle, {paddingLeft:10, color:"black"}]}
-                      title={listItem.name}
-                      leftIcon={<Thumbnail square small source={listItem.icon} />}
-                    />
-                  </TouchableOpacity>
+                  <Row style={{width: 40}}> 
+                    <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
+                      <Col>
+                        <Image
+                          source={listItem.icon}
+                        />
+                      </Col>
+                      <Col>
+                        <View style={styles.listItemContainerStyle}>
+                          <Text>
+                            {listItem.name}
+                          </Text>
+                        </View>
+                      </Col>
+                    </TouchableOpacity>
+                  </Row>
                 ))
               }
-            </List>
+            </Grid>
           </Tab>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"PAKASTEET"}>
-            <List containerStyle={styles.listContainerStyle}>
+            <Grid style={styles.listContainerStyle}>
               {
                 deliveryList.map((listItem) => (
-                  <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FROZEN") }}>
-                    <ListItem
-                      containerStyle={styles.listItemContainerStyle}
-                      titleStyle={styles.listItemTitle}
-                      key={listItem.name}
-                      title={listItem.name}
-                      leftIcon={{ type: 'font-awesome', name: 'truck', color: "red" }}
-                    />
-                  </TouchableOpacity>
+                  <Row style={{width: 40}}> 
+                    <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
+                      <Col>
+                        <Image
+                          source={listItem.icon}
+                        />
+                      </Col>
+                      <Col>
+                        <View style={styles.listItemContainerStyle}>
+                          <Text>
+                            {listItem.name}
+                          </Text>
+                        </View>
+                      </Col>
+                    </TouchableOpacity>
+                  </Row>
                 ))
               }
-            </List>
+            </Grid>
           </Tab>
         </Tabs>
       </BasicScrollLayout>

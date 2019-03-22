@@ -5,13 +5,14 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TextInput, TouchableOpacity } from "react-native";
-import { Delivery, Product, DeliveryStatus, DeliveryQuality, DeliveryNote } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryStatus, DeliveryQuality, DeliveryNote, DeliveryPlace } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
 import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
 import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
+import PakkasmarjaApi from "../../../api";
 
 /**
  * Component props
@@ -26,22 +27,22 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  products: Product[];
-  id: string;
-  productId: string;
-  userId: string;
-  status: DeliveryStatus;
-  amount: number;
-  price: string;
-  quality: DeliveryQuality;
-  time: Date;
-  beforeTime: string;
-  selectedDate?: Date;
   modalOpen: boolean;
-
-  hoursTestData: number[];
-
   datepickerVisible: boolean,
+  quality: DeliveryQuality;
+  status: DeliveryStatus;
+  products: Product[];
+  id?: string;
+  productId?: string;
+  userId?: string;
+  price: string;
+  beforeTime?: string;
+  hoursTestData: number[];
+  amount: number;
+  time?: Date;
+  selectedDate?: Date;
+  deliveryPlaces?: DeliveryPlace[];
+  deliveryPlace?: DeliveryPlace;
 
 };
 
@@ -61,38 +62,17 @@ class NewDelivery extends React.Component<Props, State> {
       loading: false,
       datepickerVisible: false,
       modalOpen: false,
-
-      id: "",
-      productId: "",
-      userId: "",
       status: "PROPOSAL",
-      amount: 100,
-      price: "0",
       quality: "NORMAL",
-      time: new Date(),
-      beforeTime: "0",
+      amount: 0,
+      price: "0",
 
       hoursTestData: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
 
-      products: [{
-        id: "0",
-        itemGroupId: "0",
-        name: "Mansikka",
-        units: 200,
-        unitSize: 10,
-        unitName: "UnitName"
-      }, {
-        id: "1",
-        itemGroupId: "1",
-        name: "Mustikka",
-        units: 400,
-        unitSize: 10,
-        unitName: "UnitName"
-      }]
+      products: []
     };
 
   }
-
 
   /**
    * Component did mount life-cycle event
@@ -101,6 +81,14 @@ class NewDelivery extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+
+    const Api = new PakkasmarjaApi();
+    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
+    const products: Product[] = await productsService.listProducts();
+    const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
+    const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
+
+    this.setState({ products, deliveryPlaces, userId: this.props.accessToken.userId, productId: products[0].id, deliveryPlace: deliveryPlaces[0] });
   }
 
   static navigationOptions = {
@@ -203,8 +191,24 @@ class NewDelivery extends React.Component<Props, State> {
               </Picker>
             </View>
           </View>
+          <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
+            <Picker
+              selectedValue={this.state.deliveryPlace}
+              style={{ height: 50, width: "100%" }}
+              onValueChange={(itemValue, itemIndex) =>
+                this.onUserInputChange("deliveryPlace", itemValue)
+              }>
+              {
+                this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
+                  return (
+                    <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace} />
+                  );
+                })
+              }
+            </Picker>
+          </View>
           <View style={{ flex: 1 }}>
-            <View style={[styles.center, { flex: 1, paddingVertical: 25 }]}>
+            <View style={[styles.center, { flex: 1, paddingVertical: 15 }]}>
               <TouchableOpacity onPress={() => this.setState({ modalOpen: true })}>
                 <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
                   <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" /><Text style={{ color: "#e01e36" }} >Lisää huomio</Text>
@@ -244,20 +248,30 @@ class NewDelivery extends React.Component<Props, State> {
   /**
    * Handles delivery submit
    */
-  private handleDeliverySubmit = () => {
+  private handleDeliverySubmit = async () => {
+    if (!this.props.accessToken||!this.state.deliveryPlace) {
+      return;
+    }
+    const Api = new PakkasmarjaApi();
+    const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const delivery: Delivery =
     {
       id: this.state.id,
       productId: this.state.productId,
       userId: this.state.userId,
       time: this.state.selectedDate,
-      status: this.state.status,
+      status: "PLANNED",
       amount: this.state.amount,
       price: this.state.price,
       quality: this.state.quality,
+      deliveryPlaceId: this.state.deliveryPlace.id
     }
 
-    console.log(delivery);
+
+
+    const data = await deliveryService.createDelivery(delivery);
+
+    console.log(data);
     //KUN PAINETAAN TALLENNA NIIN LÄHETTÄÄ DELIVERYN
   }
 

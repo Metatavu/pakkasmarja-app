@@ -9,7 +9,8 @@ import { Delivery, Product } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native';
-import { Icon } from "native-base";
+import { Thumbnail } from "native-base";
+import { INCOMING_DELIVERIES_LOGO } from "../../../static/images";
 
 /**
  * Component props
@@ -57,17 +58,17 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = Api.getProductsService(this.props.accessToken.access_token);
 
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 0, 0);
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries();
     const incomingDeliveries: Delivery[] = deliveries.filter(delivery => delivery.status !== "DONE" && delivery.status !== "REJECTED");
-    
-    const products: Product[] = await productsService.listProducts(undefined, undefined, undefined, 0, 0);
+
+    const products: Product[] = await productsService.listProducts();
 
     const deliveriesAndProducts: DeliveryProduct[] = [];
     incomingDeliveries.forEach((delivery) => {
-      const product =  products.find(product => product.id === delivery.productId);
+      const product = products.find(product => product.id === delivery.productId);
       deliveriesAndProducts.push({
         delivery: delivery,
-        product: product
+        product: product 
       });
     });
 
@@ -106,7 +107,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
           </View>
         </View>
         <View style={{ flex: 1 }}>
-          {this.renderStatus(delivery.delivery)}
+          {this.renderStatus(delivery)}
         </View>
       </View>
     );
@@ -115,8 +116,8 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   /**
    * Renders elements depending on delivery status
    */
-  private renderStatus = (delivery: Delivery) => {
-    const status = delivery.status;
+  private renderStatus = (deliveryData: DeliveryProduct) => {
+    const status = deliveryData.delivery.status;
     if (status === "PROPOSAL") {
       return (
         <View style={styles.center}>
@@ -134,7 +135,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
         <View style={styles.center}>
           <TouchableOpacity
             style={[styles.begindeliveryButton, styles.center, { width: "100%", height: 40 }]}
-            onPress={() => { this.props.navigation.navigate("Delivery", { delivery: delivery, editable: true }) }}>
+            onPress={() => { this.props.navigation.navigate("Delivery", { deliveryData: deliveryData, editable: true }) }}>
             <Text style={styles.buttonText}>Aloita toimitus</Text>
           </TouchableOpacity>
         </View>
@@ -164,7 +165,10 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View >
           <View style={[styles.center, styles.topViewWithButton]}>
-            <Text style={{ color: "black", fontWeight: '700', fontSize: 18, marginTop: 30 }}><Icon type="MaterialCommunityIcons" name="truck-delivery" style={styles.red} />Tulevat toimitukset</Text>
+            <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
+              <Thumbnail square small source={INCOMING_DELIVERIES_LOGO} style={{ marginRight: 10 }} />
+              <Text style={styles.viewHeaderText}>Tulevat toimitukset</Text>
+            </View>
             <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery") }}>
               <Text style={styles.buttonText}>Uusi toimitus</Text>
             </TouchableOpacity>
@@ -172,6 +176,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
               this.state.deliveryData.map((delivery) => {
+                console.log(delivery);
                 return this.renderListItems(delivery)
               })
             }

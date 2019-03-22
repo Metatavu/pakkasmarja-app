@@ -85,7 +85,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
 
     if (itemGroupCategory === this.state.productType) {
       return (
-        <TouchableOpacity key={weekDeliveryPredictionId} style={styles.center} onPress={() => this.onListItemClick("ViewWeekDeliveryPrediction", predictionTableData)}>
+        <TouchableOpacity key={predictionTableData.weekDeliveryPrediction.id} style={styles.center} onPress={() => this.onListItemClick("ViewWeekDeliveryPrediction", predictionTableData)}>
           <View style={styles.renderCustomListItem}>
             <View style={{ flex: 2 }}>
               <View style={{ flex: 1 }}>
@@ -168,7 +168,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
           <View style={[styles.center, styles.topViewWithButton]}>
             <View style={[styles.center,{flexDirection:"row", marginTop:30}]}>
               <Thumbnail square small source={PREDICTIONS_ICON} style={{marginRight:10}}/>
-              <Text style={{ color: "black", fontWeight: '700', fontSize: 18 }}>Viikkoennusteet</Text>
+              <Text style={styles.viewHeaderText}>Viikkoennusteet</Text>
             </View>
             <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewWeekDeliveryPrediction", { itemGroups: this.state.itemGroups }) }}>
               <Text style={styles.buttonText}>Uusi viikkoennuste</Text>

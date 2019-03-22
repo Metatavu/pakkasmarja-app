@@ -48,6 +48,11 @@ export const styles = StyleSheet.create({
     fontSize: 25,
     paddingBottom: 20
   },
+  viewHeaderText:{
+    color: "black", 
+    fontWeight: '700', 
+    fontSize: 18 
+  },
   text: {
     fontSize: 20,
     paddingTop: 7,
@@ -132,5 +137,9 @@ export const styles = StyleSheet.create({
   textPrediction: {
     color: "black",
     fontSize: 16,
+  },
+  itemIconSize:{
+    width:24,
+    height:24
   }
 });
