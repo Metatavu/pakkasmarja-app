@@ -1,4 +1,4 @@
-import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction } from "pakkasmarja-client";
+import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction, Delivery, Product  } from "pakkasmarja-client";
 
 export interface StoreState {
   accessToken?: AccessToken,
@@ -87,4 +87,26 @@ export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAll
 export interface ModalButton {
   text: string,
   onPress: () => void
+}
+
+/**
+ * Interface for Week day object
+ */
+export interface WeekDay {
+  name: Day;
+  displayName: string;
+  value: boolean;
+};
+
+/**
+ * Type for day
+ */
+type Day = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
+
+/**
+ * Interface for delivery and product
+ */
+export interface DeliveryProduct {
+  delivery: Delivery;
+  product?: Product;
 }

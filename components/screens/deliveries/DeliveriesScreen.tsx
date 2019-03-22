@@ -28,7 +28,7 @@ interface State {
 /**
  * Deliveries screen component class
  */
-class DeliveriesScreen extends React.Component<Props, State> {
+export default class DeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
@@ -40,15 +40,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
     this.state = {
       loading: false
     };
-  }
-
-  /**
-   * Component did mount life-cycle event
-   */
-  public async componentDidMount() {
-    if (!this.props.accessToken) {
-      return;
-    }
   }
 
   static navigationOptions = {
@@ -63,6 +54,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * On delivery item click
    * 
    * @param screen screen
+   * @param type type
    */
   private onDeliveryItemClick = (screen: string, type: string) => {
     this.props.navigation.navigate(screen, {
@@ -135,27 +127,3 @@ class DeliveriesScreen extends React.Component<Props, State> {
     );
   }
 }
-
-/**
- * Redux mapper for mapping store state to component props
- * 
- * @param state store state
- */
-function mapStateToProps(state: StoreState) {
-  return {
-    accessToken: state.accessToken
-  };
-}
-
-/**
- * Redux mapper for mapping component dispatches 
- * 
- * @param dispatch dispatch method
- */
-function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
-  return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
-  };
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(DeliveriesScreen);

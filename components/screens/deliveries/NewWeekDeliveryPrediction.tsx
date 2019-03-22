@@ -2,11 +2,11 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, WeekDay } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Text, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
-import { WeekDeliveryPrediction, ItemGroup } from "pakkasmarja-client";
+import { WeekDeliveryPrediction, ItemGroup, WeekDeliveryPredictionDays } from "pakkasmarja-client";
 import { Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input';
 import moment from "moment";
@@ -29,7 +29,7 @@ interface State {
   selectedItemGroup: ItemGroup;
   itemGroupIndex: number;
   amount: number;
-  weekDays: { name: string, value: boolean }[];
+  weekDays: WeekDay[];
   lastWeeksDeliveryPredictionTotalAmount: number;
   averageDailyAmount: number;
   percentageAmount: number;
@@ -57,13 +57,13 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
       amount: 0,
       selectedItemGroup: {},
       weekDays: [
-        { name: "monday", value: false },
-        { name: "tuesday", value: false },
-        { name: "wednesday", value: false },
-        { name: "thursday", value: false },
-        { name: "friday", value: false },
-        { name: "saturday", value: false },
-        { name: "sunday", value: false },
+        { name: "monday", displayName: "Maanantai", value: false },
+        { name: "tuesday", displayName: "Tiistai", value: false },
+        { name: "wednesday", displayName: "Keskiviikko", value: false },
+        { name: "thursday", displayName: "Torstai", value: false },
+        { name: "friday", displayName: "Perjantai", value: false },
+        { name: "saturday", displayName: "Lauantai", value: false },
+        { name: "sunday", displayName: "Sunnuntai", value: false },
       ]
     };
   }
@@ -91,6 +91,168 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
   };
 
   /**
+   * Renders one radio button
+   * 
+   * @param selected selected
+   * @param label label
+   * @param index index
+   */
+  private renderRadioButton = (selected: boolean, label: string, index: number) => {
+    return (
+      <View key={label} style={{ flex: 1, flexDirection: "row", marginVertical: 5 }}>
+        <TouchableOpacity style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end", paddingVertical: 5 }} onPress={() => {
+          this.changeWeekDayValue(selected, index);
+        }}>
+          <View style={{ flex: 1 }}>
+            <View style={{
+              height: 26,
+              width: 26,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: '#e01e36',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              {
+                selected ?
+                  <View style={{
+                    height: 12,
+                    width: 12,
+                    borderRadius: 6,
+                    backgroundColor: '#e01e36',
+                  }} />
+                  : null
+              }
+            </View>
+          </View>
+        </TouchableOpacity>
+        <View style={{ flex: 1.5, justifyContent: "flex-start", alignItems: "flex-start" }}>
+          <Text style={[styles.textPrediction, { paddingLeft: 15, paddingVertical: 5 }]}>
+            {label}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  /**
+   * Sends new week delivery prediction
+   */
+  private createNewWeekDeliveryPrediction = async () => {
+    if (!this.props.accessToken || !this.state.selectedItemGroup.id) {
+      return;
+    }
+
+    const weekDeliveryPredictionDays: WeekDeliveryPredictionDays = {};
+
+    this.state.weekDays.forEach((day: WeekDay) => {
+      weekDeliveryPredictionDays[day.name] = day.value;
+    });
+
+    const weekDeliveryPrediction: WeekDeliveryPrediction = {
+      itemGroupId: this.state.selectedItemGroup.id,
+      userId: this.props.accessToken.userId,
+      amount: this.state.amount,
+      weekNumber: this.getWeekNumber(),
+      year: this.getYear(),
+      days: weekDeliveryPredictionDays
+    }
+
+    const Api = new PakkasmarjaApi();
+    const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
+    await weekDeliveryPredictionService.createWeekDeliveryPrediction(weekDeliveryPrediction);
+
+    this.props.navigation.navigate("Deliveries");
+  }
+
+  /**
+   * Handle value change
+   * 
+   * @param value value
+   */
+  private handleValueChange = (value: number) => {
+    const averageDailyAmount: number = Math.round(value / 9);
+    const percentageAmount: number = this.state.lastWeeksDeliveryPredictionTotalAmount / value; // täää pitää tehhä
+    this.setState({ amount: value, averageDailyAmount: averageDailyAmount, percentageAmount: percentageAmount });
+  }
+
+  /**
+   * Set last weeks total to state
+   */
+  private setLastWeeksTotal = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const lastWeekNumber: number = this.getWeekNumber() - 1 == -1 ? 52 : this.getWeekNumber() - 1;
+    const Api = new PakkasmarjaApi();
+    const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
+    const filteredByWeekNumber = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, undefined, lastWeekNumber);
+    
+    filteredByWeekNumber.forEach((weekDeliveryPrediction) => {
+      const amount: number = weekDeliveryPrediction.amount;
+      const totalAmount = this.state.lastWeeksDeliveryPredictionTotalAmount + amount;
+      this.setState({ lastWeeksDeliveryPredictionTotalAmount: totalAmount });
+    });
+  }
+
+  /**
+   * Get week number
+   * 
+   * @return current week number
+   */
+  private getWeekNumber = () => {
+    const date: Date = new Date();
+    return Number(moment(date).format("W"));
+  }
+
+  /**
+   * Get year
+   * 
+   * @return current year
+   */
+  private getYear = () => {
+    const date: Date = new Date();
+    return moment(date).year();
+  }
+
+  /**
+   * Changes value of radio buttons
+   * 
+   * @param selected selected
+   * @param index index
+   */
+  private changeWeekDayValue = (selected: boolean, index: number) => {
+    const weekDays = this.state.weekDays;
+    const day = weekDays[index];
+
+    day.value = !selected;
+    weekDays[index] = day
+
+    this.setState({ weekDays });
+  }
+
+  /**
+   * Changes item group
+   * 
+   * @param action action
+   */
+  private changeItemGroup = (action: string) => {
+    const maxValue: number = this.state.itemGroups.length - 1;
+    const minValue: number = 0;
+
+    if (action === "next" && this.state.itemGroupIndex !== maxValue) {
+      this.setState({ itemGroupIndex: this.state.itemGroupIndex + 1 });
+    }
+
+    if (action === "previous" && this.state.itemGroupIndex !== minValue) {
+      this.setState({ itemGroupIndex: this.state.itemGroupIndex - 1 });
+    }
+
+    this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex] });
+  }
+
+  /**
    * Render method
    */
   public render() {
@@ -105,14 +267,14 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
           <View style={styles.center}>
-            <TouchableOpacity onPress={() => { this.changeItemGroup("minus") }} >
+            <TouchableOpacity onPress={() => { this.changeItemGroup("previous") }} >
               <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
             </TouchableOpacity>
           </View>
           <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
             <Text style={{ fontWeight: "bold", fontSize: 24, color: "black" }}>{this.state.selectedItemGroup.displayName}</Text>
           </View>
-          <TouchableOpacity onPress={() => { this.changeItemGroup("add") }} >
+          <TouchableOpacity onPress={() => { this.changeItemGroup("next") }} >
             <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
           </TouchableOpacity>
         </View>
@@ -169,7 +331,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
             {
               this.state.weekDays.map((day, index) => {
                 return (
-                  this.RadioButton(day.value, day.name, index)
+                  this.renderRadioButton(day.value, day.name, index)
                 );
               })
 
@@ -177,151 +339,12 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
           </View>
         </View>
         <View style={styles.center}>
-          <TouchableOpacity style={[styles.deliveriesButton, { width: "70%", height: 60, marginTop: 10, marginBottom: 20 }]} onPress={() => { this.sendNewWeekDeliveryPrediction() }}>
+          <TouchableOpacity style={[styles.deliveriesButton, { width: "70%", height: 60, marginTop: 10, marginBottom: 20 }]} onPress={() => { this.createNewWeekDeliveryPrediction() }}>
             <Text style={styles.buttonText}>Lähetä viikkoennuste</Text>
           </TouchableOpacity>
         </View>
       </BasicScrollLayout>
     );
-  }
-
-  /**
-   * Renders one radio button
-   */
-  private RadioButton = (selected: boolean, label: string, index: number) => {
-    return (
-      <View key={label} style={{ flex: 1, flexDirection: "row", marginVertical: 5 }}>
-        <TouchableOpacity style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end", paddingVertical: 5 }} onPress={() => {
-          this.changeWeekDayValue(selected, index);
-        }}>
-          <View style={{ flex: 1 }}>
-            <View style={{
-              height: 26,
-              width: 26,
-              borderRadius: 12,
-              borderWidth: 2,
-              borderColor: '#e01e36',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              {
-                selected ?
-                  <View style={{
-                    height: 12,
-                    width: 12,
-                    borderRadius: 6,
-                    backgroundColor: '#e01e36',
-                  }} />
-                  : null
-              }
-            </View>
-          </View>
-        </TouchableOpacity>
-        <View style={{ flex: 1.5, justifyContent: "flex-start", alignItems: "flex-start" }}>
-          <Text style={[styles.textPrediction, { paddingLeft: 15, paddingVertical: 5 }]}>{label}</Text>
-        </View>
-      </View>
-    );
-  }
-
-  /**
-   * Sends new week delivery prediction
-   */
-  private sendNewWeekDeliveryPrediction = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-
-    const weekDeliveryPredictionDays: any = {};
-    this.state.weekDays.forEach((day) => {
-      weekDeliveryPredictionDays[day.name] = day.value;
-    });
-    if (this.state.selectedItemGroup.id) {
-      const weekDeliveryPrediction: WeekDeliveryPrediction = {
-        itemGroupId: "A", // this.state.selectedItemGroup.id  ei ole oikea, tietokannassa on externalId? ja itemgroup.id on jotakin muuta
-        userId: this.props.accessToken.userId,
-        amount: this.state.amount,
-        weekNumber: this.getWeekNumber(),
-        year: this.getYear(),
-        days: weekDeliveryPredictionDays
-      }
-      const Api = new PakkasmarjaApi();
-      const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
-      await weekDeliveryPredictionService.createWeekDeliveryPrediction(weekDeliveryPrediction);
-      this.props.navigation.navigate("Deliveries");
-    }
-  }
-
-  /**
-   * Handle value change
-   */
-  private handleValueChange = (value: number) => {
-    const averageDailyAmount: number = Math.round(value / 9);
-    const percentageAmount: number = this.state.lastWeeksDeliveryPredictionTotalAmount / value; // täää pitää tehhä
-    this.setState({ amount: value, averageDailyAmount: averageDailyAmount, percentageAmount: percentageAmount });
-  }
-
-  /**
-   * Set last weeks total to state
-   */
-  private setLastWeeksTotal = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-    const lastWeekNumber: number = this.getWeekNumber() - 1 == -1 ? 52 : this.getWeekNumber() - 1;
-    const Api = new PakkasmarjaApi();
-    const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
-    const filteredByWeekNumber = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, undefined, lastWeekNumber);
-    filteredByWeekNumber.forEach(async (weekDeliveryPrediction) => {
-      const amount: number = await weekDeliveryPrediction.amount;
-      let totalAmount = this.state.lastWeeksDeliveryPredictionTotalAmount + amount;
-      this.setState({ lastWeeksDeliveryPredictionTotalAmount: totalAmount });
-    });
-  }
-
-  /**
-   * Get week number
-   */
-  private getWeekNumber = () => {
-    const date: Date = new Date();
-    return Number(moment(date).format("W"));
-  }
-
-  /**
-   * Get year
-   */
-  private getYear = () => {
-    const date: Date = new Date();
-    return moment(date).year();
-  }
-
-  /**
-   * Changes value of radio buttons
-   */
-  private changeWeekDayValue = (selected: boolean, index: number) => {
-    let weekDays = [...this.state.weekDays];
-    let day = { ...weekDays[index] }
-    day.value = !selected;
-    weekDays[index] = day
-    this.setState({ weekDays });
-  }
-
-  /**
-   * Changes item group
-   */
-  private changeItemGroup = (action: string) => {
-    const maxValue: number = this.state.itemGroups.length - 1;
-    const minValue: number = 0;
-    let value: number = this.state.itemGroupIndex;
-    if (action === "add" && value !== maxValue) {
-      value++;
-      this.setState({ itemGroupIndex: value });
-    }
-    if (action === "minus" && value !== minValue) {
-      value--;
-      this.setState({ itemGroupIndex: value });
-    }
-    this.setState({ selectedItemGroup: this.state.itemGroups[value] });
   }
 }
 

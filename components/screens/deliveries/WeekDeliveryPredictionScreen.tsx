@@ -6,7 +6,7 @@ import { AccessToken, StoreState, WeekDeliveryPredictionTableData } from "../../
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
-import { Icon, Text, Thumbnail } from "native-base";
+import { Text, Thumbnail } from "native-base";
 import { WeekDeliveryPrediction, ItemGroup } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON } from "../../../static/images";
@@ -62,10 +62,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     this.setState({ productType: productType });
 
     await this.loadItemGroups();
-
     await this.loadWeekDeliveryPredictionTableData();
-
-
   }
 
   static navigationOptions = {
@@ -75,6 +72,83 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
       showUser={true}
     />
   };
+
+  /**
+   * Renders list items
+   */
+  private renderListItem = (predictionTableData: WeekDeliveryPredictionTableData) => {
+    const weekDeliveryPredictionId = predictionTableData.weekDeliveryPrediction.weekNumber;
+    const weekNumber = `Vko ${weekDeliveryPredictionId}`;
+    const itemGroupName = predictionTableData.itemGroup.displayName;
+    const itemGroupCategory = predictionTableData.itemGroup.category;
+    const itemGroupAmount = predictionTableData.weekDeliveryPrediction.amount;
+
+    if (itemGroupCategory === this.state.productType) {
+      return (
+        <TouchableOpacity key={weekDeliveryPredictionId} style={styles.center} onPress={() => this.onListItemClick("ViewWeekDeliveryPrediction", predictionTableData)}>
+          <View style={styles.renderCustomListItem}>
+            <View style={{ flex: 2 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: 'black' }}>{weekNumber}</Text>
+                <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${itemGroupName} ${itemGroupAmount} KG`}</Text>
+              </View>
+            </View>
+            <View style={styles.center}>
+              <Text style={styles.red}>Avaa</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      );
+    }
+  }
+
+  /**
+   * On list item click
+   * 
+   * @param screen screen
+   * @param predictionTableData predictionTableData
+   */
+  private onListItemClick = (screen: string, predictionTableData: WeekDeliveryPredictionTableData) => {
+    this.props.navigation.navigate(screen, { 
+      predictionData: predictionTableData 
+    });
+  }
+
+  /**
+   * Load item groups 
+   */
+  private loadItemGroups = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    const api = new PakkasmarjaApi();
+    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
+    const itemGroups = await itemGroupService.listItemGroups();
+    this.setState({ itemGroups: itemGroups });
+  }
+
+  /**
+   * Load Week delivery prediction table data to state
+   */
+  private loadWeekDeliveryPredictionTableData = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const Api = new PakkasmarjaApi();
+    const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
+    const weekDeliveryPredictions = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, undefined, undefined, undefined, undefined, 10);
+
+    weekDeliveryPredictions.forEach((weekDeliveryPrediction) => {
+      const weekDeliveryPredictionState: WeekDeliveryPredictionTableData[] = this.state.weekDeliveryPredictionTableData;
+      const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === weekDeliveryPrediction.itemGroupId);
+      weekDeliveryPredictionState.push({
+        weekDeliveryPrediction: weekDeliveryPrediction,
+        itemGroup: itemGroup ? itemGroup : {}
+      });
+      this.setState({ weekDeliveryPredictionTableData: weekDeliveryPredictionState });
+    });
+  }
 
   /**
    * Render method
@@ -103,7 +177,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
               this.state.weekDeliveryPredictionTableData.map((predictionTableData: WeekDeliveryPredictionTableData) => {
-                return this.renderListItems(predictionTableData)
+                return this.renderListItem(predictionTableData)
               })
             }
           </View>
@@ -111,74 +185,6 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
       </BasicScrollLayout>
     );
   }
-
-
-  /**
-   * Renders list items
-   */
-  private renderListItems = (predictionTableData: WeekDeliveryPredictionTableData) => {
-
-    const weekNumber = "Vko " + predictionTableData.weekDeliveryPrediction.weekNumber;
-    const itemGroupName = predictionTableData.itemGroup.displayName;
-    const itemGroupCategory = predictionTableData.itemGroup.category;
-    const itemGroupAmount = predictionTableData.weekDeliveryPrediction.amount;
-    if (itemGroupCategory === this.state.productType) {
-      return (
-        <TouchableOpacity key={predictionTableData.weekDeliveryPrediction.id} style={styles.center} onPress={() => { this.props.navigation.navigate("ViewWeekDeliveryPrediction", { predictionData: predictionTableData }) }}>
-          <View style={styles.renderCustomListItem}>
-            <View style={{ flex: 2 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: 'black' }}>{weekNumber}</Text>
-                <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${itemGroupName} ${itemGroupAmount} KG`}</Text>
-              </View>
-            </View>
-            <View style={styles.center}>
-              <Text style={styles.red}>Avaa</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      );
-    }
-  }
-
-  /**
-   * Load item groups 
-   * 
-   * @param itemGroupId itemGroupId
-   */
-  private loadItemGroups = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-    const api = new PakkasmarjaApi();
-    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
-    const itemGroups = await itemGroupService.listItemGroups();
-    this.setState({ itemGroups: itemGroups });
-  }
-
-  /**
-   * Load Week delivery prediction table data to state
-   * 
-   */
-  private loadWeekDeliveryPredictionTableData = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-    const Api = new PakkasmarjaApi();
-    const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
-    const weekDeliveryPredictions = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, undefined, undefined, undefined, undefined, 10);
-    console.log(weekDeliveryPredictions);
-    weekDeliveryPredictions.forEach((weekDeliveryPrediction) => {
-      const weekDeliveryPredictionState: WeekDeliveryPredictionTableData[] = this.state.weekDeliveryPredictionTableData;
-      const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === weekDeliveryPrediction.itemGroupId);
-      weekDeliveryPredictionState.push({
-        weekDeliveryPrediction: weekDeliveryPrediction,
-        itemGroup: itemGroup ? itemGroup : {}
-      });
-      this.setState({ weekDeliveryPredictionTableData: weekDeliveryPredictionState });
-    });
-  }
-
 }
 
 /**

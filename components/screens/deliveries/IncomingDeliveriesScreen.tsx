@@ -2,10 +2,10 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
-import { Delivery } from "pakkasmarja-client";
+import { Delivery, Product } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native';
@@ -24,8 +24,7 @@ interface Props {
  */
 interface State {
   loading: boolean;
-
-  deliveryListTestData: Delivery[];
+  deliveryData: DeliveryProduct[];
 };
 
 /**
@@ -42,48 +41,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
-
-      deliveryListTestData: [{
-        id: "1",
-        productId: "2",
-        userId: "3",
-        status: "PROPOSAL",
-        amount: 1000,
-        price: "3000",
-        quality: "NORMAL"
-      }, {
-        id: "2",
-        productId: "2",
-        userId: "3",
-        status: "PLANNED",
-        amount: 1000,
-        price: "3000",
-        quality: "NORMAL"
-      }, {
-        id: "3",
-        productId: "2",
-        userId: "3",
-        status: "DELIVERY",
-        amount: 1000,
-        price: "3000",
-        quality: "NORMAL"
-      }, {
-        id: "4",
-        productId: "2",
-        userId: "3",
-        status: "DONE",
-        amount: 1000,
-        price: "3000",
-        quality: "NORMAL"
-      }, {
-        id: "5",
-        productId: "2",
-        userId: "3",
-        status: "REJECTED",
-        amount: 1000,
-        price: "3000",
-        quality: "NORMAL"
-      }]
+      deliveryData: []
     };
   }
 
@@ -94,6 +52,26 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const productsService = Api.getProductsService(this.props.accessToken.access_token);
+
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 0, 0);
+    const incomingDeliveries: Delivery[] = deliveries.filter(delivery => delivery.status !== "DONE" && delivery.status !== "REJECTED");
+    
+    const products: Product[] = await productsService.listProducts(undefined, undefined, undefined, 0, 0);
+
+    const deliveriesAndProducts: DeliveryProduct[] = [];
+    incomingDeliveries.forEach((delivery) => {
+      const product =  products.find(product => product.id === delivery.productId);
+      deliveriesAndProducts.push({
+        delivery: delivery,
+        product: product
+      });
+    });
+
+    this.setState({ deliveryData: deliveriesAndProducts });
   }
 
   static navigationOptions = {
@@ -105,63 +83,33 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   };
 
   /**
-   * Render method
-   */
-  public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
-    }
-
-    return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View >
-          <View style={[styles.center, styles.topViewWithButton]}>
-            <Text style={{ color: "black", fontWeight: '700', fontSize: 18, marginTop: 30 }}><Icon type="MaterialCommunityIcons" name="truck-delivery" style={styles.red} />Tulevat toimitukset</Text>
-            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery") }}>
-              <Text style={styles.buttonText}>Uusi toimitus</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
-            {
-              this.state.deliveryListTestData.map((delivery) => {
-                return this.renderListItems(delivery)
-              })
-            }
-          </View>
-        </View>
-      </BasicScrollLayout>
-    );
-  }
-
-  /**
    * Renders list items
    */
-  private renderListItems = (delivery: Delivery) => {
+  private renderListItems = (delivery: DeliveryProduct) => {
+    if (!delivery.product) {
+      return;
+    }
 
-    // Pitää hake product name ID avulla
+    const timeText = 'Ennen klo 11';
+    const productText = `${delivery.product.name} ${delivery.product.unitSize} ${delivery.product.unitName} x ${delivery.product.units}`;
 
-    const placeholder = 'Ennen klo 11';
-    const placeholder2 = 'Mansikkaa 250 G x 8';
-
-    if (delivery.status !== "REJECTED") {
-      return (
-        <View key={delivery.id} style={styles.renderCustomListItem}>
-          <View style={{ flex: 2 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: 'black' }}>{placeholder}</Text>
-              <Text style={{ color: 'black', fontWeight: 'bold' }}>{placeholder2}</Text>
-            </View>
-          </View>
+    return (
+      <View key={delivery.delivery.id} style={styles.renderCustomListItem}>
+        <View style={{ flex: 2 }}>
           <View style={{ flex: 1 }}>
-            {this.renderStatus(delivery)}
+            <Text style={{ color: 'black' }}>
+              {timeText}
+            </Text>
+            <Text style={{ color: 'black', fontWeight: 'bold' }}>
+              {productText}
+            </Text>
           </View>
         </View>
-      );
-    }
+        <View style={{ flex: 1 }}>
+          {this.renderStatus(delivery.delivery)}
+        </View>
+      </View>
+    );
   }
 
   /**
@@ -198,6 +146,39 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
           <Text style={styles.red}>Hyväksytty</Text>
         </View>);
     }
+  }
+
+  /**
+   * Render method
+   */
+  public render() {
+    if (this.state.loading) {
+      return (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#E51D2A" />
+        </View>
+      );
+    }
+
+    return (
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+        <View >
+          <View style={[styles.center, styles.topViewWithButton]}>
+            <Text style={{ color: "black", fontWeight: '700', fontSize: 18, marginTop: 30 }}><Icon type="MaterialCommunityIcons" name="truck-delivery" style={styles.red} />Tulevat toimitukset</Text>
+            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery") }}>
+              <Text style={styles.buttonText}>Uusi toimitus</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
+            {
+              this.state.deliveryData.map((delivery) => {
+                return this.renderListItems(delivery)
+              })
+            }
+          </View>
+        </View>
+      </BasicScrollLayout>
+    );
   }
 }
 
