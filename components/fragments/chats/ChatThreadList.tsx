@@ -108,11 +108,17 @@ class ChatThreadList extends React.Component<Props, State> {
    * Renders list items
    */
   private renderListItems = (): JSX.Element[] => {
+    const { accessToken } = this.props;
+    if (!accessToken) {
+      this.props.onError && this.props.onError(strings.accessTokenExpired);
+      return [];
+    }
+
     return this.state.chatThreads.map((chatThread: ChatThread) => {
       return (
         <ListItem onPress={() => this.selectThread(chatThread)} key={chatThread.id} avatar>
           <Left>
-            <Thumbnail source={ chatThread.imageUrl ? { uri: chatThread.imageUrl }: AVATAR_PLACEHOLDER } />
+            <Thumbnail source={ chatThread.imageUrl ? { uri: chatThread.imageUrl, headers: {"Authorization": `Bearer ${accessToken.access_token}`} }: AVATAR_PLACEHOLDER } />
           </Left>
           <Body>
             <Text>{chatThread.title ? chatThread.title : strings.noTitleAvailable}</Text>

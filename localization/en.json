@@ -8,10 +8,13 @@
   "questionsNavHeader": "Questions",
   "chatsNavHeader": "Group chat",
   "errorFindingChatThread": "Error finding chat.",
+  "accessTokenExpired": "Login session has expired, please try logging in again.",
 
   "newsFooterLink": "News",
   "messagingFooterLink": "Messages",
   "deliveriesFooterLink": "Deliveries",
   "contractsFooterLink": "Contracts",
-  "noTitleAvailable": "No title"
+  "noTitleAvailable": "No title",
+  "addImage": "Add image",
+  "cancelButton": "Cancel"
 }

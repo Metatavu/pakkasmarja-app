@@ -1,5 +1,4 @@
 import React, { Dispatch } from "react";
-import BasicLayout from "../../layout/BasicLayout";
 import TopBar from "../../layout/TopBar";
 import Moment from 'react-moment';
 import AutoResizeHeightWebView from "react-native-autoreheight-webview"
@@ -10,6 +9,9 @@ import { AccessToken, StoreState } from "../../../types";
 import { NewsArticle } from "pakkasmarja-client";
 import { styles } from "../contracts/styles";
 import { Divider } from "react-native-elements";
+import BasicScrollLayout from "../../layout/BasicScrollLayout";
+import { Image, StyleSheet } from "react-native";
+import Lightbox from 'react-native-lightbox';
 
 /**
  * Component props
@@ -25,6 +27,17 @@ interface Props {
 interface State {
   newsArticle: NewsArticle
 };
+
+const imageStyles = StyleSheet.create({
+  image: {
+    height: 300,
+    flex: 1
+  },
+  imageActive: {
+    flex: 1,
+    resizeMode: 'contain',
+  },
+});
 
 /**
  * NewsArticle screen component
@@ -75,17 +88,30 @@ class NewsArticleScreen extends React.Component<Props, State> {
    * Component render method
    */
   public render() {
+    const { accessToken } = this.props;
+    if (!accessToken) {
+      return null;
+    }
+
     return (
-      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={{ padding: 15 }}>
           <Text style={[{ fontSize: 24 }, styles.TextBold]}>{this.state.newsArticle.title}</Text>
           <Moment
             style={{ fontSize: 16, marginBottom: 15, color: "gray" }}
             format="DD.MM.YYYY HH:mm" element={Text}
-          >
-            {this.state.newsArticle.createdAt}
-          </Moment>
+            date={this.state.newsArticle.createdAt}
+          />
           <Divider />
+          {this.state.newsArticle.imageUrl &&
+            <Lightbox
+              activeProps={{
+                style: imageStyles.imageActive,
+              }}
+            >
+              <Image style={imageStyles.image} source={{uri: this.state.newsArticle.imageUrl, headers: {"Authorization": `Bearer ${accessToken.access_token}`}}} />
+            </Lightbox>
+          }
         </View>
         <AutoResizeHeightWebView
           defaultHeight={400}
@@ -103,7 +129,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
             </html>`
           }}
         />
-      </BasicLayout>
+      </BasicScrollLayout>
     );
   }
 }

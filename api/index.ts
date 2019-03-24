@@ -1,6 +1,7 @@
 import Api from "pakkasmarja-client";
 import { PDFService } from "./pdf.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import { FileService } from "./file.service";
 export * from './pdf.service';
 
 /**
@@ -18,8 +19,6 @@ export default class PakkasmarjaApi {
   constructor(basePath?: string) {
     this.basePath = basePath ? basePath : `${REACT_APP_API_URL}/rest/v1`;
   }
-
-
 
   private getApi() {
     Api.configure(this.basePath);
@@ -116,6 +115,15 @@ export default class PakkasmarjaApi {
    */
   public getPdfService(token: string) {
     return new PDFService(this.basePath, token);
+  }
+
+  /**
+   * Get file service
+   * @param token token
+   * @param basePath basePath
+   */
+  public getFileService(token: string) {
+    return new FileService(REACT_APP_API_URL, token);
   }
   
 }

@@ -15,7 +15,9 @@ export interface MqttConfig {
   port: number,
   secure: boolean,
   topic: string,
-  topicPrefix: string
+  topicPrefix: string,
+  topicPostfix: string
+  path?: string
 }
 
 /**
@@ -51,8 +53,7 @@ export class MqttConnection {
    */
   public connect(config: MqttConfig) {
     this.config = config;
-
-    const url = (config.secure ? "wss://" : "ws://") + config.host + ":" + config.port;
+    const url = (config.secure ? "wss://" : "ws://") + config.host + ":" + config.port + (config.path || "");
     const options: IClientOptions = { 
       host: config.host,
       port: config.port,
@@ -60,7 +61,7 @@ export class MqttConnection {
     };
 
     this.client = mqtt.connect(url, options);
-    this.client.subscribe(`${config.topicPrefix}${config.topic}/`);
+    this.client.subscribe(`${config.topicPrefix}${config.topic}${config.topicPostfix}`);
     this.client.on("connect", this.onClientConnect.bind(this));
     this.client.on("close", this.onClientClose.bind(this));
     this.client.on("offline", this.onClientOffline.bind(this));
@@ -122,8 +123,6 @@ export class MqttConnection {
    * Handles client connect event
    */
   private onClientConnect() {
-    console.log("MQTT connection open");
-
     while (this.pending.length) {
       const pendingMessage: PendingMessage = this.pending.shift()!;
       this.publish(pendingMessage.subtopic, pendingMessage.message);
@@ -134,14 +133,14 @@ export class MqttConnection {
    * Handles client close event
    */
   private onClientClose() {
-    console.log("MQTT connection closed");
+    console.warn("MQTT connection closed");
   }
 
   /**
    * Handles client offline event
    */
   private onClientOffline() {
-    console.log("MQTT connection offline");
+    console.warn("MQTT connection offline");
   }
 
   /**
@@ -155,8 +154,10 @@ export class MqttConnection {
    * Handles client message event
    */
   private onClientMessage(topic: string, payload: Buffer, packet: mqtt.Packet) {
+    const topicStripped = _.trim(topic, "/");
+    const subtopicIndex = topicStripped.lastIndexOf("/") + 1;
+    const subtopic = topicStripped.substr(subtopicIndex);
     const message = JSON.parse(payload.toString());
-    const subtopic = _.trim(topic.substr(this.config!.topic.length), "/");
     const topicSubscribers = this.subscribers.get(subtopic) || [];
     topicSubscribers.forEach((topicSubscriber: OnMessageCallback) => {
       topicSubscriber(message);

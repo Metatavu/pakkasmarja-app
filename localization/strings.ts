@@ -8,6 +8,7 @@ export interface Strings extends LocalizedStringsMethods {
 
   errorCommunicatingWithServer: string
   errorFindingChatThread: string
+  accessTokenExpired: string
 
   chatsNavHeader: string
   questionsNavHeader: string
@@ -18,6 +19,8 @@ export interface Strings extends LocalizedStringsMethods {
   contractsFooterLink: string
 
   noTitleAvailable: string
+  addImage: string
+  cancelButton: string
 }
 
 const strings: Strings = new LocalizedStrings({
