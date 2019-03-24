@@ -10,7 +10,7 @@ import ContractAreaDetails from "./ContractAreaDetails";
 import ContractDeliveryPlace from "./ContractDeliveryPlace";
 import ContractFooter from "./ContractFooter";
 import ContractRejectModal from "./ContractRejectModal";
-import { Contract, ItemGroup, Price, Contact, AreaDetail, DeliveryPlace } from "pakkasmarja-client";
+import { Contract, ItemGroup, ItemGroupPrice, Contact, AreaDetail, DeliveryPlace } from "pakkasmarja-client";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import PakkasmarjaApi from "../../../api";
 import { AccessToken, StoreState, ContractData, ContractDataKey } from "../../../types";
@@ -33,7 +33,7 @@ interface State {
   itemGroup?: ItemGroup,
   contact?: Contact,
   contracts?: Contract[],
-  prices?: Price[],
+  prices?: ItemGroupPrice[],
   contract?: Contract,
   deliveryPlaces?: DeliveryPlace[]
   companyName: string,
