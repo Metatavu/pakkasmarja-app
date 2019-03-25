@@ -70,10 +70,10 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
    */
   private renderIcon = (src: any) => {
     return (
-      <Thumbnail 
-        square 
-        style={{ maxHeight: "100%", maxWidth: "100%" }} 
-        source={src} 
+      <Thumbnail
+        square
+        style={{ maxHeight: "100%", maxWidth: "100%" }}
+        source={src}
       />
     );
   }

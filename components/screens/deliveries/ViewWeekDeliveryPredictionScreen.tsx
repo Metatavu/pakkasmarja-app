@@ -53,7 +53,6 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
     const predictionData: WeekDeliveryPredictionTableData = await this.props.navigation.getParam('predictionData');
     const averageDailyAmount: number = Math.round(predictionData.weekDeliveryPrediction.amount / 9);
     this.setState({ predictionData: predictionData, averageDailyAmount: averageDailyAmount });
-
   }
 
   static navigationOptions = {
@@ -75,7 +74,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
         </View>
         <View style={{ flex: 1 }}>
           <View style={[styles.center, styles.lightRedBackGroundColor, { paddingVertical: 10 }]}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={ this.props.navigation.navigate("ViewAllDeliveries") }>
               <Text style={styles.red}>Katso kaikki toimitukset</Text>
             </TouchableOpacity>
           </View>
@@ -133,7 +132,30 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
    * Renders one radio button
    */
   private RadioButton = (selected: boolean, label: string) => {
-
+    switch (label) {
+      case "monday":
+        label = "Maanantai"
+        break;
+      case "tuesday":
+        label = "Tiistai"
+        break;
+      case "wednesday":
+        label = "Keskiviikko"
+        break;
+      case "thursday":
+        label = "Torstai"
+        break;
+      case "friday":
+        label = "Perjantai"
+        break;
+      case "saturday":
+        label = "Lauantai"
+        break;
+      case "sunday":
+        label = "Sunnutai"
+        break;
+      default:
+    }
     return (
       <View key={label} style={{ flex: 1, flexDirection: "row", marginVertical: 5 }}>
         <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end", paddingVertical: 5 }}>

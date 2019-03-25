@@ -19,6 +19,7 @@ import { Root } from "native-base";
 import DeliveriesScreen from "./components/screens/deliveries/DeliveriesScreen";
 import DeliveryScreen from "./components/screens/deliveries/DeliveryScreen";
 import PastDeliveriesScreen from "./components/screens/deliveries/PastDeliveriesScreen";
+import ViewAllDeliveriesScreen from "./components/screens/deliveries/ViewAllDeliveriesScreen";
 import ProposalsScreen from "./components/screens/deliveries/ProposalsScreen";
 import ProposalCheckScreen from "./components/screens/deliveries/ProposalCheckScreen";
 import WeekDeliveryPredictionScreen from "./components/screens/deliveries/WeekDeliveryPredictionScreen";
@@ -49,6 +50,7 @@ const RootStack = createStackNavigator({
   News: NewsListScreen,
   NewsArticle: NewsArticleScreen,
   Deliveries: DeliveriesScreen,
+  ViewAllDeliveries: ViewAllDeliveriesScreen,
   Delivery: DeliveryScreen,
   PastDeliveries: PastDeliveriesScreen,
   Proposals: ProposalsScreen,

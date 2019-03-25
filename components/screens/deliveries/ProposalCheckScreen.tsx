@@ -147,7 +147,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
           <View style={[styles.center, { flex: 1 }]}>
             <View style={{ flex: 1, flexDirection: "row" }}>
               <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <TouchableOpacity style={[styles.declineButton, { width: "95%", height: 60 }]} >
+                <TouchableOpacity style={[styles.declineButton, { width: "95%", height: 60 }]} onPress={() => this.props.navigation.goBack()} >
                   <Text style={styles.buttonText}>Peruuta</Text>
                 </TouchableOpacity>
               </View>
@@ -176,7 +176,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     const delivery: Delivery =
     {
       id: this.state.delivery.id,
-      productId:  this.state.product.id,
+      productId: this.state.product.id,
       userId: this.props.accessToken.userId,
       time: this.state.delivery.time,
       status: "PLANNED",
@@ -185,12 +185,10 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       quality: this.state.delivery.quality,
       deliveryPlaceId: this.state.delivery.deliveryPlaceId
     }
-
     const data = await deliveriesService.updateDelivery(delivery, this.state.delivery.id || "");
-    console.log(data);
     this.props.navigation.navigate("IncomingDeliveries");
-
   }
+
   /**
    * Adds a delivery note
    */

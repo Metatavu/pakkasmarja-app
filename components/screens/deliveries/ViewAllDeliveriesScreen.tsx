@@ -4,13 +4,13 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { Text, Thumbnail } from "native-base";
-import { View, ActivityIndicator, TouchableOpacity } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import { styles } from "./styles.tsx";
-import { RED_LOGO } from "../../../static/images";
+import { Thumbnail, Text } from "native-base";
+import { COMPLETED_DELIVERIES_LOGO_GRAY } from "../../../static/images";
 import PakkasmarjaApi from "../../../api";
-import { Delivery, Product, ItemGroupType } from "pakkasmarja-client";
-import Moment from "react-moment";
+import { Delivery, Product } from "pakkasmarja-client";
+import moment from "moment";
 
 /**
  * Component props
@@ -26,13 +26,14 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: DeliveryProduct[];
-  ItemGroupType?: ItemGroupType;
+  filteredDates: Date[];
+  filteredData: DeliveryProduct[];
 };
 
 /**
- * Proposal screen component class
+ * View all deliveries screen component class
  */
-class ProposalsScreen extends React.Component<Props, State> {
+class ViewAllDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
@@ -43,7 +44,9 @@ class ProposalsScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
-      deliveryData: []
+      deliveryData: [],
+      filteredData: [],
+      filteredDates: [],
     };
   }
 
@@ -54,24 +57,31 @@ class ProposalsScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    this.setState({loading:true});
+    this.setState({ loading: true });
+
     const Api = new PakkasmarjaApi();
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
 
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries("PROPOSAL");
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries("DONE");
     const products: Product[] = await productsService.listProducts();
-    const deliveriesAndProducts: DeliveryProduct[] = [];
 
+    const deliveriesAndProducts: DeliveryProduct[] = [];
+    const dates: string[] = [];
     deliveries.forEach((delivery) => {
+      let deliveryDate = moment(delivery.time).format("DD.MM.YYYY");
+      if (dates.indexOf(deliveryDate) === -1) {
+        dates.push(deliveryDate);
+      }
       const product = products.find(product => product.id === delivery.productId);
       deliveriesAndProducts.push({
         delivery: delivery,
         product: product
       });
     });
+    this.setState({ deliveryData: deliveriesAndProducts, loading: false });
+    console.log(dates);
 
-    this.setState({ deliveryData: deliveriesAndProducts, loading:false });
   }
 
   static navigationOptions = {
@@ -96,14 +106,9 @@ class ProposalsScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View>
-          <View style={[styles.center, styles.topViewWithButton]}>
-            <View style={[styles.center, { flexDirection: "row", paddingVertical: 30 }]}>
-              <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
-              <Text style={styles.viewHeaderText}>Ehdotukset</Text>
-            </View>
-          </View>
-          <View>
+        <View >
+
+          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
               this.state.deliveryData.map((deliveryData: DeliveryProduct) => {
                 return this.renderListItem(deliveryData)
@@ -121,40 +126,29 @@ class ProposalsScreen extends React.Component<Props, State> {
    * @param deliveryData DeliveryProduct
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
-    if (!deliveryData || !deliveryData.product || !deliveryData.delivery.time) {
+    if (!deliveryData || !deliveryData.product) {
       return <Text></Text>;
     }
-    const date = deliveryData.delivery.time;
+    const weekNumber = deliveryData.delivery.time;
     const productName = deliveryData.product.name; // Onko se product.name vai product.unitName
     const productAmount = `${deliveryData.product.unitSize} G x ${deliveryData.product.units}`;
-
-    const deliveryId = deliveryData.delivery.id;
-    const productId = deliveryData.product.id;
 
     return (
       <View key={deliveryData.delivery.id} style={styles.renderCustomListItem}>
         <View style={{ flex: 2 }}>
           <View style={{ flex: 1 }}>
-            <View style={{ flex: 1, flexDirection: "row" }}>
-              <Text>Toimituspäivä </Text><Moment element={Text} format="DD.MM.YYYY">{date.toString()}</Moment>
-            </View>
+            <Text style={{ color: 'black' }}>{weekNumber}</Text>
             <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={[styles.proposalCheckButton, { flex: 0.8, height: 45 }]}
-          onPress={() => {
-            this.props.navigation.navigate("ProposalCheck", {
-              deliveryId: deliveryId,
-              productId: productId
-            })
-          }}
-        >
-          <Text style={styles.buttonText}>Tarkasta</Text>
-        </TouchableOpacity>
+        <View style={[styles.center, { flexDirection: "row" }]}>
+          <Thumbnail square source={COMPLETED_DELIVERIES_LOGO_GRAY} style={[styles.itemIconSize, { marginRight: 10 }]} />
+          <Text style={{ color: "lightgray" }}>Toimitettu</Text>
+        </View>
       </View>
     );
   }
+
 
 }
 
@@ -180,4 +174,4 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ProposalsScreen);
+export default connect(mapStateToProps, mapDispatchToProps)(ViewAllDeliveriesScreen);

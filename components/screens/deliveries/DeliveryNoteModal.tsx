@@ -94,7 +94,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
               width: "95%",
               height: 425,
               backgroundColor: "white",
-              borderColor: "#e01e36", 
+              borderColor: "#e01e36",
               borderWidth: 1.25,
               padding: 20,
               borderRadius: 7
@@ -137,6 +137,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
       </View>
     );
   }
+  
 }
 
 /**

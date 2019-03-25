@@ -290,7 +290,6 @@ class EditDelivery extends React.Component<Props, State> {
     }
 
     const data = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
-    console.log(data);
     this.props.navigation.navigate("Delivery", {
       deliveryId: this.state.deliveryData.delivery.id,
       productId: this.state.productId
@@ -299,6 +298,8 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
   * Prints time
+  * 
+  * @param date
   * 
   * @return formatted start time
   */

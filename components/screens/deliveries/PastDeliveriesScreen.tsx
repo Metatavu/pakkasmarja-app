@@ -52,6 +52,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    this.setState({loading:true});
 
     const Api = new PakkasmarjaApi();
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
@@ -69,7 +70,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
       });
     });
 
-    this.setState({ deliveryData: deliveriesAndProducts });
+    this.setState({ deliveryData: deliveriesAndProducts, loading:false });
   }
 
   static navigationOptions = {
@@ -115,6 +116,8 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Renders list items
+   * 
+   * @param deliveryData DeliveryProduct
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
     if (!deliveryData || !deliveryData.product) {

@@ -10,7 +10,7 @@ import PakkasmarjaApi from "../../../api";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native';
 import { Thumbnail } from "native-base";
-import { INCOMING_DELIVERIES_LOGO } from "../../../static/images";
+import { INCOMING_DELIVERIES_LOGO, INDELIVERY_LOGO, RED_LOGO } from "../../../static/images";
 import { NavigationEvents } from "react-navigation";
 
 /**
@@ -67,6 +67,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     if (previousState.productType && !this.state.productType) {
       this.setState({ productType: previousState.productType});
     }
+    this.setState({ loading: true });
   }
 
   static navigationOptions = {
@@ -78,32 +79,39 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   };
 
   /**
-   * Renders list items
+   * Render method
    */
-  private renderListItems = (delivery: DeliveryProduct) => {
-    if (!delivery.product) {
-      return;
+  public render() {
+    if (this.state.loading) {
+      return (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#E51D2A" />
+        </View>
+      );
     }
 
-    const timeText = 'Ennen klo 11';
-    const productText = `${delivery.product.name} ${delivery.product.unitSize} ${delivery.product.unitName} x ${delivery.product.units}`;
-
     return (
-      <View key={delivery.delivery.id} style={styles.renderCustomListItem}>
-        <View style={{ flex: 2 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: 'black' }}>
-              {timeText}
-            </Text>
-            <Text style={{ color: 'black', fontWeight: 'bold' }}>
-              {productText}
-            </Text>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+        <NavigationEvents onWillFocus={() => this.loadData()} />
+        <View >
+          <View style={[styles.center, styles.topViewWithButton]}>
+            <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
+              <Thumbnail square source={INCOMING_DELIVERIES_LOGO} style={{ width: 47.5, height: 28, marginRight: 10 }} />
+              <Text style={styles.viewHeaderText}>Tulevat toimitukset</Text>
+            </View>
+            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery") }}>
+              <Text style={styles.buttonText}>Uusi toimitus</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
+            {
+              this.state.deliveryData.map((delivery) => {
+                return this.renderListItems(delivery)
+              })
+            }
           </View>
         </View>
-        <View style={{ flex: 1 }}>
-          {this.renderStatus(delivery)}
-        </View>
-      </View>
+      </BasicScrollLayout>
     );
   }
 
@@ -114,15 +122,19 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     const status = deliveryData.delivery.status;
     if (status === "PROPOSAL") {
       return (
-        <View style={styles.center}>
+        <View style={[styles.center, { flexDirection: "row" }]}>
+          <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
           <Text>Tarkistuksessa</Text>
-        </View>);
+        </View>
+      );
     }
     else if (status === "DELIVERY") {
       return (
-        <View style={styles.center}>
+        <View style={[styles.center, { flexDirection: "row" }]}>
+          <Thumbnail square source={INDELIVERY_LOGO} style={{ height: 20.25, width: 34.5, marginRight: 10 }} />
           <Text style={styles.green}>Toimituksessa</Text>
-        </View>);
+        </View>
+      );
     }
     else if (status === "PLANNED") {
       return (
@@ -144,9 +156,11 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     }
     else if (status === "DONE") {
       return (
-        <View style={styles.center}>
+        <View style={[styles.center, { flexDirection: "row" }]}>
+          <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
           <Text style={styles.red}>Hyväksytty</Text>
-        </View>);
+        </View>
+      );
     }
   }
 
@@ -182,15 +196,17 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Render method
+   * Renders list items
+   * 
+   * @param delivery DeliveryProduct
    */
-  public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
+  private renderListItems = (delivery: DeliveryProduct) => {
+    if (!delivery.product) {
+      return;
     }
+
+    const timeText = 'Ennen klo 11';
+    const productText = `${delivery.product.name} ${delivery.product.unitSize} ${delivery.product.unitName} x ${delivery.product.units}`;
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
@@ -211,6 +227,21 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
                 return this.renderListItems(delivery)
               })
             }
+          </View>
+        </View>
+        <View key={delivery.delivery.id} style={styles.renderCustomListItem}>
+          <View style={{ flex: 2 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: 'black' }}>
+                {timeText}
+              </Text>
+              <Text style={{ color: 'black', fontWeight: 'bold' }}>
+                {productText}
+              </Text>
+            </View>
+          </View>
+          <View style={{ flex: 1 }}>
+            {this.renderStatus(delivery)}
           </View>
         </View>
       </BasicScrollLayout>

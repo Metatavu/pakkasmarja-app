@@ -57,6 +57,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    this.setState({ loading: true });
 
     const productType: string = await this.props.navigation.getParam('type');
     this.setState({ productType: productType });
@@ -74,7 +75,45 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
   };
 
   /**
+   * Render method
+   */
+  public render() {
+    if (this.state.loading) {
+      return (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#E51D2A" />
+        </View>
+      );
+    }
+
+    return (
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+        <View >
+          <View style={[styles.center, styles.topViewWithButton]}>
+            <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
+              <Thumbnail square source={PREDICTIONS_ICON} style={{ width: 38, height: 40, marginRight: 10 }} />
+              <Text style={styles.viewHeaderText}>Viikkoennusteet</Text>
+            </View>
+            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewWeekDeliveryPrediction", { itemGroups: this.state.itemGroups }) }}>
+              <Text style={styles.buttonText}>Uusi viikkoennuste</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
+            {
+              this.state.weekDeliveryPredictionTableData.map((predictionTableData: WeekDeliveryPredictionTableData) => {
+                return this.renderListItem(predictionTableData)
+              })
+            }
+          </View>
+        </View>
+      </BasicScrollLayout>
+    );
+  }
+
+  /**
    * Renders list items
+   * 
+   * @param predictionTableData predictionTableData
    */
   private renderListItem = (predictionTableData: WeekDeliveryPredictionTableData) => {
     const weekDeliveryPredictionId = predictionTableData.weekDeliveryPrediction.weekNumber;
@@ -109,8 +148,8 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
    * @param predictionTableData predictionTableData
    */
   private onListItemClick = (screen: string, predictionTableData: WeekDeliveryPredictionTableData) => {
-    this.props.navigation.navigate(screen, { 
-      predictionData: predictionTableData 
+    this.props.navigation.navigate(screen, {
+      predictionData: predictionTableData
     });
   }
 
@@ -146,44 +185,8 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
         weekDeliveryPrediction: weekDeliveryPrediction,
         itemGroup: itemGroup ? itemGroup : {}
       });
-      this.setState({ weekDeliveryPredictionTableData: weekDeliveryPredictionState });
+      this.setState({ weekDeliveryPredictionTableData: weekDeliveryPredictionState, loading: false });
     });
-  }
-
-  /**
-   * Render method
-   */
-  public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
-    }
-
-    return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View >
-          <View style={[styles.center, styles.topViewWithButton]}>
-            <View style={[styles.center,{flexDirection:"row", marginTop:30}]}>
-              <Thumbnail square small source={PREDICTIONS_ICON} style={{marginRight:10}}/>
-              <Text style={styles.viewHeaderText}>Viikkoennusteet</Text>
-            </View>
-            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewWeekDeliveryPrediction", { itemGroups: this.state.itemGroups }) }}>
-              <Text style={styles.buttonText}>Uusi viikkoennuste</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
-            {
-              this.state.weekDeliveryPredictionTableData.map((predictionTableData: WeekDeliveryPredictionTableData) => {
-                return this.renderListItem(predictionTableData)
-              })
-            }
-          </View>
-        </View>
-      </BasicScrollLayout>
-    );
   }
 }
 

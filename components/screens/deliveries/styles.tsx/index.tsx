@@ -54,10 +54,10 @@ export const styles = StyleSheet.create({
     fontSize: 25,
     paddingBottom: 20
   },
-  viewHeaderText:{
-    color: "black", 
-    fontWeight: '700', 
-    fontSize: 18 
+  viewHeaderText: {
+    color: "black",
+    fontWeight: '700',
+    fontSize: 18
   },
   text: {
     fontSize: 20,
@@ -144,11 +144,11 @@ export const styles = StyleSheet.create({
     color: "black",
     fontSize: 16,
   },
-  itemIconSize:{
-    width:24,
-    height:24
+  itemIconSize: {
+    width: 24,
+    height: 24
   },
-  declineButton:{
+  declineButton: {
     backgroundColor: "#B4B4B4",
     justifyContent: "center",
     alignItems: "center",
