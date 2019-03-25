@@ -31,6 +31,12 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 7
   },
+  proposalCheckButton: {
+    backgroundColor: "#e01e36",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 7
+  },
   loaderContainer: {
     paddingTop: 30
   },
@@ -141,5 +147,11 @@ export const styles = StyleSheet.create({
   itemIconSize:{
     width:24,
     height:24
+  },
+  declineButton:{
+    backgroundColor: "#B4B4B4",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 7
   }
 });

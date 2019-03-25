@@ -85,7 +85,7 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
     const deliveryList = [{
       name: "Ehdotukset",
       icon: RED_LOGO,
-      screen: "Suggestions"
+      screen: "Proposals"
     }, {
       name: "Viikkoennusteet",
       icon: PREDICTIONS_ICON,

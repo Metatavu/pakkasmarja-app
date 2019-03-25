@@ -4,12 +4,13 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
+import { Text, Thumbnail } from "native-base";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
-import { Thumbnail, Text } from "native-base";
-import { COMPLETED_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO_GRAY } from "../../../static/images";
+import { RED_LOGO } from "../../../static/images";
 import PakkasmarjaApi from "../../../api";
-import { Delivery, Product } from "pakkasmarja-client";
+import { Delivery, Product, ItemGroupType } from "pakkasmarja-client";
+import Moment from "react-moment";
 
 /**
  * Component props
@@ -25,12 +26,13 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: DeliveryProduct[];
+  ItemGroupType?: ItemGroupType;
 };
 
 /**
- * Past deliveries component class
+ * Proposal screen component class
  */
-class PastDeliveriesScreen extends React.Component<Props, State> {
+class ProposalsScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
@@ -57,10 +59,10 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
 
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries("DONE");
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries("PROPOSAL");
     const products: Product[] = await productsService.listProducts();
-
     const deliveriesAndProducts: DeliveryProduct[] = [];
+
     deliveries.forEach((delivery) => {
       const product = products.find(product => product.id === delivery.productId);
       deliveriesAndProducts.push({
@@ -68,8 +70,8 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
         product: product
       });
     });
-
     this.setState({ deliveryData: deliveriesAndProducts });
+
   }
 
   static navigationOptions = {
@@ -94,14 +96,14 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View >
+        <View>
           <View style={[styles.center, styles.topViewWithButton]}>
             <View style={[styles.center, { flexDirection: "row", paddingVertical: 30 }]}>
-              <Thumbnail square small source={COMPLETED_DELIVERIES_LOGO} style={{ marginRight: 10 }} />
-              <Text style={styles.viewHeaderText}>Tehdyt toimitukset</Text>
+              <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
+              <Text style={styles.viewHeaderText}>Ehdotukset</Text>
             </View>
           </View>
-          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
+          <View>
             {
               this.state.deliveryData.map((deliveryData: DeliveryProduct) => {
                 return this.renderListItem(deliveryData)
@@ -117,51 +119,39 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * Renders list items
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
-    if (!deliveryData || !deliveryData.product) {
+    if (!deliveryData || !deliveryData.product || !deliveryData.delivery.time) {
       return <Text></Text>;
     }
-    const weekNumber = deliveryData.delivery.time;
+    const date = deliveryData.delivery.time;
     const productName = deliveryData.product.name; // Onko se product.name vai product.unitName
     const productAmount = `${deliveryData.product.unitSize} G x ${deliveryData.product.units}`;
-    const editable = false;
+
+    const deliveryId = deliveryData.delivery.id;
+    const productId = deliveryData.product.id;
 
     return (
-      <TouchableOpacity key={deliveryData.delivery.id} style={styles.center} onPress={
-        () => this.onListItemClick("Delivery",
-          deliveryData.delivery.id,
-          deliveryData.product && deliveryData.product.id,
-          editable)
-      }>
-        <View style={styles.renderCustomListItem}>
-          <View style={{ flex: 2 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: 'black' }}>{weekNumber}</Text>
-              <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
+      <View key={deliveryData.delivery.id} style={styles.renderCustomListItem}>
+        <View style={{ flex: 2 }}>
+          <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, flexDirection: "row" }}>
+              <Text>Toimituspäivä </Text><Moment element={Text} format="DD.MM.YYYY">{date.toString()}</Moment>
             </View>
-          </View>
-          <View style={[styles.center, { flexDirection: "row" }]}>
-            <Thumbnail square source={COMPLETED_DELIVERIES_LOGO_GRAY} style={[styles.itemIconSize, { marginRight: 10 }]} />
-            <Text style={{ color: "lightgray" }}>Toimitettu</Text>
+            <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
           </View>
         </View>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.proposalCheckButton, { flex: 0.8, height: 45 }]}
+          onPress={() => {
+            this.props.navigation.navigate("ProposalCheck", {
+              deliveryId: deliveryId,
+              productId: productId
+            })
+          }}
+        >
+          <Text style={styles.buttonText}>Tarkasta</Text>
+        </TouchableOpacity>
+      </View>
     );
-  }
-
-  /**
-   * On list item click
-   * 
-   * @param screen screen
-   * @param deliveryId deliveryId
-   * @param productId productId
-   * @param editable boolean
-   */
-  private onListItemClick = (screen: string, deliveryId?: string, productId?: string, editable?: boolean) => {
-    this.props.navigation.navigate(screen, {
-      deliveryId: deliveryId,
-      productId: productId,
-      editable: editable
-    });
   }
 
 }
@@ -188,4 +178,4 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(PastDeliveriesScreen);
+export default connect(mapStateToProps, mapDispatchToProps)(ProposalsScreen);

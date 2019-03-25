@@ -11,6 +11,7 @@ import { styles } from "./styles.tsx";
 import { Text } from 'react-native';
 import { Thumbnail } from "native-base";
 import { INCOMING_DELIVERIES_LOGO } from "../../../static/images";
+import { NavigationEvents } from "react-navigation";
 
 /**
  * Component props
@@ -54,25 +55,8 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       return;
     }
 
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = Api.getProductsService(this.props.accessToken.access_token);
 
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(); // ei voi muuttaa maxResultsia, backend hajalla
-    const incomingDeliveries: Delivery[] = deliveries.filter(delivery => delivery.status !== "DONE" && delivery.status !== "REJECTED");
 
-    const products: Product[] = await productsService.listProducts();
-
-    const deliveriesAndProducts: DeliveryProduct[] = [];
-    incomingDeliveries.forEach((delivery) => {
-      const product = products.find(product => product.id === delivery.productId);
-      deliveriesAndProducts.push({
-        delivery: delivery,
-        product: product
-      });
-    });
-
-    this.setState({ deliveryData: deliveriesAndProducts });
   }
 
   static navigationOptions = {
@@ -172,10 +156,11 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <NavigationEvents onWillFocus={() => this.loadData()} />
         <View >
           <View style={[styles.center, styles.topViewWithButton]}>
             <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
-              <Thumbnail square small source={INCOMING_DELIVERIES_LOGO} style={{ marginRight: 10 }} />
+              <Thumbnail square source={INCOMING_DELIVERIES_LOGO} style={{ width: 60, height: 34, marginRight: 10 }} />
               <Text style={styles.viewHeaderText}>Tulevat toimitukset</Text>
             </View>
             <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery") }}>
@@ -192,6 +177,35 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
         </View>
       </BasicScrollLayout>
     );
+  }
+
+  /**
+   * Loads data
+   */
+  private loadData = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const productsService = Api.getProductsService(this.props.accessToken.access_token);
+
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(); // ei voi muuttaa maxResultsia, backend hajalla
+    const incomingDeliveries: Delivery[] = deliveries.filter(delivery => delivery.status !== "DONE" && delivery.status !== "REJECTED");
+
+    const products: Product[] = await productsService.listProducts();
+
+    const deliveriesAndProducts: DeliveryProduct[] = [];
+    incomingDeliveries.forEach((delivery) => {
+      const product = products.find(product => product.id === delivery.productId);
+      deliveriesAndProducts.push({
+        delivery: delivery,
+        product: product
+      });
+    });
+
+    this.setState({ deliveryData: deliveriesAndProducts });
+
   }
 }
 

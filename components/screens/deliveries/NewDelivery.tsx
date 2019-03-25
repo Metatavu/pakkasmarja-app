@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TextInput, TouchableOpacity } from "react-native";
+import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
 import { Delivery, Product, DeliveryStatus, DeliveryQuality, DeliveryNote, DeliveryPlace } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
@@ -13,7 +13,6 @@ import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
 import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
-import IncomingDeliveriesScreen from "./IncomingDeliveriesScreen";
 
 /**
  * Component props
@@ -63,7 +62,7 @@ class NewDelivery extends React.Component<Props, State> {
       loading: false,
       datepickerVisible: false,
       modalOpen: false,
-      status: "PROPOSAL",
+      status: "PLANNED",
       quality: "NORMAL",
       amount: 0,
       price: "0",
@@ -262,7 +261,7 @@ class NewDelivery extends React.Component<Props, State> {
       productId: this.state.productId,
       userId: this.state.userId,
       time: this.state.selectedDate,
-      status: "PLANNED",
+      status: "DONE",
       amount: this.state.amount,
       price: this.state.price,
       quality: this.state.quality,

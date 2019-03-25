@@ -4,10 +4,8 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, WeekDeliveryPredictionTableData } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
-import { ItemGroup } from "pakkasmarja-client";
-import { Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input';
 
 /**
@@ -24,7 +22,6 @@ interface Props {
 interface State {
   averageDailyAmount: number;
   percentageAmount: number;
-
   predictionData?: WeekDeliveryPredictionTableData;
 };
 

@@ -4,8 +4,8 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TextInput, TouchableOpacity } from "react-native";
-import { Delivery, Product, DeliveryStatus, DeliveryQuality, DeliveryNote, DeliveryPlace } from "pakkasmarja-client";
+import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
+import { Delivery, Product, DeliveryQuality, DeliveryNote, DeliveryPlace } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -264,7 +264,9 @@ class EditDelivery extends React.Component<Props, State> {
    * Handles new delivery data
    */
   private onDeliveryPlaceInputChange = (value: DeliveryPlace) => {
+    console.log(value);
     this.setState({ deliveryPlace: value });
+    console.log(this.state.deliveryPlace);
   }
 
   /**
@@ -278,7 +280,7 @@ class EditDelivery extends React.Component<Props, State> {
     const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const delivery: Delivery =
     {
-      id: this.state.id,
+      id: this.state.deliveryData.delivery.id,
       productId: this.state.productId,
       userId: this.state.userId,
       time: this.state.selectedDate,
@@ -290,9 +292,10 @@ class EditDelivery extends React.Component<Props, State> {
     }
 
     const data = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    console.log(data);
     this.props.navigation.navigate("Delivery", {
       deliveryId: this.state.deliveryData.delivery.id,
-      productId: this.state.deliveryData.product.id
+      productId: this.state.productId
     });
   }
 

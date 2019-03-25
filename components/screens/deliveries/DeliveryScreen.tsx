@@ -54,8 +54,9 @@ class DeliveryScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    this.loadData();
+    await this.loadData();
   }
+
   static navigationOptions = {
     headerTitle: <TopBar
       showMenu={true}
@@ -80,7 +81,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     }
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onWillFocus={() => this.loadData() } />
+        <NavigationEvents onWillFocus={() => this.loadData()} />
         <View style={{ flex: 1, padding: 25 }}>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>Tuote</Text></View>
@@ -107,7 +108,7 @@ class DeliveryScreen extends React.Component<Props, State> {
               <View style={[styles.center, { flex: 1 }]}>
                 <TouchableOpacity
                   style={[styles.begindeliveryButton, styles.center, { width: "70%", height: 60 }]}
-                  onPress={() => { }}>
+                  onPress={() => { this.handleBeginDelivery() }}>
                   <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Aloita toimitus</Text>
                 </TouchableOpacity>
               </View>
@@ -119,6 +120,35 @@ class DeliveryScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Handles begin delivery
+   */
+  private handleBeginDelivery = async () => {
+    if (!this.props.accessToken || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id) {
+      return;
+    }
+    const Api = new PakkasmarjaApi();
+    const deliveryService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const deliveryState = this.state.deliveryData.delivery;
+    const delivery: Delivery =
+    {
+      id: deliveryState.id,
+      productId: this.state.deliveryData.product.id,
+      userId: this.props.accessToken.userId,
+      time: deliveryState.time,
+      status: "DELIVERY",
+      amount: deliveryState.amount,
+      price: deliveryState.price,
+      quality: deliveryState.quality,
+      deliveryPlaceId: deliveryState.deliveryPlaceId
+    }
+
+    const data = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    console.log(data);
+    this.props.navigation.navigate("IncomingDeliveries");
+
+  }
+
+  /**
    * Load data
    */
   private loadData = async () => {
@@ -127,7 +157,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     }
     const deliveryId: string = this.props.navigation.getParam('deliveryId');
     const productId: string = this.props.navigation.getParam('productId');
-    
+
     const Api = new PakkasmarjaApi();
     const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = Api.getProductsService(this.props.accessToken.access_token);
