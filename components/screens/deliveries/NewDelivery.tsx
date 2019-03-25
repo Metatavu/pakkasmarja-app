@@ -43,7 +43,9 @@ interface State {
   selectedDate?: Date;
   deliveryPlaces?: DeliveryPlace[];
   deliveryPlace?: DeliveryPlace;
-
+  productType?: "FRESH" | "FROZEN";
+  deliveryNoteData: DeliveryNote;
+  deliveryNotes: DeliveryNote[];
 };
 
 /**
@@ -67,10 +69,14 @@ class NewDelivery extends React.Component<Props, State> {
       amount: 0,
       price: "0",
       selectedDate: new Date(),
-
       hoursTestData: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-
-      products: []
+      products: [],
+      deliveryNoteData: {
+        id: undefined,
+        image: undefined,
+        text: undefined
+      },
+      deliveryNotes: []
     };
 
   }
@@ -83,9 +89,11 @@ class NewDelivery extends React.Component<Props, State> {
       return;
     }
 
+    const productType = this.props.navigation.state.params.type;
+
     const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const products: Product[] = await productsService.listProducts();
+    const products: Product[] = await productsService.listProducts(undefined, productType);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
 
@@ -99,6 +107,101 @@ class NewDelivery extends React.Component<Props, State> {
       showUser={true}
     />
   };
+
+  /**
+   * Adds a delivery note
+   * 
+   * @param deliveryNote deliveryNote
+   */
+  private onDeliveryNoteChange = (deliveryNote: DeliveryNote) => {
+    this.setState({ deliveryNoteData: deliveryNote });
+  }
+
+  /**
+   * On create note click
+   */
+  private onCreateNoteClick = () => {
+    const noteData = this.state.deliveryNoteData;
+    const notes = this.state.deliveryNotes;
+    notes.push(noteData);
+
+    this.setState({ deliveryNotes: notes });
+  }
+
+  /**
+   * Handles new delivery data
+   * 
+   * @param key key
+   * @param value value
+   */
+  private onUserInputChange = (key: any, value: any) => {
+    const state: any = this.state;
+    state[key] = value;
+    this.setState(state);
+  }
+
+  /**
+   * Handles delivery submit
+   */
+  private handleDeliverySubmit = async () => {
+    if (!this.props.accessToken || !this.state.deliveryPlace || !this.state.deliveryPlace.id || !this.state.productId || !this.state.userId || !this.state.selectedDate) {
+      return;
+    }
+
+    const Api = new PakkasmarjaApi();
+    const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+    const delivery: Delivery = {
+      id: this.state.id,
+      productId: this.state.productId,
+      userId: this.state.userId,
+      time: this.state.selectedDate,
+      status: "PLANNED",
+      amount: this.state.amount,
+      price: this.state.price,
+      quality: this.state.quality,
+      deliveryPlaceId: this.state.deliveryPlace.id
+    }
+
+    const createdDelivery = await deliveryService.createDelivery(delivery);
+
+    if (createdDelivery.id && (this.state.deliveryNoteData.text || this.state.deliveryNoteData.image)) {
+      await this.createDeliveryNotes(this.state.deliveryNotes, async (deliveryNote: DeliveryNote) => {
+        await deliveryService.createDeliveryNote(deliveryNote, createdDelivery.id || "");
+      });
+    }
+
+    this.props.navigation.navigate("IncomingDeliveries");
+  }
+
+  /**
+   * Create delivery notes
+   * 
+   * @param deliveryNotes deliveryNotes
+   * @param callback callback function
+   */
+  private async createDeliveryNotes(deliveryNotes: DeliveryNote[], callback: any) {
+    for (let index = 0; index < deliveryNotes.length; index++) {
+      await callback(deliveryNotes[index], index, deliveryNotes);
+    }
+  }
+
+  /**
+  * Prints time
+  * 
+  * @return formatted start time
+  */
+  private printTime(date: Date): string {
+    return moment(date).format("DD.MM.YYYY");
+  }
+
+  /**
+   * Removes currently selected date filter
+   */
+  private removeDate = () => {
+    this.setState({
+      selectedDate: undefined
+    });
+  }
 
   /**
    * Render method
@@ -212,7 +315,10 @@ class NewDelivery extends React.Component<Props, State> {
             <View style={[styles.center, { flex: 1, paddingVertical: 15 }]}>
               <TouchableOpacity onPress={() => this.setState({ modalOpen: true })}>
                 <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
-                  <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" /><Text style={{ color: "#e01e36" }} >Lisää huomio</Text>
+                  <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
+                  <Text style={{ color: "#e01e36" }} >
+                    {`Lisää huomio (${this.state.deliveryNotes.length})`}
+                  </Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -223,75 +329,9 @@ class NewDelivery extends React.Component<Props, State> {
             </View>
           </View>
         </View>
-        <DeliveryNoteModal deliveryId="" addDeliveryNote={this.addDeliveryNote} modalClose={() => this.setState({ modalOpen: false })} modalOpen={this.state.modalOpen} />
+        <DeliveryNoteModal onCreateNoteClick={this.onCreateNoteClick} deliveryNoteData={this.state.deliveryNoteData} onDeliveryNoteChange={this.onDeliveryNoteChange} modalClose={() => this.setState({ modalOpen: false })} modalOpen={this.state.modalOpen} />
       </BasicScrollLayout>
     );
-  }
-
-  /**
-   * Adds a delivery note
-   */
-  private addDeliveryNote = (deliveryNote: DeliveryNote) => {
-
-    console.log('Data mitä tulee addDeliveryNote funktioon: ' + deliveryNote.image + deliveryNote.text);
-
-  }
-
-  /**
-   * Handles new delivery data
-   */
-  private onUserInputChange = (key: any, value: any) => {
-    const state: any = this.state;
-    state[key] = value;
-    this.setState(state);
-  }
-
-  /**
-   * Handles delivery submit
-   */
-  private handleDeliverySubmit = async () => {
-    if (!this.props.accessToken||!this.state.deliveryPlace) {
-      return;
-    }
-    const Api = new PakkasmarjaApi();
-    const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const delivery: Delivery =
-    {
-      id: this.state.id,
-      productId: this.state.productId,
-      userId: this.state.userId,
-      time: this.state.selectedDate,
-      status: "DONE",
-      amount: this.state.amount,
-      price: this.state.price,
-      quality: this.state.quality,
-      deliveryPlaceId: this.state.deliveryPlace.id
-    }
-
-
-
-    const data = await deliveryService.createDelivery(delivery);
-    this.props.navigation.navigate("IncomingDeliveries");
-    
-    //KUN PAINETAAN TALLENNA NIIN LÄHETTÄÄ DELIVERYN
-  }
-
-  /**
-  * Prints time
-  * 
-  * @return formatted start time
-  */
-  private printTime(date: Date): string {
-    return moment(date).format("DD.MM.YYYY");
-  }
-
-  /**
-   * Removes currently selected date filter
-   */
-  private removeDate = () => {
-    this.setState({
-      selectedDate: undefined
-    });
   }
 }
 

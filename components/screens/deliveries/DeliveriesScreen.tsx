@@ -9,7 +9,6 @@ import { TouchableOpacity, Image, View, Text } from "react-native";
 import { List, ListItem } from 'react-native-elements';
 import { styles } from './styles.tsx'
 import { PREDICTIONS_ICON, RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
-import { Col, Row, Grid } from "react-native-easy-grid";
 
 /**
  * Component props
@@ -58,6 +57,7 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
    * @param type type
    */
   private onDeliveryItemClick = (screen: string, type: string) => {
+    console.log("TPYE:" + type);
     this.props.navigation.navigate(screen, {
       type: type
     });
@@ -77,6 +77,37 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
       />
     );
   }
+
+  /**
+   * Render list item
+   */
+  renderDeliveryList = (deliveryList: any, productType: string) => {
+    return (
+      <View style={{flex: 1, flexDirection: "column"}}>
+        {
+          deliveryList.map((listItem: any) => {
+            return (
+              <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, productType) }}>
+              <View key={listItem.screen} style={{width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 35}}> 
+                <View style={{width: 40, alignContent: "center", alignItems: "center", paddingLeft: 5, paddingRight: 5}}>
+                  <Image
+                    style={{flex: 1, width: 40, resizeMode: 'contain'}}
+                    source={listItem.icon}
+                  />
+                </View>
+                <View style={{width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center'}}>
+                  <Text style={{fontWeight: "bold", color: "#000000", fontSize: 20}}>
+                    {listItem.name}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+            );
+          })
+        }
+      </View>
+    );
+    }
 
   /**
    * Render method
@@ -104,52 +135,14 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <Tabs>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"TUORETUOTTEET"}>
-            <View style={{flex: 1, flexDirection: "column"}}>
-              {
-                deliveryList.map((listItem) => {
-                  return (
-                    <View key={listItem.screen} style={{width: "100%", flex: 1, flexDirection: "row"}}> 
-                      <View style={{width: 40, alignContent: "center", alignItems: "center"}}>
-                        <Image
-                          source={listItem.icon}
-                        />
-                      </View>
-                      <View style={{width: "70%", paddingTop: 10}}>
-                        <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
-                          <Text style={{fontWeight: "bold", fontSize: 20}}>
-                            {listItem.name}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  );
-                })
-              }
-            </View>
+            {
+              this.renderDeliveryList(deliveryList, "FRESH")
+            }
           </Tab>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"PAKASTEET"}>
-          <View style={{flex: 1, flexDirection: "column"}}>
-              {
-                deliveryList.map((listItem) => {
-                  return (
-                    <View key={listItem.screen} style={{width: "100%", flex: 1, flexDirection: "row", height: 40}}> 
-                      <View style={{width: 40, alignContent: "center", alignItems: "center"}}>
-                        <Image
-                          source={listItem.icon}
-                        />
-                      </View>
-                      <View style={{width: "70%", paddingTop: 10}}>
-                        <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
-                          <Text>
-                            {listItem.name}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  );
-                })
-              }
-            </View>
+            {
+              this.renderDeliveryList(deliveryList, "FROZEN")
+            }
           </Tab>
         </Tabs>
       </BasicScrollLayout>

@@ -14,10 +14,10 @@ import PakkasmarjaApi from "../../../api";
 interface Props {
   accessToken?: AccessToken;
   modalOpen: boolean;
-  addDeliveryNote: (deliveryNote: DeliveryNote) => void;
+  onDeliveryNoteChange: (note: DeliveryNote) => void;
+  onCreateNoteClick: () => void;
+  deliveryNoteData: DeliveryNote;
   modalClose: () => void;
-  deliverNoteText?: string;
-  deliveryId: string;
 };
 
 /**
@@ -45,24 +45,32 @@ class DeliveryNoteModal extends React.Component<Props, State> {
   }
 
   /**
-   * Sends delivery note
+   * On delivery note data change
    */
+  private onDeliveryDataChange = (key: string, value: string) => {
+    let deliveryData: any = this.props.deliveryNoteData;
+    deliveryData[key] = value;
 
-  private sendDeliveryNote = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
+    this.props.onDeliveryNoteChange(deliveryData);
+  }
 
-    const deliveryNote: DeliveryNote = {
-      text: this.state.text,
-      image: this.state.image
-    }
+  /**
+   * Discard delivery message
+   */
+  private discardDeliveryMessage = () => {
+    this.props.onDeliveryNoteChange({
+      id: undefined,
+      image: undefined,
+      text: undefined
+    });
+  }
 
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    await deliveriesService.createDeliveryNote(deliveryNote, this.props.deliveryId);
-
-    this.props.addDeliveryNote(deliveryNote);
+  /**
+   * Create delivery message
+   */
+  private createDeliveryMessage = () => {
+    this.props.onCreateNoteClick();
+    this.props.modalClose();
   }
 
   /**
@@ -100,8 +108,8 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                 <Text style={styles.text}>Image URL</Text>
                 <TextInput
                   style={styles.textInput}
-                  value={this.state.image}
-                  onChangeText={(text: string) => this.setState({ image: text })}
+                  value={this.props.deliveryNoteData.image}
+                  onChangeText={(text: string) => this.onDeliveryDataChange("image", text)}
                 />
               </View>
               <View>
@@ -110,17 +118,17 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                   multiline={true}
                   numberOfLines={4}
                   style={styles.textInput}
-                  value={this.state.text}
-                  onChangeText={(text: string) => this.setState({ text: text })}
+                  value={this.props.deliveryNoteData.text}
+                  onChangeText={(text: string) => this.onDeliveryDataChange("text", text)}
                 />
               </View>
 
               <View style={[styles.flexView, { marginTop: 20 }]}>
-                <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.props.modalClose}>
-                  <Text style={styles.smallWhiteButtonText}>Sulje</Text>
+                <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.discardDeliveryMessage}>
+                  <Text style={styles.smallWhiteButtonText}>Peruuta</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.smallRedButton} onPress={this.sendDeliveryNote}>
-                  <Text style={styles.buttonText}>Lähetä</Text>
+                <TouchableOpacity style={styles.smallRedButton} onPress={this.createDeliveryMessage}>
+                  <Text style={styles.buttonText}>Tallenna</Text>
                 </TouchableOpacity>
               </View>
             </View>

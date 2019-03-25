@@ -27,6 +27,7 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: DeliveryProduct[];
+  productType?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -55,8 +56,17 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       return;
     }
 
+    const productType = await this.props.navigation.state.params.type;
+    this.setState({ productType: productType });
+  }
 
-
+  /**
+   * Component did update life-cycle event
+   */
+  public componentDidUpdate(previousProps: Props, previousState: State) {
+    if (previousState.productType && !this.state.productType) {
+      this.setState({ productType: previousState.productType});
+    }
   }
 
   static navigationOptions = {
@@ -101,8 +111,6 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
    * Renders elements depending on delivery status
    */
   private renderStatus = (deliveryData: DeliveryProduct) => {
-
-
     const status = deliveryData.delivery.status;
     if (status === "PROPOSAL") {
       return (
@@ -143,54 +151,19 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   }
 
   /**
-   * Render method
-   */
-  public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
-    }
-
-    return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-      <NavigationEvents onWillFocus={() => this.loadData()} />
-        <View >
-          <View style={[styles.center, styles.topViewWithButton]}>
-            <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
-              <Thumbnail square source={INCOMING_DELIVERIES_LOGO} style={{ width: 60, height: 34, marginRight: 10 }} />
-              <Text style={styles.viewHeaderText}>Tulevat toimitukset</Text>
-            </View>
-            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery") }}>
-              <Text style={styles.buttonText}>Uusi toimitus</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
-            {
-              this.state.deliveryData.map((delivery) => {
-                return this.renderListItems(delivery)
-              })
-            }
-          </View>
-        </View>
-      </BasicScrollLayout>
-    );
-  }
-
-  /**
    * Loads data
    */
-  private loadData = async () => {
+  private loadData = async (payload?: any) => {
     if (!this.props.accessToken) {
       return;
     }
+    const productType = payload.state.params.type;
+    this.setState({ productType: productType });
+
     const Api = new PakkasmarjaApi();
     const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = Api.getProductsService(this.props.accessToken.access_token);
-
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(); // ei voi muuttaa maxResultsia, backend hajalla
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, productType); // ei voi muuttaa maxResultsia, backend hajalla
     const incomingDeliveries: Delivery[] = deliveries.filter(delivery => delivery.status !== "DONE" && delivery.status !== "REJECTED");
 
     const products: Product[] = await productsService.listProducts();
@@ -205,7 +178,43 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     });
 
     this.setState({ deliveryData: deliveriesAndProducts });
+  }
 
+  /**
+   * Render method
+   */
+  public render() {
+    if (this.state.loading) {
+      return (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#E51D2A" />
+        </View>
+      );
+    }
+
+    return (
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <NavigationEvents onWillFocus={(pl:any) => this.loadData(pl)} />
+        <View >
+          <View style={[styles.center, styles.topViewWithButton]}>
+            <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
+              <Thumbnail square source={INCOMING_DELIVERIES_LOGO} style={{ width: 60, height: 34, marginRight: 10 }} />
+              <Text style={styles.viewHeaderText}>Tulevat toimitukset</Text>
+            </View>
+            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery", {type: this.state.productType}) }}>
+              <Text style={styles.buttonText}>Uusi toimitus</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
+            {
+              this.state.deliveryData.map((delivery) => {
+                return this.renderListItems(delivery)
+              })
+            }
+          </View>
+        </View>
+      </BasicScrollLayout>
+    );
   }
 }
 

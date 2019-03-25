@@ -66,9 +66,7 @@ class EditDelivery extends React.Component<Props, State> {
       quality: "NORMAL",
       amount: 0,
       price: "0",
-
       hoursTestData: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-
       products: []
     };
 
@@ -209,7 +207,7 @@ class EditDelivery extends React.Component<Props, State> {
           </View>
           <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
             <Picker
-              selectedValue={this.state.deliveryPlace}
+              selectedValue={this.state.deliveryPlace ? this.state.deliveryPlace.id : ""}
               style={{ height: 50, width: "100%" }}
               onValueChange={(itemValue, itemIndex) =>
                 this.onDeliveryPlaceInputChange(itemValue)
@@ -217,7 +215,7 @@ class EditDelivery extends React.Component<Props, State> {
               {
                 this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
                   return (
-                    <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace} />
+                    <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace.id} />
                   );
                 })
               }
