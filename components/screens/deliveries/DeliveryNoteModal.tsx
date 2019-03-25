@@ -45,27 +45,6 @@ class DeliveryNoteModal extends React.Component<Props, State> {
   }
 
   /**
-   * Sends delivery note
-   */
-
-  private sendDeliveryNote = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-
-    const deliveryNote: DeliveryNote = {
-      text: this.state.text,
-      image: this.state.image
-    }
-
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    await deliveriesService.createDeliveryNote(deliveryNote, this.props.deliveryId);
-
-    this.props.addDeliveryNote(deliveryNote);
-  }
-
-  /**
    * Render method for contract modal component
    */
   public render() {
@@ -86,7 +65,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
               width: "95%",
               height: 425,
               backgroundColor: "white",
-              borderColor: "#e01e36", 
+              borderColor: "#e01e36",
               borderWidth: 1.25,
               padding: 20,
               borderRadius: 7
@@ -128,6 +107,26 @@ class DeliveryNoteModal extends React.Component<Props, State> {
         </Modal>
       </View>
     );
+  }
+  
+  /**
+   * Sends delivery note
+   */
+  private sendDeliveryNote = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const deliveryNote: DeliveryNote = {
+      text: this.state.text,
+      image: this.state.image
+    }
+
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+    await deliveriesService.createDeliveryNote(deliveryNote, this.props.deliveryId);
+
+    this.props.addDeliveryNote(deliveryNote);
   }
 }
 

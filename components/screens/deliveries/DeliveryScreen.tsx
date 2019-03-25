@@ -143,7 +143,6 @@ class DeliveryScreen extends React.Component<Props, State> {
     }
 
     const data = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
-    console.log(data);
     this.props.navigation.navigate("IncomingDeliveries");
 
   }

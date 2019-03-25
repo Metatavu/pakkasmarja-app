@@ -188,7 +188,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
     const Api = new PakkasmarjaApi();
     const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
     const filteredByWeekNumber = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, undefined, lastWeekNumber);
-    
+
     filteredByWeekNumber.forEach((weekDeliveryPrediction) => {
       const amount: number = weekDeliveryPrediction.amount;
       const totalAmount = this.state.lastWeeksDeliveryPredictionTotalAmount + amount;
@@ -290,7 +290,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
         </View>
         <View style={{ flex: 1 }}>
           <View style={[styles.center, styles.lightRedBackGroundColor, { paddingVertical: 10 }]}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={ ()=>this.props.navigation.navigate("ViewAllDeliveries")}>
               <Text style={styles.red}>Katso kaikki toimitukset</Text>
             </TouchableOpacity>
           </View>
@@ -331,7 +331,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
             {
               this.state.weekDays.map((day, index) => {
                 return (
-                  this.renderRadioButton(day.value, day.name, index)
+                  this.renderRadioButton(day.value, day.displayName, index)
                 );
               })
 

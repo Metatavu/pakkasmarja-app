@@ -250,7 +250,7 @@ class NewDelivery extends React.Component<Props, State> {
    * Handles delivery submit
    */
   private handleDeliverySubmit = async () => {
-    if (!this.props.accessToken||!this.state.deliveryPlace) {
+    if (!this.props.accessToken || !this.state.deliveryPlace) {
       return;
     }
     const Api = new PakkasmarjaApi();
@@ -268,19 +268,18 @@ class NewDelivery extends React.Component<Props, State> {
       deliveryPlaceId: this.state.deliveryPlace.id
     }
 
-
-
     const data = await deliveryService.createDelivery(delivery);
     this.props.navigation.navigate("IncomingDeliveries");
-    
-    //KUN PAINETAAN TALLENNA NIIN LÄHETTÄÄ DELIVERYN
+
   }
 
   /**
-  * Prints time
-  * 
-  * @return formatted start time
-  */
+    * Prints time
+    * 
+    * @return formatted start time
+    * 
+    * @param date date
+    */
   private printTime(date: Date): string {
     return moment(date).format("DD.MM.YYYY");
   }

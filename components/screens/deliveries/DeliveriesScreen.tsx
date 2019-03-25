@@ -70,10 +70,10 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
    */
   private renderIcon = (src: any) => {
     return (
-      <Thumbnail 
-        square 
-        style={{ maxHeight: "100%", maxWidth: "100%" }} 
-        source={src} 
+      <Thumbnail
+        square
+        style={{ maxHeight: "100%", maxWidth: "100%" }}
+        source={src}
       />
     );
   }
@@ -104,19 +104,19 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <Tabs>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"TUORETUOTTEET"}>
-            <View style={{flex: 1, flexDirection: "column"}}>
+            <View style={{ flex: 1, flexDirection: "column" }}>
               {
                 deliveryList.map((listItem) => {
                   return (
-                    <View key={listItem.screen} style={{width: "100%", flex: 1, flexDirection: "row"}}> 
-                      <View style={{width: 40, alignContent: "center", alignItems: "center"}}>
+                    <View key={listItem.screen} style={{ width: "100%", flex: 1, flexDirection: "row" }}>
+                      <View style={{ width: 40, alignContent: "center", alignItems: "center" }}>
                         <Image
                           source={listItem.icon}
                         />
                       </View>
-                      <View style={{width: "70%", paddingTop: 10}}>
+                      <View style={{ width: "70%", paddingTop: 10 }}>
                         <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
-                          <Text style={{fontWeight: "bold", fontSize: 20}}>
+                          <Text style={{ fontWeight: "bold", fontSize: 20 }}>
                             {listItem.name}
                           </Text>
                         </TouchableOpacity>
@@ -128,17 +128,17 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
             </View>
           </Tab>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"PAKASTEET"}>
-          <View style={{flex: 1, flexDirection: "column"}}>
+            <View style={{ flex: 1, flexDirection: "column" }}>
               {
                 deliveryList.map((listItem) => {
                   return (
-                    <View key={listItem.screen} style={{width: "100%", flex: 1, flexDirection: "row", height: 40}}> 
-                      <View style={{width: 40, alignContent: "center", alignItems: "center"}}>
+                    <View key={listItem.screen} style={{ width: "100%", flex: 1, flexDirection: "row", height: 40 }}>
+                      <View style={{ width: 40, alignContent: "center", alignItems: "center" }}>
                         <Image
                           source={listItem.icon}
                         />
                       </View>
-                      <View style={{width: "70%", paddingTop: 10}}>
+                      <View style={{ width: "70%", paddingTop: 10 }}>
                         <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, "FRESH") }}>
                           <Text>
                             {listItem.name}
