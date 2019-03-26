@@ -25,6 +25,7 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: DeliveryProduct[];
+  productType?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -52,13 +53,13 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    this.setState({loading:true});
+    this.setState({ loading: true });
 
     const Api = new PakkasmarjaApi();
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries("DONE");
+    const productType = await this.props.navigation.state.params.type;
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "DONE", productType);
     const products: Product[] = await productsService.listProducts();
 
     const deliveriesAndProducts: DeliveryProduct[] = [];
@@ -70,7 +71,16 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
       });
     });
 
-    this.setState({ deliveryData: deliveriesAndProducts, loading:false });
+    this.setState({ deliveryData: deliveriesAndProducts, productType, loading: false });
+  }
+
+  /**
+   * Component did update life-cycle event
+   */
+  public componentDidUpdate(previousProps: Props, previousState: State) {
+    if (previousState.productType && !this.state.productType) {
+      this.setState({ productType: previousState.productType });
+    }
   }
 
   static navigationOptions = {

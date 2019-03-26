@@ -49,6 +49,7 @@ interface State {
     fileUri: string,
     fileType: string
   };
+  productType?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -89,24 +90,24 @@ class EditDelivery extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-
     const Api = new PakkasmarjaApi();
-    const productsService = Api.getProductsService(this.props.accessToken.access_token);
-    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
-
-    const products: Product[] = await productsService.listProducts();
+    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
+    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+    const deliveryData: DeliveryProduct = this.props.navigation.getParam('deliveryData');
+    const productType = this.props.navigation.getParam('productType');
+    const deliveryNotes = await deliveriesService.listDeliveryNotes(deliveryData.delivery.id || "");
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
 
-    const deliveryData: DeliveryProduct = this.props.navigation.getParam('deliveryData');
-    const deliveryNotes = await deliveriesService.listDeliveryNotes(deliveryData.delivery.id || "");
-
-    this.setState({ 
+    this.setState({
       deliveryData,
-      deliveryNotes 
+      deliveryNotes,
+      productType
     });
-    
-    if (deliveryData && deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
+
+    const products: Product[] = await productsService.listProducts(undefined, this.state.productType);
+
+    if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
       this.setState({
         products: products,
@@ -223,7 +224,7 @@ class EditDelivery extends React.Component<Props, State> {
       return;
     }
 
-    this.setState({ 
+    this.setState({
       deliveryNoteFile: {
         fileUri: fileUri,
         fileType: fileType
@@ -284,17 +285,16 @@ class EditDelivery extends React.Component<Props, State> {
               rounded
             />
           </View>
-          <View style={[styles.flexView, { paddingVertical: 15 }]}>
-            <View style={{ width: "47%" }}><Text>Toimituspäivä</Text></View>
-            <View style={{ width: "47%" }}><Text>Klo</Text></View>
-          </View>
-          <View style={styles.flexView}>
-            <TouchableOpacity style={[styles.pickerWrap, { width: "47%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
+          <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+              <Text style={styles.textWithSpace}>Toimituspäivä</Text>
+            </View>
+            <TouchableOpacity style={[styles.pickerWrap, { width: "100%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
               <View style={{ flex: 1, flexDirection: "row" }}>
-                <View style={[styles.center, { flex: 3 }]}>
-                  <Text>{this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"}</Text>
+                <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
+                  <Text style={{ paddingLeft: 10 }}>{this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"}</Text>
                 </View>
-                <View style={[styles.center, { flex: 1 }]}>
+                <View style={[styles.center, { flex: 0.6 }]}>
                   {this.state.selectedDate ? <Icon style={{ color: "#e01e36" }} onPress={this.removeDate} type={"AntDesign"} name="close" /> : <Icon style={{ color: "#e01e36" }} type="AntDesign" name="calendar" />}
                 </View>
               </View>
@@ -305,23 +305,6 @@ class EditDelivery extends React.Component<Props, State> {
               onConfirm={(date) => this.setState({ selectedDate: date, datepickerVisible: false })}
               onCancel={() => { this.setState({ datepickerVisible: false }); }}
             />
-            <View style={[styles.pickerWrap, { width: "47%" }]}>
-              <Picker
-                selectedValue={this.state.beforeTime}
-                style={{ height: 50, width: "100%" }}
-                onValueChange={(itemValue) =>
-                  this.onUserInputChange("beforeTime", itemValue)
-                }>
-                {
-                  //TESTIDATAAA
-                  this.state.hoursTestData.map((hour) => {
-                    return (
-                      <Picker.Item key={hour} label={"Ennen klo " + hour.toString() || ""} value={hour} />
-                    );
-                  })
-                }
-              </Picker>
-            </View>
           </View>
           <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
             <Picker
@@ -344,7 +327,7 @@ class EditDelivery extends React.Component<Props, State> {
               <TouchableOpacity onPress={() => this.setState({ modalOpen: true })}>
                 <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
                   <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
-                  <Text style={{ color: "#e01e36" }} > 
+                  <Text style={{ color: "#e01e36" }} >
                     {`Lisää huomio (${this.state.deliveryNotes.length})`}
                   </Text>
                 </View>
@@ -357,14 +340,14 @@ class EditDelivery extends React.Component<Props, State> {
             </View>
           </View>
         </View>
-        <DeliveryNoteModal 
+        <DeliveryNoteModal
           imageUri={this.state.deliveryNoteFile ? this.state.deliveryNoteFile.fileUri : undefined}
           onDeliveryNoteImageChange={((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType))}
-          onCreateNoteClick={this.onCreateNoteClick} 
-          deliveryNoteData={this.state.deliveryNoteData} 
-          onDeliveryNoteChange={this.onDeliveryNoteChange} 
-          modalClose={() => this.setState({ modalOpen: false })} 
-          modalOpen={this.state.modalOpen} 
+          onCreateNoteClick={this.onCreateNoteClick}
+          deliveryNoteData={this.state.deliveryNoteData}
+          onDeliveryNoteChange={this.onDeliveryNoteChange}
+          modalClose={() => this.setState({ modalOpen: false })}
+          modalOpen={this.state.modalOpen}
         />
       </BasicScrollLayout>
     );

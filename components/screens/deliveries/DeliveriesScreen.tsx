@@ -63,50 +63,35 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
   }
 
   /**
-   * Render icon
-   * 
-   * @param src icon source
-   */
-  private renderIcon = (src: any) => {
-    return (
-      <Thumbnail
-        square
-        style={{ maxHeight: "100%", maxWidth: "100%" }}
-        source={src}
-      />
-    );
-  }
-
-  /**
    * Render list item
    */
   renderDeliveryList = (deliveryList: any, productType: string) => {
     return (
-      <View style={{flex: 1, flexDirection: "column"}}>
+      <View style={{ flex: 1, flexDirection: "column", marginTop: 50 }}>
         {
           deliveryList.map((listItem: any) => {
             return (
               <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, productType) }}>
-              <View key={listItem.screen} style={{width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 35}}> 
-                <View style={{width: 40, alignContent: "center", alignItems: "center", paddingLeft: 5, paddingRight: 5}}>
-                  <Image
-                    style={{flex: 1, width: 40, resizeMode: 'contain'}}
-                    source={listItem.icon}
-                  />
+                <View key={listItem.screen} style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 35 }}>
+                  <View style={{ width: 40, alignContent: "center", alignItems: "center", paddingLeft: 5, paddingRight: 5 }}>
+                    <Image
+                      style={{ flex: 1, width: 40, resizeMode: 'contain' }}
+                      source={listItem.icon}
+                    />
+                  </View>
+                  <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
+                    <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
+                      {listItem.name}
+                    </Text>
+                  </View>
                 </View>
-                <View style={{width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center'}}>
-                  <Text style={{fontWeight: "bold", color: "#000000", fontSize: 20}}>
-                    {listItem.name}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
             );
           })
         }
       </View>
     );
-    }
+  }
 
   /**
    * Render method

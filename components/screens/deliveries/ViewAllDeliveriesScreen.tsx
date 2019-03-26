@@ -75,7 +75,6 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
         delivery: delivery,
         product: product
       };
-
       if (deliveryData.indexOf(deliveryDate) === -1) {
         deliveryData[deliveryDate] = [deliveryProduct];
       } else {
@@ -83,7 +82,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
       }
     });
 
-    console.log(deliveryData);
+    
     this.setState({ deliveryData: deliveryData, loading: false });
   }
 

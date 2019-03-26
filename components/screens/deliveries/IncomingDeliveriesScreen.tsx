@@ -10,9 +10,9 @@ import PakkasmarjaApi from "../../../api";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native';
 import { Thumbnail } from "native-base";
-import { INCOMING_DELIVERIES_LOGO } from "../../../static/images";
+import { INCOMING_DELIVERIES_LOGO, INDELIVERY_LOGO, RED_LOGO } from "../../../static/images";
 import { NavigationEvents } from "react-navigation";
-
+import moment from "moment";
 /**
  * Component props
  */
@@ -43,7 +43,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      loading: false,
+      loading: true,
       deliveryData: []
     };
   }
@@ -65,7 +65,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
    */
   public componentDidUpdate(previousProps: Props, previousState: State) {
     if (previousState.productType && !this.state.productType) {
-      this.setState({ productType: previousState.productType});
+      this.setState({ productType: previousState.productType });
     }
   }
 
@@ -85,7 +85,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       return;
     }
 
-    const timeText = 'Ennen klo 11';
+    const time = moment(delivery.delivery.time).format("DD.MM.YYYY");
     const productText = `${delivery.product.name} ${delivery.product.unitSize} ${delivery.product.unitName} x ${delivery.product.units}`;
 
     return (
@@ -93,7 +93,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
         <View style={{ flex: 2 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: 'black' }}>
-              {timeText}
+              {time}
             </Text>
             <Text style={{ color: 'black', fontWeight: 'bold' }}>
               {productText}
@@ -114,15 +114,19 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     const status = deliveryData.delivery.status;
     if (status === "PROPOSAL") {
       return (
-        <View style={styles.center}>
-          <Text>Tarkistuksessa</Text>
-        </View>);
+        <View style={[styles.center, { flexDirection: "row" }]}>
+          <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
+          <Text >Tarkistuksessa</Text>
+        </View>
+      );
     }
     else if (status === "DELIVERY") {
       return (
-        <View style={styles.center}>
+        <View style={[styles.center, { flexDirection: "row" }]}>
+          <Thumbnail square source={INDELIVERY_LOGO} style={{ width: 36, height: 21, marginRight: 10 }} />
           <Text style={styles.green}>Toimituksessa</Text>
-        </View>);
+        </View>
+      );
     }
     else if (status === "PLANNED") {
       return (
@@ -133,7 +137,8 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
               this.props.navigation.navigate("Delivery", {
                 deliveryId: deliveryData.delivery.id,
                 productId: deliveryData.product ? deliveryData.product.id : "",
-                editable: true
+                editable: true,
+                productType: this.state.productType
               })
             }}
           >
@@ -144,9 +149,11 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     }
     else if (status === "DONE") {
       return (
-        <View style={styles.center}>
+        <View style={[styles.center, { flexDirection: "row" }]}>
+          <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
           <Text style={styles.red}>Hyväksytty</Text>
-        </View>);
+        </View>
+      );
     }
   }
 
@@ -158,15 +165,14 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       return;
     }
     const productType = payload.state.params.type;
-    this.setState({ productType: productType });
+    this.setState({ productType: productType, loading: true });
 
     const Api = new PakkasmarjaApi();
-    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = Api.getProductsService(this.props.accessToken.access_token);
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, productType); // ei voi muuttaa maxResultsia, backend hajalla
+    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, productType);
+    const products: Product[] = await productsService.listProducts(undefined, productType);
     const incomingDeliveries: Delivery[] = deliveries.filter(delivery => delivery.status !== "DONE" && delivery.status !== "REJECTED");
-
-    const products: Product[] = await productsService.listProducts();
 
     const deliveriesAndProducts: DeliveryProduct[] = [];
     incomingDeliveries.forEach((delivery) => {
@@ -177,36 +183,32 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       });
     });
 
-    this.setState({ deliveryData: deliveriesAndProducts });
+    this.setState({ deliveryData: deliveriesAndProducts, loading: false });
   }
 
   /**
    * Render method
    */
   public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
-    }
-
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-      <NavigationEvents onWillFocus={(pl:any) => this.loadData(pl)} />
+        <NavigationEvents onDidFocus={(pl: any) => this.loadData(pl)} />
         <View >
           <View style={[styles.center, styles.topViewWithButton]}>
             <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
-              <Thumbnail square source={INCOMING_DELIVERIES_LOGO} style={{ width: 60, height: 34, marginRight: 10 }} />
+              <Thumbnail square source={INCOMING_DELIVERIES_LOGO} style={{ width: 60, height: 35, marginRight: 10 }} />
               <Text style={styles.viewHeaderText}>Tulevat toimitukset</Text>
             </View>
-            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery", {type: this.state.productType}) }}>
+            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery", { type: this.state.productType }) }}>
               <Text style={styles.buttonText}>Uusi toimitus</Text>
             </TouchableOpacity>
           </View>
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
-            {
+            {this.state.loading ?
+              <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#E51D2A" />
+              </View>
+              :
               this.state.deliveryData.map((delivery) => {
                 return this.renderListItems(delivery)
               })

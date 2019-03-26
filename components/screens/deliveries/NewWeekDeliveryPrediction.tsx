@@ -237,19 +237,19 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
    * 
    * @param action action
    */
-  private changeItemGroup = (action: string) => {
+  private changeItemGroup = async (action: string) => {
     const maxValue: number = this.state.itemGroups.length - 1;
     const minValue: number = 0;
 
     if (action === "next" && this.state.itemGroupIndex !== maxValue) {
-      this.setState({ itemGroupIndex: this.state.itemGroupIndex + 1 });
+      await this.setState({ itemGroupIndex: this.state.itemGroupIndex + 1 });
     }
 
     if (action === "previous" && this.state.itemGroupIndex !== minValue) {
-      this.setState({ itemGroupIndex: this.state.itemGroupIndex - 1 });
+      await this.setState({ itemGroupIndex: this.state.itemGroupIndex - 1 });
     }
 
-    this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex] });
+   await this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex] });
   }
 
   /**

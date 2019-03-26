@@ -29,7 +29,7 @@ interface Props {
 interface State {
   loading: boolean;
   modalOpen: boolean;
-  delivery: Delivery;
+  delivery?: Delivery;
   product?: Product;
 };
 
@@ -48,7 +48,6 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     this.state = {
       loading: false,
       modalOpen: false,
-      delivery: {}
     };
   }
 
@@ -74,7 +73,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    if (this.state.loading) {
+    if (this.state.loading || !this.state.delivery) {
       return (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#E51D2A" />
@@ -124,28 +123,16 @@ class ProposalCheckScreen extends React.Component<Props, State> {
             />
           </View>
           <View style={{ flex: 1, flexDirection: "row" }}>
-            <View style={{ flex: 1 }}>
+            <View style={styles.center}>
               <Text style={[styles.textPrediction, { marginVertical: 10 }]}>Toimituspäivä</Text>
               <View style={{ flexDirection: "row" }}>
                 <Thumbnail square source={PREDICTIONS_ICON} style={{ width: 20, height: 22, marginRight: 10 }} />
                 <Moment style={{ fontWeight: "bold", fontSize: 16, color: "black" }} element={Text} format="DD.MM.YYYY">{this.state.delivery.time && this.state.delivery.time.toString()}</Moment>
               </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.textPrediction, { marginVertical: 10 }]}>Klo</Text>
-              <Text>{this.state.delivery.time}</Text>
-            </View>
           </View>
-          <View style={[styles.center, { flex: 1, paddingVertical: 15 }]}>
-            <TouchableOpacity onPress={() => this.setState({ modalOpen: true })}>
-              <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
-                <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" /><Text style={{ color: "#e01e36" }} >Lisää huomio</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-          <DeliveryNoteModal deliveryId={""} addDeliveryNote={this.addDeliveryNote} modalClose={() => this.setState({ modalOpen: false })} modalOpen={this.state.modalOpen} />
           <View style={[styles.center, { flex: 1 }]}>
-            <View style={{ flex: 1, flexDirection: "row" }}>
+            <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
               <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
                 <TouchableOpacity style={[styles.declineButton, { width: "95%", height: 60 }]} onPress={() => this.props.navigation.goBack()} >
                   <Text style={styles.buttonText}>Peruuta</Text>
@@ -167,7 +154,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
    * Handle proposal accept
    */
   private handleProposalAccept = async () => {
-    if (!this.props.accessToken || !this.state.product || !this.state.delivery) {
+    if (!this.props.accessToken || !this.state.product || !this.state.product.id || !this.state.delivery || !this.state.delivery.id) {
       return;
     }
     const Api = new PakkasmarjaApi();
@@ -185,18 +172,13 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       quality: this.state.delivery.quality,
       deliveryPlaceId: this.state.delivery.deliveryPlaceId
     }
-    const data = await deliveriesService.updateDelivery(delivery, this.state.delivery.id || "");
-    this.props.navigation.navigate("IncomingDeliveries");
+    await deliveriesService.updateDelivery(delivery, this.state.delivery.id);
+
+    const productType = await this.props.navigation.state.params.productType;
+    this.props.navigation.navigate("IncomingDeliveries", { type: productType });
   }
 
-  /**
-   * Adds a delivery note
-   */
-  private addDeliveryNote = (deliveryNote: DeliveryNote) => {
 
-    console.log('Data mitä tulee addDeliveryNote funktioon: ' + deliveryNote.image + deliveryNote.text);
-
-  }
   /**
    * Load data
    */
