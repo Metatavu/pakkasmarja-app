@@ -147,13 +147,13 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
   /**
    * Refresh delivery data
    */
-  private refreshDeliveryData = async (weekNumber?: number) => {
+  private refreshDeliveryData = async () => {
     if (!this.props.accessToken || !this.state.selectedItemGroup) {
       return;
     }
     
     const itemGroupId = this.state.selectedItemGroup.id;
-    const week = weekNumber || this.state.weekNumber;
+    const week = this.state.weekNumber;
     const timeAfter = moment().day("Monday").week(week).toDate();
     const timeBefore = moment().day("Monday").week(week + 1).toDate();
 
