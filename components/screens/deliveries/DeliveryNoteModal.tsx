@@ -99,7 +99,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
   private openImagePicker = () => {
     ImagePicker.showImagePicker(this.getImagePickerOptions(), (response) => {
       console.log('Response = ', response);
-    
+
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.error) {
@@ -146,7 +146,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
               flexDirection: "column",
               justifyContent: "space-between",
               backgroundColor: "white",
-              borderColor: "#e01e36", 
+              borderColor: "#e01e36",
               borderWidth: 1.25,
               padding: 20,
               borderRadius: 7
@@ -156,27 +156,27 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                   Lisää huomio
               </Text>
               </View>
-                {
-                  !this.props.imageUri &&
-                  <View style={{marginTop: 20, marginBottom: 20}}>
-                    <Text style={styles.text}>Lisää kuva</Text>
-                    <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.openImagePicker}>
-                      <Text style={styles.smallWhiteButtonText}>Lisää kuva</Text>
-                    </TouchableOpacity>
-                  </View>
-                }
-                {
-                  this.props.imageUri && 
-                  <View style={{width: "100%", height: 200, justifyContent: "center", alignItems: "center"}}>
-                    <Image 
-                      source={{uri: this.props.imageUri}}
-                      style={{flex: 1, width: 200, height: 200, resizeMode: 'contain', marginBottom: 10}}
-                    />
-                    <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.removeImage}>
-                      <Text style={styles.smallWhiteButtonText}>Poista kuva</Text>
-                    </TouchableOpacity>
-                  </View>
-                }
+              {
+                !this.props.imageUri &&
+                <View style={{ marginTop: 20, marginBottom: 20 }}>
+                  <Text style={styles.text}>Lisää kuva</Text>
+                  <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.openImagePicker}>
+                    <Text style={styles.smallWhiteButtonText}>Lisää kuva</Text>
+                  </TouchableOpacity>
+                </View>
+              }
+              {
+                this.props.imageUri &&
+                <View style={{ width: "100%", height: 200, justifyContent: "center", alignItems: "center" }}>
+                  <Image
+                    source={{ uri: this.props.imageUri }}
+                    style={{ flex: 1, width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }}
+                  />
+                  <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.removeImage}>
+                    <Text style={styles.smallWhiteButtonText}>Poista kuva</Text>
+                  </TouchableOpacity>
+                </View>
+              }
               <View>
                 <Text style={styles.text}>Kommentti</Text>
                 <TextInput

@@ -74,7 +74,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
         </View>
         <View style={{ flex: 1 }}>
           <View style={[styles.center, styles.lightRedBackGroundColor, { paddingVertical: 10 }]}>
-            <TouchableOpacity onPress={ this.props.navigation.navigate("ViewAllDeliveries") }>
+            <TouchableOpacity onPress={() => this.props.navigation.navigate("ViewAllDeliveries")}>
               <Text style={styles.red}>Katso kaikki toimitukset</Text>
             </TouchableOpacity>
           </View>

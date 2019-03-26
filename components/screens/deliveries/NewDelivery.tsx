@@ -37,8 +37,6 @@ interface State {
   productId?: string;
   userId?: string;
   price: string;
-  beforeTime?: string;
-  hoursTestData: number[];
   amount: number;
   time?: Date;
   selectedDate?: Date;
@@ -74,7 +72,6 @@ class NewDelivery extends React.Component<Props, State> {
       amount: 0,
       price: "0",
       selectedDate: new Date(),
-      hoursTestData: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
       products: [],
       deliveryNoteData: {
         id: undefined,
@@ -140,6 +137,7 @@ class NewDelivery extends React.Component<Props, State> {
    * @param value value
    */
   private onUserInputChange = (key: any, value: any) => {
+    
     const state: any = this.state;
     state[key] = value;
     this.setState(state);
@@ -160,12 +158,13 @@ class NewDelivery extends React.Component<Props, State> {
       productId: this.state.productId,
       userId: this.state.userId,
       time: this.state.selectedDate,
-      status: "PLANNED",
+      status: "PROPOSAL",
       amount: this.state.amount,
       price: this.state.price,
       quality: this.state.quality,
       deliveryPlaceId: this.state.deliveryPlace.id
     }
+    
 
     const createdDelivery = await deliveryService.createDelivery(delivery);
 
@@ -222,7 +221,7 @@ class NewDelivery extends React.Component<Props, State> {
       return;
     }
 
-    this.setState({ 
+    this.setState({
       deliveryNoteFile: {
         fileUri: fileUri,
         fileType: fileType
@@ -283,17 +282,16 @@ class NewDelivery extends React.Component<Props, State> {
               rounded
             />
           </View>
-          <View style={[styles.flexView, { paddingVertical: 15 }]}>
-            <View style={{ width: "47%" }}><Text>Toimituspäivä</Text></View>
-            <View style={{ width: "47%" }}><Text>Klo</Text></View>
-          </View>
-          <View style={styles.flexView}>
-            <TouchableOpacity style={[styles.pickerWrap, { width: "47%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
+          <View style={{flex:1}}>
+            <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+              <Text style={styles.textWithSpace}>Toimituspäivä</Text>
+            </View>
+            <TouchableOpacity style={[styles.pickerWrap, { width: "100%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
               <View style={{ flex: 1, flexDirection: "row" }}>
-                <View style={[styles.center, { flex: 3 }]}>
-                  <Text>{this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"}</Text>
+                <View style={{ flex: 3, justifyContent:"center", alignItems:"flex-start" }}>
+                  <Text style={{paddingLeft:10}}>{this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"}</Text>
                 </View>
-                <View style={[styles.center, { flex: 1 }]}>
+                <View style={[styles.center, { flex: 0.6 }]}>
                   {this.state.selectedDate ? <Icon style={{ color: "#e01e36" }} onPress={this.removeDate} type={"AntDesign"} name="close" /> : <Icon style={{ color: "#e01e36" }} type="AntDesign" name="calendar" />}
                 </View>
               </View>
@@ -304,23 +302,6 @@ class NewDelivery extends React.Component<Props, State> {
               onConfirm={(date) => this.setState({ selectedDate: date, datepickerVisible: false })}
               onCancel={() => { this.setState({ datepickerVisible: false }); }}
             />
-            <View style={[styles.pickerWrap, { width: "47%" }]}>
-              <Picker
-                selectedValue={this.state.beforeTime}
-                style={{ height: 50, width: "100%" }}
-                onValueChange={(itemValue) =>
-                  this.onUserInputChange("beforeTime", itemValue)
-                }>
-                {
-                  //TESTIDATAAA
-                  this.state.hoursTestData.map((hour) => {
-                    return (
-                      <Picker.Item key={hour} label={"Ennen klo " + hour.toString() || ""} value={hour} />
-                    );
-                  })
-                }
-              </Picker>
-            </View>
           </View>
           <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
             <Picker
@@ -356,14 +337,14 @@ class NewDelivery extends React.Component<Props, State> {
             </View>
           </View>
         </View>
-        <DeliveryNoteModal 
+        <DeliveryNoteModal
           imageUri={this.state.deliveryNoteFile ? this.state.deliveryNoteFile.fileUri : undefined}
-          onCreateNoteClick={this.onCreateNoteClick} 
-          deliveryNoteData={this.state.deliveryNoteData} 
+          onCreateNoteClick={this.onCreateNoteClick}
+          deliveryNoteData={this.state.deliveryNoteData}
           onDeliveryNoteChange={this.onDeliveryNoteChange}
           onDeliveryNoteImageChange={((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType))}
-          modalClose={() => this.setState({ modalOpen: false })} 
-          modalOpen={this.state.modalOpen} 
+          modalClose={() => this.setState({ modalOpen: false })}
+          modalOpen={this.state.modalOpen}
         />
       </BasicScrollLayout>
     );

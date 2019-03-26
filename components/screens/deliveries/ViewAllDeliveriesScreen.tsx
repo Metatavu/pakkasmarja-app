@@ -180,7 +180,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
         deliveryData[deliveryDate].push(deliveryProduct);
       }
     });
-
+    
     this.setState({ deliveryData: deliveryData, loading: false });
   }
 

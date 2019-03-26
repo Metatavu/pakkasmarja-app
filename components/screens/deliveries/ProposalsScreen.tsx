@@ -9,7 +9,7 @@ import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
 import { RED_LOGO } from "../../../static/images";
 import PakkasmarjaApi from "../../../api";
-import { Delivery, Product, ItemGroupType } from "pakkasmarja-client";
+import { Delivery, Product } from "pakkasmarja-client";
 import Moment from "react-moment";
 
 /**
@@ -26,7 +26,7 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: DeliveryProduct[];
-  ItemGroupType?: ItemGroupType;
+  productType?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -54,13 +54,14 @@ class ProposalsScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    this.setState({loading:true});
+    this.setState({ loading: true });
+
     const Api = new PakkasmarjaApi();
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries("PROPOSAL");
-    const products: Product[] = await productsService.listProducts();
+    const productType = await this.props.navigation.state.params.type;
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "PROPOSAL", productType);;
+    const products: Product[] = await productsService.listProducts(undefined, productType);
     const deliveriesAndProducts: DeliveryProduct[] = [];
 
     deliveries.forEach((delivery) => {
@@ -70,8 +71,16 @@ class ProposalsScreen extends React.Component<Props, State> {
         product: product
       });
     });
+    this.setState({ deliveryData: deliveriesAndProducts, productType, loading: false });
+  }
 
-    this.setState({ deliveryData: deliveriesAndProducts, loading:false });
+  /**
+   * Component did update life-cycle event
+   */
+  public componentDidUpdate(previousProps: Props, previousState: State) {
+    if (previousState.productType && !this.state.productType) {
+      this.setState({ productType: previousState.productType });
+    }
   }
 
   static navigationOptions = {
@@ -122,17 +131,15 @@ class ProposalsScreen extends React.Component<Props, State> {
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
     if (!deliveryData || !deliveryData.product || !deliveryData.delivery.time) {
-      return <Text></Text>;
+      return <Text key={deliveryData.delivery.id}></Text>;
     }
     const date = deliveryData.delivery.time;
-    const productName = deliveryData.product.name; // Onko se product.name vai product.unitName
+    const productName = deliveryData.product.name;
     const productAmount = `${deliveryData.product.unitSize} G x ${deliveryData.product.units}`;
-
     const deliveryId = deliveryData.delivery.id;
     const productId = deliveryData.product.id;
-
     return (
-      <View key={deliveryData.delivery.id} style={styles.renderCustomListItem}>
+      <View key={deliveryId} style={styles.renderCustomListItem}>
         <View style={{ flex: 2 }}>
           <View style={{ flex: 1 }}>
             <View style={{ flex: 1, flexDirection: "row" }}>
@@ -146,7 +153,8 @@ class ProposalsScreen extends React.Component<Props, State> {
           onPress={() => {
             this.props.navigation.navigate("ProposalCheck", {
               deliveryId: deliveryId,
-              productId: productId
+              productId: productId,
+              productType: this.state.productType
             })
           }}
         >

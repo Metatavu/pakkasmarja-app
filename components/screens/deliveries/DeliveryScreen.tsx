@@ -80,7 +80,7 @@ class DeliveryScreen extends React.Component<Props, State> {
       deliveryPlaceId: deliveryState.deliveryPlaceId
     }
 
-    const data = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
     this.props.navigation.navigate("IncomingDeliveries");
   }
 
@@ -133,22 +133,35 @@ class DeliveryScreen extends React.Component<Props, State> {
         <NavigationEvents onWillFocus={() => this.loadData()} />
         <View style={{ flex: 1, padding: 25 }}>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>Tuote</Text></View>
-            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>{`${this.state.deliveryData.product.name} ${this.state.deliveryData.product.unitSize} G x ${this.state.deliveryData.product.units}`}</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16 }}>Tuote</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16 }}>{`${this.state.deliveryData.product.name} ${this.state.deliveryData.product.unitSize} G x ${this.state.deliveryData.product.units}`}</Text>
+            </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>Määrä (KG)</Text></View>
             <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>{this.state.deliveryData.delivery.amount}</Text></View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>Toimituspäivä</Text></View>
-            <View style={{ flex: 1 }}><Moment element={Text} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment></View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16 }}>Toimituspäivä</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Moment element={Text} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
+            </View>
           </View>
           {
             this.state.editable &&
             <React.Fragment>
               <View style={[styles.center, { flex: 1, paddingVertical: 25 }]}>
-                <TouchableOpacity onPress={() => { this.props.navigation.navigate("EditDelivery", { deliveryData: this.state.deliveryData }) }}>
+                <TouchableOpacity onPress={() => {
+                  this.props.navigation.navigate("EditDelivery", {
+                    deliveryData: this.state.deliveryData,
+                    productType: this.props.navigation.getParam('productType')
+                  })
+                }}>
                   <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
                     <Text style={[styles.red, { fontWeight: "bold", fontSize: 18, textDecorationLine: "underline" }]} >Muokkaa</Text>
                   </View>

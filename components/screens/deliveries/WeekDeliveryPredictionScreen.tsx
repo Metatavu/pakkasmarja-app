@@ -96,7 +96,11 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     const api = new PakkasmarjaApi();
     const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
     const itemGroups = await itemGroupService.listItemGroups();
-    this.setState({ itemGroups: itemGroups });
+    const filteredItemGroups: ItemGroup[] = [];
+    itemGroups.forEach((itemGroup) => {
+     itemGroup.category == this.state.productType && filteredItemGroups.push(itemGroup);
+    });
+    this.setState({ itemGroups: filteredItemGroups });
   }
 
   /**
@@ -110,7 +114,6 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     const Api = new PakkasmarjaApi();
     const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
     const weekDeliveryPredictions = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, this.props.accessToken.userId, undefined, undefined, undefined, 10);
-    console.log(weekDeliveryPredictions);
     weekDeliveryPredictions.forEach((weekDeliveryPrediction) => {
       const weekDeliveryPredictionState: WeekDeliveryPredictionTableData[] = this.state.weekDeliveryPredictionTableData;
       const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === weekDeliveryPrediction.itemGroupId);
