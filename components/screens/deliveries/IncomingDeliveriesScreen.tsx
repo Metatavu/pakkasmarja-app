@@ -164,6 +164,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    console.log("LADATAAAAN");
     const productType = payload.state.params.type;
     this.setState({ productType: productType, loading: true });
 

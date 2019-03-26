@@ -27,7 +27,7 @@ interface Props {
  */
 interface State {
   deliveryPlaces?: DeliveryPlace[];
-  deliveryPlace?: DeliveryPlace;
+  deliveryPlaceId: string;
   deliveryData?: DeliveryProduct;
   quality: DeliveryQuality;
   products: Product[];
@@ -73,6 +73,7 @@ class EditDelivery extends React.Component<Props, State> {
       price: "0",
       hoursTestData: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
       products: [],
+      deliveryPlaceId: "",
       deliveryNoteData: {
         id: undefined,
         image: undefined,
@@ -93,8 +94,8 @@ class EditDelivery extends React.Component<Props, State> {
     const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const deliveryData: DeliveryProduct = this.props.navigation.getParam('deliveryData');
-    const productType = this.props.navigation.getParam('productType');
+    const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
+    const productType = this.props.navigation.state.params.productType;
     const deliveryNotes = await deliveriesService.listDeliveryNotes(deliveryData.delivery.id || "");
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
@@ -114,7 +115,7 @@ class EditDelivery extends React.Component<Props, State> {
         deliveryPlaces: deliveryPlaces,
         userId: this.props.accessToken.userId,
         productId: deliveryData.product.id,
-        deliveryPlace: deliveryPlace,
+        deliveryPlaceId: deliveryPlace.id || "",
         amount: deliveryData.delivery.amount,
         selectedDate: deliveryData.delivery.time
       });
@@ -129,18 +130,19 @@ class EditDelivery extends React.Component<Props, State> {
     state[key] = value;
     this.setState(state);
   }
+  
   /**
    * Handles new delivery data
    */
-  private onDeliveryPlaceInputChange = (value: DeliveryPlace) => {
-    this.setState({ deliveryPlace: value });
+  private onDeliveryPlaceInputChange = (value: string) => {
+    this.setState({ deliveryPlaceId: value });
   }
 
   /**
    * Handles delivery update
    */
   private handleDeliveryUpdate = async () => {
-    if (!this.props.accessToken || !this.state.deliveryPlace || !this.state.selectedDate || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id) {
+    if (!this.props.accessToken || !this.state.deliveryPlaceId || !this.state.selectedDate || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id) {
       return;
     }
     const Api = new PakkasmarjaApi();
@@ -154,7 +156,7 @@ class EditDelivery extends React.Component<Props, State> {
       amount: this.state.amount,
       price: this.state.price,
       quality: this.state.quality,
-      deliveryPlaceId: this.state.deliveryPlace.id || ""
+      deliveryPlaceId: this.state.deliveryPlaceId || ""
     }
 
     await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
@@ -308,7 +310,7 @@ class EditDelivery extends React.Component<Props, State> {
           </View>
           <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
             <Picker
-              selectedValue={this.state.deliveryPlace ? this.state.deliveryPlace.id : ""}
+              selectedValue={this.state.deliveryPlaceId ? this.state.deliveryPlaceId : ""}
               style={{ height: 50, width: "100%" }}
               onValueChange={(itemValue, itemIndex) =>
                 this.onDeliveryPlaceInputChange(itemValue)
