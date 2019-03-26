@@ -4,13 +4,17 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
-import { Thumbnail, Text } from "native-base";
+import { Thumbnail, Text, Icon } from "native-base";
 import { COMPLETED_DELIVERIES_LOGO_GRAY } from "../../../static/images";
 import PakkasmarjaApi from "../../../api";
-import { Delivery, Product } from "pakkasmarja-client";
+import { Delivery, Product, ItemGroup } from "pakkasmarja-client";
 import moment from "moment";
+
+interface DeliveryData {
+  [date: string]: DeliveryProduct[]
+}
 
 /**
  * Component props
@@ -28,6 +32,10 @@ interface State {
   deliveryData: any[];
   filteredDates: Date[];
   filteredData: DeliveryProduct[];
+  itemGroups: ItemGroup[];
+  itemGroupIndex: number;
+  weekNumber: number;
+  selectedItemGroup?: ItemGroup;
 };
 
 /**
@@ -47,6 +55,9 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
       deliveryData: [],
       filteredData: [],
       filteredDates: [],
+      itemGroups: [],
+      itemGroupIndex: 0,
+      weekNumber: moment().week()
     };
   }
 
@@ -54,16 +65,103 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    await this.loadItemGroups();
+    this.refreshDeliveryData();
+  }
+
+  /**
+   * Load item groups 
+   */
+  private loadItemGroups = async () => {
     if (!this.props.accessToken) {
       return;
     }
-    this.setState({ loading: true });
+
+    const api = new PakkasmarjaApi();
+    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
+    const itemGroups = await itemGroupService.listItemGroups();
+    this.setState({ itemGroups: itemGroups, selectedItemGroup: itemGroups[0] });
+  }
+
+  /**
+   * Changes item group
+   * 
+   * @param action action
+   */
+  private changeItemGroup = async (action: string) => {
+    const maxValue: number = this.state.itemGroups.length - 1;
+    const minValue: number = 0;
+    let itemGroupIndex = this.state.itemGroupIndex;
+
+    if (action === "next") {
+      if (this.state.itemGroupIndex !== maxValue) {
+        itemGroupIndex = this.state.itemGroupIndex + 1;
+      } else {
+        itemGroupIndex = minValue;
+      }
+    }
+
+    if (action === "previous") {
+      if (this.state.itemGroupIndex !== minValue) {
+        itemGroupIndex = this.state.itemGroupIndex - 1;
+      } else {
+        itemGroupIndex = maxValue;
+      }
+    }
+
+    await this.setState({ itemGroupIndex: itemGroupIndex });
+    await this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex] });
+    this.refreshDeliveryData();
+  }
+
+  /**
+   * Changes week
+   * 
+   * @param action action
+   */
+  private changeWeekNumber = async (action: string) => {
+    const maxValue: number = 52
+    const minValue: number = 1;
+    let weekNumber = moment().week();
+
+    if (action === "next") {
+      if (this.state.weekNumber !== maxValue) {
+        weekNumber = this.state.weekNumber + 1;
+      } else {
+        weekNumber = minValue;
+      }
+    }
+
+    if (action === "previous") {
+      if (this.state.weekNumber !== minValue) {
+        weekNumber = this.state.weekNumber - 1;
+      } else {
+        weekNumber = maxValue;
+      }
+    }
+
+    await this.setState({ weekNumber: weekNumber });
+    this.refreshDeliveryData();
+  }
+
+  /**
+   * Refresh delivery data
+   */
+  private refreshDeliveryData = async (weekNumber?: number) => {
+    if (!this.props.accessToken || !this.state.selectedItemGroup) {
+      return;
+    }
+    
+    const itemGroupId = this.state.selectedItemGroup.id;
+    const week = weekNumber || this.state.weekNumber;
+    const timeAfter = moment().day("Monday").week(week).toDate();
+    const timeBefore = moment().day("Monday").week(week + 1).toDate();
 
     const Api = new PakkasmarjaApi();
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
 
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "DONE");
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "DONE", undefined, itemGroupId, undefined, undefined, timeBefore, timeAfter, 0, 100);
     const products: Product[] = await productsService.listProducts();
 
     const deliveryData: any = [];
@@ -75,15 +173,14 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
         delivery: delivery,
         product: product
       };
-
-      if (deliveryData.indexOf(deliveryDate) === -1) {
+      
+      if (Object.keys(deliveryData).indexOf(deliveryDate) === -1) {
         deliveryData[deliveryDate] = [deliveryProduct];
       } else {
         deliveryData[deliveryDate].push(deliveryProduct);
       }
     });
 
-    console.log(deliveryData);
     this.setState({ deliveryData: deliveryData, loading: false });
   }
 
@@ -109,9 +206,59 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View >
+        <View>
+          <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
+            <View style={styles.center}>
+              <TouchableOpacity onPress={() => { this.changeItemGroup("previous") }} >
+                <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
+              <Text style={{ fontWeight: "bold", fontSize: 24, color: "black" }}>
+                {this.state.selectedItemGroup ? this.state.selectedItemGroup.displayName : "-"}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => { this.changeItemGroup("next") }} >
+              <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
+            </TouchableOpacity>
+          </View>
 
+          <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
+            <View style={styles.center}>
+              <TouchableOpacity onPress={() => { this.changeWeekNumber("previous") }} >
+                <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
+              <Text style={{ fontWeight: "bold", fontSize: 24, color: "black" }}>
+                {`Viikko ${this.state.weekNumber}`}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => { this.changeWeekNumber("next") }} >
+              <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
+            </TouchableOpacity>
+          </View>
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
+            {
+              Object.keys(this.state.deliveryData).map((date: any) => {
+                return (
+                  <View style={{paddingLeft: 20, paddingTop: 10, paddingBottom: 10, borderBottomColor: "rgba(0,0,0,0.5)", borderBottomWidth: 1}}>
+                    <Text style={{fontWeight: "bold"}}>
+                      { date }
+                    </Text>
+                    {
+                      this.state.deliveryData[date].map((data: any) => {
+                        return (
+                          <Text>
+                            {`${data.product.name} ${data.product.unitSize} ${data.product.unitName} x ${data.delivery.amount}`}
+                          </Text>
+                        );
+                      })
+                    }
+                  </View>
+                );
+              })
+            }
             {
               this.state.deliveryData.map((deliveryData: any) => {
                 return this.renderListItem(deliveryData)
