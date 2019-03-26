@@ -1,6 +1,6 @@
 import * as constants from '../constants';
 import { AccessToken } from '../types';
-import { Delivery, Product } from 'pakkasmarja-client';
+import { Delivery, Product, ItemGroupCategory } from 'pakkasmarja-client';
 
 
 /**
@@ -9,6 +9,14 @@ import { Delivery, Product } from 'pakkasmarja-client';
 export interface AccessTokenUpdate {
   type: constants.ACCESS_TOKEN_UPDATE,
   accessToken: AccessToken
+}
+
+/**
+ * Item group category update data
+ */
+export interface ItemGroupCategoryUpdate {
+  type: constants.ITEM_GROUP_CATEGORY_UPDATE,
+  itemGroupCategory: ItemGroupCategory
 }
 
 /**
@@ -30,7 +38,7 @@ export interface ProductsLoaded {
 /**
  * Actions
  */
-export type AppAction =  AccessTokenUpdate | DeliveriesLoaded | ProductsLoaded;
+export type AppAction =  AccessTokenUpdate | DeliveriesLoaded | ProductsLoaded | ItemGroupCategoryUpdate;
 
 /**
  * Store update method for access token
@@ -65,5 +73,17 @@ export function productsLoaded(products: Product[]): ProductsLoaded {
   return {
     type: constants.PRODUCTS_LOADED,
     products: products
+  }
+}
+
+/**
+ * Store method for item group category
+ * 
+ * @param itemGroupCategory itemGroupCategory
+ */
+export function itemGroupCategoryUpdate(itemGroupCategory: ItemGroupCategory): ItemGroupCategoryUpdate {
+  return {
+    type: constants.ITEM_GROUP_CATEGORY_UPDATE,
+    itemGroupCategory: itemGroupCategory
   }
 }

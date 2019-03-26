@@ -10,7 +10,7 @@ import { List, ListItem } from 'react-native-elements';
 import { styles } from './styles.tsx'
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON, RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
-import { Delivery, Product } from "pakkasmarja-client";
+import { Delivery, Product, ItemGroupCategory } from "pakkasmarja-client";
 
 /**
  * Component props
@@ -20,6 +20,7 @@ interface Props {
   accessToken?: AccessToken;
   deliveriesLoaded?: (deliveries: Delivery[]) => void;
   productsLoaded?: (products: Product[]) => void;
+  itemGroupCategoryUpdate?: (itemGroupCategory: ItemGroupCategory) => void;
   deliveries?: Delivery[];
 };
 
@@ -96,27 +97,38 @@ class DeliveriesScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Update item group category
+   */
+  private updateItemGroupCategory = (itemGroupCategory: ItemGroupCategory) => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    this.props.itemGroupCategoryUpdate && this.props.itemGroupCategoryUpdate(itemGroupCategory);
+  }
+
+  /**
    * On delivery item click
    * 
    * @param screen screen
    * @param type type
    */
-  private onDeliveryItemClick = (screen: string, type: string) => {
+  private onDeliveryItemClick = (screen: string, itemGroupCategory: ItemGroupCategory) => {
+    this.updateItemGroupCategory(itemGroupCategory);
     this.props.navigation.navigate(screen, {
-      type: type
+      type: itemGroupCategory
     });
   }
 
   /**
    * Render list item
    */
-  renderDeliveryList = (deliveryList: any, productType: string) => {
+  renderDeliveryList = (deliveryList: any, itemGroupCategory: ItemGroupCategory) => {
     return (
       <View style={{ flex: 1, flexDirection: "column", marginTop: 50 }}>
         {
           deliveryList.map((listItem: any) => {
             return (
-              <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, productType) }}>
+              <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, itemGroupCategory) }}>
                 <View key={listItem.screen} style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 35 }}>
                   <View style={{ width: 40, alignContent: "center", alignItems: "center", paddingLeft: 5, paddingRight: 5 }}>
                     <Image
@@ -200,6 +212,7 @@ function mapStateToProps(state: StoreState) {
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
     onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
+    itemGroupCategoryUpdate: (itemGroupCategory: ItemGroupCategory) => dispatch(actions.itemGroupCategoryUpdate(itemGroupCategory)),
     deliveriesLoaded: (deliveries: Delivery[]) => dispatch(actions.deliveriesLoaded(deliveries)),
     productsLoaded: (products: Product[]) => dispatch(actions.productsLoaded(products))
   };

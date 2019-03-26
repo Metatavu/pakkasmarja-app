@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
-import { Delivery, Product, DeliveryStatus, DeliveryQuality, DeliveryNote, DeliveryPlace } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryStatus, DeliveryQuality, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -22,7 +22,8 @@ interface Props {
   navigation: any;
   accessToken?: AccessToken;
   deliveries?: Delivery[];
-  products?: Product[]
+  products?: Product[],
+  itemGroupCategory?: ItemGroupCategory
 };
 
 /**
@@ -95,6 +96,7 @@ class NewDelivery extends React.Component<Props, State> {
 
     console.log("REDUX DELIVERIES: ", this.props.deliveries);
     console.log("REDUX PRODUCTS: ", this.props.products);
+    console.log("REDUX ITEMGROUPCATEGORY: ", this.props.itemGroupCategory);
 
     const productType = this.props.navigation.state.params.type;
 
@@ -365,7 +367,8 @@ function mapStateToProps(state: StoreState) {
   return {
     accessToken: state.accessToken,
     deliveries: state.deliveries,
-    products: state.products
+    products: state.products,
+    itemGroupCategory: state.itemGroupCategory
   };
 }
 
