@@ -57,7 +57,6 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
    * @param type type
    */
   private onDeliveryItemClick = (screen: string, type: string) => {
-    console.log("TPYE:" + type);
     this.props.navigation.navigate(screen, {
       type: type
     });

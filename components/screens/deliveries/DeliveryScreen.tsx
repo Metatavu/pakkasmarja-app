@@ -57,6 +57,55 @@ class DeliveryScreen extends React.Component<Props, State> {
     await this.loadData();
   }
 
+  /**
+   * Handles begin delivery
+   */
+  private handleBeginDelivery = async () => {
+    if (!this.props.accessToken || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id || !this.state.deliveryData.product.id) {
+      return;
+    }
+
+    const Api = new PakkasmarjaApi();
+    const deliveryService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const deliveryState = this.state.deliveryData.delivery;
+    const delivery: Delivery = {
+      id: deliveryState.id,
+      productId: this.state.deliveryData.product.id,
+      userId: this.props.accessToken.userId,
+      time: deliveryState.time,
+      status: "DELIVERY",
+      amount: deliveryState.amount,
+      price: deliveryState.price,
+      quality: deliveryState.quality,
+      deliveryPlaceId: deliveryState.deliveryPlaceId
+    }
+
+    const data = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    this.props.navigation.navigate("IncomingDeliveries");
+  }
+
+  /**
+   * Load data
+   */
+  private loadData = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    const deliveryId: string = this.props.navigation.getParam('deliveryId');
+    const productId: string = this.props.navigation.getParam('productId');
+
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const productsService = Api.getProductsService(this.props.accessToken.access_token);
+    const delivery: Delivery = await deliveriesService.findDelivery(deliveryId);
+    const product: Product = await productsService.findProduct(productId);
+
+    const editable: boolean = this.props.navigation.getParam('editable');
+    const deliveryData = { delivery, product }
+
+    this.setState({ editable: editable, deliveryData: deliveryData });
+  }
+
   static navigationOptions = {
     headerTitle: <TopBar
       showMenu={true}
@@ -119,55 +168,6 @@ class DeliveryScreen extends React.Component<Props, State> {
     );
   }
 
-  /**
-   * Handles begin delivery
-   */
-  private handleBeginDelivery = async () => {
-    if (!this.props.accessToken || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id) {
-      return;
-    }
-    const Api = new PakkasmarjaApi();
-    const deliveryService = Api.getDeliveriesService(this.props.accessToken.access_token);
-    const deliveryState = this.state.deliveryData.delivery;
-    const delivery: Delivery =
-    {
-      id: deliveryState.id,
-      productId: this.state.deliveryData.product.id,
-      userId: this.props.accessToken.userId,
-      time: deliveryState.time,
-      status: "DELIVERY",
-      amount: deliveryState.amount,
-      price: deliveryState.price,
-      quality: deliveryState.quality,
-      deliveryPlaceId: deliveryState.deliveryPlaceId
-    }
-
-    const data = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
-    this.props.navigation.navigate("IncomingDeliveries");
-
-  }
-
-  /**
-   * Load data
-   */
-  private loadData = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-    const deliveryId: string = this.props.navigation.getParam('deliveryId');
-    const productId: string = this.props.navigation.getParam('productId');
-
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = Api.getProductsService(this.props.accessToken.access_token);
-    const delivery: Delivery = await deliveriesService.findDelivery(deliveryId);
-    const product: Product = await productsService.findProduct(productId);
-
-    const editable: boolean = this.props.navigation.getParam('editable');
-    const deliveryData = { delivery, product }
-
-    this.setState({ editable: editable, deliveryData: deliveryData });
-  }
 }
 
 /**

@@ -75,6 +75,56 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
   };
 
   /**
+   * On list item click
+   * 
+   * @param screen screen
+   * @param predictionTableData predictionTableData
+   */
+  private onListItemClick = (screen: string, predictionTableData: WeekDeliveryPredictionTableData) => {
+    this.props.navigation.navigate(screen, {
+      predictionData: predictionTableData
+    });
+  }
+
+  /**
+   * Load item groups 
+   */
+  private loadItemGroups = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    const api = new PakkasmarjaApi();
+    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
+    const itemGroups = await itemGroupService.listItemGroups();
+    this.setState({ itemGroups: itemGroups });
+  }
+
+  /**
+   * Load Week delivery prediction table data to state
+   */
+  private loadWeekDeliveryPredictionTableData = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const Api = new PakkasmarjaApi();
+    const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
+    const weekDeliveryPredictions = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, this.props.accessToken.userId, undefined, undefined, undefined, 10);
+    console.log(weekDeliveryPredictions);
+    weekDeliveryPredictions.forEach((weekDeliveryPrediction) => {
+      const weekDeliveryPredictionState: WeekDeliveryPredictionTableData[] = this.state.weekDeliveryPredictionTableData;
+      const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === weekDeliveryPrediction.itemGroupId);
+      weekDeliveryPredictionState.push({
+        weekDeliveryPrediction: weekDeliveryPrediction,
+        itemGroup: itemGroup ? itemGroup : {}
+      });
+      this.setState({ weekDeliveryPredictionTableData: weekDeliveryPredictionState });
+    });
+
+    this.setState({ loading: false });
+  }
+
+  /**
    * Render method
    */
   public render() {
@@ -139,54 +189,6 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
         </TouchableOpacity>
       );
     }
-  }
-
-  /**
-   * On list item click
-   * 
-   * @param screen screen
-   * @param predictionTableData predictionTableData
-   */
-  private onListItemClick = (screen: string, predictionTableData: WeekDeliveryPredictionTableData) => {
-    this.props.navigation.navigate(screen, {
-      predictionData: predictionTableData
-    });
-  }
-
-  /**
-   * Load item groups 
-   */
-  private loadItemGroups = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-    const api = new PakkasmarjaApi();
-    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
-    const itemGroups = await itemGroupService.listItemGroups();
-    this.setState({ itemGroups: itemGroups });
-  }
-
-  /**
-   * Load Week delivery prediction table data to state
-   */
-  private loadWeekDeliveryPredictionTableData = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-
-    const Api = new PakkasmarjaApi();
-    const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
-    const weekDeliveryPredictions = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, undefined, undefined, undefined, undefined, 10);
-
-    weekDeliveryPredictions.forEach((weekDeliveryPrediction) => {
-      const weekDeliveryPredictionState: WeekDeliveryPredictionTableData[] = this.state.weekDeliveryPredictionTableData;
-      const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === weekDeliveryPrediction.itemGroupId);
-      weekDeliveryPredictionState.push({
-        weekDeliveryPrediction: weekDeliveryPrediction,
-        itemGroup: itemGroup ? itemGroup : {}
-      });
-      this.setState({ weekDeliveryPredictionTableData: weekDeliveryPredictionState, loading: false });
-    });
   }
 }
 

@@ -25,7 +25,7 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  deliveryData: DeliveryProduct[];
+  deliveryData: any[];
   filteredDates: Date[];
   filteredData: DeliveryProduct[];
 };
@@ -63,25 +63,28 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
 
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries("DONE");
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "DONE");
     const products: Product[] = await productsService.listProducts();
 
-    const deliveriesAndProducts: DeliveryProduct[] = [];
-    const dates: string[] = [];
+    const deliveryData: any = [];
+
     deliveries.forEach((delivery) => {
-      let deliveryDate = moment(delivery.time).format("DD.MM.YYYY");
-      if (dates.indexOf(deliveryDate) === -1) {
-        dates.push(deliveryDate);
-      }
+      const deliveryDate = moment(delivery.time).format("DD.MM.YYYY");
       const product = products.find(product => product.id === delivery.productId);
-      deliveriesAndProducts.push({
+      const deliveryProduct: DeliveryProduct = {
         delivery: delivery,
         product: product
-      });
-    });
-    this.setState({ deliveryData: deliveriesAndProducts, loading: false });
-    console.log(dates);
+      };
 
+      if (deliveryData.indexOf(deliveryDate) === -1) {
+        deliveryData[deliveryDate] = [deliveryProduct];
+      } else {
+        deliveryData[deliveryDate].push(deliveryProduct);
+      }
+    });
+
+    console.log(deliveryData);
+    this.setState({ deliveryData: deliveryData, loading: false });
   }
 
   static navigationOptions = {
@@ -110,7 +113,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
 
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
-              this.state.deliveryData.map((deliveryData: DeliveryProduct) => {
+              this.state.deliveryData.map((deliveryData: any) => {
                 return this.renderListItem(deliveryData)
               })
             }

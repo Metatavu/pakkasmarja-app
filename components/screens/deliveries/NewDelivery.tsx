@@ -13,6 +13,7 @@ import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
 import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
+import { FileService } from "../../../api/file.service";
 
 /**
  * Component props
@@ -46,6 +47,10 @@ interface State {
   productType?: "FRESH" | "FROZEN";
   deliveryNoteData: DeliveryNote;
   deliveryNotes: DeliveryNote[];
+  deliveryNoteFile?: {
+    fileUri: string,
+    fileType: string
+  };
 };
 
 /**
@@ -76,7 +81,7 @@ class NewDelivery extends React.Component<Props, State> {
         image: undefined,
         text: undefined
       },
-      deliveryNotes: []
+      deliveryNotes: [],
     };
 
   }
@@ -170,6 +175,11 @@ class NewDelivery extends React.Component<Props, State> {
       });
     }
 
+    if (this.state.deliveryNoteFile) {
+      const fileService = new FileService("http://ville-local.metatavu.io:3000", this.props.accessToken.access_token);
+      await fileService.uploadFile(this.state.deliveryNoteFile.fileUri, this.state.deliveryNoteFile.fileType);
+    }
+
     this.props.navigation.navigate("IncomingDeliveries");
   }
 
@@ -200,6 +210,23 @@ class NewDelivery extends React.Component<Props, State> {
   private removeDate = () => {
     this.setState({
       selectedDate: undefined
+    });
+  }
+
+  /**
+   * On delivery note image change
+   */
+  private onDeliveryNoteImageChange = (fileUri?: string, fileType?: string) => {
+    if (!fileUri || !fileType) {
+      this.setState({ deliveryNoteFile: undefined });
+      return;
+    }
+
+    this.setState({ 
+      deliveryNoteFile: {
+        fileUri: fileUri,
+        fileType: fileType
+      }
     });
   }
 
@@ -329,7 +356,15 @@ class NewDelivery extends React.Component<Props, State> {
             </View>
           </View>
         </View>
-        <DeliveryNoteModal onCreateNoteClick={this.onCreateNoteClick} deliveryNoteData={this.state.deliveryNoteData} onDeliveryNoteChange={this.onDeliveryNoteChange} modalClose={() => this.setState({ modalOpen: false })} modalOpen={this.state.modalOpen} />
+        <DeliveryNoteModal 
+          imageUri={this.state.deliveryNoteFile ? this.state.deliveryNoteFile.fileUri : undefined}
+          onCreateNoteClick={this.onCreateNoteClick} 
+          deliveryNoteData={this.state.deliveryNoteData} 
+          onDeliveryNoteChange={this.onDeliveryNoteChange}
+          onDeliveryNoteImageChange={((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType))}
+          modalClose={() => this.setState({ modalOpen: false })} 
+          modalOpen={this.state.modalOpen} 
+        />
       </BasicScrollLayout>
     );
   }

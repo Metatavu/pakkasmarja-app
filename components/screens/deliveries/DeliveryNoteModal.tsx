@@ -3,10 +3,10 @@ import { connect } from "react-redux";
 import { Text } from "native-base";
 import * as actions from "../../../actions";
 import { AccessToken, StoreState } from "../../../types";
-import { View, TouchableOpacity, TextInput, Modal } from "react-native";
+import { View, TouchableOpacity, TextInput, Modal, Image } from "react-native";
 import { styles } from "./styles.tsx";
 import { DeliveryNote } from "pakkasmarja-client";
-import PakkasmarjaApi from "../../../api";
+import ImagePicker from 'react-native-image-picker';
 
 /**
  * Interface for component props
@@ -15,6 +15,8 @@ interface Props {
   accessToken?: AccessToken;
   modalOpen: boolean;
   onDeliveryNoteChange: (note: DeliveryNote) => void;
+  onDeliveryNoteImageChange: (fileUri?: string, fileType?: string) => void;
+  imageUri?: string,
   onCreateNoteClick: () => void;
   deliveryNoteData: DeliveryNote;
   modalClose: () => void;
@@ -63,6 +65,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
       image: undefined,
       text: undefined
     });
+    this.props.modalClose();
   }
 
   /**
@@ -71,6 +74,52 @@ class DeliveryNoteModal extends React.Component<Props, State> {
   private createDeliveryMessage = () => {
     this.props.onCreateNoteClick();
     this.props.modalClose();
+  }
+
+  /**
+   * Get image picker options
+   * 
+   * @return Options object
+   */
+  private getImagePickerOptions = () => {
+    return {
+      title: "Valitse kuva",
+      takePhotoButtonTitle: "Ota uusi kuva",
+      chooseFromLibraryButtonTitle: "Valitse kuva kirjastosta",
+      storageOptions: {
+        skipBackup: true,
+        path: "images",
+      }
+    }
+  }
+
+  /**
+   * Open image picker
+   */
+  private openImagePicker = () => {
+    ImagePicker.showImagePicker(this.getImagePickerOptions(), (response) => {
+      console.log('Response = ', response);
+    
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        console.log('User tapped custom button: ', response.customButton);
+      } else {
+        const source = { uri: response.uri };
+        const fileType = response.type || "image/jpeg";
+
+        this.props.onDeliveryNoteImageChange(source.uri, fileType);
+      }
+    });
+  }
+
+  /**
+   * Remove image
+   */
+  private removeImage = () => {
+    this.props.onDeliveryNoteImageChange(undefined, undefined);
   }
 
   /**
@@ -92,9 +141,12 @@ class DeliveryNoteModal extends React.Component<Props, State> {
           }, styles.center]} >
             <View style={{
               width: "95%",
-              height: 425,
+              height: 500,
+              flex: 0,
+              flexDirection: "column",
+              justifyContent: "space-between",
               backgroundColor: "white",
-              borderColor: "#e01e36",
+              borderColor: "#e01e36", 
               borderWidth: 1.25,
               padding: 20,
               borderRadius: 7
@@ -104,14 +156,27 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                   Lisää huomio
               </Text>
               </View>
-              <View>
-                <Text style={styles.text}>Image URL</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={this.props.deliveryNoteData.image}
-                  onChangeText={(text: string) => this.onDeliveryDataChange("image", text)}
-                />
-              </View>
+                {
+                  !this.props.imageUri &&
+                  <View style={{marginTop: 20, marginBottom: 20}}>
+                    <Text style={styles.text}>Lisää kuva</Text>
+                    <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.openImagePicker}>
+                      <Text style={styles.smallWhiteButtonText}>Lisää kuva</Text>
+                    </TouchableOpacity>
+                  </View>
+                }
+                {
+                  this.props.imageUri && 
+                  <View style={{width: "100%", height: 200, justifyContent: "center", alignItems: "center"}}>
+                    <Image 
+                      source={{uri: this.props.imageUri}}
+                      style={{flex: 1, width: 200, height: 200, resizeMode: 'contain', marginBottom: 10}}
+                    />
+                    <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.removeImage}>
+                      <Text style={styles.smallWhiteButtonText}>Poista kuva</Text>
+                    </TouchableOpacity>
+                  </View>
+                }
               <View>
                 <Text style={styles.text}>Kommentti</Text>
                 <TextInput
@@ -137,7 +202,6 @@ class DeliveryNoteModal extends React.Component<Props, State> {
       </View>
     );
   }
-  
 }
 
 /**
