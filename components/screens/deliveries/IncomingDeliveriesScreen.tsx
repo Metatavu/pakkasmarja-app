@@ -164,8 +164,9 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    console.log("LADATAAAAN");
+    
     const productType = payload.state.params.type;
+    console.log(productType);
     this.setState({ productType: productType, loading: true });
 
     const Api = new PakkasmarjaApi();
@@ -174,14 +175,16 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, productType);
     const products: Product[] = await productsService.listProducts(undefined, productType);
     const incomingDeliveries: Delivery[] = deliveries.filter(delivery => delivery.status !== "DONE" && delivery.status !== "REJECTED");
-
+    
     const deliveriesAndProducts: DeliveryProduct[] = [];
     incomingDeliveries.forEach((delivery) => {
+      
       const product = products.find(product => product.id === delivery.productId);
       deliveriesAndProducts.push({
         delivery: delivery,
         product: product
       });
+      console.log(deliveriesAndProducts);
     });
 
     this.setState({ deliveryData: deliveriesAndProducts, loading: false });

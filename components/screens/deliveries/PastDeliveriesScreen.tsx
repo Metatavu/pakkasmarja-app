@@ -60,7 +60,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const productType = await this.props.navigation.state.params.type;
     const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "DONE", productType);
-    const products: Product[] = await productsService.listProducts();
+    const products: Product[] = await productsService.listProducts(undefined, productType);
 
     const deliveriesAndProducts: DeliveryProduct[] = [];
     deliveries.forEach((delivery) => {
@@ -130,6 +130,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * @param deliveryData DeliveryProduct
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
+    console.log(deliveryData);
     if (!deliveryData || !deliveryData.product) {
       return <Text></Text>;
     }

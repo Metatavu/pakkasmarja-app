@@ -8,27 +8,34 @@ import { Tabs, Tab, Thumbnail } from "native-base";
 import { TouchableOpacity, Image, View, Text } from "react-native";
 import { List, ListItem } from 'react-native-elements';
 import { styles } from './styles.tsx'
+import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON, RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
+import { Delivery, Product } from "pakkasmarja-client";
 
 /**
  * Component props
  */
 interface Props {
-  navigation: any,
-  accessToken?: AccessToken
+  navigation: any;
+  accessToken?: AccessToken;
+  deliveriesLoaded?: (deliveries: Delivery[]) => void;
+  productsLoaded?: (products: Product[]) => void;
+  deliveries?: Delivery[];
 };
 
 /**
  * Component state
  */
 interface State {
-  loading: boolean
+  loading: boolean;
+  productType: "FRESH" | "FROZEN";
+  deliveries: Delivery[];
 };
 
 /**
  * Deliveries screen component class
  */
-export default class DeliveriesScreen extends React.Component<Props, State> {
+class DeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
@@ -38,7 +45,9 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      loading: false
+      loading: false,
+      productType: "FRESH",
+      deliveries: []
     };
   }
 
@@ -49,6 +58,42 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
       showUser={true}
     />
   };
+
+  /**
+   * Component did mount life-cycle event
+   */
+  public async componentDidMount() {
+    await this.loadDeliveries();
+    await this.loadProducts();
+  }
+
+  /**
+   * Load deliverys
+   */
+  private loadDeliveries = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 0, 200);
+    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveries);
+  }
+
+  /**
+   * Load products
+   */
+  private loadProducts = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const Api = new PakkasmarjaApi();
+    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
+    const products: Product[] = await productsService.listProducts();
+    this.props.productsLoaded && this.props.productsLoaded(products);
+  }
 
   /**
    * On delivery item click
@@ -133,3 +178,31 @@ export default class DeliveriesScreen extends React.Component<Props, State> {
     );
   }
 }
+
+
+/**
+ * Redux mapper for mapping store state to component props
+ * 
+ * @param state store state
+ */
+function mapStateToProps(state: StoreState) {
+  return {
+    accessToken: state.accessToken,
+    deliveries: state.deliveries
+  };
+}
+
+/**
+ * Redux mapper for mapping component dispatches 
+ * 
+ * @param dispatch dispatch method
+ */
+function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
+  return {
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
+    deliveriesLoaded: (deliveries: Delivery[]) => dispatch(actions.deliveriesLoaded(deliveries)),
+    productsLoaded: (products: Product[]) => dispatch(actions.productsLoaded(products))
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(DeliveriesScreen);

@@ -21,6 +21,8 @@ import { FileService } from "../../../api/file.service";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  deliveries?: Delivery[];
+  products?: Product[]
 };
 
 /**
@@ -91,6 +93,9 @@ class NewDelivery extends React.Component<Props, State> {
       return;
     }
 
+    console.log("REDUX DELIVERIES: ", this.props.deliveries);
+    console.log("REDUX PRODUCTS: ", this.props.products);
+
     const productType = this.props.navigation.state.params.type;
 
     const Api = new PakkasmarjaApi();
@@ -99,7 +104,7 @@ class NewDelivery extends React.Component<Props, State> {
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
 
-    this.setState({ products, deliveryPlaces, userId: this.props.accessToken.userId, productId: products[0].id, deliveryPlace: deliveryPlaces[0] });
+    this.setState({ products, productType, deliveryPlaces, userId: this.props.accessToken.userId, productId: products[0].id, deliveryPlace: deliveryPlaces[0] });
   }
 
   static navigationOptions = {
@@ -137,7 +142,7 @@ class NewDelivery extends React.Component<Props, State> {
    * @param value value
    */
   private onUserInputChange = (key: any, value: any) => {
-    
+
     const state: any = this.state;
     state[key] = value;
     this.setState(state);
@@ -164,8 +169,8 @@ class NewDelivery extends React.Component<Props, State> {
       quality: this.state.quality,
       deliveryPlaceId: this.state.deliveryPlace.id
     }
-    
 
+    console.log(this.state.productId);
     const createdDelivery = await deliveryService.createDelivery(delivery);
 
     if (createdDelivery.id && (this.state.deliveryNoteData.text || this.state.deliveryNoteData.image)) {
@@ -178,8 +183,8 @@ class NewDelivery extends React.Component<Props, State> {
       const fileService = new FileService("http://ville-local.metatavu.io:3000", this.props.accessToken.access_token);
       await fileService.uploadFile(this.state.deliveryNoteFile.fileUri, this.state.deliveryNoteFile.fileType);
     }
-
-    this.props.navigation.navigate("IncomingDeliveries");
+    const productType = await this.state.productType;
+    this.props.navigation.navigate("IncomingDeliveries", { type: productType });
   }
 
   /**
@@ -282,14 +287,14 @@ class NewDelivery extends React.Component<Props, State> {
               rounded
             />
           </View>
-          <View style={{flex:1}}>
+          <View style={{ flex: 1 }}>
             <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
               <Text style={styles.textWithSpace}>Toimituspäivä</Text>
             </View>
             <TouchableOpacity style={[styles.pickerWrap, { width: "100%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
               <View style={{ flex: 1, flexDirection: "row" }}>
-                <View style={{ flex: 3, justifyContent:"center", alignItems:"flex-start" }}>
-                  <Text style={{paddingLeft:10}}>{this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"}</Text>
+                <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
+                  <Text style={{ paddingLeft: 10 }}>{this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"}</Text>
                 </View>
                 <View style={[styles.center, { flex: 0.6 }]}>
                   {this.state.selectedDate ? <Icon style={{ color: "#e01e36" }} onPress={this.removeDate} type={"AntDesign"} name="close" /> : <Icon style={{ color: "#e01e36" }} type="AntDesign" name="calendar" />}
@@ -358,7 +363,9 @@ class NewDelivery extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    deliveries: state.deliveries,
+    products: state.products
   };
 }
 
