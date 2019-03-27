@@ -242,14 +242,14 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
             {
               Object.keys(this.state.deliveryData).map((date: any) => {
                 return (
-                  <View style={{paddingLeft: 20, paddingTop: 10, paddingBottom: 10, borderBottomColor: "rgba(0,0,0,0.5)", borderBottomWidth: 1}}>
+                  <View key={date} style={{paddingLeft: 20, paddingTop: 10, paddingBottom: 10, borderBottomColor: "rgba(0,0,0,0.5)", borderBottomWidth: 1}}>
                     <Text style={{fontWeight: "bold"}}>
                       { date }
                     </Text>
                     {
                       this.state.deliveryData[date].map((data: any) => {
                         return (
-                          <Text>
+                          <Text key={data.delivery.id}>
                             {`${data.product.name} ${data.product.unitSize} ${data.product.unitName} x ${data.delivery.amount}`}
                           </Text>
                         );

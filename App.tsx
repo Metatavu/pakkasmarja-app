@@ -29,9 +29,6 @@ import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDe
 import NewDelivery from "./components/screens/deliveries/NewDelivery";
 import EditDelivery from "./components/screens/deliveries/EditDelivery";
 
-
-
-
 interface State {
   authenticated: boolean
 }

@@ -223,39 +223,5 @@ export const styles = StyleSheet.create({
   },
   newsContainer: {
     paddingVertical: 20
-  },
-
-  /***************     View warpper for picker      ********************/
-
-  pickerWrap: {
-    height: 50,
-    backgroundColor: '#fafafa',
-    borderColor: "#e01e36",
-    borderWidth: 1,
-    borderRadius: 8
-  },
-
-  /***************        Tabs styles            ***********************/
-  tab: {
-    backgroundColor: "#E51D2A"
-  },
-  activeTab: {
-    color: "#000000",
-    fontWeight: "bold"
-  },
-
-  /*********************                      ************************* */
-
-  deliveriesButton: {
-    backgroundColor: "#e01e36",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 7
-  },
-  begindeliveryButton: {
-    backgroundColor: "#42AD18",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 7
   }
 });

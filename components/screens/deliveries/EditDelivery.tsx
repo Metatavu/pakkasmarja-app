@@ -37,14 +37,10 @@ interface State {
   productId?: string;
   userId?: string;
   price: string;
-  beforeTime?: string;
-  id?: string;
   amount: number;
-  time?: Date;
   selectedDate?: Date;
   deliveryNoteData: DeliveryNote;
   deliveryNotes: DeliveryNote[];
-  hoursTestData: number[];
   deliveryNoteFile?: {
     fileUri: string,
     fileType: string
@@ -71,7 +67,6 @@ class EditDelivery extends React.Component<Props, State> {
       quality: "NORMAL",
       amount: 0,
       price: "0",
-      hoursTestData: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
       products: [],
       deliveryPlaceId: "",
       deliveryNoteData: {
