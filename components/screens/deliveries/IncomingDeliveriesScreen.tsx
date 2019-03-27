@@ -2,23 +2,25 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
-import { Delivery, Product } from "pakkasmarja-client";
-import PakkasmarjaApi from "../../../api";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native';
 import { Thumbnail } from "native-base";
 import { INCOMING_DELIVERIES_LOGO, INDELIVERY_LOGO, RED_LOGO } from "../../../static/images";
 import { NavigationEvents } from "react-navigation";
 import moment from "moment";
+import ContractDeliveryPlace from "../contracts/ContractDeliveryPlace";
+
 /**
  * Component props
  */
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  deliveries?: DeliveriesState;
+  itemGroupCategory?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -43,30 +45,9 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      loading: true,
+      loading: false,
       deliveryData: []
     };
-  }
-
-  /**
-   * Component did mount life-cycle event
-   */
-  public async componentDidMount() {
-    if (!this.props.accessToken) {
-      return;
-    }
-
-    const productType = await this.props.navigation.state.params.type;
-    this.setState({ productType: productType });
-  }
-
-  /**
-   * Component did update life-cycle event
-   */
-  public componentDidUpdate(previousProps: Props, previousState: State) {
-    if (previousState.productType && !this.state.productType) {
-      this.setState({ productType: previousState.productType });
-    }
   }
 
   static navigationOptions = {
@@ -137,8 +118,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
               this.props.navigation.navigate("Delivery", {
                 deliveryId: deliveryData.delivery.id,
                 productId: deliveryData.product ? deliveryData.product.id : "",
-                editable: true,
-                productType: this.state.productType
+                editable: true
               })
             }}
           >
@@ -158,36 +138,29 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Get deliveries
+   * 
+   * @return deliveries
+   */
+  private getDeliveries = () => {
+    if (!this.props.deliveries) {
+      return [];
+    }
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      return this.props.deliveries.frozenDeliveryData;
+    } else {
+      return this.props.deliveries.freshDeliveryData;
+    }
+  }
+
+  /**
    * Loads data
    */
-  private loadData = async (payload?: any) => {
-    if (!this.props.accessToken) {
-      return;
-    }
-    
-    const productType = payload.state.params.type;
-    console.log(productType);
-    this.setState({ productType: productType, loading: true });
-
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, productType);
-    const products: Product[] = await productsService.listProducts(undefined, productType);
-    const incomingDeliveries: Delivery[] = deliveries.filter(delivery => delivery.status !== "DONE" && delivery.status !== "REJECTED");
-    
-    const deliveriesAndProducts: DeliveryProduct[] = [];
-    incomingDeliveries.forEach((delivery) => {
-      
-      const product = products.find(product => product.id === delivery.productId);
-      deliveriesAndProducts.push({
-        delivery: delivery,
-        product: product
-      });
-      console.log(deliveriesAndProducts);
-    });
-
-    this.setState({ deliveryData: deliveriesAndProducts, loading: false });
+  private loadData = async () => {
+    const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
+    const incomingDeliveriesData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status !== "DONE" && deliveryData.delivery.status !== "REJECTED");
+    this.setState({ deliveryData: incomingDeliveriesData });
   }
 
   /**
@@ -196,7 +169,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   public render() {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onDidFocus={(pl: any) => this.loadData(pl)} />
+        <NavigationEvents onDidFocus={() => this.loadData()} />
         <View >
           <View style={[styles.center, styles.topViewWithButton]}>
             <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
@@ -231,7 +204,10 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    deliveries: state.deliveries,
+    products: state.products,
+    itemGroupCategory: state.itemGroupCategory
   };
 }
 

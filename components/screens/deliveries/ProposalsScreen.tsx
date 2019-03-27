@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { Text, Thumbnail } from "native-base";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
@@ -18,6 +18,8 @@ import Moment from "react-moment";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  deliveries?: DeliveriesState;
+  itemGroupCategory?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -51,27 +53,26 @@ class ProposalsScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    if (!this.props.accessToken) {
-      return;
+    const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
+    const proposalsData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "PROPOSAL");
+    this.setState({ deliveryData: proposalsData });
+  }
+
+  /**
+   * Get deliveries
+   * 
+   * @return deliveries
+   */
+  private getDeliveries = () => {
+    if (!this.props.deliveries) {
+      return [];
     }
-    this.setState({ loading: true });
 
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const productType = await this.props.navigation.state.params.type;
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "PROPOSAL", productType);;
-    const products: Product[] = await productsService.listProducts(undefined, productType);
-    const deliveriesAndProducts: DeliveryProduct[] = [];
-
-    deliveries.forEach((delivery) => {
-      const product = products.find(product => product.id === delivery.productId);
-      deliveriesAndProducts.push({
-        delivery: delivery,
-        product: product
-      });
-    });
-    this.setState({ deliveryData: deliveriesAndProducts, productType, loading: false });
+    if (this.props.itemGroupCategory === "FROZEN") {
+      return this.props.deliveries.frozenDeliveryData;
+    } else {
+      return this.props.deliveries.freshDeliveryData;
+    }
   }
 
   /**
@@ -173,7 +174,10 @@ class ProposalsScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    deliveries: state.deliveries,
+    products: state.products,
+    itemGroupCategory: state.itemGroupCategory
   };
 }
 

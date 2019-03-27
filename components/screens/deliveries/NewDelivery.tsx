@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
 import { Delivery, Product, DeliveryStatus, DeliveryQuality, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
@@ -21,9 +21,10 @@ import { FileService } from "../../../api/file.service";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
-  deliveries?: Delivery[];
+  deliveries?: DeliveriesState;
   products?: Product[],
-  itemGroupCategory?: ItemGroupCategory
+  itemGroupCategory?: ItemGroupCategory;
+  deliveriesLoaded?: (deliveries: DeliveriesState) => void;
 };
 
 /**
@@ -35,19 +36,18 @@ interface State {
   datepickerVisible: boolean,
   quality: DeliveryQuality;
   status: DeliveryStatus;
-  products: Product[];
-  id?: string;
   productId?: string;
-  userId?: string;
   price: string;
   amount: number;
   time?: Date;
+  deliveries: DeliveryProduct[];
   selectedDate?: Date;
   deliveryPlaces?: DeliveryPlace[];
-  deliveryPlace?: DeliveryPlace;
+  deliveryPlaceId: string;
   productType?: "FRESH" | "FROZEN";
   deliveryNoteData: DeliveryNote;
   deliveryNotes: DeliveryNote[];
+  products: Product[];
   deliveryNoteFile?: {
     fileUri: string,
     fileType: string
@@ -67,6 +67,7 @@ class NewDelivery extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      products: [],
       loading: false,
       datepickerVisible: false,
       modalOpen: false,
@@ -74,8 +75,10 @@ class NewDelivery extends React.Component<Props, State> {
       quality: "NORMAL",
       amount: 0,
       price: "0",
+      deliveryPlaceId: "",
+      productId: "",
+      deliveries: [],
       selectedDate: new Date(),
-      products: [],
       deliveryNoteData: {
         id: undefined,
         image: undefined,
@@ -94,19 +97,19 @@ class NewDelivery extends React.Component<Props, State> {
       return;
     }
 
-    console.log("REDUX DELIVERIES: ", this.props.deliveries);
-    console.log("REDUX PRODUCTS: ", this.props.products);
-    console.log("REDUX ITEMGROUPCATEGORY: ", this.props.itemGroupCategory);
-
-    const productType = this.props.navigation.state.params.type;
-
     const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const products: Product[] = await productsService.listProducts(undefined, productType);
+    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
 
-    this.setState({ products, productType, deliveryPlaces, userId: this.props.accessToken.userId, productId: products[0].id, deliveryPlace: deliveryPlaces[0] });
+    const deliveries = this.getDeliveries();
+    this.setState({ 
+      deliveryPlaces,
+      deliveries,
+      products,
+      productId: products[0].id
+    });
   }
 
   static navigationOptions = {
@@ -116,6 +119,23 @@ class NewDelivery extends React.Component<Props, State> {
       showUser={true}
     />
   };
+
+  /**
+   * Get deliveries
+   * 
+   * @return deliveries
+   */
+  private getDeliveries = () => {
+    if (!this.props.deliveries) {
+      return [];
+    }
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      return this.props.deliveries.frozenDeliveryData;
+    }
+
+    return this.props.deliveries.freshDeliveryData;
+  }
 
   /**
    * Adds a delivery note
@@ -144,7 +164,6 @@ class NewDelivery extends React.Component<Props, State> {
    * @param value value
    */
   private onUserInputChange = (key: any, value: any) => {
-
     const state: any = this.state;
     state[key] = value;
     this.setState(state);
@@ -154,25 +173,25 @@ class NewDelivery extends React.Component<Props, State> {
    * Handles delivery submit
    */
   private handleDeliverySubmit = async () => {
-    if (!this.props.accessToken || !this.state.deliveryPlace || !this.state.deliveryPlace.id || !this.state.productId || !this.state.userId || !this.state.selectedDate) {
+    if (!this.props.accessToken || !this.state.deliveryPlaceId || !this.state.productId || !this.state.selectedDate) {
       return;
     }
 
     const Api = new PakkasmarjaApi();
     const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+
     const delivery: Delivery = {
-      id: this.state.id,
+      id: "",
       productId: this.state.productId,
-      userId: this.state.userId,
+      userId: this.props.accessToken.userId,
       time: this.state.selectedDate,
       status: "PLANNED",
       amount: this.state.amount,
       price: this.state.price,
       quality: this.state.quality,
-      deliveryPlaceId: this.state.deliveryPlace.id
+      deliveryPlaceId: this.state.deliveryPlaceId
     }
 
-    console.log(this.state.productId);
     const createdDelivery = await deliveryService.createDelivery(delivery);
 
     if (createdDelivery.id && (this.state.deliveryNoteData.text || this.state.deliveryNoteData.image)) {
@@ -185,8 +204,36 @@ class NewDelivery extends React.Component<Props, State> {
       const fileService = new FileService("http://ville-local.metatavu.io:3000", this.props.accessToken.access_token);
       await fileService.uploadFile(this.state.deliveryNoteFile.fileUri, this.state.deliveryNoteFile.fileType);
     }
-    const productType = await this.state.productType;
+
+    this.updateDeliveries(createdDelivery);
+    const productType = await this.props.itemGroupCategory;
     this.props.navigation.navigate("IncomingDeliveries", { type: productType });
+  }
+
+  /**
+   * Update deliveries
+   */
+  private updateDeliveries = (delivery: Delivery) => {
+    if (!this.props.deliveries) {
+      return;
+    }
+
+    const deliveries = this.getDeliveries();
+    const deliveryProduct: DeliveryProduct = {
+      delivery: delivery,
+      product: this.state.products.find(product => product.id === delivery.productId)
+    };
+
+    deliveries.push(deliveryProduct);
+    const deliveriesState = this.props.deliveries;
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      deliveriesState.frozenDeliveryData = deliveries;
+    } else {
+      deliveriesState.freshDeliveryData = deliveries;
+    }
+
+    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState)
   }
 
   /**
@@ -260,9 +307,13 @@ class NewDelivery extends React.Component<Props, State> {
                 this.onUserInputChange("productId", itemValue)
               }>
               {
-                this.state.products.map((product) => {
+                this.state.products && this.state.products.map((product) => {
                   return (
-                    <Picker.Item key={product.id} label={product.name || ""} value={product.id} />
+                    <Picker.Item 
+                      key={product.id} 
+                      label={product.name} 
+                      value={product.id} 
+                    />
                   );
                 })
               }
@@ -296,10 +347,26 @@ class NewDelivery extends React.Component<Props, State> {
             <TouchableOpacity style={[styles.pickerWrap, { width: "100%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
               <View style={{ flex: 1, flexDirection: "row" }}>
                 <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
-                  <Text style={{ paddingLeft: 10 }}>{this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"}</Text>
+                  <Text style={{ paddingLeft: 10 }}>
+                    {
+                      this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
+                    }
+                  </Text>
                 </View>
                 <View style={[styles.center, { flex: 0.6 }]}>
-                  {this.state.selectedDate ? <Icon style={{ color: "#e01e36" }} onPress={this.removeDate} type={"AntDesign"} name="close" /> : <Icon style={{ color: "#e01e36" }} type="AntDesign" name="calendar" />}
+                  {this.state.selectedDate ? 
+                    <Icon 
+                      style={{ color: "#e01e36" }} 
+                      onPress={this.removeDate} 
+                      type={"AntDesign"} 
+                      name="close" /> 
+                    : 
+                    <Icon 
+                      style={{ color: "#e01e36" }} 
+                      type="AntDesign" 
+                      name="calendar" 
+                    />
+                  }
                 </View>
               </View>
             </TouchableOpacity>
@@ -311,20 +378,24 @@ class NewDelivery extends React.Component<Props, State> {
             />
           </View>
           <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
-            <Picker
-              selectedValue={this.state.deliveryPlace}
-              style={{ height: 50, width: "100%" }}
-              onValueChange={(itemValue, itemIndex) =>
-                this.onUserInputChange("deliveryPlace", itemValue)
-              }>
-              {
-                this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
-                  return (
-                    <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace} />
-                  );
-                })
-              }
-            </Picker>
+          <Picker
+            selectedValue={this.state.deliveryPlaceId}
+            style={{ height: 50, width: "100%" }}
+            onValueChange={(itemValue) =>
+              this.onUserInputChange("deliveryPlaceId", itemValue)
+            }>
+            {
+              this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
+                return (
+                  <Picker.Item 
+                    key={deliveryPlace.id} 
+                    label={deliveryPlace.name || ""} 
+                    value={deliveryPlace.id} 
+                  />
+                );
+              })
+            }
+          </Picker>
           </View>
           <View style={{ flex: 1 }}>
             <View style={[styles.center, { flex: 1, paddingVertical: 15 }]}>
@@ -379,7 +450,8 @@ function mapStateToProps(state: StoreState) {
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
+    deliveriesLoaded: (deliveries: DeliveriesState) => dispatch(actions.deliveriesLoaded(deliveries))
   };
 }
 

@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
@@ -17,6 +17,8 @@ import { Delivery, Product } from "pakkasmarja-client";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  deliveries?: DeliveriesState;
+  itemGroupCategory?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -50,37 +52,26 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    if (!this.props.accessToken) {
-      return;
-    }
-    this.setState({ loading: true });
-
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const productType = await this.props.navigation.state.params.type;
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "DONE", productType);
-    const products: Product[] = await productsService.listProducts(undefined, productType);
-
-    const deliveriesAndProducts: DeliveryProduct[] = [];
-    deliveries.forEach((delivery) => {
-      const product = products.find(product => product.id === delivery.productId);
-      deliveriesAndProducts.push({
-        delivery: delivery,
-        product: product
-      });
-    });
-
-    this.setState({ deliveryData: deliveriesAndProducts, productType, loading: false });
+    const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
+    const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE");
+    this.setState({ deliveryData: pastDeliveries });
   }
 
   /**
-   * Component did update life-cycle event
+   * Get deliveries
+   * 
+   * @return deliveries
    */
-  public componentDidUpdate(previousProps: Props, previousState: State) {
-    if (previousState.productType && !this.state.productType) {
-      this.setState({ productType: previousState.productType });
+  private getDeliveries = () => {
+    if (!this.props.deliveries) {
+      return [];
     }
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      return this.props.deliveries.frozenDeliveryData;
+    }
+
+    return this.props.deliveries.freshDeliveryData;
   }
 
   static navigationOptions = {
@@ -187,7 +178,9 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    deliveries: state.deliveries,
+    itemGroupCategory: state.itemGroupCategory
   };
 }
 
@@ -203,3 +196,4 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(PastDeliveriesScreen);
+

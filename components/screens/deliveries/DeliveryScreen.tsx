@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { Delivery, Product } from "pakkasmarja-client";
@@ -18,6 +18,9 @@ import { NavigationEvents } from 'react-navigation';
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  deliveries?: DeliveriesState;
+  itemGroupCategory?: "FRESH" | "FROZEN";
+  deliveriesLoaded?: (deliveries: DeliveriesState) => void;
 };
 
 /**
@@ -80,8 +83,56 @@ class DeliveryScreen extends React.Component<Props, State> {
       deliveryPlaceId: deliveryState.deliveryPlaceId
     }
 
-    await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    const updatedDelivery = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    this.updateDeliveries(updatedDelivery);
     this.props.navigation.navigate("IncomingDeliveries");
+  }
+
+  /**
+   * Update deliveries
+   */
+  private updateDeliveries = (delivery: Delivery) => {
+    if (!this.props.deliveries) {
+      return;
+    }
+
+    const deliveries = this.getDeliveries();
+    const updatedDeliveries = deliveries.map((deliveryData) => {
+      if (deliveryData.delivery.id === delivery.id) {
+        return {
+          delivery: delivery,
+          product: deliveryData.product
+        }
+      }
+      return deliveryData;
+    });
+
+    const deliveriesState = this.props.deliveries;
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      deliveriesState.frozenDeliveryData = updatedDeliveries;
+    } else {
+      deliveriesState.freshDeliveryData = updatedDeliveries;
+    }
+
+    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState)
+  }
+
+  /**
+   * Get deliveries
+   * 
+   * @return deliveries
+   */
+  private getDeliveries = () => {
+    if (!this.props.deliveries) {
+      return [];
+    }
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      return this.props.deliveries.frozenDeliveryData;
+    }
+
+    return this.props.deliveries.freshDeliveryData;
   }
 
   /**
@@ -190,7 +241,10 @@ class DeliveryScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    deliveries: state.deliveries,
+    products: state.products,
+    itemGroupCategory: state.itemGroupCategory
   };
 }
 
@@ -201,7 +255,8 @@ function mapStateToProps(state: StoreState) {
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
+    deliveriesLoaded: (deliveries: DeliveriesState) => dispatch(actions.deliveriesLoaded(deliveries))
   };
 }
 

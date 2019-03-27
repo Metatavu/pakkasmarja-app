@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { Tabs, Tab, Thumbnail } from "native-base";
 import { TouchableOpacity, Image, View, Text } from "react-native";
@@ -18,7 +18,7 @@ import { Delivery, Product, ItemGroupCategory } from "pakkasmarja-client";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
-  deliveriesLoaded?: (deliveries: Delivery[]) => void;
+  deliveriesLoaded?: (deliveries: DeliveriesState) => void;
   productsLoaded?: (products: Product[]) => void;
   itemGroupCategoryUpdate?: (itemGroupCategory: ItemGroupCategory) => void;
   deliveries?: Delivery[];
@@ -64,36 +64,48 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    await this.loadDeliveries();
-    await this.loadProducts();
+    await this.loadDeliveriesData();
   }
 
   /**
    * Load deliverys
    */
-  private loadDeliveries = async () => {
+  private loadDeliveriesData = async () => {
     if (!this.props.accessToken) {
       return;
     }
 
     const Api = new PakkasmarjaApi();
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, undefined, undefined, undefined, undefined, undefined, undefined, 0, 200);
-    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveries);
-  }
-
-  /**
-   * Load products
-   */
-  private loadProducts = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-
-    const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
+
+    const freshDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FRESH", undefined, undefined, undefined, undefined, undefined, 0, 200);
+    const frozenDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FROZEN", undefined, undefined, undefined, undefined, undefined, 0, 200);
+    
     const products: Product[] = await productsService.listProducts();
-    this.props.productsLoaded && this.props.productsLoaded(products);
+
+    const freshDeliveriesAndProducts: DeliveryProduct[] = freshDeliveries.map((delivery) => {
+      return {
+        delivery: delivery,
+        product: products.find(product => product.id === delivery.productId)
+      };
+    });
+
+    const frozenDeliveriesAndProducts: DeliveryProduct[] = frozenDeliveries.map((delivery) => {
+      return {
+        delivery: delivery,
+        product: products.find(product => product.id === delivery.productId)
+      };
+    });
+
+    const deliveriesState: DeliveriesState = {
+      freshDeliveryData: freshDeliveriesAndProducts,
+      frozenDeliveryData: frozenDeliveriesAndProducts
+    };
+
+    console.log(deliveriesState);
+    
+    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState);
   }
 
   /**
@@ -199,8 +211,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken,
-    deliveries: state.deliveries
+    accessToken: state.accessToken
   };
 }
 
@@ -213,7 +224,7 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
     onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
     itemGroupCategoryUpdate: (itemGroupCategory: ItemGroupCategory) => dispatch(actions.itemGroupCategoryUpdate(itemGroupCategory)),
-    deliveriesLoaded: (deliveries: Delivery[]) => dispatch(actions.deliveriesLoaded(deliveries)),
+    deliveriesLoaded: (deliveries: DeliveriesState) => dispatch(actions.deliveriesLoaded(deliveries)),
     productsLoaded: (products: Product[]) => dispatch(actions.productsLoaded(products))
   };
 }

@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
 import { Delivery, Product, DeliveryQuality, DeliveryNote, DeliveryPlace } from "pakkasmarja-client";
@@ -20,6 +20,9 @@ import PakkasmarjaApi from "../../../api";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  deliveries?: DeliveriesState;
+  itemGroupCategory?: "FRESH" | "FROZEN";
+  deliveriesLoaded?: (deliveries: DeliveriesState) => void;
 };
 
 /**
@@ -90,7 +93,7 @@ class EditDelivery extends React.Component<Props, State> {
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
-    const productType = this.props.navigation.state.params.productType;
+    const productType = this.props.itemGroupCategory;
     const deliveryNotes = await deliveriesService.listDeliveryNotes(deliveryData.delivery.id || "");
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
@@ -101,7 +104,7 @@ class EditDelivery extends React.Component<Props, State> {
       productType
     });
 
-    const products: Product[] = await productsService.listProducts(undefined, this.state.productType);
+    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
 
     if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
@@ -154,11 +157,59 @@ class EditDelivery extends React.Component<Props, State> {
       deliveryPlaceId: this.state.deliveryPlaceId || ""
     }
 
-    await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    const updatedDelivery = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    this.updateDeliveries(updatedDelivery);
     this.props.navigation.navigate("Delivery", {
       deliveryId: this.state.deliveryData.delivery.id,
       productId: this.state.productId
     });
+  }
+
+  /**
+   * Update deliveries
+   */
+  private updateDeliveries = (delivery: Delivery) => {
+    if (!this.props.deliveries) {
+      return;
+    }
+
+    const deliveries = this.getDeliveries();
+    const updatedDeliveries = deliveries.map((deliveryData) => {
+      if (deliveryData.delivery.id === delivery.id) {
+        return {
+          delivery: delivery,
+          product: deliveryData.product
+        }
+      }
+      return deliveryData;
+    });
+
+    const deliveriesState = this.props.deliveries;
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      deliveriesState.frozenDeliveryData = updatedDeliveries;
+    } else {
+      deliveriesState.freshDeliveryData = updatedDeliveries;
+    }
+
+    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState)
+  }
+
+  /**
+   * Get deliveries
+   * 
+   * @return deliveries
+   */
+  private getDeliveries = () => {
+    if (!this.props.deliveries) {
+      return [];
+    }
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      return this.props.deliveries.frozenDeliveryData;
+    }
+
+    return this.props.deliveries.freshDeliveryData;
   }
 
   /**
@@ -369,7 +420,8 @@ function mapStateToProps(state: StoreState) {
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
+    deliveriesLoaded: (deliveries: DeliveriesState) => dispatch(actions.deliveriesLoaded(deliveries))
   };
 }
 
