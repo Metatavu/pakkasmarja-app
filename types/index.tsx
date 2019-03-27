@@ -2,9 +2,14 @@ import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction, Delivery, Prod
 
 export interface StoreState {
   accessToken?: AccessToken,
-  deliveries?: Delivery[],
+  deliveries?: DeliveriesState,
   products?: Product[],
   itemGroupCategory? : ItemGroupCategory
+}
+
+export interface DeliveriesState {
+  freshDeliveryData: DeliveryProduct[];
+  frozenDeliveryData: DeliveryProduct[];
 }
 
 export interface AuthConfig {

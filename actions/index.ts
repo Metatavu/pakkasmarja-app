@@ -1,5 +1,5 @@
 import * as constants from '../constants';
-import { AccessToken } from '../types';
+import { AccessToken, DeliveriesState } from '../types';
 import { Delivery, Product, ItemGroupCategory } from 'pakkasmarja-client';
 
 
@@ -24,7 +24,7 @@ export interface ItemGroupCategoryUpdate {
  */
 export interface DeliveriesLoaded {
   type: constants.DELIVERIES_LOADED,
-  deliveries: Delivery[]
+  deliveries: DeliveriesState
 }
 
 /**
@@ -57,7 +57,7 @@ export function accessTokenUpdate(accessToken: AccessToken): AccessTokenUpdate {
  * 
  * @param deliveries deliveries
  */
-export function deliveriesLoaded(deliveries: Delivery[]): DeliveriesLoaded {
+export function deliveriesLoaded(deliveries: DeliveriesState): DeliveriesLoaded {
   return {
     type: constants.DELIVERIES_LOADED,
     deliveries: deliveries
