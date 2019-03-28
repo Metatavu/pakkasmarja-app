@@ -178,7 +178,7 @@ class NewDelivery extends React.Component<Props, State> {
       productId: this.state.productId,
       userId: this.props.accessToken.userId,
       time: this.state.selectedDate,
-      status: "PROPOSAL",
+      status: "PLANNED",
       amount: this.state.amount,
       price: this.state.price,
       quality: "NORMAL",

@@ -182,8 +182,8 @@ class DeliveriesScreen extends React.Component<Props, State> {
       <View style={{ flex: 1, flexDirection: "column", marginTop: 50 }}>
         {
           deliveryList.map((listItem: any) => {
-            const plannedAmount: number = this.props.itemGroupCategory == "FRESH" ? listItem.freshPlannedAmount : listItem.frozenPlannedAmount;
-            const proposalAmount: number = this.props.itemGroupCategory == "FRESH" ? listItem.freshProposalAmount : listItem.frozenProposalAmount;
+            const plannedAmount: number = itemGroupCategory == "FRESH" ? listItem.freshPlannedAmount : listItem.frozenPlannedAmount;
+            const proposalAmount: number = itemGroupCategory == "FRESH" ? listItem.freshProposalAmount : listItem.frozenProposalAmount;
             return (
               <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, itemGroupCategory) }}>
                 <View key={listItem.screen} style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 35 }}>
@@ -232,21 +232,21 @@ class DeliveriesScreen extends React.Component<Props, State> {
    */
   public render() {
     const deliveryList = [{
+      freshProposalAmount: this.state.freshProposalAmount,
+      frozenProposalAmount: this.state.frozenProposalAmount,
       name: "Ehdotukset",
       screen: "Proposals",
-      icon: RED_LOGO,
-      freshProposalAmount: this.state.freshProposalAmount,
-      frozenProposalAmount: this.state.frozenProposalAmount
+      icon: RED_LOGO
     }, {
       name: "Viikkoennusteet",
       screen: "WeekDeliveryPrediction",
       icon: PREDICTIONS_ICON
     }, {
+      frozenPlannedAmount: this.state.frozenPlannedAmount,
+      freshPlannedAmount: this.state.freshPlannedAmount,
       name: "Tulevat toimitukset",
       screen: "IncomingDeliveries",
-      icon: INCOMING_DELIVERIES_LOGO,
-      frozenPlannedAmount: this.state.frozenPlannedAmount,
-      freshPlannedAmount: this.state.freshPlannedAmount
+      icon: INCOMING_DELIVERIES_LOGO
     }, {
       name: "Tehdyt toimitukset",
       screen: "PastDeliveries",
@@ -255,7 +255,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onDidFocus={this.loadAmounts} />
+        <NavigationEvents onDidFocus={() => this.loadAmounts()} />
         <Tabs>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"TUORETUOTTEET"}>
             {
