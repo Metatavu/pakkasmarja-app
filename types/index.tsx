@@ -90,6 +90,11 @@ export interface DeliveryData {
 export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAllChecked" | "quantityComment" | "areaDetailValues" | "deliveryPlaceId" | "deliveryPlaceComment";
 
 /**
+ * Type for delivery data key
+ */
+export type DeliveryDataKey = "productId" | "amount" | "deliveryPlaceId";
+
+/**
  * Interface for modal buttons
  */
 export interface ModalButton {

@@ -2,10 +2,10 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct, DeliveriesState, DeliveryDataKey } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
-import { Delivery, Product, DeliveryQuality, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -13,7 +13,6 @@ import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
 import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
-import { Z_DEFAULT_STRATEGY } from "zlib";
 
 /**
  * Component props
@@ -31,9 +30,8 @@ interface Props {
  */
 interface State {
   deliveryPlaces?: DeliveryPlace[];
-  deliveryPlaceId: string;
+  deliveryPlaceId?: string;
   deliveryData?: DeliveryProduct;
-  quality: DeliveryQuality;
   products: Product[];
   datepickerVisible: boolean,
   modalOpen: boolean;
@@ -67,11 +65,9 @@ class EditDelivery extends React.Component<Props, State> {
       loading: false,
       datepickerVisible: false,
       modalOpen: false,
-      quality: "NORMAL",
       amount: 0,
       price: "0",
       products: [],
-      deliveryPlaceId: "",
       deliveryNoteData: {
         id: undefined,
         image: undefined,
@@ -82,6 +78,14 @@ class EditDelivery extends React.Component<Props, State> {
 
   }
 
+  static navigationOptions = {
+    headerTitle: <TopBar
+      showMenu={true}
+      showHeader={false}
+      showUser={true}
+    />
+  };
+
   /**
    * Component did mount life-cycle event
    */
@@ -89,20 +93,20 @@ class EditDelivery extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
+
     const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
     const deliveryNotes = await deliveriesService.listDeliveryNotes(deliveryData.delivery.id || "");
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
+    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
 
     this.setState({
       deliveryData,
       deliveryNotes
     });
-
-    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
 
     if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
@@ -121,17 +125,10 @@ class EditDelivery extends React.Component<Props, State> {
   /**
    * Handles new delivery data
    */
-  private onUserInputChange = (key: any, value: any) => {
+  private onUserInputChange = (key: DeliveryDataKey, value: string | number) => {
     const state: any = this.state;
     state[key] = value;
     this.setState(state);
-  }
-  
-  /**
-   * Handles new delivery data
-   */
-  private onDeliveryPlaceInputChange = (value: string) => {
-    this.setState({ deliveryPlaceId: value });
   }
 
   /**
@@ -141,7 +138,7 @@ class EditDelivery extends React.Component<Props, State> {
     if (!this.props.accessToken || !this.state.deliveryPlaceId || !this.state.selectedDate || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id) {
       return;
     }
-    
+
     const Api = new PakkasmarjaApi();
     const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const delivery: Delivery = {
@@ -152,7 +149,7 @@ class EditDelivery extends React.Component<Props, State> {
       status: "PLANNED",
       amount: this.state.amount,
       price: this.state.price,
-      quality: this.state.quality,
+      quality: "NORMAL",
       deliveryPlaceId: this.state.deliveryPlaceId || ""
     }
 
@@ -213,12 +210,12 @@ class EditDelivery extends React.Component<Props, State> {
   }
 
   /**
-  * Prints time
-  * 
-  * @param date
-  * 
-  * @return formatted start time
-  */
+    * Prints time
+    * 
+    * @param date
+    * 
+    * @return formatted start time
+    */
   private printTime(date: Date): string {
     return moment(date).format("DD.MM.YYYY");
   }
@@ -231,14 +228,6 @@ class EditDelivery extends React.Component<Props, State> {
       selectedDate: undefined
     });
   }
-
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
-  };
 
   /**
    * Adds a delivery note
@@ -314,7 +303,7 @@ class EditDelivery extends React.Component<Props, State> {
           </View>
           <Text style={styles.textWithSpace}>Tämän hetkinen hinta 4,20€/kg sis.Alv</Text>
           <Text style={styles.textWithSpace}>Määrä (KG)</Text>
-          <View style={[styles.center, { width: 380, height: 70, borderRadius: 7, borderColor: "#e01e36", borderWidth: 1.25, marginBottom: 10 }]}>
+          <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
               value={this.state.amount}
               initValue={this.state.amount}
@@ -359,7 +348,7 @@ class EditDelivery extends React.Component<Props, State> {
               selectedValue={this.state.deliveryPlaceId ? this.state.deliveryPlaceId : ""}
               style={{ height: 50, width: "100%" }}
               onValueChange={(itemValue, itemIndex) =>
-                this.onDeliveryPlaceInputChange(itemValue)
+                this.onUserInputChange("deliveryPlaceId", itemValue)
               }>
               {
                 this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
@@ -410,7 +399,7 @@ class EditDelivery extends React.Component<Props, State> {
 function mapStateToProps(state: StoreState) {
   return {
     accessToken: state.accessToken,
-    itemGroupCategory : state.itemGroupCategory,
+    itemGroupCategory: state.itemGroupCategory,
     deliveries: state.deliveries
   };
 }

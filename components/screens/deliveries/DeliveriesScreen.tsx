@@ -4,14 +4,14 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { Tabs, Tab, Thumbnail } from "native-base";
+import { Tabs, Tab } from "native-base";
 import { TouchableOpacity, Image, View, Text } from "react-native";
-import { List, ListItem } from 'react-native-elements';
 import { styles } from './styles.tsx'
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON, RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
 import { Delivery, Product, ItemGroupCategory } from "pakkasmarja-client";
 import { NavigationEvents } from "react-navigation";
+
 /**
  * Component props
  */
@@ -30,7 +30,6 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  productType: "FRESH" | "FROZEN";
   deliveries: Delivery[];
   freshProposalAmount: number;
   freshPlannedAmount: number;
@@ -53,7 +52,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
-      productType: "FRESH",
       deliveries: [],
       freshProposalAmount: 0,
       freshPlannedAmount: 0,
@@ -77,6 +75,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.itemGroupCategoryUpdate) {
       return;
     }
+
     await this.loadDeliveriesData();
     await this.props.itemGroupCategoryUpdate("FRESH");
     this.loadAmounts();
@@ -96,7 +95,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
     const freshDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FRESH", undefined, undefined, undefined, undefined, undefined, 0, 200);
     const frozenDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FROZEN", undefined, undefined, undefined, undefined, undefined, 0, 200);
-
     const products: Product[] = await productsService.listProducts();
 
     const freshDeliveriesAndProducts: DeliveryProduct[] = freshDeliveries.map((delivery) => {
@@ -119,7 +117,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
     };
 
     this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState);
-
   }
 
   /**
@@ -129,33 +126,32 @@ class DeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.deliveries || !this.props.itemGroupCategory) {
       return;
     }
-    const deliveries: any = this.props.deliveries
+
+    const deliveries: DeliveriesState = this.props.deliveries;
     let freshProposalAmount = 0;
     let freshPlannedAmount = 0;
     let frozenProposalAmount = 0;
     let frozenPlannedAmount = 0;
 
-      deliveries.freshDeliveryData.forEach((deliveryProduct: DeliveryProduct) => {
-        if (deliveryProduct.delivery.status == "PROPOSAL") {
-          freshProposalAmount++;
-        }
-        else if (deliveryProduct.delivery.status == "PLANNED") {
-          freshPlannedAmount++;
-        }
-        this.setState({ freshProposalAmount, freshPlannedAmount });
-      });
+    deliveries.freshDeliveryData.forEach((deliveryProduct: DeliveryProduct) => {
+      if (deliveryProduct.delivery.status == "PROPOSAL") {
+        freshProposalAmount++;
+      }
+      else if (deliveryProduct.delivery.status == "PLANNED") {
+        freshPlannedAmount++;
+      }
+      this.setState({ freshProposalAmount, freshPlannedAmount });
+    });
 
-
-      deliveries.frozenDeliveryData.forEach((deliveryProduct: DeliveryProduct) => {
-        if (deliveryProduct.delivery.status == "PROPOSAL") {
-          frozenProposalAmount++;
-        }
-        else if (deliveryProduct.delivery.status == "PLANNED") {
-          frozenPlannedAmount++;
-        }
-        this.setState({ frozenProposalAmount, frozenPlannedAmount });
-      });
-
+    deliveries.frozenDeliveryData.forEach((deliveryProduct: DeliveryProduct) => {
+      if (deliveryProduct.delivery.status == "PROPOSAL") {
+        frozenProposalAmount++;
+      }
+      else if (deliveryProduct.delivery.status == "PLANNED") {
+        frozenPlannedAmount++;
+      }
+      this.setState({ frozenProposalAmount, frozenPlannedAmount });
+    });
   }
 
   /**
@@ -182,13 +178,13 @@ class DeliveriesScreen extends React.Component<Props, State> {
   /**
    * Render list item
    */
-  renderDeliveryList = (deliveryList: any, itemGroupCategory: ItemGroupCategory) => {
+  renderDeliveryList = (deliveryList: {}[], itemGroupCategory: ItemGroupCategory) => {
     return (
       <View style={{ flex: 1, flexDirection: "column", marginTop: 50 }}>
         {
           deliveryList.map((listItem: any) => {
-            const plannedAmount: number = itemGroupCategory == "FRESH" ? listItem.freshPlannedAmount : listItem.frozenPlannedAmount;
-            const proposalAmount: number = itemGroupCategory == "FRESH" ? listItem.freshProposalAmount : listItem.frozenProposalAmount;
+            const plannedAmount: number = this.props.itemGroupCategory == "FRESH" ? listItem.freshPlannedAmount : listItem.frozenPlannedAmount;
+            const proposalAmount: number = this.props.itemGroupCategory == "FRESH" ? listItem.freshProposalAmount : listItem.frozenProposalAmount;
             return (
               <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, itemGroupCategory) }}>
                 <View key={listItem.screen} style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 35 }}>
@@ -206,16 +202,8 @@ class DeliveriesScreen extends React.Component<Props, State> {
                   {
                     listItem.screen == "Proposals" && proposalAmount > 0 ?
                       <View style={{ justifyContent: "center" }}>
-                        <View style={{
-                          height: 20,
-                          width: 20,
-                          borderRadius: 10,
-                          backgroundColor: '#e01e36',
-                          justifyContent: "center",
-                          alignItems: "center",
-                          marginRight: 20
-                        }} >
-                          <Text style={{ color: "white" }}>{proposalAmount}</Text>
+                        <View style={styles.roundColoredView} >
+                          <Text style={styles.roundViewText}>{proposalAmount}</Text>
                         </View>
                       </View>
                       :
@@ -224,16 +212,8 @@ class DeliveriesScreen extends React.Component<Props, State> {
                   {
                     listItem.screen == "IncomingDeliveries" && plannedAmount > 0 ?
                       <View style={{ justifyContent: "center" }}>
-                        <View style={{
-                          height: 20,
-                          width: 20,
-                          borderRadius: 10,
-                          backgroundColor: '#e01e36',
-                          justifyContent: "center",
-                          alignItems: "center",
-                          marginRight: 20
-                        }} >
-                          <Text style={{ color: "white" }}>{plannedAmount}</Text>
+                        <View style={styles.roundColoredView} >
+                          <Text style={styles.roundViewText}>{plannedAmount}</Text>
                         </View>
                       </View>
                       :
@@ -254,29 +234,29 @@ class DeliveriesScreen extends React.Component<Props, State> {
   public render() {
     const deliveryList = [{
       name: "Ehdotukset",
-      icon: RED_LOGO,
       screen: "Proposals",
+      icon: RED_LOGO,
       freshProposalAmount: this.state.freshProposalAmount,
       frozenProposalAmount: this.state.frozenProposalAmount
     }, {
       name: "Viikkoennusteet",
-      icon: PREDICTIONS_ICON,
-      screen: "WeekDeliveryPrediction"
+      screen: "WeekDeliveryPrediction",
+      icon: PREDICTIONS_ICON
     }, {
       name: "Tulevat toimitukset",
-      icon: INCOMING_DELIVERIES_LOGO,
       screen: "IncomingDeliveries",
+      icon: INCOMING_DELIVERIES_LOGO,
       frozenPlannedAmount: this.state.frozenPlannedAmount,
       freshPlannedAmount: this.state.freshPlannedAmount
     }, {
       name: "Tehdyt toimitukset",
-      icon: COMPLETED_DELIVERIES_LOGO,
-      screen: "PastDeliveries"
+      screen: "PastDeliveries",
+      icon: COMPLETED_DELIVERIES_LOGO
     }];
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onDidFocus={() => this.loadAmounts()} />
+        <NavigationEvents onDidFocus={this.loadAmounts} />
         <Tabs>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"TUORETUOTTEET"}>
             {
@@ -293,7 +273,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
     );
   }
 }
-
 
 /**
  * Redux mapper for mapping store state to component props

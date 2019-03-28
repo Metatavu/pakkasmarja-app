@@ -79,7 +79,6 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
     await this.setLastWeeksTotal();
     const itemGroups: ItemGroup[] = await this.props.navigation.getParam('itemGroups');
     this.setState({ itemGroups: itemGroups, selectedItemGroup: itemGroups[0] });
-
   }
 
   static navigationOptions = {
@@ -175,7 +174,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
     let percentageAmount: string = "0";
 
     if (this.state.lastWeeksDeliveryPredictionTotalAmount > 0 && value > 0) {
-      percentageAmount = ((value / this.state.lastWeeksDeliveryPredictionTotalAmount) * 100).toFixed(2); 
+      percentageAmount = ((value / this.state.lastWeeksDeliveryPredictionTotalAmount) * 100).toFixed(2);
     }
 
     this.setState({ amount: value, averageDailyAmount: averageDailyAmount, percentageAmount: percentageAmount });
@@ -254,7 +253,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
       await this.setState({ itemGroupIndex: this.state.itemGroupIndex - 1 });
     }
 
-   await this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex] });
+    await this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex] });
   }
 
   /**
@@ -295,7 +294,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
         </View>
         <View style={{ flex: 1 }}>
           <View style={[styles.center, styles.lightRedBackGroundColor, { paddingVertical: 10 }]}>
-            <TouchableOpacity onPress={ ()=>this.props.navigation.navigate("ViewAllDeliveries")}>
+            <TouchableOpacity onPress={() => this.props.navigation.navigate("ViewAllDeliveries")}>
               <Text style={styles.red}>Katso kaikki toimitukset</Text>
             </TouchableOpacity>
           </View>

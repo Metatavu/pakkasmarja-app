@@ -88,6 +88,17 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 7
   },
+  whiteButton: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    borderColor: "#e01e36",
+    borderWidth: 2,
+    borderRadius: 7
+  },
   smallWhiteButtonText: {
     color: "#e01e36",
     fontWeight: "600"
@@ -151,5 +162,36 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 7
+  },
+  roundColoredView: {
+    height: 24,
+    width: 24,
+    borderRadius: 12,
+    backgroundColor: '#e01e36',
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 20
+  },
+  roundViewText: {
+    fontSize: 14,
+    color: "white"
+  },
+  numericInputContainer: {
+    width: 380,
+    height: 70,
+    borderRadius: 7,
+    borderColor: "#e01e36",
+    borderWidth: 1.25,
+    marginBottom: 10
+  },
+  dateContainerText: {
+    color: "black",
+    fontWeight: "bold",
+    fontSize: 18,
+    textAlign: "center",
+    backgroundColor: "#f2f2f2",
+    borderBottomColor: "lightgrey",
+    borderBottomWidth: 1,
+    paddingVertical: 5
   }
 });

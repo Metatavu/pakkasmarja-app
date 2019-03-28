@@ -8,8 +8,6 @@ import { Text, Thumbnail } from "native-base";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
 import { RED_LOGO } from "../../../static/images";
-import PakkasmarjaApi from "../../../api";
-import { Delivery, Product } from "pakkasmarja-client";
 import Moment from "react-moment";
 import { NavigationEvents } from "react-navigation";
 
@@ -29,7 +27,6 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: DeliveryProduct[];
-  productType?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -54,7 +51,10 @@ class ProposalsScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-
+    if (!this.props.accessToken) {
+      return;
+    }
+    this.setState({loading:true});
   }
 
   /**
@@ -63,7 +63,7 @@ class ProposalsScreen extends React.Component<Props, State> {
   private loadData = async () => {
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const proposalsData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "PROPOSAL");
-    this.setState({ deliveryData: proposalsData });
+    this.setState({ deliveryData: proposalsData, loading:false });
   }
 
   /**

@@ -8,6 +8,8 @@ import { styles } from "./styles.tsx";
 import { DeliveryNote } from "pakkasmarja-client";
 import ImagePicker from 'react-native-image-picker';
 import { FileService } from "../../../api/file.service";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
+
 
 /**
  * Interface for component props
@@ -34,7 +36,7 @@ interface State {
 };
 
 /**
- * Contract proposal modal component class
+ * Delivery note modal component class
  */
 class DeliveryNoteModal extends React.Component<Props, State> {
   /**
@@ -111,8 +113,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
         }
         const source = { uri: response.uri };
         const fileType = response.type || "image/jpeg";
-
-        const fileService = new FileService("http://ville-local.metatavu.io:3000", this.props.accessToken.access_token);
+        const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
         const file = await fileService.uploadFile(response.uri, fileType);
 
         this.onDeliveryDataChange("image", file.url);
@@ -163,7 +164,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
               </View>
               {
                 !this.props.imageUri &&
-                <View style={{ marginTop: 20, marginBottom: 20 }}>
+                <View style={{ marginVertical: 20 }}>
                   <Text style={styles.text}>Lisää kuva</Text>
                   <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.openImagePicker}>
                     <Text style={styles.smallWhiteButtonText}>Lisää kuva</Text>
@@ -177,7 +178,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                     source={{ uri: this.props.imageUri }}
                     style={{ flex: 1, width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }}
                   />
-                  <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.removeImage}>
+                  <TouchableOpacity style={styles.whiteButton} onPress={this.removeImage}>
                     <Text style={styles.smallWhiteButtonText}>Poista kuva</Text>
                   </TouchableOpacity>
                 </View>

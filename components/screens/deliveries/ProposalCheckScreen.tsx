@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
-import { Delivery, Product, DeliveryNote, ItemGroupCategory } from "pakkasmarja-client";
+import { Delivery, Product, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
 import Moment from "react-moment";
@@ -60,6 +60,8 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+
+    this.setState({ loading: true });
     await this.loadData();
   }
 
@@ -152,13 +154,14 @@ class ProposalCheckScreen extends React.Component<Props, State> {
 
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const selectedDelivery: DeliveryProduct | undefined = deliveriesAndProducts.find(deliveryData => deliveryData.delivery.id === deliveryId);
-    
+
     if (selectedDelivery) {
-      this.setState({ 
+      this.setState({
         delivery: selectedDelivery.delivery,
-        product: selectedDelivery.product 
+        product: selectedDelivery.product
       });
     }
+    this.setState({ loading: false });
   }
 
   /**
@@ -172,7 +175,6 @@ class ProposalCheckScreen extends React.Component<Props, State> {
         </View>
       );
     }
-
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={[styles.center, styles.topViewWithButton]}>
@@ -197,7 +199,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
           <View style={{ flex: 1, paddingTop: 10 }}>
             <Text style={[styles.textWithSpace, { color: "black" }]}>Ehdotettu määrä (KG)</Text>
           </View>
-          <View style={[styles.center, { width: 380, height: 70, borderRadius: 7, borderColor: "#e01e36", borderWidth: 1.25, marginBottom: 10 }]}>
+          <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
               value={this.state.delivery.amount}
               initValue={this.state.delivery.amount}
@@ -221,7 +223,9 @@ class ProposalCheckScreen extends React.Component<Props, State> {
               <Text style={[styles.textPrediction, { marginVertical: 10 }]}>Toimituspäivä</Text>
               <View style={{ flexDirection: "row" }}>
                 <Thumbnail square source={PREDICTIONS_ICON} style={{ width: 20, height: 22, marginRight: 10 }} />
-                <Moment style={{ fontWeight: "bold", fontSize: 16, color: "black" }} element={Text} format="DD.MM.YYYY">{this.state.delivery.time && this.state.delivery.time.toString()}</Moment>
+                <Moment style={{ fontWeight: "bold", fontSize: 16, color: "black" }} element={Text} format="DD.MM.YYYY">
+                  {this.state.delivery.time && this.state.delivery.time.toString()}
+                </Moment>
               </View>
             </View>
           </View>
@@ -253,7 +257,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
 function mapStateToProps(state: StoreState) {
   return {
     accessToken: state.accessToken,
-    itemGroupCategory : state.itemGroupCategory,
+    itemGroupCategory: state.itemGroupCategory,
     deliveries: state.deliveries
   };
 }

@@ -57,6 +57,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    this.setState({ loading: true });
     await this.loadData();
   }
 
@@ -71,6 +72,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     const Api = new PakkasmarjaApi();
     const deliveryService = Api.getDeliveriesService(this.props.accessToken.access_token);
     const deliveryState = this.state.deliveryData.delivery;
+
     const delivery: Delivery = {
       id: deliveryState.id,
       productId: this.state.deliveryData.product.id,
@@ -127,7 +129,6 @@ class DeliveryScreen extends React.Component<Props, State> {
     if (!this.props.deliveries) {
       return [];
     }
-
     if (this.props.itemGroupCategory === "FROZEN") {
       return this.props.deliveries.frozenDeliveryData;
     }
@@ -154,7 +155,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     const editable: boolean = this.props.navigation.getParam('editable');
     const deliveryData = { delivery, product }
 
-    this.setState({ editable: editable, deliveryData: deliveryData });
+    this.setState({ editable: editable, deliveryData: deliveryData, loading: false });
   }
 
   static navigationOptions = {
@@ -169,15 +170,12 @@ class DeliveryScreen extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    if (this.state.loading) {
+    if (this.state.loading || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.time) {
       return (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#E51D2A" />
         </View>
       );
-    }
-    if (!this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.time) {
-      return <Text></Text>;
     }
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
@@ -192,8 +190,12 @@ class DeliveryScreen extends React.Component<Props, State> {
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>Määrä (KG)</Text></View>
-            <View style={{ flex: 1 }}><Text style={{ fontSize: 16 }}>{this.state.deliveryData.delivery.amount}</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16 }}>Määrä (KG)</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16 }}>{this.state.deliveryData.delivery.amount}</Text>
+            </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 1 }}>
@@ -212,7 +214,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                     deliveryData: this.state.deliveryData
                   })
                 }}>
-                  <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
+                  <View style={[styles.center, { flexDirection: "row" }]}>
                     <Text style={[styles.red, { fontWeight: "bold", fontSize: 18, textDecorationLine: "underline" }]} >Muokkaa</Text>
                   </View>
                 </TouchableOpacity>

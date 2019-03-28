@@ -2,10 +2,10 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
+import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
-import { Delivery, Product, DeliveryStatus, DeliveryQuality, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryQuality, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -13,7 +13,6 @@ import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
 import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
-import { FileService } from "../../../api/file.service";
 
 /**
  * Component props
@@ -34,16 +33,13 @@ interface State {
   loading: boolean;
   modalOpen: boolean;
   datepickerVisible: boolean,
-  quality: DeliveryQuality;
   productId?: string;
   price: string;
   amount: number;
-  time?: Date;
   deliveries: DeliveryProduct[];
   selectedDate?: Date;
   deliveryPlaces?: DeliveryPlace[];
   deliveryPlaceId?: string;
-  productType?: "FRESH" | "FROZEN";
   deliveryNoteData: DeliveryNote;
   deliveryNotes: DeliveryNote[];
   products: Product[];
@@ -70,7 +66,6 @@ class NewDelivery extends React.Component<Props, State> {
       loading: false,
       datepickerVisible: false,
       modalOpen: false,
-      quality: "NORMAL",
       amount: 0,
       price: "0",
       deliveries: [],
@@ -82,7 +77,6 @@ class NewDelivery extends React.Component<Props, State> {
       },
       deliveryNotes: [],
     };
-
   }
 
   /**
@@ -160,7 +154,7 @@ class NewDelivery extends React.Component<Props, State> {
    * @param key key
    * @param value value
    */
-  private onUserInputChange = (key: any, value: any) => {
+  private onUserInputChange = (key: DeliveryDataKey, value: string | number) => {
     const state: any = this.state;
     state[key] = value;
     this.setState(state);
@@ -185,7 +179,7 @@ class NewDelivery extends React.Component<Props, State> {
       status: "PLANNED",
       amount: this.state.amount,
       price: this.state.price,
-      quality: this.state.quality,
+      quality: "NORMAL",
       deliveryPlaceId: this.state.deliveryPlaceId
     }
 
@@ -312,7 +306,7 @@ class NewDelivery extends React.Component<Props, State> {
           </View>
           <Text style={styles.textWithSpace}>Tämän hetkinen hinta 4,20€/kg sis.Alv</Text>
           <Text style={styles.textWithSpace}>Määrä (KG)</Text>
-          <View style={[styles.center, { width: 380, height: 70, borderRadius: 7, borderColor: "#e01e36", borderWidth: 1.25, marginBottom: 10 }]}>
+          <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
               value={this.state.amount}
               initValue={this.state.amount}
@@ -400,7 +394,7 @@ class NewDelivery extends React.Component<Props, State> {
               </TouchableOpacity>
             </View>
             <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60 }]} onPress={() => { this.handleDeliverySubmit() }}>
+              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60 }]} onPress={this.handleDeliverySubmit}>
                 <Text style={styles.buttonText}>Tallenna</Text>
               </TouchableOpacity>
             </View>

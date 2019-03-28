@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native';
 import { Thumbnail } from "native-base";
@@ -28,7 +28,6 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: any[];
-  productType?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -126,14 +125,6 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
         </View>
       );
     }
-    else if (status === "DONE") {
-      return (
-        <View style={[styles.center, { flexDirection: "row" }]}>
-          <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
-          <Text style={styles.red}>Hyväksytty</Text>
-        </View>
-      );
-    }
   }
 
   /**
@@ -181,7 +172,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   public render() {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onDidFocus={() => this.loadData()} />
+        <NavigationEvents onDidFocus={this.loadData} />
         <View >
           <View style={[styles.center, styles.topViewWithButton]}>
             <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
@@ -197,7 +188,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
               Object.keys(this.state.deliveryData).map((date: any) => {
                 return (
                   <View key={date} >
-                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 18, textAlign: "center", backgroundColor: "#f2f2f2", borderBottomColor: "lightgrey", borderBottomWidth: 1, paddingVertical:5 }}>
+                    <Text style={styles.dateContainerText}>
                       {date}
                     </Text>
                     {

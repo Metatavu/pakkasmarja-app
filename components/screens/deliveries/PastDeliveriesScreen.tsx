@@ -8,8 +8,6 @@ import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
 import { Thumbnail, Text } from "native-base";
 import { COMPLETED_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO_GRAY } from "../../../static/images";
-import PakkasmarjaApi from "../../../api";
-import { Delivery, Product } from "pakkasmarja-client";
 import moment from "moment";
 
 /**
@@ -48,25 +46,37 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     };
   }
 
+  static navigationOptions = {
+    headerTitle: <TopBar
+      showMenu={true}
+      showHeader={false}
+      showUser={true}
+    />
+  };
+
   /**
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    if (!this.props.accessToken) {
+      return;
+    }
+    this.setState({ loading: true });
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE");
     const deliveryData: any = [];
 
     pastDeliveries.forEach((delivery) => {
       const deliveryDate = moment(delivery.delivery.time).format("DD.MM.YYYY");
-      
+
       if (Object.keys(deliveryData).indexOf(deliveryDate) === -1) {
         deliveryData[deliveryDate] = [delivery];
       } else {
         deliveryData[deliveryDate].push(delivery);
       }
     });
-    
-    this.setState({ deliveryData: deliveryData });
+
+    this.setState({ deliveryData: deliveryData, loading: false });
   }
 
   /**
@@ -86,14 +96,6 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     return this.props.deliveries.freshDeliveryData;
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
-  };
-
   /**
    * Render method
    */
@@ -105,7 +107,6 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
         </View>
       );
     }
-
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View >
@@ -120,8 +121,8 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
               Object.keys(this.state.deliveryData).map((date: any) => {
                 return (
                   <View key={date}>
-                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 18, textAlign: "center", backgroundColor: "#f2f2f2", borderBottomColor: "lightgrey", borderBottomWidth: 1, paddingVertical:5 }}>
-                      { date }
+                    <Text style={styles.dateContainerText}>
+                      {date}
                     </Text>
                     {
                       this.state.deliveryData[date].map((data: any) => {
@@ -147,8 +148,8 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     if (!deliveryData || !deliveryData.product) {
       return <Text></Text>;
     }
-    const weekNumber = deliveryData.delivery.time;
-    const productName = deliveryData.product.name; // Onko se product.name vai product.unitName
+    const time = moment(deliveryData.delivery.time).format("DD.MM.YYYY");
+    const productName = deliveryData.product.name;
     const productAmount = `${deliveryData.product.unitSize} G x ${deliveryData.product.units}`;
     const editable = false;
 
@@ -162,7 +163,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
         <View style={styles.renderCustomListItem}>
           <View style={{ flex: 2 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: 'black' }}>{weekNumber}</Text>
+              <Text style={{ color: 'black' }}>{time}</Text>
               <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
             </View>
           </View>
