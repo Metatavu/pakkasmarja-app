@@ -68,22 +68,6 @@ export interface ContractData {
 }
 
 /**
- * POISTA MYÖHEMMIN
- */
-export interface DeliveryData {
-
-    product: string,
-    mainVariety: string,
-    quantity: number,
-    deliveryDate: Date,
-    deliveryTime: string,
-    packingWish: string,
-    comment: string,
-    status : string
-
-}
-
-/**
  * Type for contract data key
  */
 export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAllChecked" | "quantityComment" | "areaDetailValues" | "deliveryPlaceId" | "deliveryPlaceComment";
