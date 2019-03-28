@@ -7,7 +7,7 @@ import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
 import { Text, Thumbnail } from "native-base";
-import { WeekDeliveryPrediction, ItemGroup } from "pakkasmarja-client";
+import { WeekDeliveryPrediction, ItemGroup, ItemGroupCategory } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON } from "../../../static/images";
 
@@ -17,6 +17,7 @@ import { PREDICTIONS_ICON } from "../../../static/images";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  itemGroupCategory?: ItemGroupCategory; 
 };
 
 /**
@@ -24,7 +25,7 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  productType?: string;
+  
   itemGroups: ItemGroup[];
   weekDeliveryPredictions: WeekDeliveryPrediction[];
   weekDeliveryPredictionTableData: WeekDeliveryPredictionTableData[];
@@ -58,9 +59,6 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
       return;
     }
     this.setState({ loading: true });
-
-    const productType: string = await this.props.navigation.getParam('type');
-    this.setState({ productType: productType });
 
     await this.loadItemGroups();
     await this.loadWeekDeliveryPredictionTableData();
@@ -98,7 +96,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     const itemGroups = await itemGroupService.listItemGroups();
     const filteredItemGroups: ItemGroup[] = [];
     itemGroups.forEach((itemGroup) => {
-     itemGroup.category == this.state.productType && filteredItemGroups.push(itemGroup);
+     itemGroup.category == this.props.itemGroupCategory && filteredItemGroups.push(itemGroup);
     });
     this.setState({ itemGroups: filteredItemGroups });
   }
@@ -175,7 +173,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     const itemGroupCategory = predictionTableData.itemGroup.category;
     const itemGroupAmount = predictionTableData.weekDeliveryPrediction.amount;
 
-    if (itemGroupCategory === this.state.productType) {
+    if (itemGroupCategory === this.props.itemGroupCategory) {
       return (
         <TouchableOpacity key={predictionTableData.weekDeliveryPrediction.id} style={styles.center} onPress={() => this.onListItemClick("ViewWeekDeliveryPrediction", predictionTableData)}>
           <View style={styles.renderCustomListItem}>
@@ -202,7 +200,8 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    itemGroupCategory: state.itemGroupCategory
   };
 }
 

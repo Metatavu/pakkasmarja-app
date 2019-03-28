@@ -1,7 +1,7 @@
 import { AppAction } from '../actions';
-import { StoreState } from '../types';
+import { StoreState, DeliveriesState } from '../types';
 import { ACCESS_TOKEN_UPDATE, DELIVERIES_LOADED, PRODUCTS_LOADED, ITEM_GROUP_CATEGORY_UPDATE } from '../constants';
-import { Delivery, Product, ItemGroupCategory } from 'pakkasmarja-client';
+import {  Product, ItemGroupCategory } from 'pakkasmarja-client';
 
 export function reducer(storeState: StoreState, action: AppAction): StoreState {
   switch (action.type) {
@@ -9,7 +9,7 @@ export function reducer(storeState: StoreState, action: AppAction): StoreState {
       const accessToken = action.accessToken;
       return {...storeState, accessToken: accessToken };
     case DELIVERIES_LOADED:
-      const deliveries: Delivery[] = action.deliveries;
+      const deliveries: DeliveriesState = action.deliveries;
       return {...storeState, deliveries: deliveries};
     case PRODUCTS_LOADED:
       const products: Product[] = action.products;

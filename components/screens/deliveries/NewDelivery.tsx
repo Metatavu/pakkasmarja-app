@@ -35,7 +35,6 @@ interface State {
   modalOpen: boolean;
   datepickerVisible: boolean,
   quality: DeliveryQuality;
-  status: DeliveryStatus;
   productId?: string;
   price: string;
   amount: number;
@@ -43,7 +42,7 @@ interface State {
   deliveries: DeliveryProduct[];
   selectedDate?: Date;
   deliveryPlaces?: DeliveryPlace[];
-  deliveryPlaceId: string;
+  deliveryPlaceId?: string;
   productType?: "FRESH" | "FROZEN";
   deliveryNoteData: DeliveryNote;
   deliveryNotes: DeliveryNote[];
@@ -71,12 +70,9 @@ class NewDelivery extends React.Component<Props, State> {
       loading: false,
       datepickerVisible: false,
       modalOpen: false,
-      status: "PLANNED",
       quality: "NORMAL",
       amount: 0,
       price: "0",
-      deliveryPlaceId: "",
-      productId: "",
       deliveries: [],
       selectedDate: new Date(),
       deliveryNoteData: {
@@ -104,11 +100,12 @@ class NewDelivery extends React.Component<Props, State> {
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
 
     const deliveries = this.getDeliveries();
-    this.setState({ 
+    this.setState({
       deliveryPlaces,
       deliveries,
       products,
-      productId: products[0].id
+      productId: products[0].id,
+      deliveryPlaceId: deliveryPlaces[0].id
     });
   }
 
@@ -185,7 +182,7 @@ class NewDelivery extends React.Component<Props, State> {
       productId: this.state.productId,
       userId: this.props.accessToken.userId,
       time: this.state.selectedDate,
-      status: "PLANNED",
+      status: "PROPOSAL",
       amount: this.state.amount,
       price: this.state.price,
       quality: this.state.quality,
@@ -206,8 +203,7 @@ class NewDelivery extends React.Component<Props, State> {
     }
 
     this.updateDeliveries(createdDelivery);
-    const productType = await this.props.itemGroupCategory;
-    this.props.navigation.navigate("IncomingDeliveries", { type: productType });
+    this.props.navigation.navigate("IncomingDeliveries");
   }
 
   /**
@@ -309,10 +305,10 @@ class NewDelivery extends React.Component<Props, State> {
               {
                 this.state.products && this.state.products.map((product) => {
                   return (
-                    <Picker.Item 
-                      key={product.id} 
-                      label={product.name} 
-                      value={product.id} 
+                    <Picker.Item
+                      key={product.id}
+                      label={product.name}
+                      value={product.id}
                     />
                   );
                 })
@@ -354,17 +350,17 @@ class NewDelivery extends React.Component<Props, State> {
                   </Text>
                 </View>
                 <View style={[styles.center, { flex: 0.6 }]}>
-                  {this.state.selectedDate ? 
-                    <Icon 
-                      style={{ color: "#e01e36" }} 
-                      onPress={this.removeDate} 
-                      type={"AntDesign"} 
-                      name="close" /> 
-                    : 
-                    <Icon 
-                      style={{ color: "#e01e36" }} 
-                      type="AntDesign" 
-                      name="calendar" 
+                  {this.state.selectedDate ?
+                    <Icon
+                      style={{ color: "#e01e36" }}
+                      onPress={this.removeDate}
+                      type={"AntDesign"}
+                      name="close" />
+                    :
+                    <Icon
+                      style={{ color: "#e01e36" }}
+                      type="AntDesign"
+                      name="calendar"
                     />
                   }
                 </View>
@@ -378,24 +374,24 @@ class NewDelivery extends React.Component<Props, State> {
             />
           </View>
           <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
-          <Picker
-            selectedValue={this.state.deliveryPlaceId}
-            style={{ height: 50, width: "100%" }}
-            onValueChange={(itemValue) =>
-              this.onUserInputChange("deliveryPlaceId", itemValue)
-            }>
-            {
-              this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
-                return (
-                  <Picker.Item 
-                    key={deliveryPlace.id} 
-                    label={deliveryPlace.name || ""} 
-                    value={deliveryPlace.id} 
-                  />
-                );
-              })
-            }
-          </Picker>
+            <Picker
+              selectedValue={this.state.deliveryPlaceId}
+              style={{ height: 50, width: "100%" }}
+              onValueChange={(itemValue) =>
+                this.onUserInputChange("deliveryPlaceId", itemValue)
+              }>
+              {
+                this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
+                  return (
+                    <Picker.Item
+                      key={deliveryPlace.id}
+                      label={deliveryPlace.name || ""}
+                      value={deliveryPlace.id}
+                    />
+                  );
+                })
+              }
+            </Picker>
           </View>
           <View style={{ flex: 1 }}>
             <View style={[styles.center, { flex: 1, paddingVertical: 15 }]}>

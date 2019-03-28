@@ -121,7 +121,6 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * @param deliveryData DeliveryProduct
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
-    console.log(deliveryData);
     if (!deliveryData || !deliveryData.product) {
       return <Text></Text>;
     }

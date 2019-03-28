@@ -11,7 +11,6 @@ import { Thumbnail } from "native-base";
 import { INCOMING_DELIVERIES_LOGO, INDELIVERY_LOGO, RED_LOGO } from "../../../static/images";
 import { NavigationEvents } from "react-navigation";
 import moment from "moment";
-import ContractDeliveryPlace from "../contracts/ContractDeliveryPlace";
 
 /**
  * Component props
@@ -176,7 +175,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
               <Thumbnail square source={INCOMING_DELIVERIES_LOGO} style={{ width: 60, height: 35, marginRight: 10 }} />
               <Text style={styles.viewHeaderText}>Tulevat toimitukset</Text>
             </View>
-            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery", { type: this.state.productType }) }}>
+            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery")}}>
               <Text style={styles.buttonText}>Uusi toimitus</Text>
             </TouchableOpacity>
           </View>

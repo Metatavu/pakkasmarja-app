@@ -11,6 +11,7 @@ import { RED_LOGO } from "../../../static/images";
 import PakkasmarjaApi from "../../../api";
 import { Delivery, Product } from "pakkasmarja-client";
 import Moment from "react-moment";
+import { NavigationEvents } from "react-navigation";
 
 /**
  * Component props
@@ -53,6 +54,13 @@ class ProposalsScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+
+  }
+
+  /**
+   * Loads data
+   */
+  private loadData = async () => {
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const proposalsData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "PROPOSAL");
     this.setState({ deliveryData: proposalsData });
@@ -72,15 +80,6 @@ class ProposalsScreen extends React.Component<Props, State> {
       return this.props.deliveries.frozenDeliveryData;
     } else {
       return this.props.deliveries.freshDeliveryData;
-    }
-  }
-
-  /**
-   * Component did update life-cycle event
-   */
-  public componentDidUpdate(previousProps: Props, previousState: State) {
-    if (previousState.productType && !this.state.productType) {
-      this.setState({ productType: previousState.productType });
     }
   }
 
@@ -106,6 +105,7 @@ class ProposalsScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+        <NavigationEvents onDidFocus={() => this.loadData()} />
         <View>
           <View style={[styles.center, styles.topViewWithButton]}>
             <View style={[styles.center, { flexDirection: "row", paddingVertical: 30 }]}>
@@ -154,8 +154,7 @@ class ProposalsScreen extends React.Component<Props, State> {
           onPress={() => {
             this.props.navigation.navigate("ProposalCheck", {
               deliveryId: deliveryId,
-              productId: productId,
-              productType: this.state.productType
+              productId: productId
             })
           }}
         >

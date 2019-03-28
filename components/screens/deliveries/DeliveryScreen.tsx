@@ -209,8 +209,7 @@ class DeliveryScreen extends React.Component<Props, State> {
               <View style={[styles.center, { flex: 1, paddingVertical: 25 }]}>
                 <TouchableOpacity onPress={() => {
                   this.props.navigation.navigate("EditDelivery", {
-                    deliveryData: this.state.deliveryData,
-                    productType: this.props.navigation.getParam('productType')
+                    deliveryData: this.state.deliveryData
                   })
                 }}>
                   <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>

@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
-import { Delivery, Product, DeliveryQuality, DeliveryNote, DeliveryPlace } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryQuality, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -21,7 +21,7 @@ interface Props {
   navigation: any;
   accessToken?: AccessToken;
   deliveries?: DeliveriesState;
-  itemGroupCategory?: "FRESH" | "FROZEN";
+  itemGroupCategory?: ItemGroupCategory;
   deliveriesLoaded?: (deliveries: DeliveriesState) => void;
 };
 
@@ -48,7 +48,6 @@ interface State {
     fileUri: string,
     fileType: string
   };
-  productType?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -93,15 +92,13 @@ class EditDelivery extends React.Component<Props, State> {
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
-    const productType = this.props.itemGroupCategory;
     const deliveryNotes = await deliveriesService.listDeliveryNotes(deliveryData.delivery.id || "");
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
 
     this.setState({
       deliveryData,
-      deliveryNotes,
-      productType
+      deliveryNotes
     });
 
     const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
@@ -409,7 +406,8 @@ class EditDelivery extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    itemGroupCategory : state.itemGroupCategory
   };
 }
 

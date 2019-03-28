@@ -13,7 +13,6 @@ import PakkasmarjaApi from "../../../api";
 import NumericInput from 'react-native-numeric-input'
 import { Thumbnail, Icon } from "native-base";
 import { PREDICTIONS_ICON } from "../../../static/images";
-import DeliveryNoteModal from "./DeliveryNoteModal";
 
 /**
  * Component props
@@ -173,9 +172,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       deliveryPlaceId: this.state.delivery.deliveryPlaceId
     }
     await deliveriesService.updateDelivery(delivery, this.state.delivery.id);
-
-    const productType = await this.props.navigation.state.params.productType;
-    this.props.navigation.navigate("IncomingDeliveries", { type: productType });
+    this.props.navigation.navigate("Proposals");
   }
 
 

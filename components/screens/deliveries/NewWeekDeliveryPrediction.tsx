@@ -172,7 +172,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
    */
   private handleValueChange = (value: number) => {
     const averageDailyAmount: number = Math.round(value / 9);
-    const percentageAmount: number = this.state.lastWeeksDeliveryPredictionTotalAmount / value; // täää pitää tehhä
+    const percentageAmount: number = this.state.lastWeeksDeliveryPredictionTotalAmount / value; 
     this.setState({ amount: value, averageDailyAmount: averageDailyAmount, percentageAmount: percentageAmount });
   }
 
