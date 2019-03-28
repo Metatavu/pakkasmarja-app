@@ -159,19 +159,19 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   private loadData = async () => {
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const incomingDeliveriesData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status !== "DONE" && deliveryData.delivery.status !== "REJECTED");
-    
+
     const deliveryData: any = [];
 
     incomingDeliveriesData.forEach((delivery) => {
       const deliveryDate = moment(delivery.delivery.time).format("DD.MM.YYYY");
-      
+
       if (Object.keys(deliveryData).indexOf(deliveryDate) === -1) {
         deliveryData[deliveryDate] = [delivery];
       } else {
         deliveryData[deliveryDate].push(delivery);
       }
     });
-    
+
     this.setState({ deliveryData: deliveryData });
   }
 
@@ -188,17 +188,17 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
               <Thumbnail square source={INCOMING_DELIVERIES_LOGO} style={{ width: 60, height: 35, marginRight: 10 }} />
               <Text style={styles.viewHeaderText}>Tulevat toimitukset</Text>
             </View>
-            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery")}}>
+            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery") }}>
               <Text style={styles.buttonText}>Uusi toimitus</Text>
             </TouchableOpacity>
           </View>
-          <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
+          <View style={{ flex: 1, flexDirection: "column" }}>
             {
               Object.keys(this.state.deliveryData).map((date: any) => {
                 return (
-                  <View key={date} style={{paddingBottom: 10}}>
-                    <Text style={{fontWeight: "bold", fontSize: 20, textAlign: "center", backgroundColor: "#f2f2f2", borderBottomColor: "lightgrey", borderBottomWidth: 0.5}}>
-                      { date }
+                  <View key={date} >
+                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 18, textAlign: "center", backgroundColor: "#f2f2f2", borderBottomColor: "lightgrey", borderBottomWidth: 1, paddingVertical:5 }}>
+                      {date}
                     </Text>
                     {
                       this.state.deliveryData[date].map((data: any) => {

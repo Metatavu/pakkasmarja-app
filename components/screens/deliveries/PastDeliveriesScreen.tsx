@@ -28,7 +28,6 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: any[];
-  productType?: "FRESH" | "FROZEN";
 };
 
 /**
@@ -122,8 +121,8 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
             {
               Object.keys(this.state.deliveryData).map((date: any) => {
                 return (
-                  <View key={date} style={{paddingBottom: 10}}>
-                    <Text style={{fontWeight: "bold", fontSize: 20, textAlign: "center", backgroundColor: "#f2f2f2", borderBottomColor: "lightgrey", borderBottomWidth: 0.5}}>
+                  <View key={date}>
+                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 18, textAlign: "center", backgroundColor: "#f2f2f2", borderBottomColor: "lightgrey", borderBottomWidth: 1, paddingVertical:5 }}>
                       { date }
                     </Text>
                     {
