@@ -53,10 +53,8 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    console.log("MOUNT");
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE");
-    console.log(pastDeliveries);
     const deliveryData: any = [];
 
     pastDeliveries.forEach((delivery) => {

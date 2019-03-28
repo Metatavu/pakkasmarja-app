@@ -7,6 +7,7 @@ import { View, TouchableOpacity, TextInput, Modal, Image } from "react-native";
 import { styles } from "./styles.tsx";
 import { DeliveryNote } from "pakkasmarja-client";
 import ImagePicker from 'react-native-image-picker';
+import { FileService } from "../../../api/file.service";
 
 /**
  * Interface for component props
@@ -96,10 +97,8 @@ class DeliveryNoteModal extends React.Component<Props, State> {
   /**
    * Open image picker
    */
-  private openImagePicker = () => {
-    ImagePicker.showImagePicker(this.getImagePickerOptions(), (response) => {
-      console.log('Response = ', response);
-
+  private openImagePicker = async () => {
+    ImagePicker.showImagePicker(this.getImagePickerOptions(), async (response) => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.error) {
@@ -107,10 +106,16 @@ class DeliveryNoteModal extends React.Component<Props, State> {
       } else if (response.customButton) {
         console.log('User tapped custom button: ', response.customButton);
       } else {
+        if (!this.props.accessToken) {
+          return;
+        }
         const source = { uri: response.uri };
         const fileType = response.type || "image/jpeg";
 
-        this.props.onDeliveryNoteImageChange(source.uri, fileType);
+        const fileService = new FileService("http://ville-local.metatavu.io:3000", this.props.accessToken.access_token);
+        const file = await fileService.uploadFile(response.uri, fileType);
+
+        this.onDeliveryDataChange("image", file.url);
       }
     });
   }

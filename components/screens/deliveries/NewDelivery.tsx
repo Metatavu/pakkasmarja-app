@@ -182,7 +182,7 @@ class NewDelivery extends React.Component<Props, State> {
       productId: this.state.productId,
       userId: this.props.accessToken.userId,
       time: this.state.selectedDate,
-      status: "PROPOSAL",
+      status: "PLANNED",
       amount: this.state.amount,
       price: this.state.price,
       quality: this.state.quality,
@@ -195,11 +195,6 @@ class NewDelivery extends React.Component<Props, State> {
       await this.createDeliveryNotes(this.state.deliveryNotes, async (deliveryNote: DeliveryNote) => {
         await deliveryService.createDeliveryNote(deliveryNote, createdDelivery.id || "");
       });
-    }
-
-    if (this.state.deliveryNoteFile) {
-      const fileService = new FileService("http://ville-local.metatavu.io:3000", this.props.accessToken.access_token);
-      await fileService.uploadFile(this.state.deliveryNoteFile.fileUri, this.state.deliveryNoteFile.fileType);
     }
 
     this.updateDeliveries(createdDelivery);
