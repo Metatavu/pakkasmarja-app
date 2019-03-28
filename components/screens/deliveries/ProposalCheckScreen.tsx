@@ -2,10 +2,10 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
-import { Delivery, Product, DeliveryNote } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryNote, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
 import Moment from "react-moment";
@@ -20,6 +20,9 @@ import { PREDICTIONS_ICON } from "../../../static/images";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  deliveries?: DeliveriesState;
+  itemGroupCategory?: ItemGroupCategory;
+  deliveriesLoaded?: (deliveries: DeliveriesState) => void;
 };
 
 /**
@@ -69,6 +72,96 @@ class ProposalCheckScreen extends React.Component<Props, State> {
   };
 
   /**
+   * Handle proposal accept
+   */
+  private handleProposalAccept = async () => {
+    if (!this.props.accessToken || !this.state.product || !this.state.product.id || !this.state.delivery || !this.state.delivery.id) {
+      return;
+    }
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+
+    const delivery: Delivery = {
+      id: this.state.delivery.id,
+      productId: this.state.product.id,
+      userId: this.props.accessToken.userId,
+      time: this.state.delivery.time,
+      status: "PLANNED",
+      amount: this.state.delivery.amount,
+      price: this.state.delivery.price,
+      quality: this.state.delivery.quality,
+      deliveryPlaceId: this.state.delivery.deliveryPlaceId
+    }
+    const updatedDelivery = await deliveriesService.updateDelivery(delivery, this.state.delivery.id);
+    this.updateDeliveries(updatedDelivery);
+    this.props.navigation.navigate("Proposals");
+  }
+
+  /**
+   * Update deliveries
+   */
+  private updateDeliveries = (delivery: Delivery) => {
+    if (!this.props.deliveries) {
+      return;
+    }
+
+    const deliveries = this.getDeliveries();
+    const updatedDeliveries = deliveries.map((deliveryData) => {
+      if (deliveryData.delivery.id === delivery.id) {
+        return {
+          delivery: delivery,
+          product: deliveryData.product
+        }
+      }
+      return deliveryData;
+    });
+
+    const deliveriesState = this.props.deliveries;
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      deliveriesState.frozenDeliveryData = updatedDeliveries;
+    } else {
+      deliveriesState.freshDeliveryData = updatedDeliveries;
+    }
+
+    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState)
+  }
+
+  /**
+   * Get deliveries
+   * 
+   * @return deliveries
+   */
+  private getDeliveries = () => {
+    if (!this.props.deliveries) {
+      return [];
+    }
+
+    if (this.props.itemGroupCategory === "FROZEN") {
+      return this.props.deliveries.frozenDeliveryData;
+    } else {
+      return this.props.deliveries.freshDeliveryData;
+    }
+  }
+
+  /**
+   * Load data
+   */
+  private loadData = async () => {
+    const deliveryId: string = this.props.navigation.getParam('deliveryId');
+
+    const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
+    const selectedDelivery: DeliveryProduct | undefined = deliveriesAndProducts.find(deliveryData => deliveryData.delivery.id === deliveryId);
+    
+    if (selectedDelivery) {
+      this.setState({ 
+        delivery: selectedDelivery.delivery,
+        product: selectedDelivery.product 
+      });
+    }
+  }
+
+  /**
    * Render method
    */
   public render() {
@@ -93,7 +186,9 @@ class ProposalCheckScreen extends React.Component<Props, State> {
           <View style={{ flex: 1 }}>
             {
               this.state.product &&
-              <Text style={[styles.contentHeader, { color: "black" }]}>{`${this.state.product.unitName} ${this.state.product.unitSize} G x ${this.state.product.units}`}</Text>
+              <Text style={[styles.contentHeader, { color: "black" }]}>
+                {`${this.state.product.name} ${this.state.product.unitSize} G x ${this.state.product.units}`}
+              </Text>
             }
           </View>
           <View style={{ flex: 1 }}>
@@ -148,52 +243,6 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       </BasicScrollLayout>
     );
   }
-
-  /**
-   * Handle proposal accept
-   */
-  private handleProposalAccept = async () => {
-    if (!this.props.accessToken || !this.state.product || !this.state.product.id || !this.state.delivery || !this.state.delivery.id) {
-      return;
-    }
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
-
-    const delivery: Delivery =
-    {
-      id: this.state.delivery.id,
-      productId: this.state.product.id,
-      userId: this.props.accessToken.userId,
-      time: this.state.delivery.time,
-      status: "PLANNED",
-      amount: this.state.delivery.amount,
-      price: this.state.delivery.price,
-      quality: this.state.delivery.quality,
-      deliveryPlaceId: this.state.delivery.deliveryPlaceId
-    }
-    await deliveriesService.updateDelivery(delivery, this.state.delivery.id);
-    this.props.navigation.navigate("Proposals");
-  }
-
-
-  /**
-   * Load data
-   */
-  private loadData = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-    const deliveryId: string = this.props.navigation.getParam('deliveryId');
-    const productId: string = this.props.navigation.getParam('productId');
-
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = Api.getProductsService(this.props.accessToken.access_token);
-    const delivery: Delivery = await deliveriesService.findDelivery(deliveryId);
-    const product: Product = await productsService.findProduct(productId);
-
-    this.setState({ delivery, product });
-  }
 }
 
 /**
@@ -203,7 +252,9 @@ class ProposalCheckScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    itemGroupCategory : state.itemGroupCategory,
+    deliveries: state.deliveries
   };
 }
 
@@ -214,7 +265,8 @@ function mapStateToProps(state: StoreState) {
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
+    deliveriesLoaded: (deliveries: DeliveriesState) => dispatch(actions.deliveriesLoaded(deliveries))
   };
 }
 

@@ -66,7 +66,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     }
 
     const time = moment(delivery.delivery.time).format("DD.MM.YYYY");
-    const productText = `${delivery.product.name} ${delivery.product.unitSize} ${delivery.product.unitName} x ${delivery.product.units}`;
+    const productText = `${delivery.product.name} ${delivery.product.unitSize} ${delivery.product.unitName} x ${delivery.delivery.amount}`;
 
     return (
       <View key={delivery.delivery.id} style={styles.renderCustomListItem}>

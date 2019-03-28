@@ -12,10 +12,6 @@ import PakkasmarjaApi from "../../../api";
 import { Delivery, Product, ItemGroup } from "pakkasmarja-client";
 import moment from "moment";
 
-interface DeliveryData {
-  [date: string]: DeliveryProduct[]
-}
-
 /**
  * Component props
  */

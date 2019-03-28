@@ -13,6 +13,7 @@ import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
 import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
+import { Z_DEFAULT_STRATEGY } from "zlib";
 
 /**
  * Component props
@@ -140,6 +141,7 @@ class EditDelivery extends React.Component<Props, State> {
     if (!this.props.accessToken || !this.state.deliveryPlaceId || !this.state.selectedDate || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id) {
       return;
     }
+    
     const Api = new PakkasmarjaApi();
     const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const delivery: Delivery = {
@@ -407,7 +409,8 @@ class EditDelivery extends React.Component<Props, State> {
 function mapStateToProps(state: StoreState) {
   return {
     accessToken: state.accessToken,
-    itemGroupCategory : state.itemGroupCategory
+    itemGroupCategory : state.itemGroupCategory,
+    deliveries: state.deliveries
   };
 }
 
