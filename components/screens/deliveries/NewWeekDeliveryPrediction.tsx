@@ -32,7 +32,7 @@ interface State {
   weekDays: WeekDay[];
   lastWeeksDeliveryPredictionTotalAmount: number;
   averageDailyAmount: number;
-  percentageAmount: number;
+  percentageAmount: string;
 };
 
 /**
@@ -53,7 +53,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
       lastWeeksDeliveryPredictionTotalAmount: 0,
       itemGroupIndex: 0,
       averageDailyAmount: 0,
-      percentageAmount: 0,
+      percentageAmount: "0",
       amount: 0,
       selectedItemGroup: {},
       weekDays: [
@@ -172,7 +172,12 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
    */
   private handleValueChange = (value: number) => {
     const averageDailyAmount: number = Math.round(value / 9);
-    const percentageAmount: number = this.state.lastWeeksDeliveryPredictionTotalAmount / value; 
+    let percentageAmount: string = "0";
+
+    if (this.state.lastWeeksDeliveryPredictionTotalAmount > 0 && value > 0) {
+      percentageAmount = ((value / this.state.lastWeeksDeliveryPredictionTotalAmount) * 100).toFixed(2); 
+    }
+
     this.setState({ amount: value, averageDailyAmount: averageDailyAmount, percentageAmount: percentageAmount });
   }
 

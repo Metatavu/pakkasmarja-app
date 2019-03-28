@@ -172,12 +172,13 @@ class EditDelivery extends React.Component<Props, State> {
       return;
     }
 
+    const product = this.state.products.find(product => product.id === delivery.productId);
     const deliveries = this.getDeliveries();
     const updatedDeliveries = deliveries.map((deliveryData) => {
       if (deliveryData.delivery.id === delivery.id) {
         return {
           delivery: delivery,
-          product: deliveryData.product
+          product: product
         }
       }
       return deliveryData;
