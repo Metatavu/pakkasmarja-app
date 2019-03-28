@@ -57,10 +57,21 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
     };
   }
 
+  static navigationOptions = {
+    headerTitle: <TopBar
+      showMenu={true}
+      showHeader={false}
+      showUser={true}
+    />
+  };
+
   /**
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    if (!this.props.accessToken) {
+      return;
+    }
     await this.loadItemGroups();
     this.refreshDeliveryData();
   }
@@ -147,7 +158,8 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.accessToken || !this.state.selectedItemGroup) {
       return;
     }
-    
+    this.setState({ loading: true });
+
     const itemGroupId = this.state.selectedItemGroup.id;
     const week = this.state.weekNumber;
     const timeAfter = moment().day("Monday").week(week).toDate();
@@ -169,37 +181,21 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
         delivery: delivery,
         product: product
       };
-      
+
       if (Object.keys(deliveryData).indexOf(deliveryDate) === -1) {
         deliveryData[deliveryDate] = [deliveryProduct];
       } else {
         deliveryData[deliveryDate].push(deliveryProduct);
       }
     });
-    
+
     this.setState({ deliveryData: deliveryData, loading: false });
   }
-
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
-  };
 
   /**
    * Render method
    */
   public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
-    }
-
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View>
@@ -236,24 +232,29 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
           </View>
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
-              Object.keys(this.state.deliveryData).map((date: any) => {
-                return (
-                  <View key={date} style={{paddingLeft: 20, paddingTop: 10, paddingBottom: 10, borderBottomColor: "rgba(0,0,0,0.5)", borderBottomWidth: 1}}>
-                    <Text style={{fontWeight: "bold"}}>
-                      { date }
-                    </Text>
-                    {
-                      this.state.deliveryData[date].map((data: any) => {
-                        return (
-                          <Text key={data.delivery.id}>
-                            {`${data.product.name} ${data.product.unitSize} ${data.product.unitName} x ${data.delivery.amount}`}
-                          </Text>
-                        );
-                      })
-                    }
-                  </View>
-                );
-              })
+              this.state.loading ?
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="large" color="#E51D2A" />
+                </View>
+                :
+                Object.keys(this.state.deliveryData).map((date: any) => {
+                  return (
+                    <View key={date} style={{ paddingLeft: 20, paddingTop: 10, paddingBottom: 10, borderBottomColor: "rgba(0,0,0,0.5)", borderBottomWidth: 1 }}>
+                      <Text style={{ fontWeight: "bold" }}>
+                        {date}
+                      </Text>
+                      {
+                        this.state.deliveryData[date].map((data: any) => {
+                          return (
+                            <Text key={data.delivery.id}>
+                              {`${data.product.name} ${data.product.unitSize} ${data.product.unitName} x ${data.delivery.amount}`}
+                            </Text>
+                          );
+                        })
+                      }
+                    </View>
+                  );
+                })
             }
             {
               this.state.deliveryData.map((deliveryData: any) => {

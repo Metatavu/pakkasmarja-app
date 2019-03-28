@@ -47,6 +47,14 @@ class ProposalsScreen extends React.Component<Props, State> {
     };
   }
 
+  static navigationOptions = {
+    headerTitle: <TopBar
+      showMenu={true}
+      showHeader={false}
+      showUser={true}
+    />
+  };
+
   /**
    * Component did mount life-cycle event
    */
@@ -54,7 +62,7 @@ class ProposalsScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    this.setState({loading:true});
+    this.setState({ loading: true });
   }
 
   /**
@@ -63,7 +71,7 @@ class ProposalsScreen extends React.Component<Props, State> {
   private loadData = async () => {
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const proposalsData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "PROPOSAL");
-    this.setState({ deliveryData: proposalsData, loading:false });
+    this.setState({ deliveryData: proposalsData, loading: false });
   }
 
   /**
@@ -83,26 +91,10 @@ class ProposalsScreen extends React.Component<Props, State> {
     }
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
-  };
-
   /**
    * Render method
    */
   public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
-    }
-
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <NavigationEvents onDidFocus={() => this.loadData()} />
@@ -115,9 +107,14 @@ class ProposalsScreen extends React.Component<Props, State> {
           </View>
           <View>
             {
-              this.state.deliveryData.map((deliveryData: DeliveryProduct) => {
-                return this.renderListItem(deliveryData)
-              })
+              this.state.loading ?
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="large" color="#E51D2A" />
+                </View>
+                :
+                this.state.deliveryData.map((deliveryData: DeliveryProduct) => {
+                  return this.renderListItem(deliveryData)
+                })
             }
           </View>
         </View>
@@ -175,7 +172,6 @@ function mapStateToProps(state: StoreState) {
   return {
     accessToken: state.accessToken,
     deliveries: state.deliveries,
-    products: state.products,
     itemGroupCategory: state.itemGroupCategory
   };
 }

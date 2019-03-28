@@ -7,8 +7,6 @@ import { View, TouchableOpacity, TextInput, Modal, Image } from "react-native";
 import { styles } from "./styles.tsx";
 import { DeliveryNote } from "pakkasmarja-client";
 import ImagePicker from 'react-native-image-picker';
-import { FileService } from "../../../api/file.service";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 
 /**
@@ -111,12 +109,9 @@ class DeliveryNoteModal extends React.Component<Props, State> {
         if (!this.props.accessToken) {
           return;
         }
-        const source = { uri: response.uri };
-        const fileType = response.type || "image/jpeg";
-        const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
-        const file = await fileService.uploadFile(response.uri, fileType);
 
-        this.onDeliveryDataChange("image", file.url);
+        this.onDeliveryDataChange("imageUri", response.uri);
+        this.onDeliveryDataChange("imageType", response.type || "image/jpeg");
       }
     });
   }
@@ -125,7 +120,11 @@ class DeliveryNoteModal extends React.Component<Props, State> {
    * Remove image
    */
   private removeImage = () => {
-    this.props.onDeliveryNoteImageChange(undefined, undefined);
+    let deliveryData: any = this.props.deliveryNoteData;
+    deliveryData.imageUri = undefined;
+    deliveryData.imageType = undefined;
+
+    this.props.onDeliveryNoteChange(deliveryData);
   }
 
   /**

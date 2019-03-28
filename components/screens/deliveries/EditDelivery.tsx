@@ -93,6 +93,7 @@ class EditDelivery extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    this.setState({ loading: true });
     const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
 
     const Api = new PakkasmarjaApi();
@@ -117,7 +118,8 @@ class EditDelivery extends React.Component<Props, State> {
         productId: deliveryData.product.id,
         deliveryPlaceId: deliveryPlace.id || "",
         amount: deliveryData.delivery.amount,
-        selectedDate: deliveryData.delivery.time
+        selectedDate: deliveryData.delivery.time,
+        loading: false
       });
     }
   }

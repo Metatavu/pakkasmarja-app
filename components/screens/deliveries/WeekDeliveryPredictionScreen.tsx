@@ -17,7 +17,7 @@ import { PREDICTIONS_ICON } from "../../../static/images";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
-  itemGroupCategory?: ItemGroupCategory; 
+  itemGroupCategory?: ItemGroupCategory;
 };
 
 /**
@@ -25,7 +25,7 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  
+
   itemGroups: ItemGroup[];
   weekDeliveryPredictions: WeekDeliveryPrediction[];
   weekDeliveryPredictionTableData: WeekDeliveryPredictionTableData[];
@@ -51,6 +51,14 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     };
   }
 
+  static navigationOptions = {
+    headerTitle: <TopBar
+      showMenu={true}
+      showHeader={false}
+      showUser={true}
+    />
+  };
+
   /**
    * Component did mount life-cycle event
    */
@@ -63,14 +71,6 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     await this.loadItemGroups();
     await this.loadWeekDeliveryPredictionTableData();
   }
-
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
-  };
 
   /**
    * On list item click
@@ -96,7 +96,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     const itemGroups = await itemGroupService.listItemGroups();
     const filteredItemGroups: ItemGroup[] = [];
     itemGroups.forEach((itemGroup) => {
-     itemGroup.category == this.props.itemGroupCategory && filteredItemGroups.push(itemGroup);
+      itemGroup.category == this.props.itemGroupCategory && filteredItemGroups.push(itemGroup);
     });
     this.setState({ itemGroups: filteredItemGroups });
   }
@@ -129,14 +129,6 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
-    }
-
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View >
@@ -151,9 +143,14 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
           </View>
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
-              this.state.weekDeliveryPredictionTableData.map((predictionTableData: WeekDeliveryPredictionTableData) => {
-                return this.renderListItem(predictionTableData)
-              })
+              this.state.loading ?
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="large" color="#E51D2A" />
+                </View>
+                :
+                this.state.weekDeliveryPredictionTableData.map((predictionTableData: WeekDeliveryPredictionTableData) => {
+                  return this.renderListItem(predictionTableData)
+                })
             }
           </View>
         </View>
@@ -191,6 +188,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
       );
     }
   }
+  
 }
 
 /**

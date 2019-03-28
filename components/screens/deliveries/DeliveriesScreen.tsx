@@ -19,7 +19,6 @@ interface Props {
   navigation: any;
   accessToken?: AccessToken;
   deliveriesLoaded?: (deliveries: DeliveriesState) => void;
-  productsLoaded?: (products: Product[]) => void;
   itemGroupCategoryUpdate?: (itemGroupCategory: ItemGroupCategory) => void;
   deliveries?: DeliveriesState;
   itemGroupCategory?: "FRESH" | "FROZEN";
@@ -178,7 +177,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
   /**
    * Render list item
    */
-  renderDeliveryList = (deliveryList: {}[], itemGroupCategory: ItemGroupCategory) => {
+  private renderDeliveryList = (deliveryList: {}[], itemGroupCategory: ItemGroupCategory) => {
     return (
       <View style={{ flex: 1, flexDirection: "column", marginTop: 50 }}>
         {
@@ -296,8 +295,7 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
     onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
     itemGroupCategoryUpdate: (itemGroupCategory: ItemGroupCategory) => dispatch(actions.itemGroupCategoryUpdate(itemGroupCategory)),
-    deliveriesLoaded: (deliveries: DeliveriesState) => dispatch(actions.deliveriesLoaded(deliveries)),
-    productsLoaded: (products: Product[]) => dispatch(actions.productsLoaded(products))
+    deliveriesLoaded: (deliveries: DeliveriesState) => dispatch(actions.deliveriesLoaded(deliveries))
   };
 }
 

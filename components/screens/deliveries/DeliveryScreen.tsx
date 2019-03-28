@@ -50,6 +50,14 @@ class DeliveryScreen extends React.Component<Props, State> {
     };
   }
 
+  static navigationOptions = {
+    headerTitle: <TopBar
+      showMenu={true}
+      showHeader={false}
+      showUser={true}
+    />
+  };
+
   /**
    * Component did mount life-cycle event
    */
@@ -158,14 +166,6 @@ class DeliveryScreen extends React.Component<Props, State> {
     this.setState({ editable: editable, deliveryData: deliveryData, loading: false });
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
-  };
-
   /**
    * Render method
    */
@@ -244,7 +244,6 @@ function mapStateToProps(state: StoreState) {
   return {
     accessToken: state.accessToken,
     deliveries: state.deliveries,
-    products: state.products,
     itemGroupCategory: state.itemGroupCategory
   };
 }

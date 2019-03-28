@@ -193,5 +193,20 @@ export const styles = StyleSheet.create({
     borderBottomColor: "lightgrey",
     borderBottomWidth: 1,
     paddingVertical: 5
+  },
+  radioButtonContainer: {
+    height: 26,
+    width: 26,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#e01e36',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioButtonSelected: {
+    height: 12,
+    width: 12,
+    borderRadius: 6,
+    backgroundColor: '#e01e36',
   }
 });

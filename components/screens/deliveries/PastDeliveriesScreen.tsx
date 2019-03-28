@@ -100,13 +100,6 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
-    }
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View >
@@ -118,20 +111,25 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
           </View>
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
-              Object.keys(this.state.deliveryData).map((date: any) => {
-                return (
-                  <View key={date}>
-                    <Text style={styles.dateContainerText}>
-                      {date}
-                    </Text>
-                    {
-                      this.state.deliveryData[date].map((data: any) => {
-                        return this.renderListItem(data)
-                      })
-                    }
-                  </View>
-                );
-              })
+              this.state.loading ?
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="large" color="#E51D2A" />
+                </View>
+                :
+                Object.keys(this.state.deliveryData).map((date: any) => {
+                  return (
+                    <View key={date}>
+                      <Text style={styles.dateContainerText}>
+                        {date}
+                      </Text>
+                      {
+                        this.state.deliveryData[date].map((data: any) => {
+                          return this.renderListItem(data)
+                        })
+                      }
+                    </View>
+                  );
+                })
             }
           </View>
         </View>
@@ -219,4 +217,3 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(PastDeliveriesScreen);
-

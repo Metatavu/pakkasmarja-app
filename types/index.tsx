@@ -2,8 +2,7 @@ import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction, Delivery, Prod
 
 export interface StoreState {
   accessToken?: AccessToken,
-  deliveries?: DeliveriesState,
-  products?: Product[],
+  deliveries?: DeliveriesState
   itemGroupCategory? : ItemGroupCategory
 }
 

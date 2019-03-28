@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, ActivityIndicator } from "react-native";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native';
 import { Thumbnail } from "native-base";
@@ -55,6 +55,16 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       showUser={true}
     />
   };
+
+  /**
+   * Component did mount life-cycle event
+   */
+  public async componentDidMount() {
+    if (!this.props.accessToken) {
+      return;
+    }
+    this.setState({ loading: true });
+  }
 
   /**
    * Renders list items
@@ -163,7 +173,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       }
     });
 
-    this.setState({ deliveryData: deliveryData });
+    this.setState({ deliveryData: deliveryData, loading: false });
   }
 
   /**
@@ -185,20 +195,25 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
           </View>
           <View style={{ flex: 1, flexDirection: "column" }}>
             {
-              Object.keys(this.state.deliveryData).map((date: any) => {
-                return (
-                  <View key={date} >
-                    <Text style={styles.dateContainerText}>
-                      {date}
-                    </Text>
-                    {
-                      this.state.deliveryData[date].map((data: any) => {
-                        return this.renderListItems(data)
-                      })
-                    }
-                  </View>
-                );
-              })
+              this.state.loading ?
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="large" color="#E51D2A" />
+                </View>
+                :
+                Object.keys(this.state.deliveryData).map((date: any) => {
+                  return (
+                    <View key={date} >
+                      <Text style={styles.dateContainerText}>
+                        {date}
+                      </Text>
+                      {
+                        this.state.deliveryData[date].map((data: any) => {
+                          return this.renderListItems(data)
+                        })
+                      }
+                    </View>
+                  );
+                })
             }
           </View>
         </View>
@@ -216,7 +231,6 @@ function mapStateToProps(state: StoreState) {
   return {
     accessToken: state.accessToken,
     deliveries: state.deliveries,
-    products: state.products,
     itemGroupCategory: state.itemGroupCategory
   };
 }

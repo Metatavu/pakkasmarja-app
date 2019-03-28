@@ -43,6 +43,14 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
     };
   }
 
+  static navigationOptions = {
+    headerTitle: <TopBar
+      showMenu={true}
+      showHeader={false}
+      showUser={true}
+    />
+  };
+
   /**
    * Component did mount life-cycle event
    */
@@ -54,14 +62,6 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
     const averageDailyAmount: number = Math.round(predictionData.weekDeliveryPrediction.amount / 9);
     this.setState({ predictionData: predictionData, averageDailyAmount: averageDailyAmount });
   }
-
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
-  };
 
   /**
    * Render method
@@ -160,24 +160,9 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
       <View key={label} style={{ flex: 1, flexDirection: "row", marginVertical: 5 }}>
         <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end", paddingVertical: 5 }}>
           <View style={{ flex: 1 }}>
-            <View style={{
-              height: 26,
-              width: 26,
-              borderRadius: 12,
-              borderWidth: 2,
-              borderColor: '#e01e36',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
+            <View style={styles.radioButtonContainer}>
               {
-                selected ?
-                  <View style={{
-                    height: 12,
-                    width: 12,
-                    borderRadius: 6,
-                    backgroundColor: '#e01e36',
-                  }} />
-                  : null
+                selected ? <View style={styles.radioButtonSelected} /> : null
               }
             </View>
           </View>
@@ -188,7 +173,6 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
       </View>
     );
   }
-
 }
 
 /**

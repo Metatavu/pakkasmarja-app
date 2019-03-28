@@ -53,6 +53,15 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     };
   }
 
+  static navigationOptions = {
+    headerTitle: <TopBar
+      showMenu={true}
+      showHeader={false}
+      showUser={true}
+    />
+  };
+
+
   /**
    * Component did mount life-cycle event
    */
@@ -64,14 +73,6 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     this.setState({ loading: true });
     await this.loadData();
   }
-
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
-  };
 
   /**
    * Handle proposal accept
@@ -91,7 +92,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       status: "PLANNED",
       amount: this.state.delivery.amount,
       price: this.state.delivery.price,
-      quality: this.state.delivery.quality,
+      quality: "NORMAL",
       deliveryPlaceId: this.state.delivery.deliveryPlaceId
     }
     const updatedDelivery = await deliveriesService.updateDelivery(delivery, this.state.delivery.id);

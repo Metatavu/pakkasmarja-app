@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, WeekDay } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
 import { WeekDeliveryPrediction, ItemGroup, WeekDeliveryPredictionDays } from "pakkasmarja-client";
 import { Icon } from "native-base";
@@ -24,7 +24,6 @@ interface Props {
  * Component state
  */
 interface State {
-  loading: boolean;
   itemGroups: ItemGroup[];
   selectedItemGroup: ItemGroup;
   itemGroupIndex: number;
@@ -48,7 +47,6 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      loading: false,
       itemGroups: [],
       lastWeeksDeliveryPredictionTotalAmount: 0,
       itemGroupIndex: 0,
@@ -68,6 +66,14 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
     };
   }
 
+  static navigationOptions = {
+    headerTitle: <TopBar
+      showMenu={true}
+      showHeader={false}
+      showUser={true}
+    />
+  };
+
   /**
    * Component did mount life-cycle event
    */
@@ -80,14 +86,6 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
     const itemGroups: ItemGroup[] = await this.props.navigation.getParam('itemGroups');
     this.setState({ itemGroups: itemGroups, selectedItemGroup: itemGroups[0] });
   }
-
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
-  };
 
   /**
    * Renders one radio button
@@ -103,24 +101,9 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
           this.changeWeekDayValue(selected, index);
         }}>
           <View style={{ flex: 1 }}>
-            <View style={{
-              height: 26,
-              width: 26,
-              borderRadius: 12,
-              borderWidth: 2,
-              borderColor: '#e01e36',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
+            <View style={styles.radioButtonContainer}>
               {
-                selected ?
-                  <View style={{
-                    height: 12,
-                    width: 12,
-                    borderRadius: 6,
-                    backgroundColor: '#e01e36',
-                  }} />
-                  : null
+                selected ? <View style={styles.radioButtonSelected} /> : null
               }
             </View>
           </View>
@@ -260,13 +243,6 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    if (this.state.loading) {
-      return (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#E51D2A" />
-        </View>
-      );
-    }
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
