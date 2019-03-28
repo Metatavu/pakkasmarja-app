@@ -120,9 +120,7 @@ export const styles = StyleSheet.create({
   },
   topViewWithButton: {
     flex: 1,
-    backgroundColor: "#f2f2f2",
-    borderBottomColor: 'lightgray',
-    borderBottomWidth: 0.5
+    backgroundColor: "#f2f2f2"
   },
   red: {
     color: "#e01e36"

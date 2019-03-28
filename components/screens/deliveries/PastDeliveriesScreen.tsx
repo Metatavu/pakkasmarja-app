@@ -10,6 +10,7 @@ import { Thumbnail, Text } from "native-base";
 import { COMPLETED_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO_GRAY } from "../../../static/images";
 import PakkasmarjaApi from "../../../api";
 import { Delivery, Product } from "pakkasmarja-client";
+import moment from "moment";
 
 /**
  * Component props
@@ -26,7 +27,7 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  deliveryData: DeliveryProduct[];
+  deliveryData: any[];
   productType?: "FRESH" | "FROZEN";
 };
 
@@ -52,9 +53,23 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    console.log("MOUNT");
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE");
-    this.setState({ deliveryData: pastDeliveries });
+    console.log(pastDeliveries);
+    const deliveryData: any = [];
+
+    pastDeliveries.forEach((delivery) => {
+      const deliveryDate = moment(delivery.delivery.time).format("DD.MM.YYYY");
+      
+      if (Object.keys(deliveryData).indexOf(deliveryDate) === -1) {
+        deliveryData[deliveryDate] = [delivery];
+      } else {
+        deliveryData[deliveryDate].push(delivery);
+      }
+    });
+    
+    this.setState({ deliveryData: deliveryData });
   }
 
   /**
@@ -105,8 +120,19 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
           </View>
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
-              this.state.deliveryData.map((deliveryData: DeliveryProduct) => {
-                return this.renderListItem(deliveryData)
+              Object.keys(this.state.deliveryData).map((date: any) => {
+                return (
+                  <View key={date} style={{paddingBottom: 10}}>
+                    <Text style={{fontWeight: "bold", fontSize: 20, textAlign: "center", backgroundColor: "#f2f2f2", borderBottomColor: "lightgrey", borderBottomWidth: 0.5}}>
+                      { date }
+                    </Text>
+                    {
+                      this.state.deliveryData[date].map((data: any) => {
+                        return this.renderListItem(data)
+                      })
+                    }
+                  </View>
+                );
               })
             }
           </View>

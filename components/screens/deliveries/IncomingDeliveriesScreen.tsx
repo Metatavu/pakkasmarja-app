@@ -27,7 +27,7 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  deliveryData: DeliveryProduct[];
+  deliveryData: any[];
   productType?: "FRESH" | "FROZEN";
 };
 
@@ -159,7 +159,20 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   private loadData = async () => {
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const incomingDeliveriesData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status !== "DONE" && deliveryData.delivery.status !== "REJECTED");
-    this.setState({ deliveryData: incomingDeliveriesData });
+    
+    const deliveryData: any = [];
+
+    incomingDeliveriesData.forEach((delivery) => {
+      const deliveryDate = moment(delivery.delivery.time).format("DD.MM.YYYY");
+      
+      if (Object.keys(deliveryData).indexOf(deliveryDate) === -1) {
+        deliveryData[deliveryDate] = [delivery];
+      } else {
+        deliveryData[deliveryDate].push(delivery);
+      }
+    });
+    
+    this.setState({ deliveryData: deliveryData });
   }
 
   /**
@@ -180,13 +193,20 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
             </TouchableOpacity>
           </View>
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
-            {this.state.loading ?
-              <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color="#E51D2A" />
-              </View>
-              :
-              this.state.deliveryData.map((delivery) => {
-                return this.renderListItems(delivery)
+            {
+              Object.keys(this.state.deliveryData).map((date: any) => {
+                return (
+                  <View key={date} style={{paddingBottom: 10}}>
+                    <Text style={{fontWeight: "bold", fontSize: 20, textAlign: "center", backgroundColor: "#f2f2f2", borderBottomColor: "lightgrey", borderBottomWidth: 0.5}}>
+                      { date }
+                    </Text>
+                    {
+                      this.state.deliveryData[date].map((data: any) => {
+                        return this.renderListItems(data)
+                      })
+                    }
+                  </View>
+                );
               })
             }
           </View>

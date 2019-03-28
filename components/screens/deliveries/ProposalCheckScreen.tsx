@@ -11,7 +11,7 @@ import { Text } from 'react-native-elements';
 import Moment from "react-moment";
 import PakkasmarjaApi from "../../../api";
 import NumericInput from 'react-native-numeric-input'
-import { Thumbnail, Icon } from "native-base";
+import { Thumbnail } from "native-base";
 import { PREDICTIONS_ICON } from "../../../static/images";
 
 /**
