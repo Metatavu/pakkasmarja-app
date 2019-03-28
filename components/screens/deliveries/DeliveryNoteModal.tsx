@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import { Text } from "native-base";
 import * as actions from "../../../actions";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, DeliveryNoteData, DeliveryNoteDataKeys } from "../../../types";
 import { View, TouchableOpacity, TextInput, Modal, Image } from "react-native";
 import { styles } from "./styles.tsx";
 import { DeliveryNote } from "pakkasmarja-client";
@@ -15,11 +15,11 @@ import ImagePicker from 'react-native-image-picker';
 interface Props {
   accessToken?: AccessToken;
   modalOpen: boolean;
-  onDeliveryNoteChange: (note: DeliveryNote) => void;
+  onDeliveryNoteChange: (note: DeliveryNoteData) => void;
   onDeliveryNoteImageChange: (fileUri?: string, fileType?: string) => void;
   imageUri?: string,
   onCreateNoteClick: () => void;
-  deliveryNoteData: DeliveryNote;
+  deliveryNoteData: DeliveryNoteData;
   modalClose: () => void;
 };
 
@@ -49,10 +49,24 @@ class DeliveryNoteModal extends React.Component<Props, State> {
 
   /**
    * On delivery note data change
+   * 
+   * @param key key
+   * @param value value
    */
-  private onDeliveryDataChange = (key: string, value: string) => {
-    let deliveryData: any = this.props.deliveryNoteData;
-    deliveryData[key] = value;
+  private onDeliveryDataChange = (key: DeliveryNoteDataKeys, value: string) => {
+    const deliveryData: DeliveryNoteData = this.props.deliveryNoteData;
+
+    switch (key) {
+      case "imageType":
+        deliveryData.imageType = value;
+        break;
+      case "imageUri":
+        deliveryData.imageUri = value;
+        break;
+      case "text":
+        deliveryData.text = value;
+      
+    }
 
     this.props.onDeliveryNoteChange(deliveryData);
   }
@@ -62,9 +76,9 @@ class DeliveryNoteModal extends React.Component<Props, State> {
    */
   private discardDeliveryMessage = () => {
     this.props.onDeliveryNoteChange({
-      id: undefined,
-      image: undefined,
-      text: undefined
+      imageUri: "",
+      imageType: "",
+      text: ""
     });
     this.props.modalClose();
   }
@@ -120,9 +134,9 @@ class DeliveryNoteModal extends React.Component<Props, State> {
    * Remove image
    */
   private removeImage = () => {
-    let deliveryData: any = this.props.deliveryNoteData;
-    deliveryData.imageUri = undefined;
-    deliveryData.imageType = undefined;
+    const deliveryData: DeliveryNoteData = this.props.deliveryNoteData;
+    deliveryData.imageUri = "";
+    deliveryData.imageType = "";
 
     this.props.onDeliveryNoteChange(deliveryData);
   }

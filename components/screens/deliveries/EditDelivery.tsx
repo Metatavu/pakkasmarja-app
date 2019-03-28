@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct, DeliveriesState, DeliveryDataKey } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct, DeliveriesState, DeliveryDataKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
 import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
@@ -41,7 +41,7 @@ interface State {
   price: string;
   amount: number;
   selectedDate?: Date;
-  deliveryNoteData: DeliveryNote;
+  deliveryNoteData: DeliveryNoteData;
   deliveryNotes: DeliveryNote[];
   deliveryNoteFile?: {
     fileUri: string,
@@ -69,9 +69,9 @@ class EditDelivery extends React.Component<Props, State> {
       price: "0",
       products: [],
       deliveryNoteData: {
-        id: undefined,
-        image: undefined,
-        text: undefined
+        imageType: "",
+        imageUri: "",
+        text: ""
       },
       deliveryNotes: []
     };
@@ -122,15 +122,6 @@ class EditDelivery extends React.Component<Props, State> {
         loading: false
       });
     }
-  }
-
-  /**
-   * Handles new delivery data
-   */
-  private onUserInputChange = (key: DeliveryDataKey, value: string | number) => {
-    const state: any = this.state;
-    state[key] = value;
-    this.setState(state);
   }
 
   /**
@@ -236,7 +227,7 @@ class EditDelivery extends React.Component<Props, State> {
    * 
    * @param deliveryNote deliveryNote
    */
-  private onDeliveryNoteChange = (deliveryNote: DeliveryNote) => {
+  private onDeliveryNoteChange = (deliveryNote: DeliveryNoteData) => {
     this.setState({ deliveryNoteData: deliveryNote });
   }
 
@@ -292,7 +283,7 @@ class EditDelivery extends React.Component<Props, State> {
               selectedValue={this.state.productId}
               style={{ height: 50, width: "100%" }}
               onValueChange={(itemValue, itemIndex) =>
-                this.onUserInputChange("productId", itemValue)
+                this.setState({ productId: itemValue })
               }>
               {
                 this.state.products.map((product) => {
@@ -309,7 +300,7 @@ class EditDelivery extends React.Component<Props, State> {
             <NumericInput
               value={this.state.amount}
               initValue={this.state.amount}
-              onChange={(value: number) => this.onUserInputChange("amount", value)}
+              onChange={(value: number) => this.setState({ amount: value })}
               totalWidth={365}
               totalHeight={50}
               iconSize={35}
@@ -350,7 +341,7 @@ class EditDelivery extends React.Component<Props, State> {
               selectedValue={this.state.deliveryPlaceId ? this.state.deliveryPlaceId : ""}
               style={{ height: 50, width: "100%" }}
               onValueChange={(itemValue, itemIndex) =>
-                this.onUserInputChange("deliveryPlaceId", itemValue)
+                this.setState({ amount: itemValue })
               }>
               {
                 this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {

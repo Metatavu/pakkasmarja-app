@@ -135,7 +135,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
       itemGroupId: this.state.selectedItemGroup.id,
       userId: this.props.accessToken.userId,
       amount: this.state.amount,
-      weekNumber: this.getWeekNumber(),
+      weekNumber: Number(moment().format("W")),
       year: this.getYear(),
       days: weekDeliveryPredictionDays
     }
@@ -153,7 +153,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
    * @param value value
    */
   private handleValueChange = (value: number) => {
-    const averageDailyAmount: number = Math.round(value / 9);
+    const averageDailyAmount: number = Math.round(value / 7);
     let percentageAmount: string = "0";
 
     if (this.state.lastWeeksDeliveryPredictionTotalAmount > 0 && value > 0) {
@@ -171,7 +171,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
       return;
     }
 
-    const lastWeekNumber: number = this.getWeekNumber() - 1 == -1 ? 52 : this.getWeekNumber() - 1;
+    const lastWeekNumber: number = moment().subtract(1, "weeks").week();
     const Api = new PakkasmarjaApi();
     const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
     const filteredByWeekNumber = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, undefined, lastWeekNumber);
@@ -184,23 +184,12 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
   }
 
   /**
-   * Get week number
-   * 
-   * @return current week number
-   */
-  private getWeekNumber = () => {
-    const date: Date = new Date();
-    return Number(moment(date).format("W"));
-  }
-
-  /**
    * Get year
    * 
    * @return current year
    */
   private getYear = () => {
-    const date: Date = new Date();
-    return moment(date).year();
+    return moment().year();
   }
 
   /**

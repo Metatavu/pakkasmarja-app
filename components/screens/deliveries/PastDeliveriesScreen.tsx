@@ -25,7 +25,7 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  deliveryData: any[];
+  deliveryData: Map<string, DeliveryProduct[]>;
 };
 
 /**
@@ -42,7 +42,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
-      deliveryData: []
+      deliveryData: new Map<string, DeliveryProduct[]>()
     };
   }
 
@@ -64,16 +64,13 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     this.setState({ loading: true });
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE");
-    const deliveryData: any = [];
+    const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
 
     pastDeliveries.forEach((delivery) => {
       const deliveryDate = moment(delivery.delivery.time).format("DD.MM.YYYY");
-
-      if (Object.keys(deliveryData).indexOf(deliveryDate) === -1) {
-        deliveryData[deliveryDate] = [delivery];
-      } else {
-        deliveryData[deliveryDate].push(delivery);
-      }
+      const existingDeliveries: DeliveryProduct[] = deliveryData.get(deliveryDate) || [];
+      existingDeliveries.push(delivery);
+      deliveryData.set(deliveryDate, existingDeliveries);
     });
 
     this.setState({ deliveryData: deliveryData, loading: false });
@@ -116,14 +113,15 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
                   <ActivityIndicator size="large" color="#E51D2A" />
                 </View>
                 :
-                Object.keys(this.state.deliveryData).map((date: any) => {
+                Array.from(this.state.deliveryData.keys()).map((date: any) => {
+                  const deliveries = this.state.deliveryData.get(date);
                   return (
                     <View key={date}>
                       <Text style={styles.dateContainerText}>
                         {date}
                       </Text>
                       {
-                        this.state.deliveryData[date].map((data: any) => {
+                        deliveries && deliveries.map((data: any) => {
                           return this.renderListItem(data)
                         })
                       }

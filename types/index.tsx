@@ -106,3 +106,17 @@ export interface DeliveryProduct {
   delivery: Delivery;
   product?: Product;
 }
+
+/**
+ * Type for delivery note data keys
+ */
+export type DeliveryNoteDataKeys = "imageUri" | "imageType" | "text";
+
+/**
+ * Interface for delivery note data
+ */
+export interface DeliveryNoteData {
+  imageUri: string;
+  imageType: string;
+  text: string;
+}

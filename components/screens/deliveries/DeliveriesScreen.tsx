@@ -135,20 +135,20 @@ class DeliveriesScreen extends React.Component<Props, State> {
     deliveries.freshDeliveryData.forEach((deliveryProduct: DeliveryProduct) => {
       if (deliveryProduct.delivery.status == "PROPOSAL") {
         freshProposalAmount++;
-      }
-      else if (deliveryProduct.delivery.status == "PLANNED") {
+      } else if (deliveryProduct.delivery.status == "PLANNED") {
         freshPlannedAmount++;
       }
+
       this.setState({ freshProposalAmount, freshPlannedAmount });
     });
 
     deliveries.frozenDeliveryData.forEach((deliveryProduct: DeliveryProduct) => {
       if (deliveryProduct.delivery.status == "PROPOSAL") {
         frozenProposalAmount++;
-      }
-      else if (deliveryProduct.delivery.status == "PLANNED") {
+      } else if (deliveryProduct.delivery.status == "PLANNED") {
         frozenPlannedAmount++;
       }
+      
       this.setState({ frozenProposalAmount, frozenPlannedAmount });
     });
   }

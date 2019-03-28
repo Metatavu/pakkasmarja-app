@@ -27,7 +27,7 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  deliveryData: any[];
+  deliveryData: Map<string, DeliveryProduct[]>
 };
 
 /**
@@ -44,7 +44,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
-      deliveryData: []
+      deliveryData: new Map<string, DeliveryProduct[]>()
     };
   }
 
@@ -108,16 +108,14 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
           <Text >Tarkistuksessa</Text>
         </View>
       );
-    }
-    else if (status === "DELIVERY") {
+    } else if (status === "DELIVERY") {
       return (
         <View style={[styles.center, { flexDirection: "row" }]}>
           <Thumbnail square source={INDELIVERY_LOGO} style={{ width: 36, height: 21, marginRight: 10 }} />
           <Text style={styles.green}>Toimituksessa</Text>
         </View>
       );
-    }
-    else if (status === "PLANNED") {
+    } else if (status === "PLANNED") {
       return (
         <View style={styles.center}>
           <TouchableOpacity
@@ -157,20 +155,17 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   /**
    * Loads data
    */
-  private loadData = async () => {
+  private loadData = () => {
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const incomingDeliveriesData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status !== "DONE" && deliveryData.delivery.status !== "REJECTED");
 
-    const deliveryData: any = [];
+    const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
 
     incomingDeliveriesData.forEach((delivery) => {
-      const deliveryDate = moment(delivery.delivery.time).format("DD.MM.YYYY");
-
-      if (Object.keys(deliveryData).indexOf(deliveryDate) === -1) {
-        deliveryData[deliveryDate] = [delivery];
-      } else {
-        deliveryData[deliveryDate].push(delivery);
-      }
+      const deliveryDate: string = moment(delivery.delivery.time).format("DD.MM.YYYY");
+      const existingDeliveries: DeliveryProduct[] = deliveryData.get(deliveryDate) || [];
+      existingDeliveries.push(delivery);
+      deliveryData.set(deliveryDate, existingDeliveries);
     });
 
     this.setState({ deliveryData: deliveryData, loading: false });
@@ -200,14 +195,15 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
                   <ActivityIndicator size="large" color="#E51D2A" />
                 </View>
                 :
-                Object.keys(this.state.deliveryData).map((date: any) => {
+                Array.from(this.state.deliveryData.keys()).map((date: string) => {
+                  const deliveries = this.state.deliveryData.get(date);
                   return (
                     <View key={date} >
                       <Text style={styles.dateContainerText}>
                         {date}
                       </Text>
                       {
-                        this.state.deliveryData[date].map((data: any) => {
+                        deliveries && deliveries.map((data: DeliveryProduct) => {
                           return this.renderListItems(data)
                         })
                       }

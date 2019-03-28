@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey } from "../../../types";
+import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
 import { Delivery, Product, DeliveryQuality, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
@@ -13,8 +13,9 @@ import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
 import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
-import { FileService } from "../../../api/file.service";
+import { FileService, FileResponse } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import { userInfo } from "os";
 
 /**
  * Component props
@@ -42,8 +43,8 @@ interface State {
   selectedDate?: Date;
   deliveryPlaces?: DeliveryPlace[];
   deliveryPlaceId?: string;
-  deliveryNoteData: any;
-  deliveryNotes: DeliveryNote[];
+  deliveryNoteData: DeliveryNoteData;
+  deliveryNotes: DeliveryNoteData[];
   products: Product[];
   deliveryNoteFile?: {
     fileUri: string,
@@ -73,9 +74,9 @@ class NewDelivery extends React.Component<Props, State> {
       deliveries: [],
       selectedDate: new Date(),
       deliveryNoteData: {
-        id: undefined,
-        image: undefined,
-        text: undefined
+        imageUri: "",
+        imageType: "",
+        text: ""
       },
       deliveryNotes: [],
     };
@@ -135,7 +136,7 @@ class NewDelivery extends React.Component<Props, State> {
    * 
    * @param deliveryNoteData deliveryNoteData
    */
-  private onDeliveryNoteChange = (deliveryNoteData: any) => {
+  private onDeliveryNoteChange = (deliveryNoteData: DeliveryNoteData) => {
     this.setState({ deliveryNoteData: deliveryNoteData });
   }
 
@@ -147,7 +148,14 @@ class NewDelivery extends React.Component<Props, State> {
     const notes = this.state.deliveryNotes;
     notes.push(noteData);
 
-    this.setState({ deliveryNotes: notes, deliveryNoteData: {} });
+    this.setState({ 
+      deliveryNotes: notes, 
+      deliveryNoteData: {
+        imageUri: "",
+        imageType: "",
+        text: ""
+      } 
+    });
   }
 
   /**
@@ -157,7 +165,7 @@ class NewDelivery extends React.Component<Props, State> {
    * @param value value
    */
   private onUserInputChange = (key: DeliveryDataKey, value: string | number) => {
-    const state: any = this.state;
+    const state: State = this.state;
     state[key] = value;
     this.setState(state);
   }
@@ -185,24 +193,11 @@ class NewDelivery extends React.Component<Props, State> {
       deliveryPlaceId: this.state.deliveryPlaceId
     }
 
-    const createdDelivery = await deliveryService.createDelivery(delivery);
+    const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
 
-    if (createdDelivery.id) {
-      await this.createDeliveryNotes(this.state.deliveryNotes, async (deliveryNote: any) => {
-        let file;
-        if (deliveryNote.imageUri && this.props.accessToken) {
-          const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
-          file = await fileService.uploadFile(deliveryNote.imageUri, deliveryNote.imageType);
-        }
-
-        const note: DeliveryNote = {
-          text: deliveryNote.text,
-          image: file ? file.url : undefined
-        };
-
-        await deliveryService.createDeliveryNote(note, createdDelivery.id || "");
-      });
-    }
+    await Promise.all(this.state.deliveryNotes.map((deliveryNote): Promise<DeliveryNote | null> => {
+      return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
+    }));
 
     this.updateDeliveries(createdDelivery);
     this.props.navigation.navigate("IncomingDeliveries");
@@ -211,13 +206,29 @@ class NewDelivery extends React.Component<Props, State> {
   /**
    * Create delivery notes
    * 
-   * @param deliveryNotes deliveryNotes
-   * @param callback callback function
+   * @param deliveryId deliveryId
+   * @param deliveryNote deliveryNote
    */
-  private async createDeliveryNotes(deliveryNotes: any[], callback: any) {
-    for (let index = 0; index < deliveryNotes.length; index++) {
-      await callback(deliveryNotes[index], index, deliveryNotes);
+  private async createDeliveryNote(deliveryId: string, deliveryNoteData: DeliveryNoteData): Promise<DeliveryNote | null> {
+    if (this.props.accessToken) {
+      const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
+      let image: FileResponse | undefined = undefined;
+
+      if (deliveryNoteData.imageUri && deliveryNoteData.imageType) {
+        image = await fileService.uploadFile(deliveryNoteData.imageUri, deliveryNoteData.imageType);
+      }
+
+      const deliveryNote: DeliveryNote = {
+        text: deliveryNoteData.text,
+        image: image ? image.url : undefined
+      };
+
+      const Api = new PakkasmarjaApi();
+      const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+      return deliveryService.createDeliveryNote(deliveryNote, deliveryId || "");
     }
+
+    return null;
   }
 
   /**

@@ -7,6 +7,8 @@ import * as actions from "../../../actions";
 import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
 import NumericInput from 'react-native-numeric-input';
+import 'moment/min/moment-with-locales';
+import moment = require("moment");
 
 /**
  * Component props
@@ -132,30 +134,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
    * Renders one radio button
    */
   private RadioButton = (selected: boolean, label: string) => {
-    switch (label) {
-      case "monday":
-        label = "Maanantai"
-        break;
-      case "tuesday":
-        label = "Tiistai"
-        break;
-      case "wednesday":
-        label = "Keskiviikko"
-        break;
-      case "thursday":
-        label = "Torstai"
-        break;
-      case "friday":
-        label = "Perjantai"
-        break;
-      case "saturday":
-        label = "Lauantai"
-        break;
-      case "sunday":
-        label = "Sunnutai"
-        break;
-      default:
-    }
+    moment.locale('fi');
     return (
       <View key={label} style={{ flex: 1, flexDirection: "row", marginVertical: 5 }}>
         <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end", paddingVertical: 5 }}>
@@ -168,7 +147,9 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
           </View>
         </View>
         <View style={{ flex: 1.5, justifyContent: "flex-start", alignItems: "flex-start" }}>
-          <Text style={[styles.textPrediction, { paddingLeft: 15, paddingVertical: 5 }]}>{label}</Text>
+          <Text style={[styles.textPrediction, { paddingLeft: 15, paddingVertical: 5 }]}>
+            {moment().day(label)}
+          </Text>
         </View>
       </View>
     );

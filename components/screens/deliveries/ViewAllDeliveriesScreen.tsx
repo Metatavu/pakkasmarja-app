@@ -6,8 +6,7 @@ import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
-import { Thumbnail, Text, Icon } from "native-base";
-import { COMPLETED_DELIVERIES_LOGO_GRAY } from "../../../static/images";
+import { Text, Icon } from "native-base";
 import PakkasmarjaApi from "../../../api";
 import { Delivery, Product, ItemGroup } from "pakkasmarja-client";
 import moment from "moment";
@@ -25,7 +24,7 @@ interface Props {
  */
 interface State {
   loading: boolean;
-  deliveryData: any[];
+  deliveryData: Map<string, DeliveryProduct[]>;
   filteredDates: Date[];
   filteredData: DeliveryProduct[];
   itemGroups: ItemGroup[];
@@ -48,7 +47,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
-      deliveryData: [],
+      deliveryData: new Map<string, DeliveryProduct[]>(),
       filteredData: [],
       filteredDates: [],
       itemGroups: [],
@@ -163,7 +162,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
     const itemGroupId = this.state.selectedItemGroup.id;
     const week = this.state.weekNumber;
     const timeAfter = moment().day("Monday").week(week).toDate();
-    const timeBefore = moment().day("Monday").week(week + 1).toDate();
+    const timeBefore = moment(timeAfter).add(1, "week").toDate();
 
     const Api = new PakkasmarjaApi();
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
@@ -182,11 +181,9 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
         product: product
       };
 
-      if (Object.keys(deliveryData).indexOf(deliveryDate) === -1) {
-        deliveryData[deliveryDate] = [deliveryProduct];
-      } else {
-        deliveryData[deliveryDate].push(deliveryProduct);
-      }
+      const existingDeliveries: DeliveryProduct[] = deliveryData.get(deliveryDate) || [];
+      existingDeliveries.push(deliveryProduct);
+      deliveryData.set(deliveryDate, existingDeliveries);
     });
 
     this.setState({ deliveryData: deliveryData, loading: false });
@@ -237,14 +234,15 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
                   <ActivityIndicator size="large" color="#E51D2A" />
                 </View>
                 :
-                Object.keys(this.state.deliveryData).map((date: any) => {
+                Array.from(this.state.deliveryData.keys()).map((date: any) => {
+                  const deliveries = this.state.deliveryData.get(date);
                   return (
                     <View key={date} style={{ paddingLeft: 20, paddingTop: 10, paddingBottom: 10, borderBottomColor: "rgba(0,0,0,0.5)", borderBottomWidth: 1 }}>
                       <Text style={{ fontWeight: "bold" }}>
                         {date}
                       </Text>
                       {
-                        this.state.deliveryData[date].map((data: any) => {
+                        deliveries && deliveries.map((data: any) => {
                           return (
                             <Text key={data.delivery.id}>
                               {`${data.product.name} ${data.product.unitSize} ${data.product.unitName} x ${data.delivery.amount}`}
@@ -256,46 +254,11 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
                   );
                 })
             }
-            {
-              this.state.deliveryData.map((deliveryData: any) => {
-                return this.renderListItem(deliveryData)
-              })
-            }
           </View>
         </View>
       </BasicScrollLayout>
     );
   }
-
-  /**
-   * Renders list items
-   * 
-   * @param deliveryData DeliveryProduct
-   */
-  private renderListItem = (deliveryData: DeliveryProduct) => {
-    if (!deliveryData || !deliveryData.product) {
-      return <Text></Text>;
-    }
-    const weekNumber = deliveryData.delivery.time;
-    const productName = deliveryData.product.name; // Onko se product.name vai product.unitName
-    const productAmount = `${deliveryData.product.unitSize} G x ${deliveryData.product.units}`;
-
-    return (
-      <View key={deliveryData.delivery.id} style={styles.renderCustomListItem}>
-        <View style={{ flex: 2 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: 'black' }}>{weekNumber}</Text>
-            <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
-          </View>
-        </View>
-        <View style={[styles.center, { flexDirection: "row" }]}>
-          <Thumbnail square source={COMPLETED_DELIVERIES_LOGO_GRAY} style={[styles.itemIconSize, { marginRight: 10 }]} />
-          <Text style={{ color: "lightgray" }}>Toimitettu</Text>
-        </View>
-      </View>
-    );
-  }
-
 
 }
 

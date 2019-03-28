@@ -137,6 +137,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     if (!this.props.deliveries) {
       return [];
     }
+    
     if (this.props.itemGroupCategory === "FROZEN") {
       return this.props.deliveries.frozenDeliveryData;
     }
