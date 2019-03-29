@@ -63,7 +63,6 @@ class DeliveryNoteModal extends React.Component<Props, State> {
         break;
       case "text":
         deliveryData.text = value;
-
     }
 
     this.props.onDeliveryNoteChange(deliveryData);
@@ -121,7 +120,6 @@ class DeliveryNoteModal extends React.Component<Props, State> {
         if (!this.props.accessToken) {
           return;
         }
-        
         this.onDeliveryDataChange("imageUri", response.uri);
         this.onDeliveryDataChange("imageType", response.type || "image/jpeg");
       }
