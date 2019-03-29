@@ -181,7 +181,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                 </View>
               }
               {
-                this.props.imageUri !== "" &&
+                this.props.imageUri ? 
                 <View style={{ width: "100%", height: 200, justifyContent: "center", alignItems: "center" }}>
                   <Image
                     source={{ uri: this.props.imageUri }}
@@ -191,6 +191,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                     <Text style={styles.smallWhiteButtonText}>Poista kuva</Text>
                   </TouchableOpacity>
                 </View>
+                : null
               }
               <View>
                 <Text style={styles.text}>Kommentti</Text>
