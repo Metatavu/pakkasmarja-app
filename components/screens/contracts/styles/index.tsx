@@ -54,7 +54,7 @@ export const styles = StyleSheet.create({
     marginBottom: 15
   },
   textInput: {
-    height:40,
+    height: 40,
     backgroundColor: "white",
     borderColor: "red",
     borderWidth: 1,
@@ -85,7 +85,7 @@ export const styles = StyleSheet.create({
     paddingBottom: 4,
     marginBottom: 5,
     fontSize: 20
-  }, 
+  },
   flexView: {
     flex: 1,
     flexDirection: 'row',
@@ -114,13 +114,13 @@ export const styles = StyleSheet.create({
     marginBottom: 10
   },
   proposalModalView: {
-    backgroundColor:"white",
+    backgroundColor: "white",
     height: 650,
     padding: 15,
     marginBottom: 15
   },
   modalView: {
-    backgroundColor:"white",
+    backgroundColor: "white",
     height: 300,
     padding: 15,
     marginBottom: 15
@@ -200,28 +200,28 @@ export const styles = StyleSheet.create({
   },
   contractHeaderTitle: {
     fontFamily: "Sans Serif",
-    padding:15,
-    fontWeight:"bold",
+    padding: 15,
+    fontWeight: "bold",
     color: "#e01e36",
     fontSize: 24,
   },
-  contentView:{
+  contentView: {
     padding: 15,
     backgroundColor: "#dae7fa",
     paddingTop: 35,
     paddingBottom: 20,
     marginBottom: 15
   },
-  contentText:{
+  contentText: {
     fontSize: 20,
     lineHeight: 25,
-    fontWeight:"bold"
+    fontWeight: "bold"
   },
   row: {
     paddingBottom: 12,
     paddingTop: 12,
   },
-  newsContainer:{
+  newsContainer: {
     paddingVertical: 20
   }
 });

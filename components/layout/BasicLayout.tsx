@@ -87,7 +87,7 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
                 <Text>{strings.messagingFooterLink}</Text>
               </View>
             </TouchableHighlight>
-            <TouchableHighlight>
+            <TouchableHighlight onPress={() => this.goToScreen("Deliveries")}>
               <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
                 <Icon
                   name='user'
