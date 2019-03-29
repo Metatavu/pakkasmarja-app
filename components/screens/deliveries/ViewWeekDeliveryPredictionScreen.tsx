@@ -7,8 +7,8 @@ import * as actions from "../../../actions";
 import { View, Text, TouchableOpacity } from "react-native";
 import { styles } from "./styles.tsx";
 import NumericInput from 'react-native-numeric-input';
-import 'moment/min/moment-with-locales';
-import moment = require("moment");
+import moment from "moment";
+import 'moment/min/locales';
 
 /**
  * Component props
@@ -61,7 +61,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
       return;
     }
     const predictionData: WeekDeliveryPredictionTableData = await this.props.navigation.getParam('predictionData');
-    const averageDailyAmount: number = Math.round(predictionData.weekDeliveryPrediction.amount / 9);
+    const averageDailyAmount: number = Math.round(predictionData.weekDeliveryPrediction.amount / 7);
     this.setState({ predictionData: predictionData, averageDailyAmount: averageDailyAmount });
   }
 
@@ -115,8 +115,8 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
           <Text style={{ fontSize: 22, color: "black", fontWeight: "500" }}>Minä päivinä toimitat?</Text>
           <View style={[styles.center, { paddingVertical: 20 }]}>
             {
-              Object.entries(this.state.predictionData ? this.state.predictionData.weekDeliveryPrediction.days : {}).map((key) => {
-                return this.RadioButton(key.slice()[1], key.slice()[0]);
+              Object.entries(this.state.predictionData ? this.state.predictionData.weekDeliveryPrediction.days : {}).map((key, index) => {
+                return this.RadioButton(key.slice()[1], index);
               })
             }
           </View>
@@ -133,10 +133,12 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
   /**
    * Renders one radio button
    */
-  private RadioButton = (selected: boolean, label: string) => {
+  private RadioButton = (selected: boolean, index: number) => {
     moment.locale('fi');
+    let displayName = moment().isoWeekday(index + 1).format("dddd");
+    displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
     return (
-      <View key={label} style={{ flex: 1, flexDirection: "row", marginVertical: 5 }}>
+      <View key={index} style={{ flex: 1, flexDirection: "row", marginVertical: 5 }}>
         <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end", paddingVertical: 5 }}>
           <View style={{ flex: 1 }}>
             <View style={styles.radioButtonContainer}>
@@ -148,7 +150,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
         </View>
         <View style={{ flex: 1.5, justifyContent: "flex-start", alignItems: "flex-start" }}>
           <Text style={[styles.textPrediction, { paddingLeft: 15, paddingVertical: 5 }]}>
-            {moment().day(label)}
+            {displayName}
           </Text>
         </View>
       </View>

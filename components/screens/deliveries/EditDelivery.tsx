@@ -13,6 +13,8 @@ import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
 import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
+import { FileService, FileResponse } from "../../../api/file.service";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 /**
  * Component props
@@ -42,7 +44,7 @@ interface State {
   amount: number;
   selectedDate?: Date;
   deliveryNoteData: DeliveryNoteData;
-  deliveryNotes: DeliveryNote[];
+  deliveryNotes: DeliveryNoteData[];
   deliveryNoteFile?: {
     fileUri: string,
     fileType: string
@@ -98,20 +100,14 @@ class EditDelivery extends React.Component<Props, State> {
 
     const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const deliveryNotes = await deliveriesService.listDeliveryNotes(deliveryData.delivery.id || "");
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
     const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
 
-    this.setState({
-      deliveryData,
-      deliveryNotes
-    });
-
     if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
       this.setState({
+        deliveryData,
         products: products,
         deliveryPlaces: deliveryPlaces,
         userId: this.props.accessToken.userId,
@@ -146,12 +142,46 @@ class EditDelivery extends React.Component<Props, State> {
       deliveryPlaceId: this.state.deliveryPlaceId || ""
     }
 
+    const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
+
+    await Promise.all(this.state.deliveryNotes.map((deliveryNote): Promise<DeliveryNote | null> => {
+      return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
+    }));
+    
     const updatedDelivery = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
     this.updateDeliveries(updatedDelivery);
     this.props.navigation.navigate("Delivery", {
       deliveryId: this.state.deliveryData.delivery.id,
       productId: this.state.productId
     });
+  }
+
+  /**
+   * Create delivery notes
+   * 
+   * @param deliveryId deliveryId
+   * @param deliveryNote deliveryNote
+   */
+  private async createDeliveryNote(deliveryId: string, deliveryNoteData: DeliveryNoteData): Promise<DeliveryNote | null> {
+    if (this.props.accessToken) {
+      const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
+      let image: FileResponse | undefined = undefined;
+
+      if (deliveryNoteData.imageUri && deliveryNoteData.imageType) {
+        image = await fileService.uploadFile(deliveryNoteData.imageUri, deliveryNoteData.imageType);
+      }
+
+      const deliveryNote: DeliveryNote = {
+        text: deliveryNoteData.text,
+        image: image ? image.url : undefined
+      };
+
+      const Api = new PakkasmarjaApi();
+      const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+      return deliveryService.createDeliveryNote(deliveryNote, deliveryId || "");
+    }
+
+    return null;
   }
 
   /**
@@ -239,7 +269,14 @@ class EditDelivery extends React.Component<Props, State> {
     const notes = this.state.deliveryNotes;
     notes.push(noteData);
 
-    this.setState({ deliveryNotes: notes });
+    this.setState({
+      deliveryNotes: notes,
+      deliveryNoteData: {
+        imageUri: "",
+        imageType: "",
+        text: ""
+      }
+    });
   }
 
   /**
@@ -341,7 +378,7 @@ class EditDelivery extends React.Component<Props, State> {
               selectedValue={this.state.deliveryPlaceId ? this.state.deliveryPlaceId : ""}
               style={{ height: 50, width: "100%" }}
               onValueChange={(itemValue, itemIndex) =>
-                this.setState({ amount: itemValue })
+                this.setState({ deliveryPlaceId: itemValue })
               }>
               {
                 this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
@@ -371,11 +408,11 @@ class EditDelivery extends React.Component<Props, State> {
           </View>
         </View>
         <DeliveryNoteModal
-          imageUri={this.state.deliveryNoteFile ? this.state.deliveryNoteFile.fileUri : undefined}
-          onDeliveryNoteImageChange={((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType))}
+          imageUri={this.state.deliveryNoteData ? this.state.deliveryNoteData.imageUri : undefined}
           onCreateNoteClick={this.onCreateNoteClick}
           deliveryNoteData={this.state.deliveryNoteData}
           onDeliveryNoteChange={this.onDeliveryNoteChange}
+          onDeliveryNoteImageChange={((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType))}
           modalClose={() => this.setState({ modalOpen: false })}
           modalOpen={this.state.modalOpen}
         />

@@ -5,9 +5,7 @@ import * as actions from "../../../actions";
 import { AccessToken, StoreState, DeliveryNoteData, DeliveryNoteDataKeys } from "../../../types";
 import { View, TouchableOpacity, TextInput, Modal, Image } from "react-native";
 import { styles } from "./styles.tsx";
-import { DeliveryNote } from "pakkasmarja-client";
 import ImagePicker from 'react-native-image-picker';
-
 
 /**
  * Interface for component props
@@ -65,7 +63,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
         break;
       case "text":
         deliveryData.text = value;
-      
+
     }
 
     this.props.onDeliveryNoteChange(deliveryData);
@@ -123,7 +121,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
         if (!this.props.accessToken) {
           return;
         }
-
+        
         this.onDeliveryDataChange("imageUri", response.uri);
         this.onDeliveryDataChange("imageType", response.type || "image/jpeg");
       }
@@ -173,19 +171,19 @@ class DeliveryNoteModal extends React.Component<Props, State> {
               <View>
                 <Text style={styles.contentHeader}>
                   Lisää huomio
-              </Text>
+                </Text>
               </View>
               {
                 !this.props.imageUri &&
-                <View style={{ marginVertical: 20 }}>
+                <View>
                   <Text style={styles.text}>Lisää kuva</Text>
-                  <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.openImagePicker}>
+                  <TouchableOpacity style={styles.whiteButton} onPress={this.openImagePicker}>
                     <Text style={styles.smallWhiteButtonText}>Lisää kuva</Text>
                   </TouchableOpacity>
                 </View>
               }
               {
-                this.props.imageUri &&
+                this.props.imageUri !== "" &&
                 <View style={{ width: "100%", height: 200, justifyContent: "center", alignItems: "center" }}>
                   <Image
                     source={{ uri: this.props.imageUri }}

@@ -171,7 +171,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
     const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "DONE", undefined, itemGroupId, undefined, undefined, timeBefore, timeAfter, 0, 100);
     const products: Product[] = await productsService.listProducts();
 
-    const deliveryData: any = [];
+    const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
 
     deliveries.forEach((delivery) => {
       const deliveryDate = moment(delivery.time).format("DD.MM.YYYY");

@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
-import { Delivery, Product, DeliveryQuality, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -15,7 +15,6 @@ import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
 import { FileService, FileResponse } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
-import { userInfo } from "os";
 
 /**
  * Component props
@@ -78,7 +77,7 @@ class NewDelivery extends React.Component<Props, State> {
         imageType: "",
         text: ""
       },
-      deliveryNotes: [],
+      deliveryNotes: []
     };
   }
 
