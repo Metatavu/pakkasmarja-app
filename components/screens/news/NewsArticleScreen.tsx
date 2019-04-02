@@ -100,8 +100,9 @@ class NewsArticleScreen extends React.Component<Props, State> {
           <Moment
             style={{ fontSize: 16, marginBottom: 15, color: "gray" }}
             format="DD.MM.YYYY HH:mm" element={Text}
-            date={this.state.newsArticle.createdAt}
-          />
+          >
+            {this.state.newsArticle.createdAt ? this.state.newsArticle.createdAt.toString() : undefined}
+          </Moment>
           <Divider />
           {this.state.newsArticle.imageUrl &&
             <Lightbox

@@ -16,6 +16,18 @@ import AuthRefresh from "./components/AuthRefresh";
 import MqttConnector from "./components/MqttConnector";
 import ChatsListScreen from "./components/screens/chats/ChatsListScreen";
 import { Root } from "native-base";
+import DeliveriesScreen from "./components/screens/deliveries/DeliveriesScreen";
+import DeliveryScreen from "./components/screens/deliveries/DeliveryScreen";
+import PastDeliveriesScreen from "./components/screens/deliveries/PastDeliveriesScreen";
+import ViewAllDeliveriesScreen from "./components/screens/deliveries/ViewAllDeliveriesScreen";
+import ProposalsScreen from "./components/screens/deliveries/ProposalsScreen";
+import ProposalCheckScreen from "./components/screens/deliveries/ProposalCheckScreen";
+import WeekDeliveryPredictionScreen from "./components/screens/deliveries/WeekDeliveryPredictionScreen";
+import NewWeekDeliveryPrediction from "./components/screens/deliveries/NewWeekDeliveryPrediction";
+import ViewWeekDeliveryPredictionScreen from "./components/screens/deliveries/ViewWeekDeliveryPredictionScreen"
+import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDeliveriesScreen";
+import NewDelivery from "./components/screens/deliveries/NewDelivery";
+import EditDelivery from "./components/screens/deliveries/EditDelivery";
 
 interface State {
   authenticated: boolean
@@ -33,16 +45,28 @@ const RootStack = createStackNavigator({
   Contract: ContractScreen,
   ContractTerms: ContractTerms,
   News: NewsListScreen,
-  NewsArticle: NewsArticleScreen
+  NewsArticle: NewsArticleScreen,
+  Deliveries: DeliveriesScreen,
+  ViewAllDeliveries: ViewAllDeliveriesScreen,
+  Delivery: DeliveryScreen,
+  PastDeliveries: PastDeliveriesScreen,
+  Proposals: ProposalsScreen,
+  ProposalCheck: ProposalCheckScreen,
+  WeekDeliveryPrediction: WeekDeliveryPredictionScreen,
+  NewWeekDeliveryPrediction: NewWeekDeliveryPrediction,
+  ViewWeekDeliveryPrediction: ViewWeekDeliveryPredictionScreen,
+  IncomingDeliveries: IncomingDeliveriesScreen,
+  NewDelivery: NewDelivery,
+  EditDelivery: EditDelivery
 }, {
-  defaultNavigationOptions: {
-    headerStyle: {
-      backgroundColor: "#E51D2A",
-      height: 70
+    defaultNavigationOptions: {
+      headerStyle: {
+        backgroundColor: "#E51D2A",
+        height: 70
+      },
     },
-  },
-  initialRouteName: "Login"
-});
+    initialRouteName: "Login"
+  });
 
 const AppContainer = createAppContainer(RootStack);
 

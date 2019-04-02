@@ -11,6 +11,7 @@ import { ScrollView } from "react-native";
 import { NewsArticle } from "pakkasmarja-client";
 import { styles } from "../contracts/styles";
 import { ListItem } from "react-native-elements";
+import BasicScrollLayout from "../../layout/BasicScrollLayout";
 
 /**
  * Component props
@@ -83,8 +84,7 @@ class NewsListScreen extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <BasicLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <ScrollView contentContainerStyle={styles.newsContainer}>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
           <View >
             <List>
               {
@@ -96,7 +96,7 @@ class NewsListScreen extends React.Component<Props, State> {
                       titleStyle={{ fontSize: 22, color: "black", paddingBottom: 5, fontWeight: "bold" }}
                       subtitle={
                         <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
-                          {newsArticle.createdAt}
+                          {newsArticle.createdAt? newsArticle.createdAt.toString(): undefined}
                         </Moment>
                       }
                       onPress={() => { this.handleListItemClick(newsArticle) }}
@@ -106,8 +106,7 @@ class NewsListScreen extends React.Component<Props, State> {
               }
             </List>
           </View>
-        </ScrollView>
-      </BasicLayout>
+      </BasicScrollLayout>
     );
   }
 }
