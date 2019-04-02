@@ -107,11 +107,17 @@ class ChatGroupList extends React.Component<Props, State> {
    * Renders list items
    */
   private renderListItems = (): JSX.Element[] => {
+    const { accessToken } = this.props;
+    if (!accessToken) {
+      this.props.onError && this.props.onError(strings.accessTokenExpired);
+      return [];
+    }
+
     return this.state.chatGroups.map((chatGroup: ChatGroup) => {
       return (
         <ListItem onPress={() => this.selectGroup(chatGroup)} key={chatGroup.id} avatar>
           <Left>
-            <Thumbnail source={ chatGroup.imageUrl ? { uri: chatGroup.imageUrl }: AVATAR_PLACEHOLDER } />
+            <Thumbnail source={ chatGroup.imageUrl ? { uri: chatGroup.imageUrl, headers: {"Authorization": `Bearer ${accessToken.access_token}`} }: AVATAR_PLACEHOLDER } />
           </Left>
           <Body>
             <Text>{chatGroup.title}</Text>

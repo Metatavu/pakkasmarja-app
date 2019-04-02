@@ -2,7 +2,7 @@ import React from "react";
 import { Text, List, ListItem } from "native-base";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
-import { ItemGroup, Price } from "pakkasmarja-client";
+import { ItemGroup, ItemGroupPrice } from "pakkasmarja-client";
 import ContractPriceModal from "./ContractPriceModal";
 import { styles } from "./styles";
 
@@ -11,7 +11,7 @@ import { styles } from "./styles";
  */
 interface Props {
   itemGroup: ItemGroup,
-  prices?: Price[],
+  prices?: ItemGroupPrice[],
   styles?: any
 };
 

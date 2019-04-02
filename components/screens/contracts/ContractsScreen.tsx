@@ -6,11 +6,14 @@ import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
 import { View, ActivityIndicator, Alert } from "react-native";
-import { Contract, Contact, Price, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
+import { Contract, Contact, ItemGroupPrice, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import ContractAmountTable from "./ContractAmountTable";
 import ContractProposalModal from "./ContractProposalModal";
 import { styles } from "./styles";
+import AppConfig from "../../../utils/AppConfig";
+import BasicLayout from "../../layout/BasicLayout";
+import Chat from "../../fragments/chats/Chat";
 
 /**
  * Component props
@@ -29,13 +32,14 @@ interface State {
   contact?: Contact;
   itemGroup?: ItemGroup;
   itemGroups: ItemGroup[];
-  prices?: Price[],
+  prices?: ItemGroupPrice[],
   deliveryPlaces?: DeliveryPlace[],
   proposeContractModalOpen: boolean,
   proposeContractModalType: string,
   selectedBerry: string,
   proposedContractQuantity: string,
   proposedContractQuantityComment: string,
+  contractProposalChatThreadId?: number
   loading: boolean
 };
 
@@ -255,7 +259,50 @@ class ContractsScreen extends React.Component<Props, State> {
    * On contract proposal clicked
    */
   private onContractProposalClick = async () => {
-    //TODO: Implement when chat messages are ready
+    const appConfig = await AppConfig.getAppConfig();
+    const questionGroupId = appConfig['contracts-question-group'];
+    const { accessToken } = this.props;
+    if (!questionGroupId || !accessToken) {
+      return
+    }
+
+    this.setState({
+      loading: true
+    });
+
+    const api = new PakkasmarjaApi();
+    const questionGroupThreads = await api.getChatThreadsService(accessToken.access_token).listChatThreads(questionGroupId);
+    if (questionGroupThreads.length != 1) {
+      return //Application is misconfigured, bail out.
+    } 
+
+    await api.getChatMessagesService(accessToken.access_token).createChatMessage({
+      contents: this.getProposalMessageContents(),
+      threadId: questionGroupThreads[0].id!,
+      userId: accessToken.userId
+    }, questionGroupThreads[0].id!);
+
+    this.setState({
+      contractProposalChatThreadId: questionGroupThreads[0].id,
+      loading: false
+    });
+  }
+
+  /**
+   * Gets message to use for suggesting new contract
+   */
+  private getProposalMessageContents = () :string => {
+    let message = `Hei, haluaisin ehdottaa uutta sopimusta marjasta: ${this.state.selectedBerry}.`;
+    if (this.state.proposedContractQuantity) {
+      message += `
+      Määräarvio on ${this.state.proposedContractQuantity} kg.`;
+    }
+    if (this.state.proposedContractQuantityComment) {
+      message += `
+      Lisätietoa: ${this.state.proposedContractQuantityComment}`;
+    }
+
+    return message;
   }
 
   /**
@@ -267,6 +314,14 @@ class ContractsScreen extends React.Component<Props, State> {
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#E51D2A" />
         </View>
+      );
+    }
+
+    if (this.state.contractProposalChatThreadId) {
+      return (
+        <BasicLayout navigation={this.props.navigation}>
+          <Chat onBackClick={() => this.setState({contractProposalChatThreadId: undefined})} threadId={this.state.contractProposalChatThreadId} />
+        </BasicLayout>
       );
     }
 

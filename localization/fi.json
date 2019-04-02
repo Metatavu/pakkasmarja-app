@@ -8,10 +8,13 @@
   "questionsNavHeader": "Kysymykset",
   "chatsNavHeader": "Ryhmäkeskustelu",
   "errorFindingChatThread": "Virhe ladattaessa keskustelua.",
+  "accessTokenExpired": "Kirjautuminen on vanhentunut, yritä kirjautua sisään uudelleen.",
 
   "newsFooterLink": "Ajankohtaista",
   "messagingFooterLink": "Viestit",
   "deliveriesFooterLink": "Toimitukset",
   "contractsFooterLink": "Sopimukset",
-  "noTitleAvailable": "Ei otsikkoa"
+  "noTitleAvailable": "Ei otsikkoa",
+  "addImage": "Lisää kuva",
+  "cancelButton": "Peruuta"
 }

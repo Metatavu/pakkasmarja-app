@@ -3,7 +3,7 @@ import { Text } from "native-base";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import Modal from "react-native-modal";
-import { Price } from "pakkasmarja-client";
+import { ItemGroupPrice } from "pakkasmarja-client";
 import { styles  } from "./styles";
 
 /**
@@ -11,7 +11,7 @@ import { styles  } from "./styles";
  */
 interface Props {
   modalOpen: boolean,
-  prices?: Price[],
+  prices?: ItemGroupPrice[],
   closeModal: () => void,
   styles?: any
 };

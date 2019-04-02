@@ -1,5 +1,4 @@
 import React, { Dispatch } from "react";
-import BasicLayout from "../../layout/BasicLayout";
 import TopBar from "../../layout/TopBar";
 import Moment from 'react-moment';
 import AutoResizeHeightWebView from "react-native-autoreheight-webview"
@@ -11,6 +10,8 @@ import { NewsArticle } from "pakkasmarja-client";
 import { styles } from "../contracts/styles";
 import { Divider } from "react-native-elements";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
+import { Image, StyleSheet } from "react-native";
+import Lightbox from 'react-native-lightbox';
 
 /**
  * Component props
@@ -26,6 +27,17 @@ interface Props {
 interface State {
   newsArticle: NewsArticle
 };
+
+const imageStyles = StyleSheet.create({
+  image: {
+    height: 300,
+    flex: 1
+  },
+  imageActive: {
+    flex: 1,
+    resizeMode: 'contain',
+  },
+});
 
 /**
  * NewsArticle screen component
@@ -76,6 +88,11 @@ class NewsArticleScreen extends React.Component<Props, State> {
    * Component render method
    */
   public render() {
+    const { accessToken } = this.props;
+    if (!accessToken) {
+      return null;
+    }
+
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={{ padding: 15 }}>
@@ -87,6 +104,15 @@ class NewsArticleScreen extends React.Component<Props, State> {
             {this.state.newsArticle.createdAt ? this.state.newsArticle.createdAt.toString() : undefined}
           </Moment>
           <Divider />
+          {this.state.newsArticle.imageUrl &&
+            <Lightbox
+              activeProps={{
+                style: imageStyles.imageActive,
+              }}
+            >
+              <Image style={imageStyles.image} source={{uri: this.state.newsArticle.imageUrl, headers: {"Authorization": `Bearer ${accessToken.access_token}`}}} />
+            </Lightbox>
+          }
         </View>
         <AutoResizeHeightWebView
           defaultHeight={400}
