@@ -7,11 +7,12 @@ import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import { Text, List, View } from 'native-base';
 import { AccessToken, StoreState } from "../../../types";
-import { ScrollView } from "react-native";
+import { ScrollView, TouchableHighlight } from "react-native";
 import { NewsArticle } from "pakkasmarja-client";
 import { styles } from "../contracts/styles";
 import { ListItem } from "react-native-elements";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
+import Icon from "react-native-vector-icons/Feather";
 
 /**
  * Component props
@@ -48,12 +49,18 @@ class NewsListScreen extends React.Component<Props, State> {
   /**
    * Navigation options
    */
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
+        showUser={true}
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft: null
+    }
   };
 
   /**
@@ -85,27 +92,27 @@ class NewsListScreen extends React.Component<Props, State> {
   public render() {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-          <View >
-            <List>
-              {
-                this.state.newsArticles.map((newsArticle) => {
-                  return (
-                    <ListItem
-                      key={newsArticle.id}
-                      title={newsArticle.title}
-                      titleStyle={{ fontSize: 22, color: "black", paddingBottom: 5, fontWeight: "bold" }}
-                      subtitle={
-                        <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
-                          {newsArticle.createdAt? newsArticle.createdAt.toString(): undefined}
-                        </Moment>
-                      }
-                      onPress={() => { this.handleListItemClick(newsArticle) }}
-                    />
-                  )
-                })
-              }
-            </List>
-          </View>
+        <View >
+          <List>
+            {
+              this.state.newsArticles.map((newsArticle) => {
+                return (
+                  <ListItem
+                    key={newsArticle.id}
+                    title={newsArticle.title}
+                    titleStyle={{ fontSize: 22, color: "black", paddingBottom: 5, fontWeight: "bold" }}
+                    subtitle={
+                      <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
+                        {newsArticle.createdAt ? newsArticle.createdAt.toString() : undefined}
+                      </Moment>
+                    }
+                    onPress={() => { this.handleListItemClick(newsArticle) }}
+                  />
+                )
+              })
+            }
+          </List>
+        </View>
       </BasicScrollLayout>
     );
   }

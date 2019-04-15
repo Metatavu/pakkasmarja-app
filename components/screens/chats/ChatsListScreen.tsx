@@ -11,7 +11,8 @@ import BasicLayout from "../../layout/BasicLayout";
 import { Tabs, Tab } from "native-base";
 import { ChatThread, ChatGroup } from "pakkasmarja-client";
 import Chat from "../../fragments/chats/Chat";
-import { StyleSheet } from "react-native";
+import { StyleSheet, TouchableHighlight } from "react-native";
+import Icon from "react-native-vector-icons/Feather";
 
 
 /**
@@ -61,14 +62,26 @@ class ChatsListScreen extends React.Component<Props, State> {
   /**
    * Navigation options property
    */
-  static navigationOptions = (props: HeaderProps) => {
-    return( {
-      headerTitle: <TopBar 
-        showMenu={true} 
-        showHeader={false} 
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
         showUser={true}
-      />
-    });
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft:
+        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+          <Icon
+            name='arrow-down-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+    }
   };
 
   /**

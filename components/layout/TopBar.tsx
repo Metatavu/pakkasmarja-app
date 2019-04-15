@@ -6,6 +6,7 @@ import { StoreState, AccessToken } from "../../types";
 import * as actions from "../../actions";
 import { Thumbnail } from "native-base";
 import { TOP_LOGO } from "../../static/images";
+import { styles } from "../screens/deliveries/styles.tsx";
 
 /**
  * Component props
@@ -48,28 +49,22 @@ class TopBar extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <View style={{flex: 1}}>
-        <View style={{height: 70}}>
-          <View style={{flex: 1, flexDirection: "row", paddingLeft: 10, paddingRight: 10, alignItems: "center", justifyContent: "space-between"}}>
-            <TouchableHighlight style={{ paddingLeft: 10 }}>
-              <Icon
-                name='cog'
-                color='#fff'
-                size={30}
-              />
-            </TouchableHighlight>
-            <Thumbnail source={TOP_LOGO} />
-            <TouchableHighlight style={{ paddingRight: 10 }}>
-              <Icon
-                name='user'
-                color='#fff'
-                size={30}
-              />
-            </TouchableHighlight>
-          </View>
+      <React.Fragment>
+        <View style={styles.center}>
         </View>
-      </View>
-
+        <View style={styles.center}>
+          <Thumbnail source={TOP_LOGO} />
+        </View>
+        <View style={styles.center}>
+          <TouchableHighlight >
+            <Icon
+              name='user'
+              color='#fff'
+              size={30}
+            />
+          </TouchableHighlight>
+        </View>
+      </React.Fragment>
     );
   }
 

@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
-import { View, ActivityIndicator, Alert } from "react-native";
+import { View, ActivityIndicator, Alert, TouchableHighlight } from "react-native";
 import { Contract, Contact, ItemGroupPrice, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import ContractAmountTable from "./ContractAmountTable";
@@ -14,6 +14,7 @@ import { styles } from "./styles";
 import AppConfig from "../../../utils/AppConfig";
 import BasicLayout from "../../layout/BasicLayout";
 import Chat from "../../fragments/chats/Chat";
+import Icon from "react-native-vector-icons/Feather";
 
 /**
  * Component props
@@ -238,12 +239,26 @@ class ContractsScreen extends React.Component<Props, State> {
     });
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
+        showUser={true}
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft:
+        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+          <Icon
+            name='arrow-down-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+    }
   };
 
   /**

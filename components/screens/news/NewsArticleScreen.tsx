@@ -10,8 +10,9 @@ import { NewsArticle } from "pakkasmarja-client";
 import { styles } from "../contracts/styles";
 import { Divider } from "react-native-elements";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
-import { Image, StyleSheet } from "react-native";
+import { Image, StyleSheet, TouchableHighlight } from "react-native";
 import Lightbox from 'react-native-lightbox';
+import Icon from "react-native-vector-icons/Feather";
 
 /**
  * Component props
@@ -62,12 +63,26 @@ class NewsArticleScreen extends React.Component<Props, State> {
   /**
    * Navigation options
    */
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
+        showUser={true}
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft:
+        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+          <Icon
+            name='arrow-down-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+    }
   };
 
   /**
