@@ -1,8 +1,8 @@
 import React from "react";
-import { Toast, Spinner } from "native-base";
-import { StyleSheet, View, ScrollView, Text, TouchableHighlight } from "react-native";
-import Icon from 'react-native-vector-icons/FontAwesome';
+import { Toast, Spinner, Thumbnail } from "native-base";
+import { StyleSheet, View, Text, TouchableHighlight } from "react-native";
 import strings from "../../localization/strings";
+import { CONTRACTS_ICON, DELIVERIES_ICON, MESSAGES_ICON, NEWS_ICON } from "../../static/images";
 
 /**
  * Component properties
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
     flex: 0,
     flexDirection: "row",
-    alignItems: "center", 
+    alignItems: "center",
     justifyContent: "space-around"
   }
 });
@@ -53,57 +53,40 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
   }
 
   public render() {
-
     if (this.props.loading) {
       return (
-        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Spinner color="red" />
         </View>
       );
     }
 
     return (
-      <View style={{flex: 1}}>
+      <View style={{ flex: 1 }}>
         {this.props.children}
-        {this.props.displayFooter && 
+        {this.props.displayFooter &&
           <View style={styles.footer}>
-            <TouchableHighlight onPress={() => this.goToScreen("News")}>
-              <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
-                <Icon
-                  name='user'
-                  color='#000000'
-                  size={30}
-                />
+            <TouchableHighlight underlayColor="#fff" onPress={() => this.goToScreen("News")}>
+              <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
+                <Thumbnail source={NEWS_ICON} square style={{ width: 22, height: 26 }} />
                 <Text>{strings.newsFooterLink}</Text>
               </View>
             </TouchableHighlight>
-            <TouchableHighlight onPress={() => this.goToScreen("ChatsList")}>
-              <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
-                <Icon
-                  name='user'
-                  color='#000000'
-                  size={30}
-                />
+            <TouchableHighlight underlayColor="#fff" onPress={() => this.goToScreen("ChatsList")}>
+              <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
+                <Thumbnail source={MESSAGES_ICON} square style={{ width: 48, height:26 }} />
                 <Text>{strings.messagingFooterLink}</Text>
               </View>
             </TouchableHighlight>
-            <TouchableHighlight onPress={() => this.goToScreen("Deliveries")}>
-              <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
-                <Icon
-                  name='user'
-                  color='#000000'
-                  size={30}
-                />
+            <TouchableHighlight underlayColor="#fff" onPress={() => this.goToScreen("Deliveries")}>
+              <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
+                <Thumbnail source={DELIVERIES_ICON} square style={{ width: 40, height: 26 }} />
                 <Text>{strings.deliveriesFooterLink}</Text>
               </View>
             </TouchableHighlight>
-            <TouchableHighlight onPress={() => this.goToScreen("Contracts")}>
-              <View style={{flex: 0, alignItems: "center", alignContent: "center"}}>
-                <Icon
-                  name='user'
-                  color='#000000'
-                  size={30}
-                />
+            <TouchableHighlight underlayColor="#fff" onPress={() => this.goToScreen("Contracts")}>
+              <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
+                <Thumbnail source={CONTRACTS_ICON} square style={{ width: 20, height: 26 }} />
                 <Text>{strings.contractsFooterLink}</Text>
               </View>
             </TouchableHighlight>

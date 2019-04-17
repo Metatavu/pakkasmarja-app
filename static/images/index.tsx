@@ -6,3 +6,7 @@ export const AVATAR_PLACEHOLDER = require("./avatar.png");
 export const PREDICTIONS_ICON = require("./predictions_icon.png");
 export const TOP_LOGO = require("./top_logo.png");
 export const RED_LOGO = require("./red_logo.png");
+export const NEWS_ICON = require("./news_icon.png");
+export const DELIVERIES_ICON = require("./deliveries_icon.png");
+export const CONTRACTS_ICON = require("./contracts_icon.png");
+export const MESSAGES_ICON = require("./messages_icon.png");

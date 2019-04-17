@@ -4,11 +4,12 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, WeekDeliveryPredictionTableData } from "../../../types";
 import * as actions from "../../../actions";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
 import NumericInput from 'react-native-numeric-input';
 import moment from "moment";
 import 'moment/min/locales';
+import Icon from "react-native-vector-icons/Feather";
 
 /**
  * Component props
@@ -45,12 +46,26 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
+        showUser={true}
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft:
+        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+          <Icon
+            name='arrow-down-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+    }
   };
 
   /**
@@ -86,7 +101,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
             <Text style={{ fontSize: 24, color: "black", fontWeight: "500" }}>Ennuste viikolle {this.state.predictionData ? this.state.predictionData.weekDeliveryPrediction.weekNumber : null} (KG)</Text>
           </View>
           <View style={styles.center}>
-            <View style={[styles.center, { width: 370, height: 70, borderRadius: 7, borderColor: "#e01e36", borderWidth: 1.25, marginBottom: 10 }]}>
+            <View style={[styles.center, { width: 370, height: 70, borderRadius: 7, borderColor: "#B4B4B4", borderWidth: 1.25, marginBottom: 10 }]}>
               <NumericInput
                 initValue={this.state.predictionData ? this.state.predictionData.weekDeliveryPrediction.amount : 0}
                 onChange={() => { }}
@@ -99,8 +114,8 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
                 minValue={0}
                 textColor='black'
                 iconStyle={{ color: 'white' }}
-                rightButtonBackgroundColor='#e01e36'
-                leftButtonBackgroundColor='#e01e36'
+                rightButtonBackgroundColor='#B4B4B4'
+                leftButtonBackgroundColor='#B4B4B4'
                 borderColor='transparent'
                 rounded
               />

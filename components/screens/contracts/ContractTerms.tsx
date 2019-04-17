@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import PakkasmarjaApi from "../../../api";
 import { AccessToken, StoreState, ModalButton } from "../../../types";
 import { Text } from "native-base";
-import { View, TouchableOpacity, Picker, TextInput, StyleSheet, WebView, Alert } from "react-native";
+import { View, TouchableOpacity, Picker, TextInput, StyleSheet, WebView, Alert, TouchableHighlight } from "react-native";
 import { CheckBox } from "react-native-elements";
 import { SignAuthenticationService, Contract } from "pakkasmarja-client";
 import * as actions from "../../../actions";
@@ -12,6 +12,7 @@ import TopBar from "../../layout/TopBar";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import Modal from "react-native-modal";
 import { styles } from "./styles";
+import Icon from "react-native-vector-icons/Feather";
 
 /**
  * Interface for component props
@@ -170,12 +171,26 @@ class ContractTerms extends React.Component<Props, State> {
     this.props.navigation.goBack(null);
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
+        showUser={true}
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft:
+        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+          <Icon
+            name='arrow-down-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+    }
   };
 
   /**

@@ -4,12 +4,13 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, WeekDeliveryPredictionTableData } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
 import { Text, Thumbnail } from "native-base";
 import { WeekDeliveryPrediction, ItemGroup, ItemGroupCategory } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON } from "../../../static/images";
+import Icon from "react-native-vector-icons/Feather";
 
 /**
  * Component props
@@ -51,12 +52,26 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
+        showUser={true}
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft:
+        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+          <Icon
+            name='arrow-down-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+    }
   };
 
   /**

@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TouchableOpacity } from "react-native";
+import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight } from "react-native";
 import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
@@ -15,6 +15,7 @@ import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
 import { FileService, FileResponse } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import FeatherIcon from "react-native-vector-icons/Feather";
 
 /**
  * Component props
@@ -105,12 +106,26 @@ class NewDelivery extends React.Component<Props, State> {
     });
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
+        showUser={true}
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft:
+        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+          <FeatherIcon
+            name='arrow-down-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+    }
   };
 
   /**
@@ -147,13 +162,13 @@ class NewDelivery extends React.Component<Props, State> {
     const notes = this.state.deliveryNotes;
     notes.push(noteData);
 
-    this.setState({ 
-      deliveryNotes: notes, 
+    this.setState({
+      deliveryNotes: notes,
       deliveryNoteData: {
         imageUri: "",
         imageType: "",
         text: ""
-      } 
+      }
     });
   }
 

@@ -1,13 +1,14 @@
 import React, { Dispatch } from "react";
 import TopBar from "../../layout/TopBar";
 import { Text } from "native-base";
-import { View, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, TouchableHighlight } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { Contract, ItemGroup } from "pakkasmarja-client";
 import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import { connect } from "react-redux";
 import * as actions from "../../../actions";
 import { styles } from "./styles";
+import Icon from "react-native-vector-icons/Feather";
 
 /**
  * Component props
@@ -42,12 +43,26 @@ class ContractAmountTable extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
+        showUser={true}
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft:
+        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+          <Icon
+            name='arrow-down-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+    }
   };
 
   /**

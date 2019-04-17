@@ -65,7 +65,7 @@ class LoginScreen extends React.Component<Props, State> {
   async componentDidMount() {
     const accessToken = this.props.accessToken;
     if (accessToken) {
-      this.props.navigation.navigate("Main");
+      this.props.navigation.navigate("News");
     }
   }
 
@@ -95,7 +95,7 @@ class LoginScreen extends React.Component<Props, State> {
     }).then(async (accessToken) => {
       if (accessToken) {
         this.props.onAccessTokenUpdate(accessToken);
-        this.props.navigation.replace("Main");
+        this.props.navigation.replace("News");
       } else {
         // TODO: Handle error
       }

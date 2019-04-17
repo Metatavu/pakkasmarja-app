@@ -5,11 +5,12 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { Text, Thumbnail } from "native-base";
-import { View, ActivityIndicator, TouchableOpacity } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
 import { RED_LOGO } from "../../../static/images";
 import Moment from "react-moment";
 import { NavigationEvents } from "react-navigation";
+import Icon from "react-native-vector-icons/Feather";
 
 /**
  * Component props
@@ -47,12 +48,26 @@ class ProposalsScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = {
-    headerTitle: <TopBar
-      showMenu={true}
-      showHeader={false}
-      showUser={true}
-    />
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      headerTitle: <TopBar
+        showMenu={true}
+        showHeader={false}
+        showUser={true}
+      />,
+      headerTitleContainerStyle: {
+        left: 0,
+      },
+      headerLeft:
+        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+          <Icon
+            name='arrow-down-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+    }
   };
 
   /**
