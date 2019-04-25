@@ -9,7 +9,7 @@ import PakkasmarjaApi from "../../../api";
 import { View, Spinner, Fab, Icon, Container } from "native-base";
 import { mqttConnection } from "../../../mqtt";
 import ImagePicker from 'react-native-image-picker';
-import { StyleSheet, Image } from "react-native";
+import { StyleSheet, Image, Platform } from "react-native";
 import Lightbox from 'react-native-lightbox';
 import moment from "moment";
 
@@ -248,7 +248,7 @@ class Chat extends React.Component<Props, State> {
    * Handles selecting image for uploading
    */
   private selectImage = () => {
-    ImagePicker.showImagePicker({title: strings.addImage, storageOptions: {skipBackup: true, path: 'images'}}, async (response) => {
+    ImagePicker.showImagePicker({title: strings.addImage, storageOptions: {skipBackup: true, path: 'images' }}, async (response) => {
       if (response.didCancel || response.error) {
         return;
       }
@@ -262,7 +262,9 @@ class Chat extends React.Component<Props, State> {
       });
 
       const contentType = response.type || "image/jpeg";
-      const fileUploadResponse = await new PakkasmarjaApi().getFileService(accessToken.access_token).uploadFile(response.uri, contentType);
+      const uri = (Platform.OS==='android') ? response.uri : response.uri.replace('file://', '');
+      const fileUploadResponse = await new PakkasmarjaApi().getFileService(accessToken.access_token).uploadFile(uri, contentType);
+      
       const fileMessage = await new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).createChatMessage({
         image: fileUploadResponse.url,
         threadId: threadId,

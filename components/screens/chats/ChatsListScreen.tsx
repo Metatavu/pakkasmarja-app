@@ -38,8 +38,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#E51D2A"
   },
   activeTab: {
-    color: "#000000",
+    color: "#fff",
     fontWeight: "bold"
+  },
+  activeText: {
+    color: "#fff"
   }
 });
 
@@ -89,12 +92,12 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <BasicLayout displayFooter={true} navigation={this.props.navigation}>
-        <Tabs>
-          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} tabStyle={styles.tab} heading={strings.chatsNavHeader}>
+      <BasicLayout navigation={this.props.navigation}>
+        <Tabs tabBarUnderlineStyle={{backgroundColor: "#fff"}}>
+          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={strings.chatsNavHeader}>
             { this.renderChatTab() }
           </Tab>
-          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} tabStyle={styles.tab} heading={strings.questionsNavHeader}>
+          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={strings.questionsNavHeader}>
             { this.renderQuestionTab() }
           </Tab>
         </Tabs>

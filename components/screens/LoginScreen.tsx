@@ -6,7 +6,7 @@ import { REACT_APP_AUTH_SERVER_URL, REACT_APP_AUTH_RESOURCE, REACT_APP_AUTH_REAL
 import { AccessToken, StoreState } from "../../types";
 import * as actions from "../../actions";
 import strings from "../../localization/strings";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View, Platform } from "react-native";
 import BasicScrollLayout from "../layout/BasicScrollLayout";
 
 /**
@@ -84,7 +84,7 @@ class LoginScreen extends React.Component<Props, State> {
    */
   sendLogin = (event: any) => {
     const loginData = this.state.loginDetails;
-
+    
     Auth.login({
       clientId: REACT_APP_AUTH_RESOURCE,
       url: `${REACT_APP_AUTH_SERVER_URL}/realms/${REACT_APP_AUTH_REALM}/protocol/openid-connect/token`,
@@ -135,19 +135,21 @@ class LoginScreen extends React.Component<Props, State> {
     });
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={false}>
-        <Form>
-          <Item>
-            <Label style={styles.label} >{strings.loginScreenUsernameLabel}</Label>
-            <Input style={styles.inputStyle} onChangeText={(text: string) => this.updateData("username", text)} />
-          </Item>
-          <Item>
-            <Label style={styles.label} >{strings.loginScreenPasswordLabel}</Label>
-            <Input style={styles.inputStyle} secureTextEntry onChangeText={(text: string) => this.updateData("password", text)} />
-          </Item>
-        </Form>
-        <Button style={styles.button} onPress={this.sendLogin} block><Text style={styles.buttonText}>{strings.loginScreenLoginButton}</Text></Button>
+        <View>
+          <Form>
+            <Item>
+              <Label style={styles.label} >{strings.loginScreenUsernameLabel}</Label>
+              <Input style={styles.inputStyle} onChangeText={(text: string) => this.updateData("username", text)} />
+            </Item>
+            <Item>
+              <Label style={styles.label} >{strings.loginScreenPasswordLabel}</Label>
+              <Input style={styles.inputStyle} secureTextEntry onChangeText={(text: string) => this.updateData("password", text)} />
+            </Item>
+          </Form>
+          <Button style={styles.button} onPress={this.sendLogin} block><Text style={styles.buttonText}>{strings.loginScreenLoginButton}</Text></Button>
+        </View>
       </BasicScrollLayout>
-    );
+    );  
   }
 }
 

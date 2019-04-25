@@ -1,7 +1,7 @@
 import React, { Dispatch } from "react";
 import { AccessToken, StoreState } from "../../../types";
 import { Text, Form } from "native-base";
-import { View, TouchableOpacity, TextInput } from "react-native";
+import { View, TouchableOpacity, TextInput, Platform } from "react-native";
 import { Contract, ItemGroup } from "pakkasmarja-client";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
@@ -132,9 +132,9 @@ class ContractAmount extends React.Component<Props, State> {
           <Text style={[styles.textWithSpace, styles.textSize]}>Kommentti</Text>
           <TextInput 
             multiline = {true}
-            numberOfLines = {4}
+            numberOfLines={Platform.OS === 'ios' ? undefined : 4}
+            style={{... styles.textInput, height: Platform.OS === "ios" ? 80 : undefined}}
             editable={!this.props.isActiveContract}
-            style={styles.textInput}
             value={this.props.quantityComment}
             onChangeText={(text:string) => this.onQuantityCommentChange(text)}
           />

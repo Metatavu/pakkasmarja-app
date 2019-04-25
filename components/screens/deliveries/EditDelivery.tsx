@@ -4,14 +4,15 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight } from "react-native";
-import { Delivery, Product, DeliveryPlace, ItemGroupCategory, DeliveryNote } from "pakkasmarja-client";
+import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions } from "react-native";
+import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
 import moment from "moment"
 import PakkasmarjaApi from "../../../api";
 import FeatherIcon from "react-native-vector-icons/Feather";
+import ModalSelector from 'react-native-modal-selector';
 import IconPen from "react-native-vector-icons/EvilIcons";
 import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
@@ -262,23 +263,39 @@ class EditDelivery extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View style={{ padding: 15 }}>
+        <View style={styles.deliveryContainer}>
           <Text style={styles.textWithSpace} >Valitse tuote</Text>
           <View style={[styles.pickerWrap, { width: "100%" }]}>
-            <Picker
-              selectedValue={this.state.productId}
-              style={{ height: 50, width: "100%" }}
-              onValueChange={(itemValue, itemIndex) =>
-                this.setState({ productId: itemValue })
-              }>
-              {
-                this.state.products.map((product) => {
-                  return (
-                    <Picker.Item key={product.id} label={product.name || ""} value={product.id} />
-                  );
-                })
-              }
-            </Picker>
+            {
+              Platform.OS !== "ios" &&
+              <Picker
+                selectedValue={this.state.productId}
+                style={{ height: 50, width: "100%" }}
+                onValueChange={(itemValue, itemIndex) =>
+                  this.setState({ productId: itemValue })
+                }>
+                {
+                  this.state.products.map((product) => {
+                    return (
+                      <Picker.Item key={product.id} label={product.name || ""} value={product.id} />
+                    );
+                  })
+                }
+              </Picker>
+            }
+            {
+              Platform.OS === "ios" &&
+                <ModalSelector
+                  data={this.state.products && this.state.products.map((product) => {
+                    return {
+                      key: product.id,
+                      label: product.name
+                    };
+                  })}
+                  selectedKey={this.state.productId}
+                  initValue="Valitse tuote"
+                  onChange={(option: any)=> { this.setState({ productId: option.key }) }} />
+            }
           </View>
           <Text style={styles.textWithSpace}>Tämän hetkinen hinta 4,20€/kg sis.Alv</Text>
           <Text style={styles.textWithSpace}>Määrä (KG)</Text>
@@ -286,8 +303,8 @@ class EditDelivery extends React.Component<Props, State> {
             <NumericInput
               value={this.state.amount}
               initValue={this.state.amount}
-              onChange={(value: number) => this.setState({ amount: value })}
-              totalWidth={365}
+              onChange={(value: number) => this.setState({amount: value})}
+              totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2)}
               totalHeight={50}
               iconSize={35}
               step={100}
@@ -338,24 +355,40 @@ class EditDelivery extends React.Component<Props, State> {
                 <Text style={styles.textWithSpace}>Klo</Text>
               </View>
               <View style={[styles.pickerWrap, { width: "100%" }]}>
-                <Picker
-                  selectedValue={this.state.deliveryTimeValue}
-                  style={{ height: 50, width: "100%" }}
-                  onValueChange={(itemValue) =>
-                    this.setState({ deliveryTimeValue: itemValue })
-                  }>
-                  {
-                    this.state.deliveryTimeOptions.map((deliveryTime) => {
-                      return (
-                        <Picker.Item
-                          key={deliveryTime.label}
-                          label={deliveryTime.label || ""}
-                          value={deliveryTime.value}
-                        />
-                      );
-                    })
-                  }
-                </Picker>
+                {
+                  Platform.OS !== "ios" &&
+                  <Picker
+                    selectedValue={this.state.deliveryTimeValue}
+                    style={{ height: 50, width: "100%" }}
+                    onValueChange={(itemValue) =>
+                      this.setState({ deliveryTimeValue: itemValue })
+                    }>
+                    {
+                      this.state.deliveryTimeOptions.map((deliveryTime) => {
+                        return (
+                          <Picker.Item
+                            key={deliveryTime.label}
+                            label={deliveryTime.label || ""}
+                            value={deliveryTime.value}
+                          />
+                        );
+                      })
+                    }
+                  </Picker>
+                }
+                {
+                  Platform.OS === "ios" &&
+                    <ModalSelector
+                      data={this.state.deliveryTimeOptions.map((deliveryTimeOption) => {
+                        return {
+                          key: deliveryTimeOption.value,
+                          label: deliveryTimeOption.label
+                        };
+                      })}
+                      selectedKey={this.state.deliveryTimeValue}
+                      initValue="Valitse toimituspaikka"
+                      onChange={(option: any)=> { this.setState({ deliveryTimeValue: option.key }) }} />
+                }
               </View>
               <DateTimePicker
                 mode="date"
@@ -366,20 +399,40 @@ class EditDelivery extends React.Component<Props, State> {
             </View>
           </View>
           <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
-            <Picker
-              selectedValue={this.state.deliveryPlaceId ? this.state.deliveryPlaceId : ""}
-              style={{ height: 50, width: "100%" }}
-              onValueChange={(itemValue, itemIndex) =>
-                this.setState({ deliveryPlaceId: itemValue })
-              }>
-              {
-                this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
-                  return (
-                    <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace.id} />
-                  );
-                })
-              }
-            </Picker>
+            {
+              Platform.OS !== "ios" &&
+              <Picker
+                selectedValue={this.state.deliveryPlaceId}
+                style={{ height: 50, width: "100%" }}
+                onValueChange={(itemValue) =>
+                  this.setState({ deliveryPlaceId: itemValue })
+                }>
+                {
+                  this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
+                    return (
+                      <Picker.Item
+                        key={deliveryPlace.id}
+                        label={deliveryPlace.name || ""}
+                        value={deliveryPlace.id}
+                      />
+                    );
+                  })
+                }
+              </Picker>
+            }
+            {
+              Platform.OS === "ios" &&
+                <ModalSelector
+                  data={this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
+                    return {
+                      key: deliveryPlace.id,
+                      label: deliveryPlace.name
+                    };
+                  })}
+                  selectedKey={this.state.deliveryPlaceId}
+                  initValue="Valitse toimituspaikka"
+                  onChange={(option: any)=> { this.setState({ deliveryPlaceId: option.key }) }} />
+            }
           </View>
           <View style={{ flex: 1 }}>
             {

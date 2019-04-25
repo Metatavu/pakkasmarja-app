@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Text } from "native-base";
 import * as actions from "../../../actions";
 import { AccessToken, StoreState, DeliveryNoteData, DeliveryNoteDataKeys } from "../../../types";
-import { View, TouchableOpacity, TextInput, Modal, Image } from "react-native";
+import { View, TouchableOpacity, TextInput, Modal, Image, Platform } from "react-native";
 import { styles } from "./styles.tsx";
 import ImagePicker from 'react-native-image-picker';
 
@@ -204,8 +204,8 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                 <Text style={styles.text}>Kommentti</Text>
                 <TextInput
                   multiline={true}
-                  numberOfLines={4}
-                  style={styles.textInput}
+                  numberOfLines={Platform.OS === 'ios' ? undefined : 4}
+                  style={{... styles.textInput, height: Platform.OS === "ios" ? 80 : undefined}}
                   value={this.props.deliveryNoteData.text}
                   onChangeText={(text: string) => this.onDeliveryDataChange("text", text)}
                 />

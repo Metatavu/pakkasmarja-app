@@ -28,6 +28,7 @@ import ViewWeekDeliveryPredictionScreen from "./components/screens/deliveries/Vi
 import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDeliveriesScreen";
 import NewDelivery from "./components/screens/deliveries/NewDelivery";
 import EditDelivery from "./components/screens/deliveries/EditDelivery";
+import Permissions from 'react-native-permissions';
 import strings from "./localization/strings";
 
 interface State {
@@ -78,6 +79,18 @@ export default class App extends React.Component<any, State> {
     this.state = {
       authenticated: false
     };
+
+    Permissions.check('photo').then(response => {
+      if (response !== "authorized") {
+        Permissions.request('photo').then(response => {});
+      }
+    });
+
+    Permissions.check('camera').then(response => {
+      if (response !== "authorized") {
+        Permissions.request('camera').then(response => {});
+      }
+    });
     strings.setLanguage("fi");
   }
 

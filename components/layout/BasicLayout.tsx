@@ -1,6 +1,6 @@
 import React from "react";
 import { Toast, Spinner, Thumbnail } from "native-base";
-import { StyleSheet, View, Text, TouchableHighlight } from "react-native";
+import { StyleSheet, View, Text, TouchableHighlight, Platform, SafeAreaView } from "react-native";
 import strings from "../../localization/strings";
 import { CONTRACTS_ICON, DELIVERIES_ICON, MESSAGES_ICON, NEWS_ICON } from "../../static/images";
 
@@ -62,7 +62,7 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
     }
 
     return (
-      <View style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }}>
         {this.props.children}
         {this.props.displayFooter &&
           <View style={styles.footer}>
@@ -92,7 +92,7 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
             </TouchableHighlight>
           </View>
         }
-      </View>
+      </SafeAreaView>
     );
   }
 

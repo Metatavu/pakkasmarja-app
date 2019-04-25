@@ -54,6 +54,7 @@ class NewsListScreen extends React.Component<Props, State> {
         showMenu={true}
         showHeader={false}
         showUser={true}
+        frontPage={true}
       />,
       headerTitleContainerStyle: {
         left: 0,

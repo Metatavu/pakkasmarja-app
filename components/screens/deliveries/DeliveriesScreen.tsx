@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { Tabs, Tab } from "native-base";
-import { TouchableOpacity, Image, View, Text, TouchableHighlight } from "react-native";
+import { TouchableOpacity, Image, View, Text, TouchableHighlight, Dimensions } from "react-native";
 import { styles } from './styles.tsx'
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON, RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
@@ -67,6 +67,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
         showHeader={false}
         showUser={true}
       />,
+      headerTitleStyle : {width : Dimensions.get('window').width},
       headerTitleContainerStyle: {
         left: 0,
       },
@@ -271,13 +272,13 @@ class DeliveriesScreen extends React.Component<Props, State> {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <NavigationEvents onDidFocus={() => this.loadAmounts()} />
-        <Tabs>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"TUORETUOTTEET"}>
+        <Tabs tabBarUnderlineStyle={{backgroundColor: "#fff"}}>
+          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={"TUORETUOTTEET"}>
             {
               this.renderDeliveryList(deliveryList, "FRESH")
             }
           </Tab>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} tabStyle={styles.tab} heading={"PAKASTEET"}>
+          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={"PAKASTEET"}>
             {
               this.renderDeliveryList(deliveryList, "FROZEN")
             }

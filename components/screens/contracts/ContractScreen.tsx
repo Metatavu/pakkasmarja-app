@@ -132,7 +132,7 @@ class ContractScreen extends React.Component<Props, State> {
     const currentQuantity = this.state.contractData.proposedQuantity;
     const contractPlaceId = this.state.contract.deliveryPlaceId;
     const currentContractPlaceId = this.state.contractData.deliveryPlaceId;
-
+    
     if (contractQuantity != currentQuantity || contractPlaceId != currentContractPlaceId) {
       this.setState({ companyApprovalRequired: true });
     } else {
