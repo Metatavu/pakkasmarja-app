@@ -162,18 +162,6 @@ class NewsArticleScreen extends React.Component<Props, State> {
               ${this.state.newsArticle.contents}
             </div>
             </body>
-            <script>
-              function onPageLoaded() {
-                window.postMessage("asd");
-                if (window.postMessage.length !== 1){
-                  setTimeout(onPageLoaded, 200);
-                }
-                else {
-                  window.postMessage(window.location.href);
-                }
-              }
-              window.onload = onPageLoaded();
-            </script>
             </html>`
           }}
         />
