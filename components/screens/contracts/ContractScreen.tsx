@@ -96,9 +96,9 @@ class ContractScreen extends React.Component<Props, State> {
     if (this.props.navigation.getParam('contract')) {
       const contract = this.props.navigation.getParam('contract');
       this.setState({ contract: contract });
- 
+
       this.updateContractData("quantityComment", contract.quantityComment);
-      this.updateContractData("proposedQuantity", contract.proposedQuantity.toString());
+      this.updateContractData("proposedQuantity", contract.proposedQuantity ? contract.proposedQuantity.toString() : "");
       this.updateContractData("areaDetailValues", contract.areaDetails);
       this.updateContractData("deliveryPlaceId", contract.deliveryPlaceId.toString());
       this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment);
@@ -203,7 +203,7 @@ class ContractScreen extends React.Component<Props, State> {
 
     const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
-    
+
     if (this.state.companyApprovalRequired) {
       contract.status = "ON_HOLD";
       await contractsService.updateContract(contract, contract.id || "");
@@ -244,7 +244,7 @@ class ContractScreen extends React.Component<Props, State> {
       'Lataus onnistui!',
       `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`,
       [
-        {text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})},
+        { text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {}) },
       ]
     );
   }
@@ -311,7 +311,7 @@ class ContractScreen extends React.Component<Props, State> {
             downloadContractPdf={this.downloadContractPdfClicked}
             approveButtonText={this.state.companyApprovalRequired ? "EHDOTA MUUTOSTA" : "HYVÄKSYN"}
           />
-          <ContractRejectModal 
+          <ContractRejectModal
             onUserInputChange={this.updateContractData}
             rejectComment={this.state.contractData.rejectComment}
             modalOpen={this.state.rejectModalOpen}

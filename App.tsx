@@ -29,6 +29,7 @@ import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDe
 import NewDelivery from "./components/screens/deliveries/NewDelivery";
 import EditDelivery from "./components/screens/deliveries/EditDelivery";
 import Permissions from 'react-native-permissions';
+import strings from "./localization/strings";
 
 interface State {
   authenticated: boolean
@@ -90,6 +91,7 @@ export default class App extends React.Component<any, State> {
         Permissions.request('camera').then(response => {});
       }
     });
+    strings.setLanguage("fi");
   }
 
   render() {

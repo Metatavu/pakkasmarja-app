@@ -78,6 +78,15 @@ export const styles = StyleSheet.create({
     marginBottom: 5,
     borderRadius: 7
   },
+  redButton: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#e01e36",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 5,
+    borderRadius: 7
+  },
   buttonText: {
     color: '#f2f2f2',
     fontWeight: "700"
@@ -212,5 +221,17 @@ export const styles = StyleSheet.create({
     width: 12,
     borderRadius: 6,
     backgroundColor: '#e01e36',
+  },
+  noteModal:{
+    width: "95%",
+    height: 500,
+    flex: 0,
+    flexDirection: "column",
+    justifyContent: "space-between",
+    backgroundColor: "white",
+    borderColor: "#e01e36",
+    borderWidth: 1.25,
+    padding: 20,
+    borderRadius: 7
   }
 });

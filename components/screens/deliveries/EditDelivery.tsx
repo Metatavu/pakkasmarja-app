@@ -2,21 +2,21 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct, DeliveriesState, DeliveryDataKey, DeliveryNoteData } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions } from "react-native";
 import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
-import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment"
-import DeliveryNoteModal from '../deliveries/DeliveryNoteModal'
 import PakkasmarjaApi from "../../../api";
-import { FileService, FileResponse } from "../../../api/file.service";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
 import FeatherIcon from "react-native-vector-icons/Feather";
 import ModalSelector from 'react-native-modal-selector';
+import IconPen from "react-native-vector-icons/EvilIcons";
+import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
+import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
+import DateTimePicker from "react-native-modal-datetime-picker";
 
 /**
  * Component props
@@ -45,12 +45,12 @@ interface State {
   price: string;
   amount: number;
   selectedDate?: Date;
-  deliveryNoteData: DeliveryNoteData;
-  deliveryNotes: DeliveryNoteData[];
-  deliveryNoteFile?: {
-    fileUri: string,
-    fileType: string
-  };
+  deliveryNotes?: DeliveryNote[];
+  createModal: boolean;
+  editModal: boolean;
+  deliveryNoteId?: string;
+  deliveryTimeOptions: { label: string, value: number }[];
+  deliveryTimeValue: number;
 };
 
 /**
@@ -72,14 +72,11 @@ class EditDelivery extends React.Component<Props, State> {
       amount: 0,
       price: "0",
       products: [],
-      deliveryNoteData: {
-        imageType: "",
-        imageUri: "",
-        text: ""
-      },
-      deliveryNotes: []
+      createModal: false,
+      editModal: false,
+      deliveryTimeOptions: [{ label: "Ennen klo 11", value: 11 }, { label: "Jälkeen klo 11", value: 17 }],
+      deliveryTimeValue: 11
     };
-
   }
 
   static navigationOptions = ({ navigation }: any) => {
@@ -113,7 +110,6 @@ class EditDelivery extends React.Component<Props, State> {
     }
     this.setState({ loading: true });
     const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
-
     const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
@@ -133,6 +129,7 @@ class EditDelivery extends React.Component<Props, State> {
         selectedDate: deliveryData.delivery.time,
         loading: false
       });
+      this.loadDeliveryNotes();
     }
   }
 
@@ -146,58 +143,29 @@ class EditDelivery extends React.Component<Props, State> {
 
     const Api = new PakkasmarjaApi();
     const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+
+    let time: string | Date = moment(this.state.selectedDate).format("YYYY-MM-DD");
+    time = `${time} ${this.state.deliveryTimeValue}:00 +0000`
+    time = moment(time, "YYYY-MM-DD HH:mm Z").toDate();
+
     const delivery: Delivery = {
       id: this.state.deliveryData.delivery.id,
       productId: this.state.productId || "",
       userId: this.state.userId || "",
-      time: this.state.selectedDate,
+      time: time,
       status: "PLANNED",
       amount: this.state.amount,
       price: this.state.price,
-      quality: "NORMAL",
       deliveryPlaceId: this.state.deliveryPlaceId || ""
     }
 
-    const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
-
-    await Promise.all(this.state.deliveryNotes.map((deliveryNote): Promise<DeliveryNote | null> => {
-      return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
-    }));
-
+    await deliveryService.createDelivery(delivery);
     const updatedDelivery = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
     this.updateDeliveries(updatedDelivery);
     this.props.navigation.navigate("Delivery", {
       deliveryId: this.state.deliveryData.delivery.id,
       productId: this.state.productId
     });
-  }
-
-  /**
-   * Create delivery notes
-   * 
-   * @param deliveryId deliveryId
-   * @param deliveryNote deliveryNote
-   */
-  private async createDeliveryNote(deliveryId: string, deliveryNoteData: DeliveryNoteData): Promise<DeliveryNote | null> {
-    if (this.props.accessToken) {
-      const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
-      let image: FileResponse | undefined = undefined;
-
-      if (deliveryNoteData.imageUri && deliveryNoteData.imageType) {
-        image = await fileService.uploadFile(deliveryNoteData.imageUri, deliveryNoteData.imageType);
-      }
-
-      const deliveryNote: DeliveryNote = {
-        text: deliveryNoteData.text,
-        image: image ? image.url : undefined
-      };
-
-      const Api = new PakkasmarjaApi();
-      const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-      return deliveryService.createDeliveryNote(deliveryNote, deliveryId || "");
-    }
-
-    return null;
   }
 
   /**
@@ -249,6 +217,19 @@ class EditDelivery extends React.Component<Props, State> {
   }
 
   /**
+   * Load delivery notes
+   */
+  private loadDeliveryNotes = async () => {
+    if (!this.props.accessToken || !this.state.deliveryData) {
+      return;
+    }
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const deliveryNotes: DeliveryNote[] = await deliveriesService.listDeliveryNotes(this.state.deliveryData.delivery.id || "");
+    this.setState({ deliveryNotes });
+  }
+
+  /**
     * Prints time
     * 
     * @param date
@@ -265,53 +246,6 @@ class EditDelivery extends React.Component<Props, State> {
   private removeDate = () => {
     this.setState({
       selectedDate: undefined
-    });
-  }
-
-  /**
-   * Adds a delivery note
-   * 
-   * @param deliveryNote deliveryNote
-   */
-  private onDeliveryNoteChange = (deliveryNote: DeliveryNoteData) => {
-    this.setState({ deliveryNoteData: deliveryNote });
-  }
-
-  /**
-   * On create note click
-   */
-  private onCreateNoteClick = () => {
-    const noteData = this.state.deliveryNoteData;
-    const notes = this.state.deliveryNotes;
-    notes.push(noteData);
-
-    this.setState({
-      deliveryNotes: notes,
-      deliveryNoteData: {
-        imageUri: "",
-        imageType: "",
-        text: ""
-      }
-    });
-  }
-
-  /**
-   * On delivery note image change
-   * 
-   * @param fileUri fileUri
-   * @param fileType fileType
-   */
-  private onDeliveryNoteImageChange = (fileUri?: string, fileType?: string) => {
-    if (!fileUri || !fileType) {
-      this.setState({ deliveryNoteFile: undefined });
-      return;
-    }
-
-    this.setState({
-      deliveryNoteFile: {
-        fileUri: fileUri,
-        fileType: fileType
-      }
     });
   }
 
@@ -384,26 +318,85 @@ class EditDelivery extends React.Component<Props, State> {
               rounded
             />
           </View>
-          <View style={{ flex: 1 }}>
-            <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-              <Text style={styles.textWithSpace}>Toimituspäivä</Text>
-            </View>
-            <TouchableOpacity style={[styles.pickerWrap, { width: "100%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
-              <View style={{ flex: 1, flexDirection: "row" }}>
-                <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
-                  <Text style={{ paddingLeft: 10 }}>{this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"}</Text>
-                </View>
-                <View style={[styles.center, { flex: 0.6 }]}>
-                  {this.state.selectedDate ? <Icon style={{ color: "#e01e36" }} onPress={this.removeDate} type={"AntDesign"} name="close" /> : <Icon style={{ color: "#e01e36" }} type="AntDesign" name="calendar" />}
-                </View>
+          <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
+            <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+                <Text style={styles.textWithSpace}>Toimituspäivä</Text>
               </View>
-            </TouchableOpacity>
-            <DateTimePicker
-              mode="date"
-              isVisible={this.state.datepickerVisible}
-              onConfirm={(date) => this.setState({ selectedDate: date, datepickerVisible: false })}
-              onCancel={() => { this.setState({ datepickerVisible: false }); }}
-            />
+              <TouchableOpacity style={[styles.pickerWrap, { width: "98%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
+                <View style={{ flex: 1, flexDirection: "row" }}>
+                  <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
+                    <Text style={{ paddingLeft: 10 }}>
+                      {
+                        this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
+                      }
+                    </Text>
+                  </View>
+                  <View style={[styles.center, { flex: 0.6 }]}>
+                    {this.state.selectedDate ?
+                      <Icon
+                        style={{ color: "#e01e36" }}
+                        onPress={this.removeDate}
+                        type={"AntDesign"}
+                        name="close" />
+                      :
+                      <Icon
+                        style={{ color: "#e01e36" }}
+                        type="AntDesign"
+                        name="calendar"
+                      />
+                    }
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flex: 1, marginLeft: "4%" }}>
+              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+                <Text style={styles.textWithSpace}>Klo</Text>
+              </View>
+              <View style={[styles.pickerWrap, { width: "100%" }]}>
+                {
+                  Platform.OS !== "ios" &&
+                  <Picker
+                    selectedValue={this.state.deliveryTimeValue}
+                    style={{ height: 50, width: "100%" }}
+                    onValueChange={(itemValue) =>
+                      this.setState({ deliveryTimeValue: itemValue })
+                    }>
+                    {
+                      this.state.deliveryTimeOptions.map((deliveryTime) => {
+                        return (
+                          <Picker.Item
+                            key={deliveryTime.label}
+                            label={deliveryTime.label || ""}
+                            value={deliveryTime.value}
+                          />
+                        );
+                      })
+                    }
+                  </Picker>
+                }
+                {
+                  Platform.OS === "ios" &&
+                    <ModalSelector
+                      data={this.state.deliveryTimeOptions.map((deliveryTimeOption) => {
+                        return {
+                          key: deliveryTimeOption.value,
+                          label: deliveryTimeOption.label
+                        };
+                      })}
+                      selectedKey={this.state.deliveryTimeValue}
+                      initValue="Valitse toimituspaikka"
+                      onChange={(option: any)=> { this.setState({ deliveryTimeValue: option.key }) }} />
+                }
+              </View>
+              <DateTimePicker
+                mode="date"
+                isVisible={this.state.datepickerVisible}
+                onConfirm={(date) => this.setState({ selectedDate: date, datepickerVisible: false })}
+                onCancel={() => { this.setState({ datepickerVisible: false }); }}
+              />
+            </View>
           </View>
           <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
             {
@@ -442,31 +435,53 @@ class EditDelivery extends React.Component<Props, State> {
             }
           </View>
           <View style={{ flex: 1 }}>
-            <View style={[styles.center, { flex: 1, paddingVertical: 15 }]}>
-              <TouchableOpacity onPress={() => this.setState({ modalOpen: true })}>
+            {
+              this.state.deliveryNotes ?
+                this.state.deliveryNotes.map((deliveryNote: DeliveryNote, index) => {
+                  return (
+                    <View key={index} style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
+                      <TouchableOpacity onPress={() => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true })}>
+                        <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
+                          <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
+                          <Text style={{ fontSize: 16, color: "#e01e36" }} >
+                            {`Katso/poista huomio ${index + 1}`}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })
+                : null
+            }
+            <View style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
+              <TouchableOpacity onPress={() => this.setState({ createModal: true })}>
                 <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
-                  <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
-                  <Text style={{ color: "#e01e36" }} >
-                    {`Lisää huomio (${this.state.deliveryNotes.length})`}
+                  <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
+                  <Text style={{ fontSize: 16, color: "#e01e36" }} >
+                    {`Lisää huomio`}
                   </Text>
                 </View>
               </TouchableOpacity>
             </View>
             <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60 }]} onPress={this.handleDeliveryUpdate}>
+              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop:15 }]} onPress={this.handleDeliveryUpdate}>
                 <Text style={styles.buttonText}>Tallenna</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
-        <DeliveryNoteModal
-          imageUri={this.state.deliveryNoteData ? this.state.deliveryNoteData.imageUri : undefined}
-          onCreateNoteClick={this.onCreateNoteClick}
-          deliveryNoteData={this.state.deliveryNoteData}
-          onDeliveryNoteChange={this.onDeliveryNoteChange}
-          onDeliveryNoteImageChange={((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType))}
-          modalClose={() => this.setState({ modalOpen: false })}
-          modalOpen={this.state.modalOpen}
+        <CreateDeliveryNoteModal
+          loadDeliveryNotes={this.loadDeliveryNotes}
+          deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
+          modalClose={() => this.setState({ createModal: false })}
+          modalOpen={this.state.createModal}
+        />
+        <ViewOrDeleteNoteModal
+          loadDeliveryNotes={this.loadDeliveryNotes}
+          deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
+          deliveryNoteId={this.state.deliveryNoteId || ""}
+          modalClose={() => this.setState({ editModal: false })}
+          modalOpen={this.state.editModal}
         />
       </BasicScrollLayout>
     );

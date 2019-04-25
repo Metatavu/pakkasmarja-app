@@ -81,8 +81,8 @@ class ContractsScreen extends React.Component<Props, State> {
 
     const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
-    const frozenContracts = await contractsService.listContracts("application/json", false, "FROZEN");
-    const freshContracts = await contractsService.listContracts("application/json", false, "FRESH");
+    const frozenContracts = await contractsService.listContracts("application/json", false, "FROZEN", undefined, undefined, undefined, undefined, 100);
+    const freshContracts = await contractsService.listContracts("application/json", false, "FRESH", undefined, undefined, undefined, undefined, 100);
 
     await this.loadItemGroups();
 
@@ -104,7 +104,7 @@ class ContractsScreen extends React.Component<Props, State> {
         contract: freshContract,
         itemGroup: itemGroup
       });
-      
+
       this.setState({ freshContracts: freshContractsState });
     });
 
@@ -289,7 +289,7 @@ class ContractsScreen extends React.Component<Props, State> {
     const questionGroupThreads = await api.getChatThreadsService(accessToken.access_token).listChatThreads(questionGroupId);
     if (questionGroupThreads.length != 1) {
       return; //Application is misconfigured, bail out.
-    } 
+    }
 
     await api.getChatMessagesService(accessToken.access_token).createChatMessage({
       contents: this.getProposalMessageContents(),
@@ -306,7 +306,7 @@ class ContractsScreen extends React.Component<Props, State> {
   /**
    * Gets message to use for suggesting new contract
    */
-  private getProposalMessageContents = () :string => {
+  private getProposalMessageContents = (): string => {
     let message = `Hei, haluaisin ehdottaa uutta sopimusta marjasta: ${this.state.selectedBerry}.`;
     if (this.state.proposedContractQuantity) {
       message += `
@@ -335,7 +335,7 @@ class ContractsScreen extends React.Component<Props, State> {
     if (this.state.contractProposalChatThreadId) {
       return (
         <BasicLayout navigation={this.props.navigation}>
-          <Chat onBackClick={() => this.setState({contractProposalChatThreadId: undefined})} threadId={this.state.contractProposalChatThreadId} />
+          <Chat onBackClick={() => this.setState({ contractProposalChatThreadId: undefined })} threadId={this.state.contractProposalChatThreadId} />
         </BasicLayout>
       );
     }

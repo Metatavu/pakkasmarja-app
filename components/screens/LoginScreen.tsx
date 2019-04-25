@@ -18,7 +18,6 @@ interface LoginDetails {
   realm?: string 
 }
 
-
 /**
  * Component props
  */
@@ -85,9 +84,7 @@ class LoginScreen extends React.Component<Props, State> {
    */
   sendLogin = (event: any) => {
     const loginData = this.state.loginDetails;
-    console.log(loginData.username || REACT_APP_DEFAULT_USER);
-    console.log(loginData.password || REACT_APP_DEFAULT_PASSWORD);
-
+    
     Auth.login({
       clientId: REACT_APP_AUTH_RESOURCE,
       url: `${REACT_APP_AUTH_SERVER_URL}/realms/${REACT_APP_AUTH_REALM}/protocol/openid-connect/token`,

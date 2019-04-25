@@ -87,14 +87,13 @@ export class FileService {
    * 
    */
   public async getFile(url: string): Promise<string> {
-    
     return RNFetchBlob.fetch('GET', url, {
       Authorization: `Bearer ${this.token}`
     })
       .then((res: any) => {
-        let status = res.info().status;
+        const status = res.info().status;
         if (status == 200) {
-          let base64Str = res.base64()
+          const base64Str = res.base64()
           return base64Str;
         }
       })
