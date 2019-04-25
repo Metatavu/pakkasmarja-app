@@ -107,7 +107,6 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       status: "PLANNED",
       amount: this.state.delivery.amount,
       price: this.state.delivery.price,
-      quality: "NORMAL",
       deliveryPlaceId: this.state.delivery.deliveryPlaceId
     }
     const updatedDelivery = await deliveriesService.updateDelivery(delivery, this.state.delivery.id);

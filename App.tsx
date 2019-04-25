@@ -28,6 +28,7 @@ import ViewWeekDeliveryPredictionScreen from "./components/screens/deliveries/Vi
 import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDeliveriesScreen";
 import NewDelivery from "./components/screens/deliveries/NewDelivery";
 import EditDelivery from "./components/screens/deliveries/EditDelivery";
+import strings from "./localization/strings";
 
 interface State {
   authenticated: boolean
@@ -77,6 +78,7 @@ export default class App extends React.Component<any, State> {
     this.state = {
       authenticated: false
     };
+    strings.setLanguage("fi");
   }
 
   render() {

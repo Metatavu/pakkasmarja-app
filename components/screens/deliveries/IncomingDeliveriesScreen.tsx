@@ -12,6 +12,7 @@ import { INCOMING_DELIVERIES_LOGO, INDELIVERY_LOGO, RED_LOGO } from "../../../st
 import { NavigationEvents } from "react-navigation";
 import moment from "moment";
 import Icon from "react-native-vector-icons/Feather";
+import * as _ from "lodash";
 
 /**
  * Component props
@@ -173,10 +174,10 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   private loadData = () => {
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const incomingDeliveriesData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status !== "DONE" && deliveryData.delivery.status !== "REJECTED");
-
+    const sortedByTimeIncomingDeliveriesData = _.sortBy(incomingDeliveriesData, [(deliveryProduct) => { return deliveryProduct.delivery.time; }]).reverse();
     const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
 
-    incomingDeliveriesData.forEach((delivery) => {
+    sortedByTimeIncomingDeliveriesData.forEach((delivery) => {
       const deliveryDate: string = moment(delivery.delivery.time).format("DD.MM.YYYY");
       const existingDeliveries: DeliveryProduct[] = deliveryData.get(deliveryDate) || [];
       existingDeliveries.push(delivery);

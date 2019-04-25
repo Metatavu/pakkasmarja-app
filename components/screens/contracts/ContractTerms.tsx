@@ -208,13 +208,13 @@ class ContractTerms extends React.Component<Props, State> {
               {`Satokautta ${this.state.contract ? this.state.contract.year : ""} koskeva sopimus`}
             </Text>
           </View>
-          <View>
+           <View>
             <TouchableOpacity onPress={this.downloadContractPdfClicked}>
               <Text style={styles.linkStyle}>
                 Lataa sopimus PDF - muodossa.
                 </Text>
             </TouchableOpacity>
-          </View>
+          </View> 
           <View>
             <CheckBox
               checked={this.state.acceptedTerms}

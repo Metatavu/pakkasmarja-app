@@ -89,7 +89,7 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <BasicLayout navigation={this.props.navigation}>
+      <BasicLayout displayFooter={true} navigation={this.props.navigation}>
         <Tabs>
           <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} tabStyle={styles.tab} heading={strings.chatsNavHeader}>
             { this.renderChatTab() }

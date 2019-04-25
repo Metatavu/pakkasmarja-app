@@ -11,6 +11,7 @@ import { WeekDeliveryPrediction, ItemGroup, ItemGroupCategory } from "pakkasmarj
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON } from "../../../static/images";
 import Icon from "react-native-vector-icons/Feather";
+import * as _ from "lodash";
 
 /**
  * Component props
@@ -127,17 +128,16 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     const Api = new PakkasmarjaApi();
     const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
     const weekDeliveryPredictions = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, this.props.accessToken.userId, undefined, undefined, undefined, 10);
+    const weekDeliveryPredictionTableData: WeekDeliveryPredictionTableData[] = this.state.weekDeliveryPredictionTableData;
     weekDeliveryPredictions.forEach((weekDeliveryPrediction) => {
-      const weekDeliveryPredictionState: WeekDeliveryPredictionTableData[] = this.state.weekDeliveryPredictionTableData;
       const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === weekDeliveryPrediction.itemGroupId);
-      weekDeliveryPredictionState.push({
+      weekDeliveryPredictionTableData.push({
         weekDeliveryPrediction: weekDeliveryPrediction,
         itemGroup: itemGroup ? itemGroup : {}
       });
-      this.setState({ weekDeliveryPredictionTableData: weekDeliveryPredictionState });
     });
-
-    this.setState({ loading: false });
+    const sortedByWeekTableData = _.sortBy(weekDeliveryPredictionTableData, [(weekDelivery) => { return weekDelivery.weekDeliveryPrediction.weekNumber; }]).reverse();
+    this.setState({ weekDeliveryPredictionTableData: sortedByWeekTableData, loading: false });
   }
 
   /**
@@ -203,7 +203,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
       );
     }
   }
-  
+
 }
 
 /**

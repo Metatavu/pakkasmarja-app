@@ -5,13 +5,16 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
-import { Delivery, Product } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryNote } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
 import Moment from "react-moment";
 import PakkasmarjaApi from "../../../api";
 import { NavigationEvents } from 'react-navigation';
-import Icon from "react-native-vector-icons/Feather";
+import FeatherIcon from "react-native-vector-icons/Feather";
+import Icon from "react-native-vector-icons/EvilIcons";
+import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
+import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
 
 /**
  * Component props
@@ -31,6 +34,10 @@ interface State {
   loading: boolean;
   editable: boolean;
   deliveryData?: DeliveryProduct;
+  deliveryNotes?: DeliveryNote[];
+  createModal: boolean;
+  editModal: boolean;
+  deliveryNoteId?: string;
 };
 
 /**
@@ -48,6 +55,8 @@ class DeliveryScreen extends React.Component<Props, State> {
     this.state = {
       loading: false,
       editable: false,
+      createModal: false,
+      editModal: false
     };
   }
 
@@ -63,7 +72,7 @@ class DeliveryScreen extends React.Component<Props, State> {
       },
       headerLeft:
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
-          <Icon
+          <FeatherIcon
             name='arrow-down-left'
             color='#fff'
             size={40}
@@ -82,6 +91,8 @@ class DeliveryScreen extends React.Component<Props, State> {
     }
     this.setState({ loading: true });
     await this.loadData();
+    await this.loadDeliveryNotes();
+    this.setState({ loading: false });
   }
 
   /**
@@ -104,7 +115,6 @@ class DeliveryScreen extends React.Component<Props, State> {
       status: "DELIVERY",
       amount: deliveryState.amount,
       price: deliveryState.price,
-      quality: deliveryState.quality,
       deliveryPlaceId: deliveryState.deliveryPlaceId
     }
 
@@ -152,7 +162,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     if (!this.props.deliveries) {
       return [];
     }
-    
+
     if (this.props.itemGroupCategory === "FROZEN") {
       return this.props.deliveries.frozenDeliveryData;
     }
@@ -175,11 +185,22 @@ class DeliveryScreen extends React.Component<Props, State> {
     const productsService = Api.getProductsService(this.props.accessToken.access_token);
     const delivery: Delivery = await deliveriesService.findDelivery(deliveryId);
     const product: Product = await productsService.findProduct(productId);
-
     const editable: boolean = this.props.navigation.getParam('editable');
     const deliveryData = { delivery, product }
+    this.setState({ editable: editable, deliveryData: deliveryData });
+  }
 
-    this.setState({ editable: editable, deliveryData: deliveryData, loading: false });
+  /**
+   * Load delivery notes
+   */
+  private loadDeliveryNotes = async () => {
+    if (!this.props.accessToken || !this.state.deliveryData) {
+      return;
+    }
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const deliveryNotes: DeliveryNote[] = await deliveriesService.listDeliveryNotes(this.state.deliveryData.delivery.id || "");
+    this.setState({ deliveryNotes });
   }
 
   /**
@@ -224,6 +245,34 @@ class DeliveryScreen extends React.Component<Props, State> {
           {
             this.state.editable &&
             <React.Fragment>
+              {
+                this.state.deliveryNotes ?
+                  this.state.deliveryNotes.map((deliveryNote: DeliveryNote, index) => {
+                    return (
+                      <View key={index} style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
+                        <TouchableOpacity onPress={() => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true })}>
+                          <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
+                            <Icon size={25} style={{ color: "#e01e36" }} name="pencil" />
+                            <Text style={{ fontSize: 16, color: "#e01e36" }} >
+                              {`Katso/poista huomio ${index + 1}`}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })
+                  : null
+              }
+              <View style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
+                <TouchableOpacity onPress={() => this.setState({ createModal: true })}>
+                  <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
+                    <Icon size={25} style={{ color: "#e01e36" }} name="pencil" />
+                    <Text style={{ fontSize: 16, color: "#e01e36" }} >
+                      {`Lisää huomio`}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
               <View style={[styles.center, { flex: 1, paddingVertical: 25 }]}>
                 <TouchableOpacity onPress={() => {
                   this.props.navigation.navigate("EditDelivery", {
@@ -245,6 +294,19 @@ class DeliveryScreen extends React.Component<Props, State> {
             </React.Fragment>
           }
         </View>
+        <CreateDeliveryNoteModal
+          loadDeliveryNotes={this.loadDeliveryNotes}
+          deliveryId={this.state.deliveryData.delivery.id || ""}
+          modalClose={() => this.setState({ createModal: false })}
+          modalOpen={this.state.createModal}
+        />
+        <ViewOrDeleteNoteModal
+          loadDeliveryNotes={this.loadDeliveryNotes}
+          deliveryId={this.state.deliveryData.delivery.id || ""}
+          deliveryNoteId={this.state.deliveryNoteId || ""}
+          modalClose={() => this.setState({ editModal: false })}
+          modalOpen={this.state.editModal}
+        />
       </BasicScrollLayout>
     );
   }
