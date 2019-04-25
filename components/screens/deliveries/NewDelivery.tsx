@@ -50,6 +50,9 @@ interface State {
     fileUri: string,
     fileType: string
   };
+  deliveryTimeOptions: { label: string, value: number }[];
+  deliveryTimeValue: number;
+  noteEditable: boolean;
 };
 
 /**
@@ -78,7 +81,10 @@ class NewDelivery extends React.Component<Props, State> {
         imageType: "",
         text: ""
       },
-      deliveryNotes: []
+      deliveryNotes: [],
+      deliveryTimeOptions: [{ label: "Ennen klo 11", value: 11 }, { label: "Jälkeen klo 11", value: 17 }],
+      noteEditable: false,
+      deliveryTimeValue: 11
     };
   }
 
@@ -195,26 +201,29 @@ class NewDelivery extends React.Component<Props, State> {
     const Api = new PakkasmarjaApi();
     const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
 
+    let time: string | Date = moment(this.state.selectedDate).format("YYYY-MM-DD");
+    time = `${time} ${this.state.deliveryTimeValue}:00 +0000`
+    time = moment(time, "YYYY-MM-DD HH:mm Z").toDate();
+
     const delivery: Delivery = {
       id: "",
       productId: this.state.productId,
       userId: this.props.accessToken.userId,
-      time: this.state.selectedDate,
+      time: time,
       status: "PLANNED",
       amount: this.state.amount,
       price: this.state.price,
-      quality: "NORMAL",
       deliveryPlaceId: this.state.deliveryPlaceId
     }
 
-    const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
-
-    await Promise.all(this.state.deliveryNotes.map((deliveryNote): Promise<DeliveryNote | null> => {
-      return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
-    }));
-
-    this.updateDeliveries(createdDelivery);
-    this.props.navigation.navigate("IncomingDeliveries");
+    if (delivery.amount > 0) {
+      const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
+      await Promise.all(this.state.deliveryNotes.map((deliveryNote): Promise<DeliveryNote | null> => {
+        return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
+      }));
+      this.updateDeliveries(createdDelivery);
+      this.props.navigation.navigate("IncomingDeliveries");
+    }
   }
 
   /**
@@ -363,36 +372,63 @@ class NewDelivery extends React.Component<Props, State> {
               rounded
             />
           </View>
-          <View style={{ flex: 1 }}>
-            <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-              <Text style={styles.textWithSpace}>Toimituspäivä</Text>
-            </View>
-            <TouchableOpacity style={[styles.pickerWrap, { width: "100%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
-              <View style={{ flex: 1, flexDirection: "row" }}>
-                <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
-                  <Text style={{ paddingLeft: 10 }}>
-                    {
-                      this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
-                    }
-                  </Text>
-                </View>
-                <View style={[styles.center, { flex: 0.6 }]}>
-                  {this.state.selectedDate ?
-                    <Icon
-                      style={{ color: "#e01e36" }}
-                      onPress={this.removeDate}
-                      type={"AntDesign"}
-                      name="close" />
-                    :
-                    <Icon
-                      style={{ color: "#e01e36" }}
-                      type="AntDesign"
-                      name="calendar"
-                    />
-                  }
-                </View>
+          <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
+            <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+                <Text style={styles.textWithSpace}>Toimituspäivä</Text>
               </View>
-            </TouchableOpacity>
+              <TouchableOpacity style={[styles.pickerWrap, { width: "98%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
+                <View style={{ flex: 1, flexDirection: "row" }}>
+                  <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
+                    <Text style={{ paddingLeft: 10 }}>
+                      {
+                        this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
+                      }
+                    </Text>
+                  </View>
+                  <View style={[styles.center, { flex: 0.6 }]}>
+                    {this.state.selectedDate ?
+                      <Icon
+                        style={{ color: "#e01e36" }}
+                        onPress={this.removeDate}
+                        type={"AntDesign"}
+                        name="close" />
+                      :
+                      <Icon
+                        style={{ color: "#e01e36" }}
+                        type="AntDesign"
+                        name="calendar"
+                      />
+                    }
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flex: 1, marginLeft: "4%" }}>
+              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+                <Text style={styles.textWithSpace}>Klo</Text>
+              </View>
+              <View style={[styles.pickerWrap, { width: "100%" }]}>
+                <Picker
+                  selectedValue={this.state.deliveryTimeValue}
+                  style={{ height: 50, width: "100%" }}
+                  onValueChange={(itemValue) =>
+                    this.onUserInputChange("deliveryTimeValue", itemValue)
+                  }>
+                  {
+                    this.state.deliveryTimeOptions.map((deliveryTime) => {
+                      return (
+                        <Picker.Item
+                          key={deliveryTime.label}
+                          label={deliveryTime.label || ""}
+                          value={deliveryTime.value}
+                        />
+                      );
+                    })
+                  }
+                </Picker>
+              </View>
+            </View>
             <DateTimePicker
               mode="date"
               isVisible={this.state.datepickerVisible}
@@ -421,24 +457,52 @@ class NewDelivery extends React.Component<Props, State> {
             </Picker>
           </View>
           <View style={{ flex: 1 }}>
+            {
+              this.state.deliveryNotes.length > 0 ?
+                this.state.deliveryNotes.map((deliveryNoteData, index) => {
+                  return (
+                    <View key={index} style={[styles.center, { flex: 1, paddingVertical: 15 }]}>
+                      <TouchableOpacity onPress={() => this.setState({ deliveryNoteData, noteEditable: true, modalOpen: true })}>
+                        <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
+                          <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
+                          <Text style={{ color: "#e01e36" }} >
+                            {`Muokkaa huomiota ${index + 1}`}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })
+                : null
+            }
             <View style={[styles.center, { flex: 1, paddingVertical: 15 }]}>
-              <TouchableOpacity onPress={() => this.setState({ modalOpen: true })}>
+              <TouchableOpacity onPress={() =>
+                this.setState({
+                  deliveryNoteData: {
+                    imageUri: "",
+                    imageType: "",
+                    text: ""
+                  },
+                  noteEditable: false,
+                  modalOpen: true
+                })}>
                 <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
                   <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
                   <Text style={{ color: "#e01e36" }} >
-                    {`Lisää huomio (${this.state.deliveryNotes.length})`}
+                    {`Lisää huomio`}
                   </Text>
                 </View>
               </TouchableOpacity>
             </View>
             <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60 }]} onPress={this.handleDeliverySubmit}>
+              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop:15 }]} onPress={this.handleDeliverySubmit}>
                 <Text style={styles.buttonText}>Tallenna</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
         <DeliveryNoteModal
+          editable={this.state.noteEditable}
           imageUri={this.state.deliveryNoteData ? this.state.deliveryNoteData.imageUri : undefined}
           onCreateNoteClick={this.onCreateNoteClick}
           deliveryNoteData={this.state.deliveryNoteData}

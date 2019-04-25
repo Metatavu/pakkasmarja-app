@@ -1,18 +1,15 @@
 import React, { Dispatch } from "react";
-import BasicLayout from "../../layout/BasicLayout";
 import TopBar from "../../layout/TopBar";
 import PakkasmarjaApi from "../../../api";
 import Moment from 'react-moment';
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
-import { Text, List, View } from 'native-base';
+import { Text, List, View, Spinner } from 'native-base';
 import { AccessToken, StoreState } from "../../../types";
-import { ScrollView, TouchableHighlight } from "react-native";
 import { NewsArticle } from "pakkasmarja-client";
-import { styles } from "../contracts/styles";
 import { ListItem } from "react-native-elements";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
-import Icon from "react-native-vector-icons/Feather";
+import * as _ from "lodash"
 
 /**
  * Component props
@@ -26,7 +23,8 @@ interface Props {
  * Component state
  */
 interface State {
-  newsArticles: NewsArticle[]
+  newsArticles: NewsArticle[],
+  loading: boolean
 };
 
 /**
@@ -42,7 +40,8 @@ class NewsListScreen extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      newsArticles: []
+      newsArticles: [],
+      loading: false
     };
   }
 
@@ -70,11 +69,12 @@ class NewsListScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-
+    this.setState({ loading: true });
     const Api = new PakkasmarjaApi();
     const newsArticleService = await Api.getNewsArticlesService(this.props.accessToken.access_token);
     const newsArticles = await newsArticleService.listNewsArticles();
-    this.setState({ newsArticles: newsArticles });
+    const sortedNewsArticles = _.sortBy(newsArticles, [(newsArticle) => { return newsArticle.updatedAt; }]).reverse();
+    this.setState({ newsArticles: sortedNewsArticles, loading: false });
   }
 
   /**
@@ -90,6 +90,13 @@ class NewsListScreen extends React.Component<Props, State> {
    * Component render method
    */
   public render() {
+    if (this.state.loading) {
+      return (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Spinner color="red" />
+        </View>
+      );
+    }
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View >

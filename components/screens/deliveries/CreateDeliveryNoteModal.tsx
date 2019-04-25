@@ -6,6 +6,10 @@ import { AccessToken, StoreState, DeliveryNoteData, DeliveryNoteDataKeys } from 
 import { View, TouchableOpacity, TextInput, Modal, Image } from "react-native";
 import { styles } from "./styles.tsx";
 import ImagePicker from 'react-native-image-picker';
+import { FileService, FileResponse } from "../../../api/file.service";
+import { DeliveryNote } from "pakkasmarja-client";
+import PakkasmarjaApi from "../../../api";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 /**
  * Interface for component props
@@ -13,13 +17,9 @@ import ImagePicker from 'react-native-image-picker';
 interface Props {
   accessToken?: AccessToken;
   modalOpen: boolean;
-  onDeliveryNoteChange: (note: DeliveryNoteData) => void;
-  onDeliveryNoteImageChange: (fileUri?: string, fileType?: string) => void;
-  imageUri?: string,
-  onCreateNoteClick: () => void;
-  deliveryNoteData: DeliveryNoteData;
+  deliveryId: string;
   modalClose: () => void;
-  editable: boolean;
+  loadDeliveryNotes: () => void;
 };
 
 /**
@@ -27,22 +27,31 @@ interface Props {
  */
 interface State {
   modalOpen: boolean,
-  id?: string;
-  text?: string;
-  image?: string;
+  deliveryNoteData: DeliveryNoteData;
+  deliveryNoteFile?: {
+    fileUri: string,
+    fileType: string
+  };
+  deliveryId: string;
 };
 
 /**
- * Delivery note modal component class
+ * Create delivery note modal component class
  */
-class DeliveryNoteModal extends React.Component<Props, State> {
+class CreateDeliveryNoteModal extends React.Component<Props, State> {
   /**
    * Constructor
    */
   constructor(props: Props) {
     super(props);
     this.state = {
-      modalOpen: false
+      modalOpen: false,
+      deliveryNoteData: {
+        imageUri: "",
+        imageType: "",
+        text: ""
+      },
+      deliveryId: ""
     };
   }
 
@@ -55,10 +64,13 @@ class DeliveryNoteModal extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    if (this.props.deliveryNoteData !== prevProps.deliveryNoteData) {
+    if (this.props.modalOpen !== prevProps.modalOpen && this.props.modalOpen) {
       this.setState({
-        text: this.props.deliveryNoteData.text,
-        image: this.props.deliveryNoteData.imageUri
+        deliveryNoteData: {
+          imageUri: "",
+          imageType: "",
+          text: ""
+        }
       });
     }
   }
@@ -70,39 +82,57 @@ class DeliveryNoteModal extends React.Component<Props, State> {
    * @param value value
    */
   private onDeliveryDataChange = (key: DeliveryNoteDataKeys, value: string) => {
-    const deliveryData: DeliveryNoteData = this.props.deliveryNoteData;
+    const deliveryNoteData: DeliveryNoteData = this.state.deliveryNoteData;
 
     switch (key) {
       case "imageType":
-        deliveryData.imageType = value;
+        deliveryNoteData.imageType = value;
         break;
       case "imageUri":
-        deliveryData.imageUri = value;
+        deliveryNoteData.imageUri = value;
         break;
       case "text":
-        deliveryData.text = value;
+        deliveryNoteData.text = value;
     }
 
-    this.props.onDeliveryNoteChange(deliveryData);
+    this.setState({ deliveryNoteData });
   }
 
   /**
    * Discard delivery message
    */
   private discardDeliveryMessage = () => {
-    this.props.onDeliveryNoteChange({
+    const deliveryNoteData: DeliveryNoteData = {
       imageUri: "",
       imageType: "",
       text: ""
-    });
+    }
+    this.setState({ deliveryNoteData });
     this.props.modalClose();
   }
 
   /**
-   * Create delivery message
+   * Create delivery note
    */
-  private createDeliveryMessage = () => {
-    this.props.onCreateNoteClick();
+  private createDeliveryNote = async () => {
+    if (!this.props.accessToken || !this.props.accessToken.access_token) {
+      return;
+    }
+    const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
+    let image: FileResponse | undefined = undefined;
+
+    if (this.state.deliveryNoteData.imageUri && this.state.deliveryNoteData.imageType) {
+      image = await fileService.uploadFile(this.state.deliveryNoteData.imageUri, this.state.deliveryNoteData.imageType);
+    }
+
+    const deliveryNote: DeliveryNote = {
+      text: this.state.deliveryNoteData.text,
+      image: image ? image.url : undefined
+    };
+    const Api = new PakkasmarjaApi();
+    const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+    await deliveryService.createDeliveryNote(deliveryNote, this.props.deliveryId || "");
+    this.props.loadDeliveryNotes();
     this.props.modalClose();
   }
 
@@ -148,11 +178,10 @@ class DeliveryNoteModal extends React.Component<Props, State> {
    * Remove image
    */
   private removeImage = () => {
-    const deliveryData: DeliveryNoteData = this.props.deliveryNoteData;
-    deliveryData.imageUri = "";
-    deliveryData.imageType = "";
-
-    this.props.onDeliveryNoteChange(deliveryData);
+    const deliveryNoteData: DeliveryNoteData = this.state.deliveryNoteData;
+    deliveryNoteData.imageUri = "";
+    deliveryNoteData.imageType = "";
+    this.setState({ deliveryNoteData });
   }
 
   /**
@@ -179,7 +208,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                 </Text>
               </View>
               {
-                !this.props.imageUri &&
+                !this.state.deliveryNoteData.imageUri &&
                 <View>
                   <Text style={styles.text}>Lisää kuva</Text>
                   <TouchableOpacity style={styles.whiteButton} onPress={this.openImagePicker}>
@@ -188,10 +217,10 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                 </View>
               }
               {
-                this.props.imageUri ?
+                this.state.deliveryNoteData.imageUri ?
                   <View style={{ width: "100%", height: 200, justifyContent: "center", alignItems: "center" }}>
                     <Image
-                      source={{ uri: this.props.imageUri }}
+                      source={{ uri: this.state.deliveryNoteData.imageUri }}
                       style={{ flex: 1, width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }}
                     />
                     <TouchableOpacity style={styles.whiteButton} onPress={this.removeImage}>
@@ -206,27 +235,18 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                   multiline={true}
                   numberOfLines={4}
                   style={styles.textInput}
-                  value={this.props.deliveryNoteData.text}
+                  value={this.state.deliveryNoteData.text}
                   onChangeText={(text: string) => this.onDeliveryDataChange("text", text)}
                 />
               </View>
-              {
-                this.props.editable ?
-                  <View style={{ marginTop: 20, flex: 1, alignContent: "center" }}>
-                    <TouchableOpacity style={[styles.redButton]} onPress={this.props.modalClose}>
-                      <Text style={styles.buttonText}>Tallenna muutokset</Text>
-                    </TouchableOpacity>
-                  </View>
-                  :
-                  <View style={[styles.flexView, { marginTop: 20 }]}>
-                    <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.discardDeliveryMessage}>
-                      <Text style={styles.smallWhiteButtonText}>Peruuta</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.smallRedButton} onPress={this.createDeliveryMessage}>
-                      <Text style={styles.buttonText}>Tallenna</Text>
-                    </TouchableOpacity>
-                  </View>
-              }
+              <View style={[styles.flexView, { marginTop: 20 }]}>
+                <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.discardDeliveryMessage}>
+                  <Text style={styles.smallWhiteButtonText}>Peruuta</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.smallRedButton} onPress={this.createDeliveryNote}>
+                  <Text style={styles.buttonText}>Tallenna</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -257,4 +277,4 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(DeliveryNoteModal);
+export default connect(mapStateToProps, mapDispatchToProps)(CreateDeliveryNoteModal);
