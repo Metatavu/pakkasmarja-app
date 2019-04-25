@@ -1,19 +1,24 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 
 /**
  * Styles
  */
 export const styles = StyleSheet.create({
-
+  deliveryContainer: {
+    padding: 15
+  },
   tab: {
     backgroundColor: "#E51D2A"
   },
   activeTab: {
-    color: "#000000",
+    color: "#fff",
     fontWeight: "bold"
   },
+  activeText: {
+    color: "#fff"
+  },
   pickerWrap: {
-    height: 50,
+    height: Platform.OS === "ios" ? 40 : 50,
     backgroundColor: '#fafafa',
     borderColor: "#e01e36",
     borderWidth: 1,
@@ -176,7 +181,7 @@ export const styles = StyleSheet.create({
     color: "white"
   },
   numericInputContainer: {
-    width: 380,
+    width: "100%",
     height: 70,
     borderRadius: 7,
     borderColor: "#e01e36",

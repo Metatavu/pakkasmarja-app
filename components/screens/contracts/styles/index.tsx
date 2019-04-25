@@ -199,7 +199,7 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1
   },
   contractHeaderTitle: {
-    fontFamily: "Sans Serif",
+    //fontFamily: "Sans Serif",
     padding: 15,
     fontWeight: "bold",
     color: "#e01e36",

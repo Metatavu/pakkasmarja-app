@@ -288,7 +288,7 @@ class ContractsScreen extends React.Component<Props, State> {
     const api = new PakkasmarjaApi();
     const questionGroupThreads = await api.getChatThreadsService(accessToken.access_token).listChatThreads(questionGroupId);
     if (questionGroupThreads.length != 1) {
-      return //Application is misconfigured, bail out.
+      return; //Application is misconfigured, bail out.
     } 
 
     await api.getChatMessagesService(accessToken.access_token).createChatMessage({

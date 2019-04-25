@@ -1,9 +1,10 @@
 import React from "react";
 import { Text } from "native-base";
-import { View, TouchableOpacity, Picker, TextInput } from "react-native";
+import { View, TouchableOpacity, Picker, TextInput, Platform } from "react-native";
 import Modal from "react-native-modal";
 import { ItemGroup } from "pakkasmarja-client";
 import { styles } from "./styles";
+import ModalSelector from 'react-native-modal-selector';
 
 /**
  * Interface for component props
@@ -64,7 +65,8 @@ export default class ContractProposalModal extends React.Component<Props, State>
               </Text>
             </View>
             <View>
-              <View style={{
+              {Platform.OS !== "ios" &&
+                <View style={{
                   height: 50,
                   width: "100%",
                   backgroundColor: 'white',
@@ -72,21 +74,35 @@ export default class ContractProposalModal extends React.Component<Props, State>
                   borderWidth: 1,
                   borderRadius: 4
                 }}>
-              <Picker
-                selectedValue={this.props.selectedBerry}
-                style={{height:50,width:"100%", color:"black"}}
-                onValueChange={(itemValue, itemIndex) =>
-                  this.props.onSelectedBerryChange(itemValue)
-                }>
-                {
-                  this.props.itemGroups.map((itemGroup) => {
-                    return (
-                      <Picker.Item key={itemGroup.id} label={itemGroup.name || ""} value={itemGroup.id} />
-                    );
-                  })
-                }
-              </Picker>
-              </View>
+                  <Picker
+                    selectedValue={this.props.selectedBerry}
+                    style={{height:50,width:"100%", color:"black"}}
+                    onValueChange={(itemValue, itemIndex) =>
+                      this.props.onSelectedBerryChange(itemValue)
+                    }>
+                    {
+                      this.props.itemGroups.map((itemGroup) => {
+                        return (
+                          <Picker.Item key={itemGroup.id} label={itemGroup.name || ""} value={itemGroup.id} />
+                        );
+                      })
+                    }
+                  </Picker>
+                </View>
+            }
+            {
+              Platform.OS === "ios" &&
+                <ModalSelector
+                  data={this.props.itemGroups && this.props.itemGroups.map((itemGroup) => {
+                    return {
+                      key: itemGroup.id,
+                      label: itemGroup.displayName || itemGroup.name
+                    };
+                  })}
+                  selectedKey={this.props.selectedBerry}
+                  initValue="Valitse marjalaji"
+                  onChange={(option: any)=>{ this.props.onSelectedBerryChange(option.key) }} />
+            }
             </View>
             <View>
               <Text style={styles.Text}>Määrä</Text>
@@ -101,8 +117,8 @@ export default class ContractProposalModal extends React.Component<Props, State>
               <Text style={styles.Text}>Kommentti</Text>
               <TextInput
                 multiline={true}
-                numberOfLines={4}
-                style={styles.textInput}
+                numberOfLines={Platform.OS === 'ios' ? undefined : 4}
+                style={{... styles.textInput, height: Platform.OS === "ios" ? 80 : undefined}}
                 value={this.props.quantityComment}
                 onChangeText={(text: string) => this.props.onQuantityCommentChange(text)}
               />

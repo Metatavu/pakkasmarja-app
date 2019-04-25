@@ -1,12 +1,13 @@
 import React, { Dispatch } from "react";
 import { connect } from "react-redux";
-import { View, TouchableHighlight } from "react-native";
+import { View, TouchableHighlight, Dimensions, Platform } from "react-native";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { StoreState, AccessToken } from "../../types";
 import * as actions from "../../actions";
 import { Thumbnail } from "native-base";
 import { TOP_LOGO } from "../../static/images";
 import { styles } from "../screens/deliveries/styles.tsx";
+import { Text } from "react-native-elements";
 
 /**
  * Component props
@@ -18,6 +19,7 @@ interface Props {
   showHeader?: boolean,
   showCancel?: boolean
   textColor?: string
+  frontPage?: boolean;
   accessToken?: AccessToken
   secondaryNavItems?: any
   navigation?: any
@@ -44,10 +46,7 @@ class TopBar extends React.Component<Props, State> {
     this.state = {};
   }
 
-  /**
-   * Component render method
-   */
-  public render() {
+  private renderFrontPageTopBar = () => {
     return (
       <React.Fragment>
         <View style={styles.center}>
@@ -65,6 +64,35 @@ class TopBar extends React.Component<Props, State> {
           </TouchableHighlight>
         </View>
       </React.Fragment>
+    );
+  }
+
+  /**
+   * Component render method
+   */
+  public render() {
+    if (this.props.frontPage) {
+      return this.renderFrontPageTopBar()
+    }
+
+    const width = Dimensions.get("screen").width;
+    const align = Platform.OS === "ios" ? "flex-end" : "center";
+
+    return (
+      <View style={{width: (width / 3) * 2, marginLeft: width / 3, flex: 0, flexDirection: "row", alignContent: "space-around"}}>
+        <View style={{... styles.center, alignContent: align, justifyContent: align, alignItems: align}}>
+          <Thumbnail source={TOP_LOGO} />
+        </View>
+        <View style={{... styles.center, alignContent: align, alignItems: align}}>
+          <TouchableHighlight >
+            <Icon
+              name='user'
+              color='#fff'
+              size={30}
+            />
+          </TouchableHighlight>
+        </View>
+      </View>
     );
   }
 

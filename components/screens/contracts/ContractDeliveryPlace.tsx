@@ -1,8 +1,9 @@
 import React from "react";
-import { Text } from "native-base";
-import { View, Picker, TextInput } from "react-native";
+import { Text, Button } from "native-base";
+import { View, Picker, TextInput, Platform } from "react-native";
 import { Contract, DeliveryPlace } from "pakkasmarja-client";
 import { styles } from "./styles";
+import ModalSelector from 'react-native-modal-selector';
 
 /**
  * Interface for component props
@@ -21,7 +22,9 @@ interface Props {
  * Interface for component state
  */
 interface State {
-  proposedDeliveryPlace?: string
+  proposedDeliveryPlace?: string;
+  pickerOpacity: number;
+  buttonOpacity: number;
 };
 
 export default class ContractDeliveryPlace extends React.Component<Props, State> {
@@ -31,6 +34,8 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
   constructor(props: Props) {
     super(props);
     this.state = {
+      pickerOpacity: 0,
+      buttonOpacity: 1
     };
   }
 
@@ -57,7 +62,6 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
     this.props.onUserInputChange("deliveryPlaceComment", value);
   }
 
-
   /**
    * Render method
    */
@@ -69,28 +73,43 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
             Toimituspaikka
           </Text>
           <View style={{
-            height: 50,
+            height: Platform.OS === "ios" ? 40 : 50,
             width: "100%",
             backgroundColor: 'white',
             borderColor: "red",
             borderWidth: 1,
             borderRadius: 4
           }}>
-            <Picker
-              selectedValue={this.props.selectedPlaceId}
-              enabled={!this.props.isActiveContract}
-              style={{height:50,width:"100%", color:"black"}}
-              onValueChange={(itemValue, itemIndex) =>
-                this.props.onUserInputChange("deliveryPlaceId", itemValue)
-              }>
-              {
-                this.props.deliveryPlaces && this.props.deliveryPlaces.map((deliveryPlace) => {
-                  return (
-                    <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace.id} />
-                  );
-                })
-              }
-            </Picker>
+            {Platform.OS !== "ios" &&
+              <Picker
+                selectedValue={this.props.selectedPlaceId}
+                enabled={!this.props.isActiveContract}
+                style={{height:50,width:"100%", color:"black"}}
+                onValueChange={(itemValue, itemIndex) =>
+                  this.props.onUserInputChange("deliveryPlaceId", itemValue)
+                }>
+                {
+                  this.props.deliveryPlaces && this.props.deliveryPlaces.map((deliveryPlace) => {
+                    return (
+                      <Picker.Item key={deliveryPlace.id} label={deliveryPlace.name || ""} value={deliveryPlace.id} />
+                    );
+                  })
+                }
+              </Picker>
+            }
+            {
+              Platform.OS === "ios" &&
+                <ModalSelector
+                  data={this.props.deliveryPlaces && this.props.deliveryPlaces.map((deliveryPlace) => {
+                    return {
+                      key: deliveryPlace.id,
+                      label: deliveryPlace.name
+                    };
+                  })}
+                  selectedKey={this.props.selectedPlaceId}
+                  initValue="Valitse toimituspaikka"
+                  onChange={(option: any)=>{ this.props.onUserInputChange("deliveryPlaceId", option.key) }} />
+            }
           </View>
         </View>
         <View>
@@ -105,9 +124,9 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
           <Text style={[styles.textWithSpace, styles.textSize]}>Kommentti</Text>
           <TextInput
             multiline={true}
-            numberOfLines={4}
+            numberOfLines={Platform.OS === 'ios' ? undefined : 4}
+            style={{... styles.textInput, height: Platform.OS === "ios" ? 80 : undefined}}
             editable={!this.props.isActiveContract}
-            style={styles.textAreaInput}
             value={this.props.deliveryPlaceComment}
             onChangeText={(text: string) => this.onDeliveryPlaceChange(text)}
           />

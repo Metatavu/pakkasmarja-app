@@ -1,7 +1,7 @@
 import React, { Dispatch } from "react";
 import { AccessToken, StoreState } from "../../../types";
 import { Text } from "native-base";
-import { View, TouchableOpacity, StyleSheet, TextInput } from "react-native";
+import { View, TouchableOpacity, StyleSheet, TextInput, Platform } from "react-native";
 import Modal from "react-native-modal";
 import { Contract } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
@@ -85,8 +85,8 @@ class ContractRejectModal extends React.Component<Props, State> {
             <View>
               <TextInput 
                 multiline = {true}
-                numberOfLines = {4}
-                style={styles.textInput}
+                numberOfLines={Platform.OS === 'ios' ? undefined : 4}
+                style={{... styles.textInput, height: Platform.OS === "ios" ? 80 : undefined}}
                 value={this.props.rejectComment}
                 onChangeText={(text:string) => this.props.onUserInputChange("rejectComment", text)}
               />

@@ -4,7 +4,7 @@ import Moment from 'react-moment';
 import AutoResizeHeightWebView from "react-native-autoreheight-webview"
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
-import { Text, View } from 'native-base';
+import { Text, View, Spinner } from 'native-base';
 import { AccessToken, StoreState } from "../../../types";
 import { NewsArticle } from "pakkasmarja-client";
 import { styles } from "../contracts/styles";
@@ -13,6 +13,9 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import { Image, StyleSheet, TouchableHighlight } from "react-native";
 import Lightbox from 'react-native-lightbox';
 import Icon from "react-native-vector-icons/Feather";
+import moment from "moment";
+import { FileService } from "../../../api/file.service";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 /**
  * Component props
@@ -26,7 +29,9 @@ interface Props {
  * Component state
  */
 interface State {
-  newsArticle: NewsArticle
+  newsArticle: NewsArticle;
+  imageData?: string;
+  loading: boolean;
 };
 
 const imageStyles = StyleSheet.create({
@@ -56,7 +61,8 @@ class NewsArticleScreen extends React.Component<Props, State> {
       newsArticle: {
         title: "",
         contents: ""
-      }
+      },
+      loading: false
     };
   }
 
@@ -93,55 +99,81 @@ class NewsArticleScreen extends React.Component<Props, State> {
       return;
     }
 
+    this.setState({ loading: true });
+
     if (this.props.navigation.getParam('newsArticle')) {
-      this.setState({ newsArticle: this.props.navigation.getParam('newsArticle') });
+      const newsArticle = this.props.navigation.getParam('newsArticle');
+      this.setState({ newsArticle: newsArticle });
+
+      if (newsArticle.imageUrl) {
+        const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
+        const imageData = await fileService.getFile(newsArticle.imageUrl);
+        this.setState({ imageData: imageData });
+      }
     }
 
+    this.setState({ loading: false });
   }
 
   /**
    * Component render method
    */
   public render() {
+    if (this.state.loading) {
+      return (
+        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+          <Spinner color="red" />
+        </View>
+      );
+    }
     const { accessToken } = this.props;
     if (!accessToken) {
       return null;
     }
 
+    const title = this.state.newsArticle.title;
+    const date = moment(this.state.newsArticle.createdAt).format("DD.MM.YYYY HH:mm");
+    const imageData = this.state.imageData;
+
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View style={{ padding: 15 }}>
-          <Text style={[{ fontSize: 24 }, styles.TextBold]}>{this.state.newsArticle.title}</Text>
-          <Moment
-            style={{ fontSize: 16, marginBottom: 15, color: "gray" }}
-            format="DD.MM.YYYY HH:mm" element={Text}
-          >
-            {this.state.newsArticle.createdAt ? this.state.newsArticle.createdAt.toString() : undefined}
-          </Moment>
-          <Divider />
-          {this.state.newsArticle.imageUrl &&
-            <Lightbox
-              activeProps={{
-                style: imageStyles.imageActive,
-              }}
-            >
-              <Image style={imageStyles.image} source={{uri: this.state.newsArticle.imageUrl, headers: {"Authorization": `Bearer ${accessToken.access_token}`}}} />
-            </Lightbox>
-          }
-        </View>
         <AutoResizeHeightWebView
           defaultHeight={400}
           AnimationDuration={0}
+          scalesPageToFit={true}
           source={{
             html: `
             <html>
             <head>
+              <meta charset="utf-8"/>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <link rel="stylesheet" href="https://cdn.metatavu.io/libs/bootstrap/4.0.0/css/bootstrap.css"/>
               <style>
-                h1{font-size:24px;}
-                p{font-size:20px;}
+                h1{ 
+                  font-size: 24px
+                }
               </style>
             </head>
-            <body>${this.state.newsArticle.contents}</body>
+            <body>
+            <div class="container">
+              <h1>${title}</h1>
+              <p>${date}</p>
+              ${imageData ? '<img src="data:image/jpeg;base64,'+imageData+'" style="width:100%;"/>' : ''}
+              ${this.state.newsArticle.contents}
+            </div>
+            </body>
+            <script>
+              function onPageLoaded() {
+                window.postMessage("asd");
+                if (window.postMessage.length !== 1){
+                  setTimeout(onPageLoaded, 200);
+                }
+                else {
+                  window.postMessage(window.location.href);
+                }
+              }
+              window.onload = onPageLoaded();
+            </script>
             </html>`
           }}
         />

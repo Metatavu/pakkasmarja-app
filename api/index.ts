@@ -18,6 +18,7 @@ export default class PakkasmarjaApi {
    */
   constructor(basePath?: string) {
     this.basePath = basePath ? basePath : `${REACT_APP_API_URL}/rest/v1`;
+    console.log(REACT_APP_API_URL);
   }
 
   private getApi() {

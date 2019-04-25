@@ -1,10 +1,18 @@
 import uuid from "uuid";
+import RNFetchBlob from 'rn-fetch-blob';
 
 /**
  * Interface describing file upload response
  */
 export interface FileResponse {
   url: string
+}
+
+/**
+ * Interface for image base64 response
+ */
+export interface ImageBase64Response {
+  data: string;
 }
 
 /**
@@ -51,15 +59,15 @@ export class FileService {
       method: "POST",
       body: data
     })
-    .then((res) => { return res.json() })
-    .catch((err) => { console.log(err) });
+      .then((res) => { return res.json() })
+      .catch((err) => { console.log(err) });
   }
 
-    /**
-   * Resolves file extension
-   * 
-   * @param contentType content type
-   */
+  /**
+ * Resolves file extension
+ * 
+ * @param contentType content type
+ */
   private getFileExtension(contentType: string) {
     switch (contentType) {
       case "image/jpeg":
@@ -71,5 +79,27 @@ export class FileService {
         return "";
     }
   };
-  
+
+  /**
+   * Get image
+   * 
+   * @param url file url
+   * 
+   */
+  public async getFile(url: string): Promise<string> {
+    
+    return RNFetchBlob.fetch('GET', url, {
+      Authorization: `Bearer ${this.token}`
+    })
+      .then((res: any) => {
+        let status = res.info().status;
+        if (status == 200) {
+          let base64Str = res.base64()
+          return base64Str;
+        }
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  }
 }
