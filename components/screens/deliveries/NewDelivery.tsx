@@ -325,7 +325,6 @@ class NewDelivery extends React.Component<Props, State> {
     const newDeliveryNotes = deliveryNotes.filter((deliverynote)=>{
       return deliverynote !== deliveryNote;
     });
-    console.log(newDeliveryNotes);
     this.setState({ deliveryNotes: newDeliveryNotes, modalOpen: false });
   }
 
