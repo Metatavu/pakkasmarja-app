@@ -1,8 +1,8 @@
 import React, { Dispatch } from "react";
 import PakkasmarjaApi from "../../../api";
 import { AccessToken, StoreState, ModalButton } from "../../../types";
-import { Text } from "native-base";
-import { View, TouchableOpacity, Picker, TextInput, StyleSheet, WebView, Alert, TouchableHighlight } from "react-native";
+import { Text, Spinner } from "native-base";
+import { View, TouchableOpacity, Picker, TextInput, StyleSheet, WebView, Alert, TouchableHighlight, Platform } from "react-native";
 import { CheckBox } from "react-native-elements";
 import { SignAuthenticationService, Contract } from "pakkasmarja-client";
 import * as actions from "../../../actions";
@@ -13,6 +13,7 @@ import { REACT_APP_API_URL } from 'react-native-dotenv';
 import Modal from "react-native-modal";
 import { styles } from "./styles";
 import Icon from "react-native-vector-icons/Feather";
+import ModalSelector from 'react-native-modal-selector';
 
 /**
  * Interface for component props
@@ -35,8 +36,11 @@ interface State {
   ssn: string,
   signAuthenticationUrl: string,
   modalOpen: boolean,
-  type: string
+  type: string,
+  loading: boolean
 };
+
+const redirectUrl = "about:blank";
 
 /**
  * Contract terms component class
@@ -54,7 +58,8 @@ class ContractTerms extends React.Component<Props, State> {
       ssn: "",
       signAuthenticationUrl: "",
       modalOpen: false,
-      type: "2019"
+      type: "2019",
+      loading: false
     };
   }
 
@@ -126,12 +131,14 @@ class ContractTerms extends React.Component<Props, State> {
       return;
     }
 
+    this.setState({ loading: true });
+
     const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
-    const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "" }, this.state.contract.id || "", this.state.type, this.state.ssn, this.state.selectedSignServiceId);
+    const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "" }, this.state.contract.id || "", this.state.type, this.state.ssn, this.state.selectedSignServiceId, redirectUrl);
     
     if (contractSignRequest && contractSignRequest.redirectUrl) {
-      this.setState({ signAuthenticationUrl: contractSignRequest.redirectUrl, modalOpen: true });
+      this.setState({ loading: false, signAuthenticationUrl: contractSignRequest.redirectUrl, modalOpen: true });
     } else {
       const header = "Allekirjoitus epäonnistui";
       const content = "Jotain meni pieleen. Varmista, että olet valinnut tunnistautumispalvelun ja henkilötunnus on oikeassa muodossa.";
@@ -155,13 +162,10 @@ class ContractTerms extends React.Component<Props, State> {
   /**
    * When signed successfully
    */
-  private onSignSuccess = () => {
-    this.setState({ modalOpen: false });
-
-    const header = "Allekirjoitus onnistui!";
-    const content = "Palaa sopimuksiin painamalla OK.";
-    const buttons = [{text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})}];
-    this.displayAlert(header, content, buttons);
+  private onSignSuccess = async () => {
+    this.setState({ modalOpen: false }, () => {
+      this.props.navigation.navigate('Contracts', {refresh: true});
+   });
   }
 
   /**
@@ -197,6 +201,14 @@ class ContractTerms extends React.Component<Props, State> {
    * Render method for contract modal component
    */
   public render() {
+    if (this.state.loading) {
+      return (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Spinner color="red" />
+        </View>
+      );
+    }
+
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={styles.WhiteContentView}>
@@ -229,21 +241,36 @@ class ContractTerms extends React.Component<Props, State> {
           </View>
           <View>
             <Text style={[styles.Text, styles.TextBold]}>Tunnistautumispalvelu:</Text>
-            <View style={styles.InputStyle}>
-              <Picker
-                selectedValue={this.state.selectedSignServiceId}
-                style={{ height: 50, width: "100%", color: "black" }}
-                onValueChange={(itemValue) =>
-                  this.setState({ selectedSignServiceId: itemValue })
-                }>
-                {
-                  this.state.authServices && this.state.authServices.map((authService) => {
-                    return (
-                      <Picker.Item key={authService.identifier} label={authService.name || ""} value={authService.identifier} />
-                    );
-                  })
-                }
-              </Picker>
+            <View style={{...styles.InputStyle, height: Platform.OS === "ios" ? 40 : 50}}>
+              {Platform.OS !== "ios" &&
+                <Picker
+                  selectedValue={this.state.selectedSignServiceId}
+                  style={{height:50,width:"100%", color:"black"}}
+                  onValueChange={(itemValue, itemIndex) =>
+                    this.setState({ selectedSignServiceId: itemValue })
+                  }>
+                  {
+                    this.state.authServices && this.state.authServices.map((authService) => {
+                      return (
+                        <Picker.Item key={authService.identifier} label={authService.name || ""} value={authService.identifier} />
+                      );
+                    })
+                  }
+                </Picker>
+              }
+              {
+                Platform.OS === "ios" &&
+                  <ModalSelector
+                    data={this.state.authServices && this.state.authServices.map((authService) => {
+                      return {
+                        key: authService.identifier,
+                        label: authService.name
+                      };
+                    })}
+                    selectedKey={this.state.selectedSignServiceId}
+                    initValue="Valitse tunnistautumispalvelu"
+                    onChange={(option: any)=>{ this.setState({ selectedSignServiceId: option.key }) }} />
+              }
             </View>
           </View>
           <View>
@@ -271,10 +298,10 @@ class ContractTerms extends React.Component<Props, State> {
           <WebView
             source={{uri: this.state.signAuthenticationUrl}}
             style={{width: "90%", height: "100%"}}
+            scalesPageToFit={true}
             onNavigationStateChange={(webViewState: any) => {
-              const contractId = this.state.contract ? this.state.contract.id : null;
-              if (webViewState.url.indexOf(`contractId=${contractId}`) > 0) {
-                this.onSignSuccess;
+              if (webViewState.url == redirectUrl) {
+                this.onSignSuccess();
               }
           }}
           />

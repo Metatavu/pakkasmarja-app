@@ -98,7 +98,7 @@ class ContractScreen extends React.Component<Props, State> {
       this.setState({ contract: contract });
 
       this.updateContractData("quantityComment", contract.quantityComment);
-      this.updateContractData("proposedQuantity", contract.proposedQuantity ? contract.proposedQuantity.toString() : "");
+      this.updateContractData("proposedQuantity", contract.proposedQuantity ? contract.proposedQuantity.toString() : contract.contractQuantity ? contract.contractQuantity.toString() : "");
       this.updateContractData("areaDetailValues", contract.areaDetails);
       this.updateContractData("deliveryPlaceId", contract.deliveryPlaceId.toString());
       this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment);
@@ -132,8 +132,10 @@ class ContractScreen extends React.Component<Props, State> {
     const currentQuantity = this.state.contractData.proposedQuantity;
     const contractPlaceId = this.state.contract.deliveryPlaceId;
     const currentContractPlaceId = this.state.contractData.deliveryPlaceId;
+    const contractDeliverAll = this.state.contract.deliverAll;
+    const deliverAll = this.state.contractData.deliverAllChecked;
     
-    if (contractQuantity != currentQuantity || contractPlaceId != currentContractPlaceId) {
+    if (contractQuantity != currentQuantity || contractPlaceId != currentContractPlaceId || contractDeliverAll != deliverAll) {
       this.setState({ companyApprovalRequired: true });
     } else {
       this.setState({ companyApprovalRequired: false });

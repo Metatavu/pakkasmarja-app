@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
-import { View, ActivityIndicator, Alert, TouchableHighlight } from "react-native";
+import { View, ActivityIndicator, Alert, TouchableHighlight, AlertIOS } from "react-native";
 import { Contract, Contact, ItemGroupPrice, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import ContractAmountTable from "./ContractAmountTable";
@@ -73,11 +73,23 @@ class ContractsScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.addListener('willFocus', (navigation: any) =>{
+      if (navigation.state.params && navigation.state.params.refresh) {
+        this.loadData();
+      }
+    });
+    await this.loadData();
+  }
+
+  /**
+   * Load data
+   */
+  private loadData = async () => {
     if (!this.props.accessToken) {
       return;
     }
 
-    this.setState({ loading: true });
+    this.setState({ loading: true, freshContracts:[], frozenContracts: [] });
 
     const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
