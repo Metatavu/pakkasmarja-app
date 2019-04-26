@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct } from "../../../types";
+import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
@@ -11,6 +11,7 @@ import PakkasmarjaApi from "../../../api";
 import { Delivery, Product, ItemGroup } from "pakkasmarja-client";
 import moment from "moment";
 import FeatherIcon from "react-native-vector-icons/Feather";
+import * as _ from "lodash";
 
 /**
  * Component props
@@ -18,6 +19,7 @@ import FeatherIcon from "react-native-vector-icons/Feather";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  deliveries?: DeliveriesState;
 };
 
 /**
@@ -30,8 +32,11 @@ interface State {
   filteredData: DeliveryProduct[];
   itemGroups: ItemGroup[];
   itemGroupIndex: number;
+  weekNumberArrayIndex: number;
   weekNumber: number;
   selectedItemGroup?: ItemGroup;
+  allDeliveryProducts: DeliveryProduct[];
+  weekNumberArray: number[];
 };
 
 /**
@@ -53,7 +58,10 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
       filteredDates: [],
       itemGroups: [],
       itemGroupIndex: 0,
-      weekNumber: moment().week()
+      weekNumberArrayIndex: 0,
+      weekNumber: moment().week(),
+      allDeliveryProducts: [],
+      weekNumberArray: []
     };
   }
 
@@ -91,17 +99,59 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Component did update life-cycle event
+   */
+  public async componentDidUpdate(prevProps: Props, prevState: State) {
+    if (!this.props.accessToken) {
+      return;
+    }
+    if (this.state.selectedItemGroup !== prevState.selectedItemGroup && this.state.selectedItemGroup) {
+      const itemGroupId = this.state.selectedItemGroup.id;
+      const filteredDeliveryProductsById: DeliveryProduct[] = this.state.allDeliveryProducts.filter((deliveryProduct: DeliveryProduct) => {
+        return deliveryProduct.product && deliveryProduct.product.itemGroupId == itemGroupId;
+      })
+      const filteredDeliveryProductsByYear: DeliveryProduct[] = filteredDeliveryProductsById.filter((deliveryProduct: DeliveryProduct) => {
+        return moment(deliveryProduct.delivery.time).year() == moment().year();
+      });
+
+      let weekNumberArray: number[] = filteredDeliveryProductsByYear.map((deliveryProduct: DeliveryProduct) => {
+        return moment(deliveryProduct.delivery.time).week();
+      })
+      weekNumberArray = _.sortBy(_.uniq(weekNumberArray));
+      this.setState({ weekNumberArray, weekNumber: weekNumberArray[0], weekNumberArrayIndex: 0 });
+    }
+  }
+
+  /**
    * Load item groups 
    */
   private loadItemGroups = async () => {
-    if (!this.props.accessToken) {
+    if (!this.props.accessToken || !this.props.deliveries) {
       return;
     }
 
     const api = new PakkasmarjaApi();
+    const freshDeliveryData: DeliveryProduct[] = this.props.deliveries.freshDeliveryData;
+    const frozenDeliveryData: DeliveryProduct[] = this.props.deliveries.frozenDeliveryData;
+    let allDeliveryProducts: DeliveryProduct[] | string[] = freshDeliveryData.concat(frozenDeliveryData);
+    this.setState({ allDeliveryProducts });
+
+    allDeliveryProducts = _.uniqWith(allDeliveryProducts, (arrVal: any, othVal: any) => {
+      if (arrVal.product && othVal.product) {
+        return arrVal.product.itemGroupId === othVal.product.itemGroupId && arrVal;
+      }
+    });
+
+    const itemGroupIds = allDeliveryProducts.map((deliveryProduct: DeliveryProduct) => {
+      return deliveryProduct.product && deliveryProduct.product.itemGroupId;
+    });
+
     const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
     const itemGroups = await itemGroupService.listItemGroups();
-    this.setState({ itemGroups: itemGroups, selectedItemGroup: itemGroups[0] });
+    const filteredItemGroups = itemGroups.filter((itemgroup) => {
+      return itemGroupIds.includes(itemgroup.id);
+    })
+    this.setState({ itemGroups: filteredItemGroups, selectedItemGroup: filteredItemGroups[0] });
   }
 
   /**
@@ -130,9 +180,10 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
       }
     }
 
-    await this.setState({ itemGroupIndex: itemGroupIndex });
+    await this.setState({ itemGroupIndex });
     await this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex] });
-    this.refreshDeliveryData();
+    await this.refreshDeliveryData();
+    this.setState({ weekNumber: this.state.weekNumberArray[0] });
   }
 
   /**
@@ -141,27 +192,28 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
    * @param action action
    */
   private changeWeekNumber = async (action: string) => {
-    const maxValue: number = 52
-    const minValue: number = 1;
-    let weekNumber = moment().week();
+    const maxValue: number = this.state.weekNumberArray.length - 1;
+    const minValue: number = 0;
+    let weekNumberArrayIndex = this.state.weekNumberArrayIndex;
 
     if (action === "next") {
-      if (this.state.weekNumber !== maxValue) {
-        weekNumber = this.state.weekNumber + 1;
+      if (this.state.weekNumberArrayIndex !== maxValue) {
+        weekNumberArrayIndex = this.state.weekNumberArrayIndex + 1;
       } else {
-        weekNumber = minValue;
+        weekNumberArrayIndex = minValue;
       }
     }
 
     if (action === "previous") {
-      if (this.state.weekNumber !== minValue) {
-        weekNumber = this.state.weekNumber - 1;
+      if (this.state.weekNumberArrayIndex !== minValue) {
+        weekNumberArrayIndex = this.state.weekNumberArrayIndex - 1;
       } else {
-        weekNumber = maxValue;
+        weekNumberArrayIndex = maxValue;
       }
     }
 
-    await this.setState({ weekNumber: weekNumber });
+    await this.setState({ weekNumberArrayIndex });
+    await this.setState({ weekNumber: this.state.weekNumberArray[weekNumberArrayIndex] });
     this.refreshDeliveryData();
   }
 
@@ -183,7 +235,8 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
     const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
 
-    const deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, "DONE", undefined, itemGroupId, undefined, undefined, timeBefore, timeAfter, 0, 100);
+    let deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, undefined, itemGroupId, undefined, undefined, timeBefore, timeAfter, 0, 100);
+    deliveries = _.sortBy(deliveries, 'time').reverse();
     const products: Product[] = await productsService.listProducts();
 
     const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
@@ -284,7 +337,8 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    deliveries: state.deliveries
   };
 }
 

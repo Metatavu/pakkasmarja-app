@@ -7,7 +7,6 @@ import * as actions from "../../actions";
 import { Thumbnail } from "native-base";
 import { TOP_LOGO } from "../../static/images";
 import { styles } from "../screens/deliveries/styles.tsx";
-import { Text } from "react-native-elements";
 
 /**
  * Component props

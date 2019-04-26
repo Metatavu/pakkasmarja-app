@@ -189,6 +189,19 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: "white"
   },
+  deliveryQualityRoundView: {
+    height: 28,
+    width: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10
+  },
+  deliveryQualityRoundViewText: {
+    fontSize: 16,
+    color: "white",
+    fontWeight: "600"
+  },
   numericInputContainer: {
     width: "100%",
     height: 70,
