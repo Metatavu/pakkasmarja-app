@@ -298,7 +298,7 @@ class EditDelivery extends React.Component<Props, State> {
             }
           </View>
           <Text style={styles.textWithSpace}>Tämän hetkinen hinta 4,20€/kg sis.Alv</Text>
-          <Text style={styles.textWithSpace}>Määrä (KG)</Text>
+          <Text style={styles.textWithSpace}>Määrä (Yksikköä)</Text>
           <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
               value={this.state.amount}

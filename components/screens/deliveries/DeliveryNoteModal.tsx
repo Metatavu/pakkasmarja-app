@@ -15,10 +15,11 @@ interface Props {
   modalOpen: boolean;
   onDeliveryNoteChange: (note: DeliveryNoteData) => void;
   onDeliveryNoteImageChange: (fileUri?: string, fileType?: string) => void;
-  imageUri?: string,
   onCreateNoteClick: () => void;
-  deliveryNoteData: DeliveryNoteData;
   modalClose: () => void;
+  onRemoveNote: () => void;
+  imageUri?: string,
+  deliveryNoteData: DeliveryNoteData;
   editable: boolean;
 };
 
@@ -179,7 +180,7 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                 </Text>
               </View>
               {
-                !this.props.imageUri &&
+                !this.props.imageUri && !this.props.editable &&
                 <View>
                   <Text style={styles.text}>Lisää kuva</Text>
                   <TouchableOpacity style={styles.whiteButton} onPress={this.openImagePicker}>
@@ -194,38 +195,64 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                       source={{ uri: this.props.imageUri }}
                       style={{ flex: 1, width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }}
                     />
-                    <TouchableOpacity style={styles.whiteButton} onPress={this.removeImage}>
-                      <Text style={styles.smallWhiteButtonText}>Poista kuva</Text>
-                    </TouchableOpacity>
+                    {
+                      !this.props.editable &&
+                      <TouchableOpacity style={styles.whiteButton} onPress={this.removeImage}>
+                        <Text style={styles.smallWhiteButtonText}>Poista kuva</Text>
+                      </TouchableOpacity>
+                    }
                   </View>
                   : null
               }
-              <View>
-                <Text style={styles.text}>Kommentti</Text>
-                <TextInput
-                  multiline={true}
-                  numberOfLines={Platform.OS === 'ios' ? undefined : 4}
-                  style={{... styles.textInput, height: Platform.OS === "ios" ? 80 : undefined}}
-                  value={this.props.deliveryNoteData.text}
-                  onChangeText={(text: string) => this.onDeliveryDataChange("text", text)}
-                />
-              </View>
               {
                 this.props.editable ?
-                  <View style={{ marginTop: 20, flex: 1, alignContent: "center" }}>
-                    <TouchableOpacity style={[styles.redButton]} onPress={this.props.modalClose}>
-                      <Text style={styles.buttonText}>Tallenna muutokset</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <React.Fragment>
+                    {
+                      !this.props.imageUri &&
+                      <View style={{ width: "100%", height: 150, justifyContent: "center", alignItems: "center" }}>
+                        <Text>Huomiolla ei ole kuvaa</Text>
+                      </View>
+                    }
+                    <View>
+                      <View style={{ height: 140 }}>
+                        <Text style={styles.text}>Huomion kommentti</Text>
+                        <View>
+                          <Text>{this.props.deliveryNoteData.text}</Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={{ flex: 1, marginTop: 20 }}>
+                      <View style={styles.flexView}>
+                        <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.discardDeliveryMessage}>
+                          <Text style={styles.smallWhiteButtonText}>Peruuta</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.smallRedButton} onPress={this.props.onRemoveNote}>
+                          <Text style={styles.buttonText}>Poista</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </React.Fragment>
                   :
-                  <View style={[styles.flexView, { marginTop: 20 }]}>
-                    <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.discardDeliveryMessage}>
-                      <Text style={styles.smallWhiteButtonText}>Peruuta</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.smallRedButton} onPress={this.createDeliveryMessage}>
-                      <Text style={styles.buttonText}>Tallenna</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <React.Fragment>
+                    <View>
+                      <Text style={styles.text}>Kommentti</Text>
+                      <TextInput
+                        multiline={true}
+                        numberOfLines={Platform.OS === 'ios' ? undefined : 4}
+                        style={{ ...styles.textInput, height: Platform.OS === "ios" ? 80 : undefined }}
+                        value={this.props.deliveryNoteData.text}
+                        onChangeText={(text: string) => this.onDeliveryDataChange("text", text)}
+                      />
+                    </View>
+                    <View style={[styles.flexView, { marginTop: 20 }]}>
+                      <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.discardDeliveryMessage}>
+                        <Text style={styles.smallWhiteButtonText}>Peruuta</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.smallRedButton} onPress={this.createDeliveryMessage}>
+                        <Text style={styles.buttonText}>Tallenna</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </React.Fragment>
               }
             </View>
           </View>

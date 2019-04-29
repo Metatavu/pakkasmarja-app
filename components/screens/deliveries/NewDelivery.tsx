@@ -317,6 +317,18 @@ class NewDelivery extends React.Component<Props, State> {
   }
 
   /**
+   * On remove note
+   */
+  private onRemoveNote = () => {
+    const deliveryNotes =  this.state.deliveryNotes;
+    const deliveryNote =  this.state.deliveryNoteData;
+    const newDeliveryNotes = deliveryNotes.filter((deliverynote)=>{
+      return deliverynote !== deliveryNote;
+    });
+    this.setState({ deliveryNotes: newDeliveryNotes, modalOpen: false });
+  }
+
+  /**
    * Render method
    */
   public render() {
@@ -352,26 +364,26 @@ class NewDelivery extends React.Component<Props, State> {
             }
             {
               Platform.OS === "ios" &&
-                <ModalSelector
-                  data={this.state.products && this.state.products.map((product) => {
-                    return {
-                      key: product.id,
-                      label: product.name
-                    };
-                  })}
-                  selectedKey={this.state.productId}
-                  initValue="Valitse tuote"
-                  onChange={(option: any)=> { this.onUserInputChange("productId", option.key) }} />
+              <ModalSelector
+                data={this.state.products && this.state.products.map((product) => {
+                  return {
+                    key: product.id,
+                    label: product.name
+                  };
+                })}
+                selectedKey={this.state.productId}
+                initValue="Valitse tuote"
+                onChange={(option: any) => { this.onUserInputChange("productId", option.key) }} />
             }
           </View>
           <Text style={styles.textWithSpace}>Tämän hetkinen hinta 4,20€/kg sis.Alv</Text>
-          <Text style={styles.textWithSpace}>Määrä (KG)</Text>
+          <Text style={styles.textWithSpace}>Määrä (Yksikköä)</Text>
           <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
               value={this.state.amount}
               initValue={this.state.amount}
               onChange={(value: number) => this.onUserInputChange("amount", value)}
-              totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2)}
+              totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2) - 20}
               totalHeight={50}
               iconSize={35}
               step={100}
@@ -445,16 +457,16 @@ class NewDelivery extends React.Component<Props, State> {
                 }
                 {
                   Platform.OS === "ios" &&
-                    <ModalSelector
-                      data={this.state.deliveryTimeOptions.map((deliveryTimeOption) => {
-                        return {
-                          key: deliveryTimeOption.value,
-                          label: deliveryTimeOption.label
-                        };
-                      })}
-                      selectedKey={this.state.deliveryTimeValue}
-                      initValue="Valitse toimituspaikka"
-                      onChange={(option: any)=> { this.onUserInputChange("deliveryTimeValue", option.key) }} />
+                  <ModalSelector
+                    data={this.state.deliveryTimeOptions.map((deliveryTimeOption) => {
+                      return {
+                        key: deliveryTimeOption.value,
+                        label: deliveryTimeOption.label
+                      };
+                    })}
+                    selectedKey={this.state.deliveryTimeValue}
+                    initValue="Valitse toimituspaikka"
+                    onChange={(option: any) => { this.onUserInputChange("deliveryTimeValue", option.key) }} />
                 }
               </View>
             </View>
@@ -489,16 +501,16 @@ class NewDelivery extends React.Component<Props, State> {
             }
             {
               Platform.OS === "ios" &&
-                <ModalSelector
-                  data={this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
-                    return {
-                      key: deliveryPlace.id,
-                      label: deliveryPlace.name
-                    };
-                  })}
-                  selectedKey={this.state.deliveryPlaceId}
-                  initValue="Valitse toimituspaikka"
-                  onChange={(option: any)=> { this.onUserInputChange("deliveryPlaceId", option.key) }} />
+              <ModalSelector
+                data={this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
+                  return {
+                    key: deliveryPlace.id,
+                    label: deliveryPlace.name
+                  };
+                })}
+                selectedKey={this.state.deliveryPlaceId}
+                initValue="Valitse toimituspaikka"
+                onChange={(option: any) => { this.onUserInputChange("deliveryPlaceId", option.key) }} />
             }
           </View>
           <View style={{ flex: 1 }}>
@@ -511,7 +523,7 @@ class NewDelivery extends React.Component<Props, State> {
                         <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
                           <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
                           <Text style={{ color: "#e01e36" }} >
-                            {`Muokkaa huomiota ${index + 1}`}
+                            {`Katso/poista huomio`}
                           </Text>
                         </View>
                       </TouchableOpacity>
@@ -540,13 +552,14 @@ class NewDelivery extends React.Component<Props, State> {
               </TouchableOpacity>
             </View>
             <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop:15 }]} onPress={this.handleDeliverySubmit}>
+              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 }]} onPress={this.handleDeliverySubmit}>
                 <Text style={styles.buttonText}>Tallenna</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
         <DeliveryNoteModal
+          onRemoveNote={this.onRemoveNote}
           editable={this.state.noteEditable}
           imageUri={this.state.deliveryNoteData ? this.state.deliveryNoteData.imageUri : undefined}
           onCreateNoteClick={this.onCreateNoteClick}

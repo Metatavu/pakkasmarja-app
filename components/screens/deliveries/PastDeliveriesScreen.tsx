@@ -7,9 +7,11 @@ import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
 import { Thumbnail, Text } from "native-base";
-import { COMPLETED_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO_GRAY } from "../../../static/images";
+import { COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
 import moment from "moment";
 import Icon from "react-native-vector-icons/Feather";
+import * as _ from "lodash";
+import { ItemGroupCategory } from "pakkasmarja-client";
 
 /**
  * Component props
@@ -27,7 +29,17 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: Map<string, DeliveryProduct[]>;
+  deliveryQualitys: DeliveryQuality[];
 };
+
+// TODO remove whend deliveryQuality backend is ready
+export interface DeliveryQuality {
+  id: string,
+  itemGroupCategory: ItemGroupCategory,
+  name: string,
+  priceBonus: number,
+  color: string
+}
 
 /**
  * Past deliveries component class
@@ -43,7 +55,8 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
-      deliveryData: new Map<string, DeliveryProduct[]>()
+      deliveryData: new Map<string, DeliveryProduct[]>(),
+      deliveryQualitys: []
     };
   }
 
@@ -77,17 +90,28 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
       return;
     }
     this.setState({ loading: true });
+
+    //TODO remove when deliveryQualityId backend is ready
+    const deliveryQuality1: DeliveryQuality = { id: "1", name: "bonus", color: "#43AB18", priceBonus: 2, itemGroupCategory: "FRESH" };
+    const deliveryQuality2: DeliveryQuality = { id: "2", name: "perus", color: "#FFB512", priceBonus: 1.2, itemGroupCategory: "FRESH" };
+    const deliveryQuality3: DeliveryQuality = { id: "3", name: "välttävä", color: "#AA6EE0", priceBonus: 0, itemGroupCategory: "FRESH" };
+    const deliveryQuality4: DeliveryQuality = { id: "4", name: "bonus", color: "#43AB18", priceBonus: 2, itemGroupCategory: "FROZEN" };
+    const deliveryQuality5: DeliveryQuality = { id: "5", name: "perus", color: "#FFB512", priceBonus: 1.2, itemGroupCategory: "FROZEN" };
+    const deliveryQuality6: DeliveryQuality = { id: "6", name: "välttävä", color: "#AA6EE0", priceBonus: 0, itemGroupCategory: "FROZEN" };
+    const deliveryQualitys: DeliveryQuality[] = [deliveryQuality1, deliveryQuality2, deliveryQuality3, deliveryQuality4, deliveryQuality5, deliveryQuality6]
+    this.setState({ deliveryQualitys }); //
+
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE");
+    const sortedPastDeliveries = _.sortBy(pastDeliveries, [(deliveryProduct: DeliveryProduct) => { return deliveryProduct.delivery.time; }]).reverse();
     const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
 
-    pastDeliveries.forEach((delivery) => {
+    sortedPastDeliveries.forEach((delivery) => {
       const deliveryDate = moment(delivery.delivery.time).format("DD.MM.YYYY");
       const existingDeliveries: DeliveryProduct[] = deliveryData.get(deliveryDate) || [];
       existingDeliveries.push(delivery);
       deliveryData.set(deliveryDate, existingDeliveries);
     });
-
     this.setState({ deliveryData: deliveryData, loading: false });
   }
 
@@ -106,6 +130,27 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     }
 
     return this.props.deliveries.freshDeliveryData;
+  }
+
+  /**
+   * render quality status
+   */
+  private renderQualityStatus = (deliveryQualityId: string) => {
+    //TODO find delivery quality from array of deliveryQualitys which comes from api
+    const deliveryQuality = this.state.deliveryQualitys.find((deliveryQuality) => deliveryQuality.id == deliveryQualityId);
+    if (deliveryQuality) {
+      const letter = deliveryQuality.name.slice(0, 1).toUpperCase();
+      return (
+        <View style={{ flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+          <View style={[styles.deliveryQualityRoundView, { backgroundColor: deliveryQuality.color }]} >
+            <Text style={styles.deliveryQualityRoundViewText}>{letter}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text>{deliveryQuality && deliveryQuality.name}</Text>
+          </View>
+        </View>
+      );
+    }
   }
 
   /**
@@ -128,7 +173,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
                   <ActivityIndicator size="large" color="#E51D2A" />
                 </View>
                 :
-                Array.from(this.state.deliveryData.keys()).map((date: any) => {
+                Array.from(this.state.deliveryData.keys()).map((date: any, index) => { //TODO remove when deliveryQualityId backend is ready
                   const deliveries = this.state.deliveryData.get(date);
                   return (
                     <View key={date}>
@@ -137,7 +182,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
                       </Text>
                       {
                         deliveries && deliveries.map((data: any) => {
-                          return this.renderListItem(data)
+                          return this.renderListItem(data, index) //TODO remove when deliveryQualityId backend is ready
                         })
                       }
                     </View>
@@ -155,11 +200,13 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * 
    * @param deliveryData DeliveryProduct
    */
-  private renderListItem = (deliveryData: DeliveryProduct) => {
+  private renderListItem = (deliveryData: DeliveryProduct, index: number) => { //TODO remove when deliveryQualityId backend is ready
     if (!deliveryData || !deliveryData.product) {
       return <Text></Text>;
     }
-    const time = moment(deliveryData.delivery.time).format("DD.MM.YYYY");
+    const i: string = index.toString(); // TODO remove when deliveryQualityId backend is ready
+    const deliveryHour = moment(deliveryData.delivery.time).hours();
+    const time = deliveryHour > 12 ? `Jälkeen klo 11` : `Ennen kello 11`;
     const productName = deliveryData.product.name;
     const productAmount = `${deliveryData.product.unitSize} G x ${deliveryData.product.units}`;
     const editable = false;
@@ -169,7 +216,9 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
         () => this.onListItemClick("Delivery",
           deliveryData.delivery.id,
           deliveryData.product && deliveryData.product.id,
-          editable)
+          i, // TODO put deliveryQualityId here from deliveryData parameter
+          editable,
+        )
       }>
         <View style={styles.renderCustomListItem}>
           <View style={{ flex: 2 }}>
@@ -178,10 +227,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
               <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
             </View>
           </View>
-          <View style={[styles.center, { flexDirection: "row" }]}>
-            <Thumbnail square source={COMPLETED_DELIVERIES_LOGO_GRAY} style={[styles.itemIconSize, { marginRight: 10 }]} />
-            <Text style={{ color: "lightgray" }}>Toimitettu</Text>
-          </View>
+          {this.renderQualityStatus(i)}
         </View>
       </TouchableOpacity>
     );
@@ -195,10 +241,11 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * @param productId productId
    * @param editable boolean
    */
-  private onListItemClick = (screen: string, deliveryId?: string, productId?: string, editable?: boolean) => {
+  private onListItemClick = (screen: string, deliveryId?: string, productId?: string, qualityId?: string, editable?: boolean) => {
     this.props.navigation.navigate(screen, {
       deliveryId: deliveryId,
       productId: productId,
+      qualityId: qualityId,
       editable: editable
     });
   }

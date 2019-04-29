@@ -273,12 +273,12 @@ class DeliveriesScreen extends React.Component<Props, State> {
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <NavigationEvents onDidFocus={() => this.loadAmounts()} />
         <Tabs tabBarUnderlineStyle={{backgroundColor: "#fff"}}>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={"TUORETUOTTEET"}>
+          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={"TUORE"}>
             {
               this.renderDeliveryList(deliveryList, "FRESH")
             }
           </Tab>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={"PAKASTEET"}>
+          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={"PAKASTE"}>
             {
               this.renderDeliveryList(deliveryList, "FROZEN")
             }
