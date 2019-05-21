@@ -1,17 +1,13 @@
 import React, { Dispatch } from "react";
 import TopBar from "../../layout/TopBar";
-import Moment from 'react-moment';
 import AutoResizeHeightWebView from "react-native-autoreheight-webview"
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
-import { Text, View, Spinner } from 'native-base';
+import { View, Spinner } from 'native-base';
 import { AccessToken, StoreState } from "../../../types";
 import { NewsArticle } from "pakkasmarja-client";
-import { styles } from "../contracts/styles";
-import { Divider } from "react-native-elements";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
-import { Image, StyleSheet, TouchableHighlight } from "react-native";
-import Lightbox from 'react-native-lightbox';
+import { TouchableHighlight } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import moment from "moment";
 import { FileService } from "../../../api/file.service";
@@ -33,17 +29,6 @@ interface State {
   imageData?: string;
   loading: boolean;
 };
-
-const imageStyles = StyleSheet.create({
-  image: {
-    height: 300,
-    flex: 1
-  },
-  imageActive: {
-    flex: 1,
-    resizeMode: 'contain',
-  },
-});
 
 /**
  * NewsArticle screen component
@@ -121,7 +106,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
   public render() {
     if (this.state.loading) {
       return (
-        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Spinner color="red" />
         </View>
       );
@@ -137,12 +122,13 @@ class NewsArticleScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <AutoResizeHeightWebView
-          defaultHeight={400}
-          AnimationDuration={0}
-          scalesPageToFit={true}
-          source={{
-            html: `
+        <View style={{paddingTop:30}}>
+          <AutoResizeHeightWebView
+            defaultHeight={400}
+            AnimationDuration={0}
+            scalesPageToFit={true}
+            source={{
+              html: `
             <html>
             <head>
               <meta charset="utf-8"/>
@@ -158,13 +144,14 @@ class NewsArticleScreen extends React.Component<Props, State> {
             <div class="container">
               <h1>${title}</h1>
               <p>${date}</p>
-              ${imageData ? '<img src="data:image/jpeg;base64,'+imageData+'" style="width:100%;"/>' : ''}
+              ${imageData ? '<img src="data:image/jpeg;base64,' + imageData + '" style="width:100%;"/>' : ''}
               ${this.state.newsArticle.contents}
             </div>
             </body>
             </html>`
-          }}
-        />
+            }}
+          />
+        </View>
       </BasicScrollLayout>
     );
   }

@@ -11,7 +11,8 @@ import { COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
 import moment from "moment";
 import Icon from "react-native-vector-icons/Feather";
 import * as _ from "lodash";
-import { ItemGroupCategory } from "pakkasmarja-client";
+import { DeliveryQuality } from "pakkasmarja-client";
+import PakkasmarjaApi from "../../../api";
 
 /**
  * Component props
@@ -29,17 +30,9 @@ interface Props {
 interface State {
   loading: boolean;
   deliveryData: Map<string, DeliveryProduct[]>;
-  deliveryQualitys: DeliveryQuality[];
+  deliveryQualities: DeliveryQuality[];
 };
 
-// TODO remove whend deliveryQuality backend is ready
-export interface DeliveryQuality {
-  id: string,
-  itemGroupCategory: ItemGroupCategory,
-  name: string,
-  priceBonus: number,
-  color: string
-}
 
 /**
  * Past deliveries component class
@@ -56,7 +49,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     this.state = {
       loading: false,
       deliveryData: new Map<string, DeliveryProduct[]>(),
-      deliveryQualitys: []
+      deliveryQualities: []
     };
   }
 
@@ -90,16 +83,10 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
       return;
     }
     this.setState({ loading: true });
-
-    //TODO remove when deliveryQualityId backend is ready
-    const deliveryQuality1: DeliveryQuality = { id: "1", name: "bonus", color: "#43AB18", priceBonus: 2, itemGroupCategory: "FRESH" };
-    const deliveryQuality2: DeliveryQuality = { id: "2", name: "perus", color: "#FFB512", priceBonus: 1.2, itemGroupCategory: "FRESH" };
-    const deliveryQuality3: DeliveryQuality = { id: "3", name: "välttävä", color: "#AA6EE0", priceBonus: 0, itemGroupCategory: "FRESH" };
-    const deliveryQuality4: DeliveryQuality = { id: "4", name: "bonus", color: "#43AB18", priceBonus: 2, itemGroupCategory: "FROZEN" };
-    const deliveryQuality5: DeliveryQuality = { id: "5", name: "perus", color: "#FFB512", priceBonus: 1.2, itemGroupCategory: "FROZEN" };
-    const deliveryQuality6: DeliveryQuality = { id: "6", name: "välttävä", color: "#AA6EE0", priceBonus: 0, itemGroupCategory: "FROZEN" };
-    const deliveryQualitys: DeliveryQuality[] = [deliveryQuality1, deliveryQuality2, deliveryQuality3, deliveryQuality4, deliveryQuality5, deliveryQuality6]
-    this.setState({ deliveryQualitys }); //
+    const Api = new PakkasmarjaApi();
+    const deliveryQualitiesService = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token);
+    const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(this.props.itemGroupCategory);
+    this.setState({ deliveryQualities });
 
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE");
@@ -136,13 +123,12 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * render quality status
    */
   private renderQualityStatus = (deliveryQualityId: string) => {
-    //TODO find delivery quality from array of deliveryQualitys which comes from api
-    const deliveryQuality = this.state.deliveryQualitys.find((deliveryQuality) => deliveryQuality.id == deliveryQualityId);
+    const deliveryQuality = this.state.deliveryQualities.find((deliveryQuality) => deliveryQuality.id == deliveryQualityId);
     if (deliveryQuality) {
       const letter = deliveryQuality.name.slice(0, 1).toUpperCase();
       return (
-        <View style={{ flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
-          <View style={[styles.deliveryQualityRoundView, { backgroundColor: deliveryQuality.color }]} >
+        <View style={{ flex: 0.8, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingLeft:8 }}>
+          <View style={[styles.deliveryQualityRoundView, { backgroundColor: deliveryQuality.color || "gray" }]} >
             <Text style={styles.deliveryQualityRoundViewText}>{letter}</Text>
           </View>
           <View style={{ flex: 1 }}>
@@ -173,7 +159,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
                   <ActivityIndicator size="large" color="#E51D2A" />
                 </View>
                 :
-                Array.from(this.state.deliveryData.keys()).map((date: any, index) => { //TODO remove when deliveryQualityId backend is ready
+                Array.from(this.state.deliveryData.keys()).map((date: any) => {
                   const deliveries = this.state.deliveryData.get(date);
                   return (
                     <View key={date}>
@@ -182,7 +168,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
                       </Text>
                       {
                         deliveries && deliveries.map((data: any) => {
-                          return this.renderListItem(data, index) //TODO remove when deliveryQualityId backend is ready
+                          return this.renderListItem(data);
                         })
                       }
                     </View>
@@ -200,15 +186,14 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * 
    * @param deliveryData DeliveryProduct
    */
-  private renderListItem = (deliveryData: DeliveryProduct, index: number) => { //TODO remove when deliveryQualityId backend is ready
-    if (!deliveryData || !deliveryData.product) {
+  private renderListItem = (deliveryData: DeliveryProduct) => {
+    if (!deliveryData || !deliveryData.product || !deliveryData.delivery.qualityId) {
       return <Text></Text>;
     }
-    const i: string = index.toString(); // TODO remove when deliveryQualityId backend is ready
     const deliveryHour = moment(deliveryData.delivery.time).hours();
     const time = deliveryHour > 12 ? `Jälkeen klo 11` : `Ennen kello 11`;
     const productName = deliveryData.product.name;
-    const productAmount = `${deliveryData.product.unitSize} G x ${deliveryData.product.units}`;
+    const productAmount = `${deliveryData.delivery.amount} x ${deliveryData.product.units} ${deliveryData.product.unitName}`;
     const editable = false;
 
     return (
@@ -216,7 +201,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
         () => this.onListItemClick("Delivery",
           deliveryData.delivery.id,
           deliveryData.product && deliveryData.product.id,
-          i, // TODO put deliveryQualityId here from deliveryData parameter
+          deliveryData.delivery.qualityId,
           editable,
         )
       }>
@@ -227,7 +212,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
               <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
             </View>
           </View>
-          {this.renderQualityStatus(i)}
+          {this.renderQualityStatus(deliveryData.delivery.qualityId)}
         </View>
       </TouchableOpacity>
     );

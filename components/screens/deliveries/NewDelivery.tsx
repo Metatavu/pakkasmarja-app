@@ -4,8 +4,8 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions } from "react-native";
-import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
+import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
+import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -17,6 +17,7 @@ import { FileService, FileResponse } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import FeatherIcon from "react-native-vector-icons/Feather";
 import ModalSelector from 'react-native-modal-selector';
+import EntypoIcon from "react-native-vector-icons/Entypo";
 
 /**
  * Component props
@@ -47,6 +48,7 @@ interface State {
   deliveryNoteData: DeliveryNoteData;
   deliveryNotes: DeliveryNoteData[];
   products: Product[];
+  product?: Product;
   deliveryNoteFile?: {
     fileUri: string,
     fileType: string
@@ -54,6 +56,7 @@ interface State {
   deliveryTimeOptions: { label: string, value: number }[];
   deliveryTimeValue: number;
   noteEditable: boolean;
+  productPrice?: ProductPrice;
 };
 
 /**
@@ -74,7 +77,7 @@ class NewDelivery extends React.Component<Props, State> {
       datepickerVisible: false,
       modalOpen: false,
       amount: 0,
-      price: "0",
+      price: "",
       deliveries: [],
       selectedDate: new Date(),
       deliveryNoteData: {
@@ -102,15 +105,20 @@ class NewDelivery extends React.Component<Props, State> {
     const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
-
+    const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
+    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, 1);
     const deliveries = this.getDeliveries();
-    this.setState({
+    await this.setState({
       deliveryPlaces,
       deliveries,
       products,
-      productId: products[0].id,
-      deliveryPlaceId: deliveryPlaces[0].id
+      product: products[0],
+      deliveryPlaceId: deliveryPlaces[0].id,
+      productPrice: productPrice[0]
     });
+    if (!this.state.productPrice) {
+      this.renderAlert();
+    }
   }
 
   static navigationOptions = ({ navigation }: any) => {
@@ -185,30 +193,48 @@ class NewDelivery extends React.Component<Props, State> {
    * @param key key
    * @param value value
    */
-  private onUserInputChange = (key: DeliveryDataKey, value: string | number) => {
+  private onUserInputChange = async (key: DeliveryDataKey, value: string | number) => {
     const state: State = this.state;
     state[key] = value;
     this.setState(state);
   }
 
   /**
+   * Handles product change
+   */
+  private handleProductChange = async (productId: string) => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    this.setState({ productId });
+    const products = this.state.products;
+    const product = products.find((product) => product.id === productId)
+    const Api = new PakkasmarjaApi();
+    const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
+    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, 1);
+    if (!productPrice[0]) {
+      this.renderAlert();
+    }
+    this.setState({ product, productPrice: productPrice[0] });
+  }
+
+  /**
    * Handles delivery submit
    */
   private handleDeliverySubmit = async () => {
-    if (!this.props.accessToken || !this.state.deliveryPlaceId || !this.state.productId || !this.state.selectedDate) {
+    if (!this.props.accessToken || !this.state.deliveryPlaceId || !this.state.product || !this.state.product.id || !this.state.selectedDate) {
       return;
     }
 
     const Api = new PakkasmarjaApi();
     const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-
     let time: string | Date = moment(this.state.selectedDate).format("YYYY-MM-DD");
     time = `${time} ${this.state.deliveryTimeValue}:00 +0000`
     time = moment(time, "YYYY-MM-DD HH:mm Z").toDate();
 
     const delivery: Delivery = {
       id: "",
-      productId: this.state.productId,
+      productId: this.state.product.id,
       userId: this.props.accessToken.userId,
       time: time,
       status: "PLANNED",
@@ -320,12 +346,25 @@ class NewDelivery extends React.Component<Props, State> {
    * On remove note
    */
   private onRemoveNote = () => {
-    const deliveryNotes =  this.state.deliveryNotes;
-    const deliveryNote =  this.state.deliveryNoteData;
-    const newDeliveryNotes = deliveryNotes.filter((deliverynote)=>{
+    const deliveryNotes = this.state.deliveryNotes;
+    const deliveryNote = this.state.deliveryNoteData;
+    const newDeliveryNotes = deliveryNotes.filter((deliverynote) => {
       return deliverynote !== deliveryNote;
     });
     this.setState({ deliveryNotes: newDeliveryNotes, modalOpen: false });
+  }
+
+  /**
+   * Show alert when no product price found
+   */
+  private renderAlert = () => {
+    Alert.alert(
+      'Tuotteelle ei löytynyt hintaa',
+      `Tuotteelle ${this.state.product && this.state.product.name} ei löytynyt hintaa, ota yhteyttä pakkasmarjaan`,
+      [
+        { text: 'OK', onPress: () => { } },
+      ]
+    );
   }
 
   /**
@@ -351,7 +390,7 @@ class NewDelivery extends React.Component<Props, State> {
                 selectedValue={this.state.productId}
                 style={{ height: 50, width: "100%" }}
                 onValueChange={(itemValue, itemIndex) =>
-                  this.onUserInputChange("productId", itemValue)
+                  this.handleProductChange(itemValue)
                 }>
                 {
                   this.state.products.map((product) => {
@@ -367,17 +406,33 @@ class NewDelivery extends React.Component<Props, State> {
               <ModalSelector
                 data={this.state.products && this.state.products.map((product) => {
                   return {
-                    key: product.id,
+                    key: product,
                     label: product.name
                   };
                 })}
-                selectedKey={this.state.productId}
+                selectedKey={this.state.product}
                 initValue="Valitse tuote"
-                onChange={(option: any) => { this.onUserInputChange("productId", option.key) }} />
+                onChange={(option: any) => { this.handleProductChange(option.key) }} />
             }
           </View>
-          <Text style={styles.textWithSpace}>Tämän hetkinen hinta 4,20€/kg sis.Alv</Text>
-          <Text style={styles.textWithSpace}>Määrä (Yksikköä)</Text>
+          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
+            <View style={{ flex: 0.1 }}>
+              <EntypoIcon
+                name='info-with-circle'
+                color='#e01e36'
+                size={20}
+              />
+            </View >
+            <View style={{ flex: 1.1 }}>
+              {
+                this.state.productPrice ?
+                  <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} ${this.state.productPrice.unit}`}</Text>
+                  :
+                  <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>
+              }
+            </View>
+          </View>
+          <Text style={styles.textWithSpace}>Määrä ({this.state.product && this.state.product.unitName})</Text>
           <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
               value={this.state.amount}
@@ -386,7 +441,7 @@ class NewDelivery extends React.Component<Props, State> {
               totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2) - 20}
               totalHeight={50}
               iconSize={35}
-              step={100}
+              step={10}
               valueType='real'
               minValue={0}
               textColor='black'
@@ -396,6 +451,9 @@ class NewDelivery extends React.Component<Props, State> {
               borderColor='transparent'
               rounded
             />
+          </View>
+          <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><Text>= {this.state.product && this.state.product.units * this.state.amount} KG</Text></View>
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
             <View style={{ flex: 1 }}>

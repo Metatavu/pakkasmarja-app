@@ -94,6 +94,16 @@ export default class PakkasmarjaApi {
   }
 
   /**
+   * Get deliveries service
+   * 
+   * @param token token
+   * @return Deliveriy qualities service
+   */
+  public getDeliveryQualitiesService(token: string) {
+    return this.getApi().getDeliveryQualitiesService(token);
+  }
+
+  /**
    * Get products service
    * 
    * @param token token
@@ -101,6 +111,16 @@ export default class PakkasmarjaApi {
    */
   public getProductsService(token: string) {
     return this.getApi().getProductsService(token);
+  }
+
+  /**
+   * Get product prices service
+   * 
+   * @param token token
+   * @return Product prices service
+   */
+  public getProductPricesService(token: string) {
+    return this.getApi().getProductPricesService(token);
   }
 
    /**

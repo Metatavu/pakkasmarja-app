@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
-import { Delivery, Product, ItemGroupCategory } from "pakkasmarja-client";
+import { Delivery, Product, ItemGroupCategory, ProductPrice } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
 import Moment from "react-moment";
@@ -14,6 +14,7 @@ import NumericInput from 'react-native-numeric-input'
 import { Thumbnail } from "native-base";
 import { PREDICTIONS_ICON } from "../../../static/images";
 import Icon from "react-native-vector-icons/Feather";
+import EntypoIcon from "react-native-vector-icons/Entypo";
 
 /**
  * Component props
@@ -34,6 +35,7 @@ interface State {
   modalOpen: boolean;
   delivery?: Delivery;
   product?: Product;
+  productPrice?: ProductPrice;
 };
 
 /**
@@ -84,7 +86,6 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-
     this.setState({ loading: true });
     await this.loadData();
   }
@@ -165,15 +166,20 @@ class ProposalCheckScreen extends React.Component<Props, State> {
    * Load data
    */
   private loadData = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
     const deliveryId: string = this.props.navigation.getParam('deliveryId');
-
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const selectedDelivery: DeliveryProduct | undefined = deliveriesAndProducts.find(deliveryData => deliveryData.delivery.id === deliveryId);
-
-    if (selectedDelivery) {
+    if (selectedDelivery && selectedDelivery.product && selectedDelivery.product.id) {
+      const Api = new PakkasmarjaApi();
+      const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
+      const productPrice: ProductPrice[] = await productPricesService.listProductPrices(selectedDelivery.product.id, "CREATED_AT_DSC", undefined, 1);
       this.setState({
         delivery: selectedDelivery.delivery,
-        product: selectedDelivery.product
+        product: selectedDelivery.product,
+        productPrice: productPrice[0]
       });
     }
     this.setState({ loading: false });
@@ -183,7 +189,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    if (this.state.loading || !this.state.delivery) {
+    if (this.state.loading || !this.state.delivery || !this.state.product) {
       return (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#E51D2A" />
@@ -204,15 +210,29 @@ class ProposalCheckScreen extends React.Component<Props, State> {
             {
               this.state.product &&
               <Text style={[styles.contentHeader, { color: "black" }]}>
-                {`${this.state.product.name} ${this.state.product.unitSize} G x ${this.state.product.units}`}
+                {`${this.state.product.name}`}
               </Text>
             }
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.textPrediction}>Tämän hetkinen hinta 4,20 €/kg sis Alv.</Text>
+          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingBottom: 5, }}>
+            <View style={{ flex: 0.1 }}>
+              <EntypoIcon
+                name='info-with-circle'
+                color='#e01e36'
+                size={20}
+              />
+            </View >
+            <View style={{ flex: 1.1 }}>
+              {
+                this.state.productPrice &&
+                <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} ${this.state.productPrice.unit}`}</Text>
+              }
+            </View>
           </View>
-          <View style={{ flex: 1, paddingTop: 10 }}>
-            <Text style={[styles.textWithSpace, { color: "black" }]}>Ehdotettu määrä (KG)</Text>
+          <View >
+            <Text style={[styles.textWithSpace, { marginLeft: 5, color: "black" }]}>
+              Ehdotettu määrä ({this.state.product.unitName})
+              </Text>
           </View>
           <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
@@ -232,6 +252,9 @@ class ProposalCheckScreen extends React.Component<Props, State> {
               borderColor='transparent'
               rounded
             />
+          </View>
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Text style={styles.textPrediction}>{`= ${this.state.delivery.amount * this.state.product.units} KG`}</Text>
           </View>
           <View style={{ flex: 1, flexDirection: "row" }}>
             <View style={styles.center}>
