@@ -91,7 +91,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     }
 
     const time = moment(delivery.delivery.time).format("DD.MM.YYYY");
-    const productText = `${delivery.product.name} ${delivery.product.unitSize} ${delivery.product.unitName} x ${delivery.delivery.amount}`;
+    const productText = `${delivery.product.name} ${delivery.delivery.amount} x ${delivery.product.units} ${delivery.product.unitName}`;
 
     return (
       <View key={delivery.delivery.id} style={styles.renderCustomListItem}>
@@ -121,7 +121,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       return (
         <View style={[styles.center, { flexDirection: "row" }]}>
           <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
-          <Text >Tarkistuksessa</Text>
+          <Text >Ehdotuksissa</Text>
         </View>
       );
     } else if (status === "DELIVERY") {

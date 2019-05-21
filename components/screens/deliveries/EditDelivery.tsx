@@ -4,8 +4,8 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions } from "react-native";
-import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory } from "pakkasmarja-client";
+import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
+import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -17,6 +17,7 @@ import IconPen from "react-native-vector-icons/EvilIcons";
 import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
 import DateTimePicker from "react-native-modal-datetime-picker";
+import EntypoIcon from "react-native-vector-icons/Entypo";
 
 /**
  * Component props
@@ -51,6 +52,8 @@ interface State {
   deliveryNoteId?: string;
   deliveryTimeOptions: { label: string, value: number }[];
   deliveryTimeValue: number;
+  productPrice?: ProductPrice;
+  product?: Product;
 };
 
 /**
@@ -105,30 +108,39 @@ class EditDelivery extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    if (!this.props.accessToken) {
+    const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
+    if (!this.props.accessToken || !deliveryData.product || !deliveryData.product.id) {
       return;
     }
     this.setState({ loading: true });
-    const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
     const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
     const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
+    const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
+    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(deliveryData.product.id, "CREATED_AT_DESC", undefined, 0);
 
     if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
-      this.setState({
+      const deliveryTimeValue = moment(deliveryData.delivery.time).utc().hours() > 12 ? 17 : 11;
+      await this.setState({
         deliveryData,
         products: products,
         deliveryPlaces: deliveryPlaces,
         userId: this.props.accessToken.userId,
         productId: deliveryData.product.id,
+        product: deliveryData.product,
         deliveryPlaceId: deliveryPlace.id || "",
         amount: deliveryData.delivery.amount,
         selectedDate: deliveryData.delivery.time,
-        loading: false
+        loading: false,
+        productPrice: productPrice[0],
+        deliveryTimeValue
       });
+      if (!this.state.productPrice) {
+        this.renderAlert();
+      }
       this.loadDeliveryNotes();
     }
   }
@@ -137,7 +149,16 @@ class EditDelivery extends React.Component<Props, State> {
    * Handles delivery update
    */
   private handleDeliveryUpdate = async () => {
-    if (!this.props.accessToken || !this.state.deliveryPlaceId || !this.state.selectedDate || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id) {
+    if (!this.props.accessToken
+      || !this.state.product
+      || !this.state.product.id
+      || !this.state.deliveryPlaceId
+      || !this.state.selectedDate
+      || !this.state.deliveryData
+      || !this.state.deliveryData.product
+      || !this.state.deliveryData.delivery.id
+      || !this.state.userId
+    ) {
       return;
     }
 
@@ -150,8 +171,8 @@ class EditDelivery extends React.Component<Props, State> {
 
     const delivery: Delivery = {
       id: this.state.deliveryData.delivery.id,
-      productId: this.state.productId || "",
-      userId: this.state.userId || "",
+      productId: this.state.product.id,
+      userId: this.state.userId,
       time: time,
       status: "PLANNED",
       amount: this.state.amount,
@@ -159,7 +180,6 @@ class EditDelivery extends React.Component<Props, State> {
       deliveryPlaceId: this.state.deliveryPlaceId || ""
     }
 
-    await deliveryService.createDelivery(delivery);
     const updatedDelivery = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
     this.updateDeliveries(updatedDelivery);
     this.props.navigation.navigate("Delivery", {
@@ -250,6 +270,38 @@ class EditDelivery extends React.Component<Props, State> {
   }
 
   /**
+   * Handles product change
+   */
+  private handleProductChange = async (productId: string) => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    this.setState({ productId });
+    const products = this.state.products;
+    const product = products.find((product) => product.id === productId)
+    const Api = new PakkasmarjaApi();
+    const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
+    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, 1);
+    if (!productPrice[0]) {
+      this.renderAlert();
+    }
+    this.setState({ product, productPrice: productPrice[0] });
+  }
+
+  /**
+   * Show alert when no product price found
+   */
+  private renderAlert = () => {
+    Alert.alert(
+      'Tuotteelle ei löytynyt hintaa',
+      `Tuotteelle ${this.state.product && this.state.product.name} ei löytynyt hintaa, ota yhteyttä pakkasmarjaan`,
+      [
+        { text: 'OK', onPress: () => { } },
+      ]
+    );
+  }
+
+  /**
    * Render method
    */
   public render() {
@@ -272,7 +324,7 @@ class EditDelivery extends React.Component<Props, State> {
                 selectedValue={this.state.productId}
                 style={{ height: 50, width: "100%" }}
                 onValueChange={(itemValue, itemIndex) =>
-                  this.setState({ productId: itemValue })
+                  this.handleProductChange(itemValue)
                 }>
                 {
                   this.state.products.map((product) => {
@@ -285,29 +337,45 @@ class EditDelivery extends React.Component<Props, State> {
             }
             {
               Platform.OS === "ios" &&
-                <ModalSelector
-                  data={this.state.products && this.state.products.map((product) => {
-                    return {
-                      key: product.id,
-                      label: product.name
-                    };
-                  })}
-                  selectedKey={this.state.productId}
-                  initValue="Valitse tuote"
-                  onChange={(option: any)=> { this.setState({ productId: option.key }) }} />
+              <ModalSelector
+                data={this.state.products && this.state.products.map((product) => {
+                  return {
+                    key: product.id,
+                    label: product.name
+                  };
+                })}
+                selectedKey={this.state.productId}
+                initValue="Valitse tuote"
+                onChange={(option: any) => this.handleProductChange(option.key)} />
             }
           </View>
-          <Text style={styles.textWithSpace}>Tämän hetkinen hinta 4,20€/kg sis.Alv</Text>
-          <Text style={styles.textWithSpace}>Määrä (Yksikköä)</Text>
+          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
+            <View style={{ flex: 0.1 }}>
+              <EntypoIcon
+                name='info-with-circle'
+                color='#e01e36'
+                size={20}
+              />
+            </View >
+            <View style={{ flex: 1.1 }}>
+              {
+                this.state.productPrice ?
+                  <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} ${this.state.productPrice.unit}`}</Text>
+                  :
+                  <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>
+              }
+            </View>
+          </View>
+          <Text style={styles.textWithSpace}>Määrä ({this.state.product && this.state.product.unitName})</Text>
           <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
               value={this.state.amount}
               initValue={this.state.amount}
-              onChange={(value: number) => this.setState({amount: value})}
-              totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2)}
+              onChange={(value: number) => this.setState({ amount: value })}
+              totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2) - 20}
               totalHeight={50}
               iconSize={35}
-              step={100}
+              step={10}
               valueType='real'
               minValue={0}
               textColor='black'
@@ -317,6 +385,9 @@ class EditDelivery extends React.Component<Props, State> {
               borderColor='transparent'
               rounded
             />
+          </View>
+          <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><Text>= {this.state.product && this.state.product.units * this.state.amount} KG</Text></View>
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
             <View style={{ flex: 1 }}>
@@ -378,16 +449,16 @@ class EditDelivery extends React.Component<Props, State> {
                 }
                 {
                   Platform.OS === "ios" &&
-                    <ModalSelector
-                      data={this.state.deliveryTimeOptions.map((deliveryTimeOption) => {
-                        return {
-                          key: deliveryTimeOption.value,
-                          label: deliveryTimeOption.label
-                        };
-                      })}
-                      selectedKey={this.state.deliveryTimeValue}
-                      initValue="Valitse toimituspaikka"
-                      onChange={(option: any)=> { this.setState({ deliveryTimeValue: option.key }) }} />
+                  <ModalSelector
+                    data={this.state.deliveryTimeOptions.map((deliveryTimeOption) => {
+                      return {
+                        key: deliveryTimeOption.value,
+                        label: deliveryTimeOption.label
+                      };
+                    })}
+                    selectedKey={this.state.deliveryTimeValue}
+                    initValue="Valitse toimituspaikka"
+                    onChange={(option: any) => { this.setState({ deliveryTimeValue: option.key }) }} />
                 }
               </View>
               <DateTimePicker
@@ -422,16 +493,16 @@ class EditDelivery extends React.Component<Props, State> {
             }
             {
               Platform.OS === "ios" &&
-                <ModalSelector
-                  data={this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
-                    return {
-                      key: deliveryPlace.id,
-                      label: deliveryPlace.name
-                    };
-                  })}
-                  selectedKey={this.state.deliveryPlaceId}
-                  initValue="Valitse toimituspaikka"
-                  onChange={(option: any)=> { this.setState({ deliveryPlaceId: option.key }) }} />
+              <ModalSelector
+                data={this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
+                  return {
+                    key: deliveryPlace.id,
+                    label: deliveryPlace.name
+                  };
+                })}
+                selectedKey={this.state.deliveryPlaceId}
+                initValue="Valitse toimituspaikka"
+                onChange={(option: any) => { this.setState({ deliveryPlaceId: option.key }) }} />
             }
           </View>
           <View style={{ flex: 1 }}>
@@ -464,7 +535,7 @@ class EditDelivery extends React.Component<Props, State> {
               </TouchableOpacity>
             </View>
             <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop:15 }]} onPress={this.handleDeliveryUpdate}>
+              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 }]} onPress={this.handleDeliveryUpdate}>
                 <Text style={styles.buttonText}>Tallenna</Text>
               </TouchableOpacity>
             </View>

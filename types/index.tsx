@@ -75,7 +75,7 @@ export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAll
 /**
  * Type for delivery data key
  */
-export type DeliveryDataKey = "productId" | "amount" | "deliveryPlaceId" | "deliveryTimeValue";
+export type DeliveryDataKey = "amount" | "deliveryPlaceId" | "deliveryTimeValue";
 
 /**
  * Interface for modal buttons

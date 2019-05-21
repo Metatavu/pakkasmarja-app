@@ -148,7 +148,9 @@ class ProposalsScreen extends React.Component<Props, State> {
     }
     const date = deliveryData.delivery.time;
     const productName = deliveryData.product.name;
-    const productAmount = `${deliveryData.product.unitSize} G x ${deliveryData.product.units}`;
+    const deliveryAmount = `${deliveryData.delivery.amount}`;
+    const productUnitName = `${deliveryData.product.unitName}`;
+    const productUnits = `${deliveryData.product.units}`;
     const deliveryId = deliveryData.delivery.id;
     const productId = deliveryData.product.id;
     return (
@@ -158,7 +160,7 @@ class ProposalsScreen extends React.Component<Props, State> {
             <View style={{ flex: 1, flexDirection: "row" }}>
               <Text>Toimituspäivä </Text><Moment element={Text} format="DD.MM.YYYY">{date.toString()}</Moment>
             </View>
-            <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
+            <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${deliveryAmount} x ${productUnits} ${productUnitName}`}</Text>
           </View>
         </View>
         <TouchableOpacity

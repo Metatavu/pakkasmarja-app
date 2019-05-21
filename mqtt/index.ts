@@ -11,6 +11,8 @@ export type OnMessageCallback = (message: any) => void;
  * MQTT server connection configuration
  */
 export interface MqttConfig {
+  username: string,
+  password: string,
   host: string,
   port: number,
   secure: boolean,
@@ -55,6 +57,8 @@ export class MqttConnection {
     this.config = config;
     const url = (config.secure ? "wss://" : "ws://") + config.host + ":" + config.port + (config.path || "");
     const options: IClientOptions = { 
+      username: config.username,
+      password: config.password,
       host: config.host,
       port: config.port,
       keepalive: 30 

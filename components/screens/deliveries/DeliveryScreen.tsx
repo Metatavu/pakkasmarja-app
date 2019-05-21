@@ -4,8 +4,8 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
-import { Delivery, Product, DeliveryNote, ItemGroupCategory } from "pakkasmarja-client";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Image, ImageSourcePropType } from "react-native";
+import { Delivery, Product, DeliveryNote, DeliveryQuality } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
 import Moment from "react-moment";
@@ -16,6 +16,8 @@ import FeatherIcon from "react-native-vector-icons/Feather";
 import Icon from "react-native-vector-icons/EvilIcons";
 import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
+import { FileService } from "../../../api/file.service";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 /**
  * Component props
@@ -40,16 +42,8 @@ interface State {
   editModal: boolean;
   deliveryNoteId?: string;
   deliveryQuality?: DeliveryQuality;
+  notes64?: { text: string | undefined, url64?: string }[]
 };
-
-//TODO remove when DeliveryQuality backend ready
-export interface DeliveryQuality {
-  id: string,
-  itemGroupCategory: ItemGroupCategory,
-  name: string,
-  priceBonus: number,
-  color: string
-}
 
 /**
  * Delivery component class
@@ -102,7 +96,6 @@ class DeliveryScreen extends React.Component<Props, State> {
     }
     this.setState({ loading: true });
     await this.loadData();
-    await this.loadDeliveryNotes();
     this.setState({ loading: false });
   }
 
@@ -188,22 +181,16 @@ class DeliveryScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    const Api = new PakkasmarjaApi();
     const deliveryId: string = this.props.navigation.getParam('deliveryId');
     const productId: string = this.props.navigation.getParam('productId');
     const qualityId: string = this.props.navigation.getParam('qualityId');
+    const deliveryQualitiesService = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token);
+    const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(this.props.itemGroupCategory);
+    const deliveryQuality = deliveryQualities.find((deliveryQuality) => deliveryQuality.id == qualityId);
+    this.setState({ deliveryQuality });
 
-    //TODO remove when deliveryQualityId backend is ready
-    const deliveryQuality1: DeliveryQuality = { id: "1", name: "bonus", color: "#43AB18", priceBonus: 2, itemGroupCategory: "FRESH" };
-    const deliveryQuality2: DeliveryQuality = { id: "2", name: "perus", color: "#FFB512", priceBonus: 1.2, itemGroupCategory: "FRESH" };
-    const deliveryQuality3: DeliveryQuality = { id: "3", name: "välttävä", color: "#AA6EE0", priceBonus: 0, itemGroupCategory: "FRESH" };
-    const deliveryQuality4: DeliveryQuality = { id: "4", name: "bonus", color: "#43AB18", priceBonus: 2, itemGroupCategory: "FROZEN" };
-    const deliveryQuality5: DeliveryQuality = { id: "5", name: "perus", color: "#FFB512", priceBonus: 1.2, itemGroupCategory: "FROZEN" };
-    const deliveryQuality6: DeliveryQuality = { id: "6", name: "välttävä", color: "#AA6EE0", priceBonus: 0, itemGroupCategory: "FROZEN" };
-    const deliveryQualitys: DeliveryQuality[] = [deliveryQuality1, deliveryQuality2, deliveryQuality3, deliveryQuality4, deliveryQuality5, deliveryQuality6]
-    const deliveryQuality = deliveryQualitys.find((deliveryQuality) => deliveryQuality.id == qualityId);
-    this.setState({ deliveryQuality }); //
 
-    const Api = new PakkasmarjaApi();
     const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = Api.getProductsService(this.props.accessToken.access_token);
     const delivery: Delivery = await deliveriesService.findDelivery(deliveryId);
@@ -211,19 +198,77 @@ class DeliveryScreen extends React.Component<Props, State> {
     const editable: boolean = this.props.navigation.getParam('editable');
     const deliveryData = { delivery, product }
     this.setState({ editable: editable, deliveryData: deliveryData });
+    this.loadDeliveryNotes();
   }
 
   /**
    * Load delivery notes
    */
   private loadDeliveryNotes = async () => {
-    if (!this.props.accessToken || !this.state.deliveryData) {
+    if (!this.props.accessToken || !this.state.deliveryData || !this.state.deliveryData.delivery.id) {
       return;
     }
     const Api = new PakkasmarjaApi();
     const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
-    const deliveryNotes: DeliveryNote[] = await deliveriesService.listDeliveryNotes(this.state.deliveryData.delivery.id || "");
+    const deliveryNotes: DeliveryNote[] = await deliveriesService.listDeliveryNotes(this.state.deliveryData.delivery.id);
+    if (deliveryNotes[0]) {
+      const deliveryNotesImg64 = await deliveryNotes.map(async (note) => {
+        if (note.image) {
+          return { text: note.text, url64: await this.getImage(note.image) }
+        } else {
+          return { text: note.text }
+        }
+      });
+      const notes64 = await Promise.all(deliveryNotesImg64);
+      this.setState({ notes64 });
+    }
     this.setState({ deliveryNotes });
+  }
+
+  /**
+   * Get image
+   */
+  private getImage = async (imageUrl: string) => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
+    const imageData = await fileService.getFile(imageUrl);
+    const imageBase64 = `data:image/jpeg;base64,${imageData}`
+    return imageBase64;
+  }
+
+  /**
+   * Renders delivery notes
+   */
+  private renderDeliveryNotes = (): JSX.Element => {
+    if (!this.state.deliveryNotes || !this.state.notes64 || !this.state.notes64[0]) {
+      return <Text style={{ color: "black", fontSize: 18, fontWeight: "400" }}>Huomioita ei ole</Text>;
+    }
+    return (
+      <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: "black", fontSize: 18, fontWeight: "400" }}>Huomiot:</Text>
+        </View>
+        {
+          this.state.notes64.map((deliveryNote, index) => {
+            return (
+              <View style={{ flex: 1, paddingVertical: 10, borderBottomColor: 'grey', borderBottomWidth: 1, }} key={deliveryNote.text || "" + index}>
+                <Text style={{ flex: 1, paddingVertical: 5, fontSize: 15 }}>Kommentti {index + 1}:</Text>
+                {
+                  deliveryNote.url64 &&
+                  <Image
+                    source={{ uri: deliveryNote.url64 }}
+                    style={{ flex: 1, width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }}
+                  />
+                }
+                <Text style={{ flex: 1, color: "black", fontSize: 14 }}>{deliveryNote.text}</Text>
+              </View>
+            );
+          })
+        }
+      </View>
+    );
   }
 
   /**
@@ -246,26 +291,32 @@ class DeliveryScreen extends React.Component<Props, State> {
               <Text style={{ fontSize: 16 }}>Tuote</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16 }}>{`${this.state.deliveryData.product.name} ${this.state.deliveryData.product.unitSize} G x ${this.state.deliveryData.product.units}`}</Text>
+              <Text style={{ fontSize: 16, color: "black" }}>{`${this.state.deliveryData.product.name}`}</Text>
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
-              <Text style={{ fontSize: 16 }}>Määrä (Yksikköä)</Text>
+              <Text style={{ fontSize: 16 }}>Määrä ({this.state.deliveryData.product.unitName})</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16 }}>{this.state.deliveryData.delivery.amount}</Text>
+              <Text style={{ fontSize: 16, color: "black" }}>{this.state.deliveryData.delivery.amount}</Text>
+            </View>
+          </View>
+          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+            <View style={{ flex: 0.8 }}>
+              <Text style={{ fontSize: 16 }}>Kiloa</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, color: "black" }}>{this.state.deliveryData.delivery.amount * this.state.deliveryData.product.units}</Text>
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 16 }}>Toimituspäivä</Text>
             </View>
-            <View style={{ flex: 0.5 }}>
-              <Moment element={Text} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
-            </View>
-            <View style={{ flex: 0.5 }}>
-              <Text>{moment(this.state.deliveryData.delivery.time).hours() > 12 ? `Jälkeen klo 11` : `Ennen kello 11`}</Text>
+            <View style={{ flex: 1, flexDirection: 'row' }}>
+              <Moment element={Text} style={{ color: "black", fontSize: 16 }} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
+              <Text style={{ color: "black", fontSize: 16 }}>{moment(this.state.deliveryData.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 11` : ` - Ennen kello 11`}</Text>
             </View>
           </View>
           {this.state.deliveryQuality &&
@@ -274,8 +325,8 @@ class DeliveryScreen extends React.Component<Props, State> {
                 <Text style={{ fontSize: 16 }}>Laatuluokka</Text>
               </View>
               <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-                <View style={[styles.deliveryQualityRoundView, { backgroundColor: this.state.deliveryQuality.color }]} >
-                  <Text style={[styles.deliveryQualityRoundViewText]}>{this.state.deliveryQuality.name.slice(0, 1).toUpperCase()}</Text>
+                <View style={[styles.deliveryQualityRoundView, { backgroundColor: this.state.deliveryQuality.color || "grey" }]} >
+                  <Text style={[styles.deliveryQualityRoundViewText, { fontSize: 16 }]}>{this.state.deliveryQuality.name.slice(0, 1).toUpperCase()}</Text>
                 </View>
                 <View >
                   <Text style={{ color: "black", fontSize: 14, fontWeight: "400", marginBottom: 4 }}>{this.state.deliveryQuality.name}</Text>
@@ -334,10 +385,19 @@ class DeliveryScreen extends React.Component<Props, State> {
                 </View>
               </React.Fragment>
               :
-              <View style={{ marginTop: 30 }}>
-                <Text style={{ color: "black", fontSize: 18, fontWeight: "400" }}>Pakkasmarjan kommentti:</Text>
-                {/*TODO pakkasmarja delivery note text and photo */}
-              </View>
+              <React.Fragment>
+                <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+                  <View style={{ flex: 0.8 }}>
+                    <Text style={{ fontSize: 16 }}>Maksettu hinta</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, color: "black" }}>{this.state.deliveryData.delivery.price}</Text>
+                  </View>
+                </View>
+                <View style={{ flex: 1, marginTop: 30 }}>
+                  {this.renderDeliveryNotes()}
+                </View>
+              </React.Fragment>
           }
         </View>
         <CreateDeliveryNoteModal
