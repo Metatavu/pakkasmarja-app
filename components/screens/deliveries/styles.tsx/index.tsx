@@ -56,7 +56,7 @@ export const styles = StyleSheet.create({
   },
   contentHeader: {
     fontWeight: "bold",
-    fontSize: 25,
+    fontSize: 18,
     paddingBottom: 20
   },
   viewHeaderText: {

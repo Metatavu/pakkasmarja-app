@@ -453,7 +453,7 @@ class NewDelivery extends React.Component<Props, State> {
             />
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><Text>= {this.state.product && this.state.product.units * this.state.amount} KG</Text></View>
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><Text>= {this.state.product && this.state.amount * (this.state.product.units * this.state.product.unitSize)} KG</Text></View>
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
             <View style={{ flex: 1 }}>

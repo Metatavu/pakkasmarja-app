@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, WeekDay } from "../../../types";
 import * as actions from "../../../actions";
-import { View, Text, TouchableOpacity, TouchableHighlight } from "react-native";
+import { View, Text, TouchableOpacity, TouchableHighlight, Dimensions } from "react-native";
 import { styles } from "./styles.tsx";
 import { WeekDeliveryPrediction, ItemGroup, WeekDeliveryPredictionDays } from "pakkasmarja-client";
 import { Icon } from "native-base";
@@ -12,6 +12,7 @@ import NumericInput from 'react-native-numeric-input';
 import moment from "moment";
 import PakkasmarjaApi from "../../../api";
 import FeatherIcon from "react-native-vector-icons/Feather";
+import * as _ from "lodash";
 
 /**
  * Component props
@@ -169,13 +170,21 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
    */
   private handleValueChange = (value: number) => {
     const averageDailyAmount: number = Math.round(value / 7);
+    this.calculatePercentage(value);
+    this.setState({ amount: value, averageDailyAmount: averageDailyAmount });
+  }
+
+  /**
+   * Calculate percentage
+   */
+  private calculatePercentage = (inputValue?: number) => {
+    const value = inputValue || this.state.amount;
     let percentageAmount: string = "0";
-
-    if (this.state.lastWeeksDeliveryPredictionTotalAmount > 0 && value > 0) {
-      percentageAmount = ((value / this.state.lastWeeksDeliveryPredictionTotalAmount) * 100).toFixed(2);
+    const lastWeeksAmount = this.state.lastWeeksDeliveryPredictionTotalAmount > 0 ? this.state.lastWeeksDeliveryPredictionTotalAmount : 1;
+    if (value > 0) {
+      lastWeeksAmount === 1 ? percentageAmount = value.toFixed(2) : percentageAmount = ((value / lastWeeksAmount) * 100 - 100).toFixed(2);
     }
-
-    this.setState({ amount: value, averageDailyAmount: averageDailyAmount, percentageAmount: percentageAmount });
+    this.setState({ percentageAmount });
   }
 
   /**
@@ -189,13 +198,11 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
     const lastWeekNumber: number = moment().subtract(1, "weeks").week();
     const Api = new PakkasmarjaApi();
     const weekDeliveryPredictionService = await Api.getWeekDeliveryPredictionsService(this.props.accessToken.access_token);
-    const filteredByWeekNumber = await weekDeliveryPredictionService.listWeekDeliveryPredictions(undefined, undefined, undefined, lastWeekNumber);
+    const year = moment().year();
+    const filteredByWeekNumber = await weekDeliveryPredictionService.listWeekDeliveryPredictions(this.state.selectedItemGroup.id, undefined, this.props.accessToken.userId, lastWeekNumber, year, undefined, 999);
+    const lastWeeksDeliveryPredictionTotalAmount = _.sumBy(filteredByWeekNumber, prediction => prediction.amount);
+    this.setState({ lastWeeksDeliveryPredictionTotalAmount });
 
-    filteredByWeekNumber.forEach((weekDeliveryPrediction) => {
-      const amount: number = weekDeliveryPrediction.amount;
-      const totalAmount = this.state.lastWeeksDeliveryPredictionTotalAmount + amount;
-      this.setState({ lastWeeksDeliveryPredictionTotalAmount: totalAmount });
-    });
   }
 
   /**
@@ -239,8 +246,9 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
     if (action === "previous" && this.state.itemGroupIndex !== minValue) {
       await this.setState({ itemGroupIndex: this.state.itemGroupIndex - 1 });
     }
-
-    await this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex] });
+    await this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex], amount: 0, averageDailyAmount: 0 });
+    this.setLastWeeksTotal();
+    this.calculatePercentage();
   }
 
   /**
@@ -267,7 +275,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
             <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start", paddingLeft: 20 }}>
               <Text style={styles.textPrediction}>Viime viikon toimitukset</Text>
             </View>
-            <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end", paddingRight: 20 }} >
+            <View style={{ flex: 0.5, justifyContent: "center", alignItems: "center", paddingRight: 20 }} >
               <Text style={[styles.textPrediction, { fontWeight: "bold" }]}>{`${this.state.lastWeeksDeliveryPredictionTotalAmount} kg`}</Text>
             </View>
           </View>
@@ -284,12 +292,12 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
             <Text style={{ fontSize: 24, color: "black", fontWeight: "500" }}>Ennuste ensi viikolle (KG)</Text>
           </View>
           <View style={styles.center}>
-            <View style={[styles.center, { width: 370, height: 70, borderRadius: 7, borderColor: "#e01e36", borderWidth: 1.25, marginBottom: 10 }]}>
+            <View style={[styles.center, { width: "90%", height: 70, borderRadius: 7, borderColor: "#e01e36", borderWidth: 1.25, marginBottom: 10 }]}>
               <NumericInput
                 value={this.state.amount}
                 initValue={this.state.amount}
                 onChange={(value: number) => this.handleValueChange(value)}
-                totalWidth={360}
+                totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2) - 20}
                 totalHeight={50}
                 iconSize={35}
                 step={100}

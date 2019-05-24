@@ -11,6 +11,7 @@ import { RED_LOGO } from "../../../static/images";
 import Moment from "react-moment";
 import { NavigationEvents } from "react-navigation";
 import Icon from "react-native-vector-icons/Feather";
+import * as _ from "lodash";
 
 /**
  * Component props
@@ -86,7 +87,8 @@ class ProposalsScreen extends React.Component<Props, State> {
   private loadData = async () => {
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const proposalsData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "PROPOSAL");
-    this.setState({ deliveryData: proposalsData, loading: false });
+    const proposalsDataSorted = _.sortBy(proposalsData, data => data.delivery.time).reverse();
+    this.setState({ deliveryData: proposalsDataSorted, loading: false });
   }
 
   /**
@@ -148,19 +150,16 @@ class ProposalsScreen extends React.Component<Props, State> {
     }
     const date = deliveryData.delivery.time;
     const productName = deliveryData.product.name;
-    const deliveryAmount = `${deliveryData.delivery.amount}`;
-    const productUnitName = `${deliveryData.product.unitName}`;
-    const productUnits = `${deliveryData.product.units}`;
     const deliveryId = deliveryData.delivery.id;
     const productId = deliveryData.product.id;
     return (
       <View key={deliveryId} style={styles.renderCustomListItem}>
-        <View style={{ flex: 2 }}>
+        <View style={{ flex: 2, alignItems: "center", justifyContent: "center" }}>
           <View style={{ flex: 1 }}>
             <View style={{ flex: 1, flexDirection: "row" }}>
               <Text>Toimituspäivä </Text><Moment element={Text} format="DD.MM.YYYY">{date.toString()}</Moment>
             </View>
-            <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${deliveryAmount} x ${productUnits} ${productUnitName}`}</Text>
+            <Text style={{ color: 'black', fontWeight: "500" }}>{`${productName}`}</Text>
           </View>
         </View>
         <TouchableOpacity
