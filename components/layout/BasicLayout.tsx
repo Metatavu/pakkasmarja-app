@@ -1,6 +1,6 @@
 import React from "react";
 import { Toast, Spinner, Thumbnail } from "native-base";
-import { StyleSheet, View, Text, TouchableHighlight, Platform, SafeAreaView } from "react-native";
+import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity } from "react-native";
 import strings from "../../localization/strings";
 import { CONTRACTS_ICON, DELIVERIES_ICON, MESSAGES_ICON, NEWS_ICON } from "../../static/images";
 
@@ -66,30 +66,30 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
         {this.props.children}
         {this.props.displayFooter &&
           <View style={styles.footer}>
-            <TouchableHighlight underlayColor="#fff" onPress={() => this.goToScreen("News")}>
+            <TouchableOpacity  onPress={() => this.goToScreen("News")}>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
                 <Thumbnail source={NEWS_ICON} square style={{ width: 22, height: 26 }} />
                 <Text>{strings.newsFooterLink}</Text>
               </View>
-            </TouchableHighlight>
-            <TouchableHighlight underlayColor="#fff" onPress={() => this.goToScreen("ChatsList")}>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => this.goToScreen("ChatsList")}>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
                 <Thumbnail source={MESSAGES_ICON} square style={{ width: 48, height:26 }} />
                 <Text>{strings.messagingFooterLink}</Text>
               </View>
-            </TouchableHighlight>
-            <TouchableHighlight underlayColor="#fff" onPress={() => this.goToScreen("Deliveries")}>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => this.goToScreen("Deliveries")}>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
                 <Thumbnail source={DELIVERIES_ICON} square style={{ width: 40, height: 26 }} />
                 <Text>{strings.deliveriesFooterLink}</Text>
               </View>
-            </TouchableHighlight>
-            <TouchableHighlight underlayColor="#fff" onPress={() => this.goToScreen("Contracts")}>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => this.goToScreen("Contracts")}>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
                 <Thumbnail source={CONTRACTS_ICON} square style={{ width: 20, height: 26 }} />
                 <Text>{strings.contractsFooterLink}</Text>
               </View>
-            </TouchableHighlight>
+            </TouchableOpacity>
           </View>
         }
       </SafeAreaView>

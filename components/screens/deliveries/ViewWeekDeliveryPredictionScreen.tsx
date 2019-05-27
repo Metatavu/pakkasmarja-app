@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, WeekDeliveryPredictionTableData } from "../../../types";
 import * as actions from "../../../actions";
-import { View, Text, TouchableOpacity, TouchableHighlight } from "react-native";
+import { View, Text, TouchableOpacity, TouchableHighlight, Dimensions } from "react-native";
 import { styles } from "./styles.tsx";
 import NumericInput from 'react-native-numeric-input';
 import moment from "moment";
@@ -24,7 +24,6 @@ interface Props {
  */
 interface State {
   averageDailyAmount: number;
-  percentageAmount: number;
   predictionData?: WeekDeliveryPredictionTableData;
 };
 
@@ -41,8 +40,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      averageDailyAmount: 0,
-      percentageAmount: 0,
+      averageDailyAmount: 0
     };
   }
 
@@ -101,11 +99,11 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
             <Text style={{ fontSize: 24, color: "black", fontWeight: "500" }}>Ennuste viikolle {this.state.predictionData ? this.state.predictionData.weekDeliveryPrediction.weekNumber : null} (KG)</Text>
           </View>
           <View style={styles.center}>
-            <View style={[styles.center, { width: 370, height: 70, borderRadius: 7, borderColor: "#B4B4B4", borderWidth: 1.25, marginBottom: 10 }]}>
+            <View style={[styles.center, { width: "90%", height: 70, borderRadius: 7, borderColor: "#B4B4B4", borderWidth: 1.25, marginBottom: 10 }]}>
               <NumericInput
                 initValue={this.state.predictionData ? this.state.predictionData.weekDeliveryPrediction.amount : 0}
                 onChange={() => { }}
-                totalWidth={360}
+                totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2) - 20}
                 totalHeight={50}
                 editable={false}
                 iconSize={35}
@@ -123,7 +121,6 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
           </View>
           <View style={styles.center}>
             <Text style={styles.textPrediction}>Keskimäärin<Text style={[styles.textPrediction, { fontWeight: "bold" }]}>{` ${this.state.averageDailyAmount} kg/pv`}</Text></Text>
-            <Text style={styles.textPrediction}>Muutos viime viikkoon <Text style={[styles.textPrediction, { fontWeight: "bold" }]}>{` ${this.state.percentageAmount} %`}</Text></Text>
           </View>
         </View>
         <View style={[styles.center, { paddingVertical: 20 }]}>

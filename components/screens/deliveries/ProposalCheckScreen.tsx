@@ -4,8 +4,8 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
-import { Delivery, Product, ItemGroupCategory, ProductPrice } from "pakkasmarja-client";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Dimensions, Image } from "react-native";
+import { Delivery, Product, ItemGroupCategory, ProductPrice, DeliveryNote } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
 import Moment from "react-moment";
@@ -15,6 +15,9 @@ import { Thumbnail } from "native-base";
 import { PREDICTIONS_ICON } from "../../../static/images";
 import Icon from "react-native-vector-icons/Feather";
 import EntypoIcon from "react-native-vector-icons/Entypo";
+import Lightbox from 'react-native-lightbox';
+import { FileService } from "../../../api/file.service";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 /**
  * Component props
@@ -36,6 +39,10 @@ interface State {
   delivery?: Delivery;
   product?: Product;
   productPrice?: ProductPrice;
+  amount: number;
+  notesLoading: boolean;
+  lightBoxOpen: boolean;
+  notes64?: { text: string | undefined, url64?: string }[];
 };
 
 /**
@@ -52,7 +59,10 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
+      lightBoxOpen: false,
       modalOpen: false,
+      notesLoading: false,
+      amount: 0
     };
   }
 
@@ -106,7 +116,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       userId: this.props.accessToken.userId,
       time: this.state.delivery.time,
       status: "PLANNED",
-      amount: this.state.delivery.amount,
+      amount: this.state.amount,
       price: this.state.delivery.price,
       deliveryPlaceId: this.state.delivery.deliveryPlaceId
     }
@@ -176,13 +186,105 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       const Api = new PakkasmarjaApi();
       const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
       const productPrice: ProductPrice[] = await productPricesService.listProductPrices(selectedDelivery.product.id, "CREATED_AT_DSC", undefined, 1);
-      this.setState({
+      await this.setState({
         delivery: selectedDelivery.delivery,
         product: selectedDelivery.product,
-        productPrice: productPrice[0]
+        productPrice: productPrice[0],
+        amount: selectedDelivery.delivery.amount
       });
     }
     this.setState({ loading: false });
+    this.loadDeliveryNotes();
+  }
+
+  /**
+ * Load delivery notes
+ */
+  private loadDeliveryNotes = async () => {
+    if (!this.props.accessToken || !this.state.delivery || !this.state.delivery.id) {
+      return;
+    }
+    this.setState({ notesLoading: true });
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const deliveryNotes: DeliveryNote[] = await deliveriesService.listDeliveryNotes(this.state.delivery.id);
+    if (deliveryNotes[0]) {
+      const deliveryNotesImg64 = await deliveryNotes.map(async (note) => {
+        if (note.image) {
+          return { text: note.text, url64: await this.getImage(note.image) }
+        } else {
+          return { text: note.text }
+        }
+      });
+      const notes64 = await Promise.all(deliveryNotesImg64);
+      this.setState({ notes64 });
+    }
+    this.setState({ notesLoading: false });
+  }
+
+  /**
+   * Get image
+   */
+  private getImage = async (imageUrl: string) => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
+    const imageData = await fileService.getFile(imageUrl);
+    const imageBase64 = `data:image/jpeg;base64,${imageData}`
+    return imageBase64;
+  }
+
+  /**
+   * Renders delivery notes
+   */
+  private renderDeliveryNotes = (): JSX.Element => {
+    if (this.state.notesLoading) {
+      return (
+        <View style={[styles.loaderContainer, { flex: 1, flexDirection: "column" }]}>
+          <View style={{ flex: 1 }}>
+            <ActivityIndicator size="large" color="#E51D2A" />
+          </View >
+          <View style={{ flex: 1, height: 20, alignItems: "center", justifyContent: "center" }}>
+            <Text>Ladataan huomioita...</Text>
+          </View>
+        </View>
+      );
+    }
+    if (!this.state.notes64) {
+      return <React.Fragment></React.Fragment>;
+    }
+    return (
+      <View style={{ flex: 1 }}>
+        {
+          this.state.notes64.map((deliveryNote, index) => {
+            return (
+              <View style={{ flex: 1, paddingVertical: 10, borderBottomColor: 'grey', borderBottomWidth: 1, }} key={deliveryNote.text || "" + index}>
+                <Text style={{ flex: 1, paddingVertical: 5, fontSize: 15 }}>Huomio {index + 1}:</Text>
+                {
+                  deliveryNote.url64 &&
+                  <Lightbox
+                    navigator={this.props.navigation.navigator}
+                    springConfig={{ tension: 20, friction: 10 }}
+                    underlayColor="transparent"
+                    backgroundColor="black"
+                    onOpen={() => this.setState({ lightBoxOpen: true })}
+                    onClose={() => this.setState({ lightBoxOpen: false })}
+                  >
+                    <Image
+                      source={{ uri: deliveryNote.url64 }}
+                      style={this.state.lightBoxOpen ? { flex: 1, alignSelf: "center", height: Dimensions.get('screen').height, width: Dimensions.get('screen').width, resizeMode: "contain" } : { flex: 1, alignSelf: "center", width: 200, height: 100, resizeMode: 'contain', marginBottom: 10 }}
+                    />
+                  </Lightbox>
+                }
+                <Text style={{ flex: 1, color: "black", fontSize: 14 }}>{deliveryNote.text}</Text>
+
+              </View>
+            );
+          })
+        }
+      </View>
+    );
   }
 
   /**
@@ -196,6 +298,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
         </View>
       );
     }
+    const kilograms = this.state.amount * (this.state.product.units * this.state.product.unitSize);
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={[styles.center, styles.topViewWithButton]}>
@@ -236,13 +339,13 @@ class ProposalCheckScreen extends React.Component<Props, State> {
           </View>
           <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
-              value={this.state.delivery.amount}
-              initValue={this.state.delivery.amount}
-              onChange={(value: number) => { }}
-              totalWidth={365}
+              value={this.state.amount}
+              initValue={this.state.amount}
+              onChange={(value: number) => { this.setState({ amount: value }) }}
+              totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2) - 20}
               totalHeight={50}
               iconSize={35}
-              step={0}
+              step={10}
               valueType='real'
               minValue={0}
               textColor='black'
@@ -254,7 +357,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
             />
           </View>
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text style={styles.textPrediction}>{`= ${this.state.delivery.amount * this.state.product.units} KG`}</Text>
+            <Text style={styles.textPrediction}>{`= ${kilograms} KG`}</Text>
           </View>
           <View style={{ flex: 1, flexDirection: "row" }}>
             <View style={styles.center}>
@@ -266,6 +369,9 @@ class ProposalCheckScreen extends React.Component<Props, State> {
                 </Moment>
               </View>
             </View>
+          </View>
+          <View style={{ flex: 1, marginTop: 30 }}>
+            {this.renderDeliveryNotes()}
           </View>
           <View style={[styles.center, { flex: 1 }]}>
             <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>

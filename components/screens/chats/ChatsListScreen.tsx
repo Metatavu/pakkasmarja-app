@@ -92,12 +92,12 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <BasicLayout navigation={this.props.navigation}>
+      <BasicLayout displayFooter={true} navigation={this.props.navigation}>
         <Tabs tabBarUnderlineStyle={{backgroundColor: "#fff"}}>
-          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={strings.chatsNavHeader}>
+          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} textStyle={{color:"#fff"}} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={strings.chatsNavHeader}>
             { this.renderChatTab() }
           </Tab>
-          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={strings.questionsNavHeader}>
+          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} textStyle={{color:"#fff"}} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={strings.questionsNavHeader}>
             { this.renderQuestionTab() }
           </Tab>
         </Tabs>

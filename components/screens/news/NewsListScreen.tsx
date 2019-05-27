@@ -10,6 +10,7 @@ import { NewsArticle } from "pakkasmarja-client";
 import { ListItem } from "react-native-elements";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import * as _ from "lodash"
+import { TouchableOpacity } from "react-native";
 
 /**
  * Component props
@@ -105,17 +106,18 @@ class NewsListScreen extends React.Component<Props, State> {
             {
               this.state.newsArticles.map((newsArticle) => {
                 return (
-                  <ListItem
-                    key={newsArticle.id}
-                    title={newsArticle.title}
-                    titleStyle={{ fontSize: 22, color: "black", paddingBottom: 5, fontWeight: "bold" }}
-                    subtitle={
-                      <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
-                        {newsArticle.createdAt ? newsArticle.createdAt.toString() : undefined}
-                      </Moment>
-                    }
-                    onPress={() => { this.handleListItemClick(newsArticle) }}
-                  />
+                  <TouchableOpacity onPress={() => { this.handleListItemClick(newsArticle) }}>
+                    <ListItem
+                      key={newsArticle.id}
+                      title={newsArticle.title}
+                      titleStyle={{ fontSize: 22, color: "black", paddingBottom: 5, fontWeight: "bold" }}
+                      subtitle={
+                        <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
+                          {newsArticle.createdAt ? newsArticle.createdAt.toString() : undefined}
+                        </Moment>
+                      }
+                    />
+                  </TouchableOpacity>
                 )
               })
             }

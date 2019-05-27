@@ -67,7 +67,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
         showHeader={false}
         showUser={true}
       />,
-      headerTitleStyle : {width : Dimensions.get('window').width},
+      headerTitleStyle: { width: Dimensions.get('window').width },
       headerTitleContainerStyle: {
         left: 0,
       },
@@ -195,7 +195,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
    */
   private renderDeliveryList = (deliveryList: {}[], itemGroupCategory: ItemGroupCategory) => {
     return (
-      <View style={{ flex: 1, flexDirection: "column", marginTop: 50 }}>
+      <View style={{ flex: 1, flexDirection: "column", marginTop: 40 }}>
         {
           deliveryList.map((listItem: any) => {
             const plannedAmount: number = itemGroupCategory == "FRESH" ? listItem.freshPlannedAmount : listItem.frozenPlannedAmount;
@@ -272,13 +272,13 @@ class DeliveriesScreen extends React.Component<Props, State> {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <NavigationEvents onDidFocus={() => this.loadAmounts()} />
-        <Tabs tabBarUnderlineStyle={{backgroundColor: "#fff"}}>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{color:"#fff"}} tabStyle={styles.tab} heading={"TUORE"}>
+        <Tabs tabBarUnderlineStyle={{ backgroundColor: "#fff" }}>
+          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"TUORE"}>
             {
               this.renderDeliveryList(deliveryList, "FRESH")
             }
           </Tab>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{color:"#fff"}} tabStyle={styles.tab} heading={"PAKASTE"}>
+          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"PAKASTE"}>
             {
               this.renderDeliveryList(deliveryList, "FROZEN")
             }

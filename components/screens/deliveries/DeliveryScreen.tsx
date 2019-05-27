@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Image, ImageSourcePropType } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Image, Dimensions, } from "react-native";
 import { Delivery, Product, DeliveryNote, DeliveryQuality } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
@@ -18,6 +18,7 @@ import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
 import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import Lightbox from 'react-native-lightbox';
 
 /**
  * Component props
@@ -42,7 +43,9 @@ interface State {
   editModal: boolean;
   deliveryNoteId?: string;
   deliveryQuality?: DeliveryQuality;
-  notes64?: { text: string | undefined, url64?: string }[]
+  notes64?: { text: string | undefined, url64?: string }[];
+  notesLoading: boolean;
+  lightBoxOpen: boolean;
 };
 
 /**
@@ -61,7 +64,9 @@ class DeliveryScreen extends React.Component<Props, State> {
       loading: false,
       editable: false,
       createModal: false,
-      editModal: false
+      editModal: false,
+      notesLoading: false,
+      lightBoxOpen: false
     };
   }
 
@@ -208,6 +213,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     if (!this.props.accessToken || !this.state.deliveryData || !this.state.deliveryData.delivery.id) {
       return;
     }
+    this.setState({ notesLoading: true });
     const Api = new PakkasmarjaApi();
     const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
     const deliveryNotes: DeliveryNote[] = await deliveriesService.listDeliveryNotes(this.state.deliveryData.delivery.id);
@@ -223,6 +229,7 @@ class DeliveryScreen extends React.Component<Props, State> {
       this.setState({ notes64 });
     }
     this.setState({ deliveryNotes });
+    this.setState({ notesLoading: false });
   }
 
   /**
@@ -242,27 +249,46 @@ class DeliveryScreen extends React.Component<Props, State> {
    * Renders delivery notes
    */
   private renderDeliveryNotes = (): JSX.Element => {
-    if (!this.state.deliveryNotes || !this.state.notes64 || !this.state.notes64[0]) {
-      return <Text style={{ color: "black", fontSize: 18, fontWeight: "400" }}>Huomioita ei ole</Text>;
+    if (this.state.notesLoading) {
+      return (
+        <View style={[styles.loaderContainer, { flex: 1, flexDirection: "column" }]}>
+          <View style={{ flex: 1 }}>
+            <ActivityIndicator size="large" color="#E51D2A" />
+          </View >
+          <View style={{ flex: 1, height: 20, alignItems: "center", justifyContent: "center" }}>
+            <Text>Ladataan huomioita...</Text>
+          </View>
+        </View>
+      );
+    }
+    if (!this.state.notes64) {
+      return <React.Fragment></React.Fragment>;
     }
     return (
       <View style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: "black", fontSize: 18, fontWeight: "400" }}>Huomiot:</Text>
-        </View>
         {
           this.state.notes64.map((deliveryNote, index) => {
             return (
               <View style={{ flex: 1, paddingVertical: 10, borderBottomColor: 'grey', borderBottomWidth: 1, }} key={deliveryNote.text || "" + index}>
-                <Text style={{ flex: 1, paddingVertical: 5, fontSize: 15 }}>Kommentti {index + 1}:</Text>
+                <Text style={{ flex: 1, paddingVertical: 5, fontSize: 15 }}>Huomio {index + 1}:</Text>
                 {
                   deliveryNote.url64 &&
-                  <Image
-                    source={{ uri: deliveryNote.url64 }}
-                    style={{ flex: 1, width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }}
-                  />
+                  <Lightbox
+                    navigator={this.props.navigation.navigator}
+                    springConfig={{ tension: 20, friction: 10 }}
+                    underlayColor="transparent"
+                    backgroundColor="black"
+                    onOpen={() => this.setState({ lightBoxOpen: true })}
+                    onClose={() => this.setState({ lightBoxOpen: false })}
+                  >
+                    <Image
+                      source={{ uri: deliveryNote.url64 }}
+                      style={this.state.lightBoxOpen ? { flex: 1, alignSelf: "center", height: Dimensions.get('screen').height, width: Dimensions.get('screen').width, resizeMode:"contain" } : { flex: 1, alignSelf: "center", width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }}
+                    />
+                  </Lightbox>
                 }
                 <Text style={{ flex: 1, color: "black", fontSize: 14 }}>{deliveryNote.text}</Text>
+
               </View>
             );
           })
@@ -287,46 +313,46 @@ class DeliveryScreen extends React.Component<Props, State> {
         <NavigationEvents onWillFocus={() => this.loadData()} />
         <View style={{ flex: 1, padding: 25 }}>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 0.8 }}>
-              <Text style={{ fontSize: 16 }}>Tuote</Text>
+            <View style={{ flex: 0.7 }}>
+              <Text style={{ fontSize: 15 }}>Tuote</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, color: "black" }}>{`${this.state.deliveryData.product.name}`}</Text>
+              <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.product.name}`}</Text>
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 0.8 }}>
-              <Text style={{ fontSize: 16 }}>Määrä ({this.state.deliveryData.product.unitName})</Text>
+            <View style={{ flex: 0.7 }}>
+              <Text style={{ fontSize: 15 }}>Määrä ({this.state.deliveryData.product.unitName})</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, color: "black" }}>{this.state.deliveryData.delivery.amount}</Text>
+              <Text style={{ fontSize: 15, color: "black" }}>{this.state.deliveryData.delivery.amount}</Text>
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 0.8 }}>
-              <Text style={{ fontSize: 16 }}>Kiloa</Text>
+            <View style={{ flex: 0.7 }}>
+              <Text style={{ fontSize: 15 }}>Kiloa</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, color: "black" }}>{this.state.deliveryData.delivery.amount * this.state.deliveryData.product.units}</Text>
+              <Text style={{ fontSize: 15, color: "black" }}>{this.state.deliveryData.delivery.amount * (this.state.deliveryData.product.units * this.state.deliveryData.product.unitSize)}</Text>
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 0.8 }}>
-              <Text style={{ fontSize: 16 }}>Toimituspäivä</Text>
+            <View style={{ flex: 0.7 }}>
+              <Text style={{ fontSize: 15 }}>Toimituspäivä</Text>
             </View>
             <View style={{ flex: 1, flexDirection: 'row' }}>
-              <Moment element={Text} style={{ color: "black", fontSize: 16 }} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
-              <Text style={{ color: "black", fontSize: 16 }}>{moment(this.state.deliveryData.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 11` : ` - Ennen kello 11`}</Text>
+              <Moment element={Text} style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
+              <Text style={{ color: "black", fontSize: 15 }}>{moment(this.state.deliveryData.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 11` : ` - Ennen kello 11`}</Text>
             </View>
           </View>
           {this.state.deliveryQuality &&
             <View style={{ flex: 1, flexDirection: 'row', alignItems: "center", paddingVertical: 5, height: 60 }}>
-              <View style={{ flex: 0.8 }}>
-                <Text style={{ fontSize: 16 }}>Laatuluokka</Text>
+              <View style={{ flex: 0.7 }}>
+                <Text style={{ fontSize: 15 }}>Laatuluokka</Text>
               </View>
               <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
                 <View style={[styles.deliveryQualityRoundView, { backgroundColor: this.state.deliveryQuality.color || "grey" }]} >
-                  <Text style={[styles.deliveryQualityRoundViewText, { fontSize: 16 }]}>{this.state.deliveryQuality.name.slice(0, 1).toUpperCase()}</Text>
+                  <Text style={[styles.deliveryQualityRoundViewText, { fontSize: 15 }]}>{this.state.deliveryQuality.name.slice(0, 1).toUpperCase()}</Text>
                 </View>
                 <View >
                   <Text style={{ color: "black", fontSize: 14, fontWeight: "400", marginBottom: 4 }}>{this.state.deliveryQuality.name}</Text>
@@ -345,7 +371,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                           <TouchableOpacity onPress={() => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true })}>
                             <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
                               <Icon size={25} style={{ color: "#e01e36" }} name="pencil" />
-                              <Text style={{ fontSize: 16, color: "#e01e36" }} >
+                              <Text style={{ fontSize: 15, color: "#e01e36" }} >
                                 {`Katso/poista huomio`}
                               </Text>
                             </View>
@@ -359,7 +385,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                   <TouchableOpacity onPress={() => this.setState({ createModal: true })}>
                     <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
                       <Icon size={25} style={{ color: "#e01e36" }} name="pencil" />
-                      <Text style={{ fontSize: 16, color: "#e01e36" }} >
+                      <Text style={{ fontSize: 15, color: "#e01e36" }} >
                         {`Lisää huomio`}
                       </Text>
                     </View>
@@ -387,11 +413,11 @@ class DeliveryScreen extends React.Component<Props, State> {
               :
               <React.Fragment>
                 <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-                  <View style={{ flex: 0.8 }}>
-                    <Text style={{ fontSize: 16 }}>Maksettu hinta</Text>
+                  <View style={{ flex: 0.7 }}>
+                    <Text style={{ fontSize: 15 }}>Maksettu hinta</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, color: "black" }}>{this.state.deliveryData.delivery.price}</Text>
+                    <Text style={{ fontSize: 15, color: "black" }}>{this.state.deliveryData.delivery.price}</Text>
                   </View>
                 </View>
                 <View style={{ flex: 1, marginTop: 30 }}>

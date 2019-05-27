@@ -95,7 +95,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
 
     return (
       <View key={delivery.delivery.id} style={styles.renderCustomListItem}>
-        <View style={{ flex: 2 }}>
+        <View style={{ flex: 1.8 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: 'black' }}>
               {time}
