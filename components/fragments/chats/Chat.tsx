@@ -1,15 +1,15 @@
 import React, { Dispatch } from "react";
-import { GiftedChat, IChatMessage, IMessage, Actions, MessageImageProps } from 'react-native-gifted-chat'
+import { GiftedChat, IChatMessage, IMessage, Actions, MessageImageProps, LoadEarlierProps, LoadEarlier } from 'react-native-gifted-chat'
 import { connect } from "react-redux";
 import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
-import { ChatMessage, Contact } from "pakkasmarja-client";
+import { ChatMessage, Contact, ChatThread } from "pakkasmarja-client";
 import strings from "../../../localization/strings";
 import PakkasmarjaApi from "../../../api";
-import { View, Spinner, Fab, Icon, Container } from "native-base";
+import { View, Spinner, Fab, Icon, Container, ListItem, Left, Text, Right, Radio, List, Item, Input, Button } from "native-base";
 import { mqttConnection } from "../../../mqtt";
 import ImagePicker from 'react-native-image-picker';
-import { StyleSheet, Image, Platform } from "react-native";
+import { StyleSheet, Image, Platform, ScrollView } from "react-native";
 import Lightbox from 'react-native-lightbox';
 import moment from "moment";
 
@@ -29,7 +29,11 @@ interface Props {
 interface State {
   messages: IChatMessage[],
   user?: Contact,
-  loading: boolean
+  thread?: ChatThread,
+  loading: boolean,
+  loadingEarlier: boolean
+  pollAnswer?: string
+  savingPollAnswer: boolean
 };
 
 const styles = StyleSheet.create({
@@ -65,7 +69,9 @@ class Chat extends React.Component<Props, State> {
     this.userLookup = new Map();
     this.state = {
       messages: [],
-      loading: false
+      loading: false,
+      loadingEarlier: false,
+      savingPollAnswer: false
     };
   }
 
@@ -80,13 +86,18 @@ class Chat extends React.Component<Props, State> {
 
     this.setState({loading: true});
     try {
+      const thread = await new PakkasmarjaApi().getChatThreadsService(accessToken.access_token).findChatThread(threadId);
       const chatMessages = await new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).listChatMessages(threadId); //TODO: limit
-      mqttConnection.subscribe("chatmessages", this.onMessage);
+      if (thread.answerType !== "POLL") {
+        mqttConnection.subscribe("chatmessages", this.onMessage);
+      }
       const messages = await this.translateMessages(chatMessages);
       const user = await new PakkasmarjaApi().getContactsService(accessToken.access_token).findContact(accessToken.userId);
       this.setState({
         messages: messages,
         user: user,
+        thread: thread,
+        pollAnswer: thread.answerType == "POLL" && messages[0] ? messages[0].text : undefined,
         loading: false
       });
     } catch(e) {
@@ -106,7 +117,9 @@ class Chat extends React.Component<Props, State> {
       return null;
     }
 
-    if (this.state.loading) {
+    const { user, thread } = this.state;
+
+    if (this.state.loading || !user || !thread) {
       return (
         <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
           <Spinner color="red" />
@@ -114,16 +127,22 @@ class Chat extends React.Component<Props, State> {
       );
     }
 
-    const user = this.state.user || {};
+    
 
     //TODO: remove this when gifted chat type definitions are up to date.
     const giftedChatProps = {
       messages: this.state.messages,
       onSend: this.onSend,
       showUserAvatar: true,
+      loadEarlier: true,
+      isLoadingEarlier: this.state.loadingEarlier,
+      onLoadEarlier: this.loadEarlierMessages,
       renderUsernameOnMessage: true,
       renderActions: this.renderCustomActions,
       renderMessageImage: this.renderMessageImage,
+      renderLoadEarlier: this.renderLoadEarlier,
+      placeholder: "Kirjoita viesti...",
+      locale: "fi",
       user: {
         _id: this.props.accessToken.userId,
         name: user.displayName,
@@ -131,11 +150,53 @@ class Chat extends React.Component<Props, State> {
       }
     } as any;
 
+    let isPredefinedOptionSelected = false;
+    const pollReplyItems = (thread.pollPredefinedTexts || []).map((predefinedText) => {
+      if (predefinedText === this.state.pollAnswer) {
+        isPredefinedOptionSelected = true;
+      }
+
+      return (<ListItem key={predefinedText} onPress={() => this.setState({ pollAnswer: predefinedText })}>
+        <Left>
+          <Text>{predefinedText}</Text>
+        </Left>
+        <Right>
+          <Radio onPress={() => this.setState({ pollAnswer: predefinedText })} selected={predefinedText === this.state.pollAnswer} />
+        </Right>
+      </ListItem>);
+    });
+
+    pollReplyItems.unshift(<ListItem key="poll-title"><Left><Text>{thread.title}</Text></Left></ListItem>);
+    
+    if (thread.pollAllowOther) {
+      pollReplyItems.push(
+        <ListItem key="other-answer-input">
+          <Left>
+            <Item bordered={false} regular>
+              <Input onChangeText={(text) => this.setState({pollAnswer: text})} value={ isPredefinedOptionSelected ? undefined : this.state.pollAnswer } placeholder='Muu, mikä?' />
+            </Item>
+          </Left>
+        </ListItem>
+      );
+    }
+
     return (
       <Container>
-        <GiftedChat
-          {...giftedChatProps}
-        />
+        {thread.answerType == "TEXT" ? (
+          <GiftedChat
+            {...giftedChatProps}
+          />
+        ) : (
+          <ScrollView>
+            <List>
+              {pollReplyItems}
+            </List>
+            <Button disabled={this.state.savingPollAnswer} onPress={() => this.savePollAnswer()} style={{ backgroundColor: '#E51D2A' }} block>
+              { this.state.savingPollAnswer ? <Spinner size="small" color="white" /> : <Text>Tallenna</Text> }
+            </Button>
+          </ScrollView>
+        )}
+
         {this.props.onBackClick && (
           <Fab
             containerStyle={{ }}
@@ -147,6 +208,47 @@ class Chat extends React.Component<Props, State> {
         )}
       </Container>
     );
+  }
+
+  /**
+   * Saves poll answer
+   */
+  private savePollAnswer = async () => {
+    const { pollAnswer, user } = this.state;
+    const { threadId, accessToken } = this.props;
+    if (!accessToken || !threadId || !pollAnswer || !user) {
+      return;
+    }
+
+    this.setState({ savingPollAnswer: true });
+    await new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).createChatMessage({
+      contents: pollAnswer,
+      threadId: threadId,
+      userId: user.id
+    }, threadId);
+    this.setState({ savingPollAnswer: false });
+  }
+
+  /**
+   * Callback for loading earlier messages from server
+   */
+  private loadEarlierMessages = async () => {
+    const earliestMessage = this.getEarliestMessage();
+    const { threadId, accessToken } = this.props;
+    if (!accessToken || !threadId) {
+      return;
+    }
+    this.setState({
+      loadingEarlier: true
+    })
+    const chatMessages = await new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).listChatMessages(threadId, earliestMessage.toDate(), undefined, 0, 20);
+    const messages = await this.translateMessages(chatMessages);
+    this.setState((prevState: State) => {
+      return {
+        loadingEarlier: false,
+        messages: GiftedChat.prepend(prevState.messages, messages)
+      }
+    });
   }
 
   /**
@@ -188,6 +290,30 @@ class Chat extends React.Component<Props, State> {
     });
 
     return latestMessage;
+  }
+
+  /**
+   * Return moment representing latest time message has arrived
+   */
+  private getEarliestMessage = () => {
+    let earliestMessage = moment();
+    this.state.messages.forEach((message) => {
+      const messageMoment = moment(message.createdAt);
+      if (messageMoment.isBefore(earliestMessage)) {
+        earliestMessage = messageMoment;
+      }
+    });
+
+    return earliestMessage;
+  }
+
+
+  /**
+   * Custom rendering method for load earlier button
+   */
+  private renderLoadEarlier = (loadEarlierProps: LoadEarlierProps) => {
+    loadEarlierProps.label = "Näytä vanhemmat viestit"
+    return <LoadEarlier {...loadEarlierProps} />
   }
 
   /**
