@@ -183,7 +183,10 @@ class ContractsScreen extends React.Component<Props, State> {
     const api = new PakkasmarjaApi();
     const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
     const itemGroups = await itemGroupService.listItemGroups();
-    this.setState({ itemGroups: itemGroups });
+    if (itemGroups && itemGroups[0].id) {
+      this.setState({ itemGroups: itemGroups, selectedBerry: itemGroups[0].id });
+
+    }
   }
 
   /**
@@ -298,13 +301,16 @@ class ContractsScreen extends React.Component<Props, State> {
     });
 
     const api = new PakkasmarjaApi();
-    const questionGroupThreads = await api.getChatThreadsService(accessToken.access_token).listChatThreads(questionGroupId);
+    const questionGroupThreads = await api.getChatThreadsService(accessToken.access_token).listChatThreads(questionGroupId, "QUESTION", accessToken.userId);
     if (questionGroupThreads.length != 1) {
       return; //Application is misconfigured, bail out.
     }
-
+    const contents = this.getProposalMessageContents();
+    if (!contents) {
+      return;
+    }
     await api.getChatMessagesService(accessToken.access_token).createChatMessage({
-      contents: this.getProposalMessageContents(),
+      contents: contents,
       threadId: questionGroupThreads[0].id!,
       userId: accessToken.userId
     }, questionGroupThreads[0].id!);
@@ -318,8 +324,19 @@ class ContractsScreen extends React.Component<Props, State> {
   /**
    * Gets message to use for suggesting new contract
    */
-  private getProposalMessageContents = (): string => {
-    let message = `Hei, haluaisin ehdottaa uutta sopimusta marjasta: ${this.state.selectedBerry}.`;
+  private getProposalMessageContents = (): string | null => {
+    const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === this.state.selectedBerry);
+    if (!itemGroup) {
+      Alert.alert(
+        'Marjaa ei löytynyt',
+        `Valittua marjaa ei löytynyt tietokannasta, ota yhteyttä Pakkasmarjaan sopimuksesi tekemiseen.`,
+        [
+          { text: 'OK', onPress: () => { } },
+        ]
+      );
+      return null;
+    }
+    let message = `Hei, haluaisin ehdottaa uutta sopimusta marjasta: ${itemGroup.displayName}`;
     if (this.state.proposedContractQuantity) {
       message += `
       Määräarvio on ${this.state.proposedContractQuantity} kg.`;

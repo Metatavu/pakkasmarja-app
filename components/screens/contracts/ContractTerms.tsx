@@ -95,7 +95,7 @@ class ContractTerms extends React.Component<Props, State> {
 
     const header = "Lataus onnistui!";
     const content = `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`;
-    const buttons = [{text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {})}];
+    const buttons = [{ text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {}) }];
     this.displayAlert(header, content, buttons);
   }
 
@@ -110,7 +110,7 @@ class ContractTerms extends React.Component<Props, State> {
     if (!this.state.acceptedTerms) {
       const header = "Allekirjoitus epäonnistui";
       const content = "Sinun tulee hyväksyä sopimusehdot ennen allekirjotusta.";
-      const buttons = [{text: 'OK', onPress: () => {}}];
+      const buttons = [{ text: 'OK', onPress: () => { } }];
       this.displayAlert(header, content, buttons);
       return;
     }
@@ -118,7 +118,7 @@ class ContractTerms extends React.Component<Props, State> {
     if (!this.state.viableToSign) {
       const header = "Allekirjoitus epäonnistui";
       const content = "Sinun tulee olla viljelijän puolesta edustuskelpoinen.";
-      const buttons = [{text: 'OK', onPress: () => {}}];
+      const buttons = [{ text: 'OK', onPress: () => { } }];
       this.displayAlert(header, content, buttons);
       return;
     }
@@ -126,7 +126,7 @@ class ContractTerms extends React.Component<Props, State> {
     if (!this.state.ssn) {
       const header = "Allekirjoitus epäonnistui";
       const content = "Sinun tulee antaa henkilötunnus.";
-      const buttons = [{text: 'OK', onPress: () => {}}];
+      const buttons = [{ text: 'OK', onPress: () => { } }];
       this.displayAlert(header, content, buttons);
       return;
     }
@@ -136,13 +136,13 @@ class ContractTerms extends React.Component<Props, State> {
     const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
     const contractSignRequest = await contractsService.createContractDocumentSignRequest({ redirectUrl: "" }, this.state.contract.id || "", this.state.type, this.state.ssn, this.state.selectedSignServiceId, redirectUrl);
-    
+
     if (contractSignRequest && contractSignRequest.redirectUrl) {
       this.setState({ loading: false, signAuthenticationUrl: contractSignRequest.redirectUrl, modalOpen: true });
     } else {
       const header = "Allekirjoitus epäonnistui";
       const content = "Jotain meni pieleen. Varmista, että olet valinnut tunnistautumispalvelun ja henkilötunnus on oikeassa muodossa.";
-      const buttons = [{text: 'OK', onPress: () => {}}];
+      const buttons = [{ text: 'OK', onPress: () => { } }];
       this.displayAlert(header, content, buttons);
       return;
     }
@@ -164,8 +164,8 @@ class ContractTerms extends React.Component<Props, State> {
    */
   private onSignSuccess = async () => {
     this.setState({ modalOpen: false }, () => {
-      this.props.navigation.navigate('Contracts', {refresh: true});
-   });
+      this.props.navigation.navigate('Contracts', { refresh: true });
+    });
   }
 
   /**
@@ -220,13 +220,13 @@ class ContractTerms extends React.Component<Props, State> {
               {`Satokautta ${this.state.contract ? this.state.contract.year : ""} koskeva sopimus`}
             </Text>
           </View>
-           <View>
+          <View>
             <TouchableOpacity onPress={this.downloadContractPdfClicked}>
               <Text style={styles.linkStyle}>
                 Lataa sopimus PDF - muodossa.
                 </Text>
             </TouchableOpacity>
-          </View> 
+          </View>
           <View>
             <CheckBox
               checked={this.state.acceptedTerms}
@@ -241,11 +241,11 @@ class ContractTerms extends React.Component<Props, State> {
           </View>
           <View>
             <Text style={[styles.Text, styles.TextBold]}>Tunnistautumispalvelu:</Text>
-            <View style={{...styles.InputStyle, height: Platform.OS === "ios" ? 40 : 50}}>
+            <View style={{ ...styles.InputStyle, height: Platform.OS === "ios" ? 40 : 50 }}>
               {Platform.OS !== "ios" &&
                 <Picker
                   selectedValue={this.state.selectedSignServiceId}
-                  style={{height:50,width:"100%", color:"black"}}
+                  style={{ height: 50, width: "100%", color: "black" }}
                   onValueChange={(itemValue, itemIndex) =>
                     this.setState({ selectedSignServiceId: itemValue })
                   }>
@@ -260,16 +260,16 @@ class ContractTerms extends React.Component<Props, State> {
               }
               {
                 Platform.OS === "ios" &&
-                  <ModalSelector
-                    data={this.state.authServices && this.state.authServices.map((authService) => {
-                      return {
-                        key: authService.identifier,
-                        label: authService.name
-                      };
-                    })}
-                    selectedKey={this.state.selectedSignServiceId}
-                    initValue="Valitse tunnistautumispalvelu"
-                    onChange={(option: any)=>{ this.setState({ selectedSignServiceId: option.key }) }} />
+                <ModalSelector
+                  data={this.state.authServices && this.state.authServices.map((authService) => {
+                    return {
+                      key: authService.identifier,
+                      label: authService.name
+                    };
+                  })}
+                  selectedKey={this.state.selectedSignServiceId}
+                  initValue="Valitse tunnistautumispalvelu"
+                  onChange={(option: any) => { this.setState({ selectedSignServiceId: option.key }) }} />
               }
             </View>
           </View>
@@ -296,14 +296,14 @@ class ContractTerms extends React.Component<Props, State> {
         </View>
         <Modal isVisible={this.state.modalOpen} style={{ height: "100%", width: "100%" }}>
           <WebView
-            source={{uri: this.state.signAuthenticationUrl}}
-            style={{width: "90%", height: "100%"}}
-            scalesPageToFit={true}
+            source={{ uri: this.state.signAuthenticationUrl }}
+            style={{ width: "90%", height: "100%" }}
+            scalesPageToFit={false}
             onNavigationStateChange={(webViewState: any) => {
               if (webViewState.url == redirectUrl) {
                 this.onSignSuccess();
               }
-          }}
+            }}
           />
         </Modal>
       </BasicScrollLayout>

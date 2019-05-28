@@ -115,9 +115,9 @@ export const styles = StyleSheet.create({
   },
   proposalModalView: {
     backgroundColor: "white",
-    height: 650,
+    height: 480,
     padding: 15,
-    marginBottom: 15
+    marginBottom: 15 
   },
   modalView: {
     backgroundColor: "white",
