@@ -1,9 +1,10 @@
-import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction, Delivery, Product, ItemGroupCategory } from "pakkasmarja-client";
+import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction, Delivery, Product, ItemGroupCategory, Unread } from "pakkasmarja-client";
 
 export interface StoreState {
   accessToken?: AccessToken,
-  deliveries?: DeliveriesState
-  itemGroupCategory?: ItemGroupCategory
+  deliveries?: DeliveriesState,
+  itemGroupCategory?: ItemGroupCategory,
+  unreads: Unread[]
 }
 
 export interface DeliveriesState {

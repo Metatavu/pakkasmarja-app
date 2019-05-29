@@ -36,6 +36,7 @@ interface State {
   authenticated: boolean
 }
 const initalStoreState: StoreState = {
+  unreads: []
 };
 
 const store = createStore<StoreState, AppAction, any, any>(reducer as any, initalStoreState);

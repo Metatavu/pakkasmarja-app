@@ -1,8 +1,12 @@
-import React from "react";
-import { Toast, Spinner, Thumbnail } from "native-base";
+import React, { Dispatch } from "react";
+import * as actions from "../../actions"
+import { connect } from "react-redux";
+import { Toast, Spinner, Thumbnail, Badge } from "native-base";
 import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity } from "react-native";
 import strings from "../../localization/strings";
 import { CONTRACTS_ICON, DELIVERIES_ICON, MESSAGES_ICON, NEWS_ICON } from "../../static/images";
+import { StoreState } from "../../types";
+import { Unread } from "pakkasmarja-client";
 
 /**
  * Component properties
@@ -11,7 +15,8 @@ export interface BasicLayoutProps {
   loading?: boolean,
   displayFooter?: boolean
   errorMsg?: string,
-  navigation: any
+  navigation: any,
+  unreads?: Unread[]
 }
 
 /**
@@ -36,7 +41,7 @@ const styles = StyleSheet.create({
 /**
  * Basic layout component
  */
-export default class BasicLayout extends React.Component<BasicLayoutProps, State> {
+class BasicLayout extends React.Component<BasicLayoutProps, State> {
 
   constructor(props: BasicLayoutProps) {
     super(props);
@@ -53,6 +58,9 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
   }
 
   public render() {
+    const unreadNews = this.countUnreads("news-");
+    const unreadChats = this.countUnreads("chat");
+
     if (this.props.loading) {
       return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -68,12 +76,14 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
           <View style={styles.footer}>
             <TouchableOpacity  onPress={() => this.goToScreen("News")}>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
+                { unreadNews > 0 && <Badge style={{position: "absolute"}}><Text>{unreadNews}</Text></Badge> }
                 <Thumbnail source={NEWS_ICON} square style={{ width: 22, height: 26 }} />
                 <Text>{strings.newsFooterLink}</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => this.goToScreen("ChatsList")}>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
+                { unreadChats > 0 && <Badge style={{position: "absolute"}}><Text>{unreadChats}</Text></Badge> }
                 <Thumbnail source={MESSAGES_ICON} square style={{ width: 48, height:26 }} />
                 <Text>{strings.messagingFooterLink}</Text>
               </View>
@@ -96,6 +106,18 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
     );
   }
 
+    /**
+   * Counts unreads by prefix
+   * 
+   * @param prefix prefix
+   * @return unreads
+   */
+  private countUnreads = (prefix: string) => {
+    return (this.props.unreads || []).filter((unread: Unread) => {
+      return (unread.path || "").startsWith(prefix);
+    }).length;
+  }
+
   /**
    * Navigates to screen
    */
@@ -103,3 +125,27 @@ export default class BasicLayout extends React.Component<BasicLayoutProps, State
     this.props.navigation.navigate(screen);
   }
 }
+
+/**
+ * Redux mapper for mapping store state to component props
+ * 
+ * @param state store state
+ */
+function mapStateToProps(state: StoreState) {
+  return {
+    accessToken: state.accessToken,
+    unreads: state.unreads
+  };
+}
+
+/**
+ * Redux mapper for mapping component dispatches 
+ * 
+ * @param dispatch dispatch method
+ */
+function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
+  return {
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(BasicLayout);

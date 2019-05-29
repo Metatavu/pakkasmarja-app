@@ -3,7 +3,7 @@ import { GiftedChat, IChatMessage, IMessage, Actions, MessageImageProps, LoadEar
 import { connect } from "react-redux";
 import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
-import { ChatMessage, Contact, ChatThread } from "pakkasmarja-client";
+import { ChatMessage, Contact, ChatThread, Unread } from "pakkasmarja-client";
 import strings from "../../../localization/strings";
 import PakkasmarjaApi from "../../../api";
 import { View, Spinner, Fab, Icon, Container, ListItem, Left, Text, Right, Radio, List, Item, Input, Button } from "native-base";
@@ -19,6 +19,8 @@ import moment from "moment";
 interface Props {
   accessToken?: AccessToken
   threadId: number
+  unreads?: Unread[],
+  unreadRemoved?: (unread: Unread) => void;
   onError?: (errorMsg: string) => void
   onBackClick?: () => void
 };
@@ -87,6 +89,7 @@ class Chat extends React.Component<Props, State> {
     this.setState({loading: true});
     try {
       const thread = await new PakkasmarjaApi().getChatThreadsService(accessToken.access_token).findChatThread(threadId);
+      await this.removeUnreads(thread);
       const chatMessages = await new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).listChatMessages(threadId); //TODO: limit
       if (thread.answerType !== "POLL") {
         mqttConnection.subscribe("chatmessages", this.onMessage);
@@ -457,6 +460,34 @@ class Chat extends React.Component<Props, State> {
     }
   }
 
+    /**
+   * Counts unreads by group
+   * 
+   * @param group id
+   * @return unreads
+   */
+  private removeUnreads = async (thread: ChatThread) => {
+    const { accessToken } = this.props;
+    
+    if (!accessToken || !thread || !thread.id || !thread.groupId) {
+      return;
+    }
+
+    const unreadsService = new PakkasmarjaApi().getUnreadsService(accessToken.access_token);
+
+    const unreads = (this.props.unreads || [])
+      .filter((unread: Unread) => {
+        const path = (unread.path || "");
+        return path.startsWith(`chat-${thread.groupId}-${thread.id}-`);
+      });
+
+    await Promise.all(unreads.map(async (unread) => {
+      this.props.unreadRemoved && this.props.unreadRemoved(unread);
+      await unreadsService.deleteUnread(unread.id!)
+    }));
+
+  }
+
   /**
    * Resolves contact for chat message
    */
@@ -502,7 +533,8 @@ class Chat extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    unreads: state.unreads
   };
 }
 
@@ -512,7 +544,9 @@ function mapStateToProps(state: StoreState) {
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
-  return {};
+  return {
+    unreadRemoved: (unread: Unread) => dispatch(actions.unreadRemoved(unread))
+  };
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Chat);

@@ -5,20 +5,23 @@ import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import { View, Spinner } from 'native-base';
 import { AccessToken, StoreState } from "../../../types";
-import { NewsArticle } from "pakkasmarja-client";
+import { NewsArticle, Unread } from "pakkasmarja-client";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import { TouchableHighlight } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import moment from "moment";
 import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import PakkasmarjaApi from "../../../api";
 
 /**
  * Component props
  */
 interface Props {
   navigation: any,
-  accessToken?: AccessToken
+  accessToken?: AccessToken,
+  unreads: Unread[],
+  unreadRemoved?: (unread: Unread) => void;
 };
 
 /**
@@ -89,6 +92,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
     if (this.props.navigation.getParam('newsArticle')) {
       const newsArticle = this.props.navigation.getParam('newsArticle');
       this.setState({ newsArticle: newsArticle });
+      this.markRead(newsArticle);
 
       if (newsArticle.imageUrl) {
         const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
@@ -98,6 +102,28 @@ class NewsArticleScreen extends React.Component<Props, State> {
     }
 
     this.setState({ loading: false });
+  }
+
+    /**
+   * Retuns related unread
+   * 
+   * @return related unread
+   */
+  private markRead = (news: any) => {
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    const unread = this.props.unreads.find((unread: Unread) => {
+      return (unread.path || "") == `news-${news.id}`;
+    });
+
+    if (!unread) {
+      return;
+    }
+
+    this.props.unreadRemoved && this.props.unreadRemoved(unread);
+    new PakkasmarjaApi().getUnreadsService(this.props.accessToken.access_token).deleteUnread(unread.id!);
   }
 
   /**
@@ -164,7 +190,8 @@ class NewsArticleScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    unreads: state.unreads
   };
 }
 
@@ -175,7 +202,8 @@ function mapStateToProps(state: StoreState) {
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
+    unreadRemoved: (unread: Unread) => dispatch(actions.unreadRemoved(unread))
   };
 }
 

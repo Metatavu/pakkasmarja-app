@@ -3,6 +3,8 @@ import { connect } from "react-redux";
 import { StoreState, AccessToken } from "../types";
 import * as actions from "../actions";
 import Auth from "../utils/Auth";
+import { Unread } from "pakkasmarja-client";
+import PakkasmarjaApi from "../api";
 
 /**
  * Component props
@@ -10,6 +12,7 @@ import Auth from "../utils/Auth";
 interface Props {
   accessToken?: AccessToken,
   onAccessTokenUpdate: (accessToken: AccessToken) => void
+  unreadsUpdate: (unreads: Unread[]) => void
 };
 
 /**
@@ -25,6 +28,7 @@ interface State {
 class AuthRefresh extends React.Component<Props, State> {
 
   private timer?: any;
+  private unreadTimer: any;
 
   /**
    * Constructor
@@ -53,6 +57,7 @@ class AuthRefresh extends React.Component<Props, State> {
         }
       }
     }, 30000);
+    this.unreadTimer = setInterval(this.checkUnreads, 1000 * 30);
   }
 
   /**
@@ -62,6 +67,10 @@ class AuthRefresh extends React.Component<Props, State> {
     if (this.timer) {
       clearInterval(this.timer);
     }
+
+    if (this.unreadTimer) {
+      clearInterval(this.unreadTimer);
+    }
   }
 
   /**
@@ -69,6 +78,15 @@ class AuthRefresh extends React.Component<Props, State> {
    */
   render() {
     return null;
+  }
+
+  private checkUnreads = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    
+    const unreadsService = await new PakkasmarjaApi().getUnreadsService(this.props.accessToken.access_token);
+    this.props.unreadsUpdate(await unreadsService.listUnreads());
   }
 }
 
@@ -90,7 +108,8 @@ function mapStateToProps(state: StoreState) {
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
+    unreadsUpdate: (unreads: Unread[]) => dispatch(actions.unreadsUpdate(unreads))
   };
 }
 

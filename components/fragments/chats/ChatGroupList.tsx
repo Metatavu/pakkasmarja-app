@@ -2,10 +2,10 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import { AccessToken, StoreState } from "../../../types";
 import * as actions from "../../../actions";
-import { ChatGroup } from "pakkasmarja-client";
+import { ChatGroup, Unread } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import strings from "../../../localization/strings";
-import { List, ListItem, Left, Thumbnail, Body, Text, Container, View, Spinner, Fab, Icon } from "native-base";
+import { List, ListItem, Left, Thumbnail, Body, Text, Container, View, Spinner, Fab, Icon, Right, Badge } from "native-base";
 import { AVATAR_PLACEHOLDER } from "../../../static/images";
 import { ScrollView } from "react-native";
 
@@ -16,6 +16,7 @@ import { ScrollView } from "react-native";
 interface Props {
   accessToken?: AccessToken
   type: "CHAT" | "QUESTION",
+  unreads?: Unread[],
   onGroupSelected: (group: ChatGroup) => void
   onBackClick?: () => void
   onError?: (errorMsg: string) => void
@@ -114,6 +115,7 @@ class ChatGroupList extends React.Component<Props, State> {
     }
 
     return this.state.chatGroups.map((chatGroup: ChatGroup) => {
+      const unreadCount = this.countUnreadsByGroup(chatGroup.id!);
       return (
         <ListItem onPress={() => this.selectGroup(chatGroup)} key={chatGroup.id} avatar>
           <Left>
@@ -122,10 +124,24 @@ class ChatGroupList extends React.Component<Props, State> {
           <Body>
             <Text>{chatGroup.title}</Text>
           </Body>
+          {unreadCount > 0 && <Right><Badge><Text>{ unreadCount }</Text></Badge></Right>}
         </ListItem>
       );
     })
   }
+
+    /**
+   * Counts unreads by group
+   * 
+   * @param group id
+   * @return unreads
+   */
+  private countUnreadsByGroup = (groupId: number) => {
+    return (this.props.unreads || []).filter((unread: Unread) => {
+      return (unread.path || "").startsWith(`chat-${groupId}-`);
+    }).length;
+  }
+
 
   /**
    * selects group
@@ -142,7 +158,8 @@ class ChatGroupList extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    unreads: state.unreads
   };
 }
 

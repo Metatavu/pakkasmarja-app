@@ -1,7 +1,7 @@
 import * as constants from '../constants';
 import { AccessToken, DeliveriesState } from '../types';
 import { ItemGroupCategory } from 'pakkasmarja-client';
-
+import { Unread } from 'pakkasmarja-client';
 
 /**
  * Access token update data
@@ -28,9 +28,25 @@ export interface DeliveriesLoaded {
 }
 
 /**
+ * Unreads update
+ */
+export interface UnreadsUpdate {
+  type: constants.UNREADS_UPDATE,
+  unreads: Unread[]
+}
+
+/**
+ * Unread removed
+ */
+export interface UnreadRemoved {
+  type: constants.UNREAD_REMOVED,
+  unread: Unread
+}
+
+/**
  * Actions
  */
-export type AppAction =  AccessTokenUpdate | DeliveriesLoaded | ItemGroupCategoryUpdate;
+export type AppAction =  AccessTokenUpdate | DeliveriesLoaded | ItemGroupCategoryUpdate | UnreadsUpdate | UnreadRemoved;
 
 /**
  * Store update method for access token
@@ -65,5 +81,19 @@ export function itemGroupCategoryUpdate(itemGroupCategory: ItemGroupCategory): I
   return {
     type: constants.ITEM_GROUP_CATEGORY_UPDATE,
     itemGroupCategory: itemGroupCategory
+  }
+}
+
+export function unreadsUpdate(unreads: Unread[]): UnreadsUpdate {
+  return {
+    type: constants.UNREADS_UPDATE,
+    unreads: unreads
+  }
+}
+
+export function unreadRemoved(unread: Unread): UnreadRemoved {
+  return {
+    type: constants.UNREAD_REMOVED,
+    unread: unread
   }
 }

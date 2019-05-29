@@ -160,6 +160,15 @@ export default class PakkasmarjaApi {
   }
 
   /**
+   * Returns unreads service
+   * 
+   * @param token token
+   */
+  public getUnreadsService(token: string) {
+    return this.getApi().getUnreadsService(token);
+  }
+
+  /**
    * Get pdf service
    * @param token token
    * @param basePath basePath
