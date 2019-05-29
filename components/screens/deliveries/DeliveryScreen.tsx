@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Image, Dimensions, } from "react-native";
-import { Delivery, Product, DeliveryNote, DeliveryQuality } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryNote, DeliveryQuality, DeliveryPlace } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
 import Moment from "react-moment";
@@ -46,6 +46,7 @@ interface State {
   notes64?: { text: string | undefined, url64?: string }[];
   notesLoading: boolean;
   lightBoxOpen: boolean;
+  deliveryPlace?: DeliveryPlace;
 };
 
 /**
@@ -115,7 +116,6 @@ class DeliveryScreen extends React.Component<Props, State> {
     const Api = new PakkasmarjaApi();
     const deliveryService = Api.getDeliveriesService(this.props.accessToken.access_token);
     const deliveryState = this.state.deliveryData.delivery;
-
     const delivery: Delivery = {
       id: deliveryState.id,
       productId: this.state.deliveryData.product.id,
@@ -201,8 +201,9 @@ class DeliveryScreen extends React.Component<Props, State> {
     const delivery: Delivery = await deliveriesService.findDelivery(deliveryId);
     const product: Product = await productsService.findProduct(productId);
     const editable: boolean = this.props.navigation.getParam('editable');
+    const deliveryPlace = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).findDeliveryPlace(delivery.deliveryPlaceId);
     const deliveryData = { delivery, product }
-    this.setState({ editable: editable, deliveryData: deliveryData });
+    this.setState({ editable: editable, deliveryData: deliveryData, deliveryPlace });
     this.loadDeliveryNotes();
   }
 
@@ -283,7 +284,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                   >
                     <Image
                       source={{ uri: deliveryNote.url64 }}
-                      style={this.state.lightBoxOpen ? { flex: 1, alignSelf: "center", height: Dimensions.get('screen').height, width: Dimensions.get('screen').width, resizeMode:"contain" } : { flex: 1, alignSelf: "center", width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }}
+                      style={this.state.lightBoxOpen ? { flex: 1, alignSelf: "center", height: Dimensions.get('screen').height, width: Dimensions.get('screen').width, resizeMode: "contain" } : { flex: 1, alignSelf: "center", width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }}
                     />
                   </Lightbox>
                 }
@@ -342,7 +343,15 @@ class DeliveryScreen extends React.Component<Props, State> {
             </View>
             <View style={{ flex: 1, flexDirection: 'row' }}>
               <Moment element={Text} style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
-              <Text style={{ color: "black", fontSize: 15 }}>{moment(this.state.deliveryData.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 11` : ` - Ennen kello 11`}</Text>
+              <Text style={{ color: "black", fontSize: 15 }}>{moment(this.state.deliveryData.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 12` : ` - Ennen klo 12`}</Text>
+            </View>
+          </View>
+          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+            <View style={{ flex: 0.7 }}>
+              <Text style={{ fontSize: 15 }}>Toimituspaikka</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, color: "black" }}>{this.state.deliveryPlace ? this.state.deliveryPlace.name : ""}</Text>
             </View>
           </View>
           {this.state.deliveryQuality &&

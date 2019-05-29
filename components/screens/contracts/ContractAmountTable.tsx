@@ -8,7 +8,9 @@ import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import { connect } from "react-redux";
 import * as actions from "../../../actions";
 import { styles } from "./styles";
-import Icon from "react-native-vector-icons/Feather";
+import FeatherIcon from "react-native-vector-icons/Feather";
+import _ from "lodash";
+import { Icon } from "native-base";
 
 /**
  * Component props
@@ -55,7 +57,7 @@ class ContractAmountTable extends React.Component<Props, State> {
       },
       headerLeft:
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
-          <Icon
+          <FeatherIcon
             name='arrow-down-left'
             color='#fff'
             size={40}
@@ -69,15 +71,14 @@ class ContractAmountTable extends React.Component<Props, State> {
    * Render rows
    */
   private renderRows = () => {
-    const contractsNotTerminated = this.props.contractTableDatas.filter(contractTableData => contractTableData.contract.status !== "TERMINATED");
-    
-    return contractsNotTerminated.map((contractTableData) => {
+    const contractsNotTerminated: ContractTableData[] = this.props.contractTableDatas.filter(contractTableData => contractTableData.contract.status !== "TERMINATED");
+    const sortedContracts = _.sortBy(contractsNotTerminated, (obj) => obj.contract.status);
+    return sortedContracts.map((contractTableData) => {
       const contractStatus = contractTableData.contract.status;
-
       return (
         <TouchableOpacity key={contractTableData.contract.id} onPress={() => { this.props.onContractClick(contractTableData.contract) }}>
           {
-            contractStatus !== "APPROVED" ? 
+            contractStatus !== "APPROVED" ?
               this.renderNotApproved(contractStatus, contractTableData.itemGroup) :
               this.renderApproved(contractTableData.contract, contractTableData.itemGroup)
           }
@@ -93,15 +94,15 @@ class ContractAmountTable extends React.Component<Props, State> {
    * @param itemGroup itemGroup
    */
   private renderApproved = (contract: Contract, itemGroup?: ItemGroup) => {
-    if (!contract || !contract.contractQuantity || !contract.deliveredQuantity) {
+    if (!contract || !contract.contractQuantity) {
       return <Row></Row>;
     }
 
     return (
-      <Row style={styles.row}>
+      <Row style={[styles.row, { borderBottomColor: "black", borderBottomWidth: 0.5, height: 75 }]}>
         {this.renderColumn(itemGroup && itemGroup.displayName ? itemGroup.displayName : "-")}
-        {this.renderColumn(contract.contractQuantity.toString()) }
-        {this.renderColumn(contract.deliveredQuantity.toString()) }
+        {this.renderColumn(contract.contractQuantity.toString(), { fontWeight: "bold", fontSize: 18 })}
+        {this.renderColumn(contract.deliveredQuantity ? contract.deliveredQuantity.toString() : "0", { fontWeight: "bold", fontSize: 18 })}
       </Row>
     );
   }
@@ -113,13 +114,12 @@ class ContractAmountTable extends React.Component<Props, State> {
    * @param itemGroup itemGroup
    */
   private renderNotApproved = (status: string, itemGroup?: ItemGroup) => {
-    const infoText = this.getInfoTextByStatus(status);
+    const info: { text: string, icon: string } = this.getInfo(status);
 
     return (
-      <Row style={styles.row}>
-        {this.renderColumn(itemGroup && itemGroup.displayName ? itemGroup.displayName : "-")}
-        {this.renderColumn(infoText)}
-        {this.renderColumn("", {width: 1})}
+      <Row style={[styles.row, { borderBottomColor: "black", borderBottomWidth: 0.5, height: 75 }]}>
+        {this.renderColumn(itemGroup && itemGroup.displayName ? itemGroup.displayName : "-", { fontSize: 15 })}
+        {this.renderColumn(info.text, { fontSize: 15 }, info.icon)}
       </Row>
     );
   }
@@ -130,16 +130,16 @@ class ContractAmountTable extends React.Component<Props, State> {
    * @param status status
    * @return info text
    */
-  private getInfoTextByStatus = (status: string) => {
+  private getInfo = (status: string): { text: string, icon: string } => {
     switch (status) {
       case "ON_HOLD":
-        return "Pakkasmarjan tarkistettavana";
+        return { text: "Odottaa", icon: "clock-o" };
       case "DRAFT":
-        return "Tarkasta ehdotus";
+        return { text: "Tarkasta ehdotus", icon: "envelope" };
       case "REJECTED":
-        return "Hylätty";
+        return { text: "Hylätty", icon: "close" };
       default:
-        return "";
+        return { text: "", icon: "" };
     }
   }
 
@@ -149,13 +149,16 @@ class ContractAmountTable extends React.Component<Props, State> {
    * @param text
    * @style style
    */
-  private renderColumn = (text: string, style?: any) => {
+  private renderColumn = (text: string, style?: any, icon?: string) => {
     return (
-      <Col style={style}>
-        <Text style={{ fontSize: 20 }}>
+      <Col style={[style, { flex: 1, justifyContent: "center", alignItems: "center", flexDirection: "row" }]}>
+        {icon &&
+          <Icon style={{ color: '#E51D2A', fontSize: 20, marginRight: 10 }} type="FontAwesome" name={icon} />
+        }
+        <Text style={[{ fontSize: 15, textAlign: "center" }, style]}>
           {text}
         </Text>
-      </Col> 
+      </Col>
     );
   }
 
@@ -169,8 +172,8 @@ class ContractAmountTable extends React.Component<Props, State> {
           <Grid>
             <Row style={styles.headerRow}>
               <Col></Col>
-              <Col><Text>Sovittu KG</Text></Col>
-              <Col><Text>Toteutunut KG</Text></Col>
+              <Col><Text style={{textAlign:"center"}}>Sovittu KG</Text></Col>
+              <Col><Text style={{textAlign:"center"}}>Toteutunut KG</Text></Col>
             </Row>
             {this.renderRows()}
           </Grid>

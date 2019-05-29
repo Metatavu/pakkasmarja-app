@@ -264,7 +264,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
             </TouchableOpacity>
           </View>
           <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
-            <Text style={{ fontWeight: "bold", fontSize: 24, color: "black" }}>{this.state.selectedItemGroup.displayName}</Text>
+            <Text style={{ fontWeight: "bold", fontSize: 20, color: "black" }}>{this.state.selectedItemGroup.displayName}</Text>
           </View>
           <TouchableOpacity onPress={() => { this.changeItemGroup("next") }} >
             <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>

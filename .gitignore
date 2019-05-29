@@ -63,4 +63,7 @@ test-data
 #ios
 *.xcscheme
 *Info.plist
-*.pbxproj
+*.pbxpr
+
+# Google services.json
+google-services.json

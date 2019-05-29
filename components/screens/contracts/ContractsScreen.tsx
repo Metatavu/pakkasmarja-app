@@ -97,7 +97,6 @@ class ContractsScreen extends React.Component<Props, State> {
     const freshContracts = await contractsService.listContracts("application/json", false, "FRESH", undefined, undefined, undefined, undefined, 100);
 
     await this.loadItemGroups();
-
     frozenContracts.forEach((frozenContract) => {
       const frozenContractsState: ContractTableData[] = this.state.frozenContracts;
       const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === frozenContract.itemGroupId);
