@@ -1,4 +1,4 @@
-package fi.metatavu.pakkasmarja;
+package fi.metatavu.pakkasmarjaBerriesApp;
 
 import com.facebook.react.ReactActivity;
 
