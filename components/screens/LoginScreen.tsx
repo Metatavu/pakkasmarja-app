@@ -6,8 +6,9 @@ import { REACT_APP_AUTH_SERVER_URL, REACT_APP_AUTH_RESOURCE, REACT_APP_AUTH_REAL
 import { AccessToken, StoreState } from "../../types";
 import * as actions from "../../actions";
 import strings from "../../localization/strings";
-import { StyleSheet, View, Platform } from "react-native";
+import { StyleSheet, View, Alert } from "react-native";
 import BasicScrollLayout from "../layout/BasicScrollLayout";
+import firebase from 'react-native-firebase';
 
 /**
  * Login details
@@ -82,29 +83,45 @@ class LoginScreen extends React.Component<Props, State> {
   /**
    * Tries to login
    */
-  sendLogin = (event: any) => {
+  sendLogin = async (event: any) => {
     const loginData = this.state.loginDetails;
-    
-    Auth.login({
-      clientId: REACT_APP_AUTH_RESOURCE,
-      url: `${REACT_APP_AUTH_SERVER_URL}/realms/${REACT_APP_AUTH_REALM}/protocol/openid-connect/token`,
-      username: loginData.username || REACT_APP_DEFAULT_USER,
-      password: loginData.password || REACT_APP_DEFAULT_PASSWORD,
-      realmId: REACT_APP_AUTH_REALM
-    }).then(async (accessToken) => {
+    try {
+      const accessToken = await Auth.login({
+        clientId: REACT_APP_AUTH_RESOURCE,
+        url: `${REACT_APP_AUTH_SERVER_URL}/realms/${REACT_APP_AUTH_REALM}/protocol/openid-connect/token`,
+        username: loginData.username || REACT_APP_DEFAULT_USER,
+        password: loginData.password || REACT_APP_DEFAULT_PASSWORD,
+        realmId: REACT_APP_AUTH_REALM
+      });
+
       if (accessToken) {
         this.props.onAccessTokenUpdate(accessToken);
+        let pushNotificationPermissions = await firebase.messaging().hasPermission();
+        if (!pushNotificationPermissions) {
+          try {
+            await firebase.messaging().requestPermission();
+            pushNotificationPermissions = true;
+          } catch (error) {
+            pushNotificationPermissions = false;
+          }
+        }
+    
+        if (pushNotificationPermissions) {
+          firebase.messaging().subscribeToTopic(`v3-${accessToken.userId}`);
+        }
         this.props.navigation.replace("News");
       } else {
-        // TODO: Handle error
+        this.showErrorMessage();
       }
-    });
+    } catch(error) {
+      this.showErrorMessage();
+    }
   }
 
   /**
    * Component render method
    */
-  render() {
+  public render() {
 
     const styles = StyleSheet.create({
       item: {
@@ -150,6 +167,13 @@ class LoginScreen extends React.Component<Props, State> {
         </View>
       </BasicScrollLayout>
     );  
+  }
+
+  /**
+   * Displays login error
+   */
+  private showErrorMessage() {
+    Alert.alert("Kirjautuminen epäonnistui.", "Kirjautuminen epäonnistui, tarkista käyttäjänimi ja salasana.");
   }
 }
 
