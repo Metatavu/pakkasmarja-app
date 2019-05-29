@@ -86,7 +86,7 @@ class NewDelivery extends React.Component<Props, State> {
         text: ""
       },
       deliveryNotes: [],
-      deliveryTimeOptions: [{ label: "Ennen klo 11", value: 11 }, { label: "Jälkeen klo 11", value: 17 }],
+      deliveryTimeOptions: [{ label: "Ennen klo 12", value: 11 }, { label: "Jälkeen klo 12", value: 17 }],
       noteEditable: false,
       deliveryTimeValue: 11
     };
@@ -489,7 +489,7 @@ class NewDelivery extends React.Component<Props, State> {
             </View>
             <View style={{ flex: 1, marginLeft: "4%" }}>
               <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <Text style={styles.textWithSpace}>Klo</Text>
+                <Text style={styles.textWithSpace}>Ajankohta</Text>
               </View>
               <View style={[styles.pickerWrap, { width: "100%" }]}>
                 {

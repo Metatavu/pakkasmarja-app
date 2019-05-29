@@ -191,7 +191,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
       return <Text></Text>;
     }
     const deliveryHour = moment(deliveryData.delivery.time).utc().hours();
-    const time = deliveryHour > 12 ? `Jälkeen klo 11` : `Ennen kello 11`;
+    const time = deliveryHour > 12 ? `Jälkeen klo 12` : `Ennen klo 12`;
     const productName = deliveryData.product.name;
     const productAmount = `${deliveryData.delivery.amount} x ${deliveryData.product.units} ${deliveryData.product.unitName}`;
     const editable = false;
