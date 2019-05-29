@@ -55,7 +55,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
   static navigationOptions = ({ navigation }: any) => {
     return {
-      headerTitle: <TopBar
+      headerTitle: <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}

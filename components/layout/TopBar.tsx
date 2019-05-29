@@ -54,7 +54,7 @@ class TopBar extends React.Component<Props, State> {
           <Thumbnail source={TOP_LOGO} />
         </View>
         <View style={styles.center}>
-          <TouchableHighlight >
+          <TouchableHighlight onPress={() => this.navigateTo("ManageContact")}>
             <Icon
               name='user'
               color='#fff'
@@ -78,12 +78,12 @@ class TopBar extends React.Component<Props, State> {
     const align = Platform.OS === "ios" ? "flex-end" : "center";
 
     return (
-      <View style={{width: (width / 3) * 2, marginLeft: width / 3, flex: 0, flexDirection: "row", alignContent: "space-around"}}>
-        <View style={{... styles.center, alignContent: align, justifyContent: align, alignItems: align}}>
+      <View style={{ width: (width / 3) * 2, marginLeft: width / 3, flex: 0, flexDirection: "row", alignContent: "space-around" }}>
+        <View style={{ ...styles.center, alignContent: align, justifyContent: align, alignItems: align }}>
           <Thumbnail source={TOP_LOGO} />
         </View>
-        <View style={{... styles.center, alignContent: align, alignItems: align}}>
-          <TouchableHighlight >
+        <View style={{ ...styles.center, alignContent: align, alignItems: align }}>
+          <TouchableHighlight onPress={() => this.navigateTo("ManageContact")}>
             <Icon
               name='user'
               color='#fff'
@@ -91,7 +91,7 @@ class TopBar extends React.Component<Props, State> {
             />
           </TouchableHighlight>
         </View>
-      </View>
+      </View >
     );
   }
 

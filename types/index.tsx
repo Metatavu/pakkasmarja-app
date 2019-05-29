@@ -1,9 +1,9 @@
-import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction, Delivery, Product, ItemGroupCategory  } from "pakkasmarja-client";
+import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction, Delivery, Product, ItemGroupCategory } from "pakkasmarja-client";
 
 export interface StoreState {
   accessToken?: AccessToken,
   deliveries?: DeliveriesState
-  itemGroupCategory? : ItemGroupCategory
+  itemGroupCategory?: ItemGroupCategory
 }
 
 export interface DeliveriesState {
@@ -76,6 +76,39 @@ export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAll
  * Type for delivery data key
  */
 export type DeliveryDataKey = "amount" | "deliveryPlaceId" | "deliveryTimeValue";
+
+/**
+ * Type for manage contact key
+ */
+export type ManageContactKey =
+  "firstName" |
+  "lastName" |
+  "companyName" |
+  "phoneNumber1" |
+  "phoneNumber2" |
+  "email" |
+  "audit" |
+  "sapId" |
+  "BIC" |
+  "IBAN" |
+  "taxCode" |
+  "alv" |
+  "postNumber" |
+  "postAddress" |
+  "city" |
+  "farmPostNumber" |
+  "farmPostAddress" |
+  "farmCity" |
+  "vatLiable";
+
+/**
+  * Interface for manage contact inputs
+  */
+export interface ManageContactInput {
+  label: string,
+  key: ManageContactKey,
+  isDisabled?: boolean
+}
 
 /**
  * Interface for modal buttons
