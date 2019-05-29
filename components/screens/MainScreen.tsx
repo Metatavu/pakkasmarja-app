@@ -19,7 +19,7 @@ export default class MainScreen extends React.Component<Props, State> {
   }
 
   static navigationOptions = {
-    headerTitle: <TopBar 
+    headerTitle: <TopBar
       showMenu={true} 
       showHeader={false} 
       showUser={true} 

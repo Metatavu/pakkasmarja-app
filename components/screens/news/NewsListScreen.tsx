@@ -51,7 +51,7 @@ class NewsListScreen extends React.Component<Props, State> {
    */
   static navigationOptions = ({ navigation }: any) => {
     return {
-      headerTitle: <TopBar
+      headerTitle: <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -106,7 +106,7 @@ class NewsListScreen extends React.Component<Props, State> {
             {
               this.state.newsArticles.map((newsArticle) => {
                 return (
-                  <TouchableOpacity onPress={() => { this.handleListItemClick(newsArticle) }}>
+                  <TouchableOpacity key={newsArticle.id} onPress={() => { this.handleListItemClick(newsArticle) }}>
                     <ListItem
                       key={newsArticle.id}
                       title={newsArticle.title}

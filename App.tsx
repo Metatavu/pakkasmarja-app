@@ -28,6 +28,7 @@ import ViewWeekDeliveryPredictionScreen from "./components/screens/deliveries/Vi
 import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDeliveriesScreen";
 import NewDelivery from "./components/screens/deliveries/NewDelivery";
 import EditDelivery from "./components/screens/deliveries/EditDelivery";
+import ManageContact from "./components/screens/contact/ManageContact";
 import Permissions from 'react-native-permissions';
 import strings from "./localization/strings";
 
@@ -59,7 +60,8 @@ const RootStack = createStackNavigator({
   ViewWeekDeliveryPrediction: ViewWeekDeliveryPredictionScreen,
   IncomingDeliveries: IncomingDeliveriesScreen,
   NewDelivery: NewDelivery,
-  EditDelivery: EditDelivery
+  EditDelivery: EditDelivery,
+  ManageContact: ManageContact,
 }, {
     defaultNavigationOptions: {
       headerStyle: {
