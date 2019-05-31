@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Image, Dimensions, } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Image, Dimensions, Alert, } from "react-native";
 import { Delivery, Product, DeliveryNote, DeliveryQuality, DeliveryPlace } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
@@ -47,6 +47,7 @@ interface State {
   notesLoading: boolean;
   lightBoxOpen: boolean;
   deliveryPlace?: DeliveryPlace;
+  description: string;
 };
 
 /**
@@ -67,7 +68,8 @@ class DeliveryScreen extends React.Component<Props, State> {
       createModal: false,
       editModal: false,
       notesLoading: false,
-      lightBoxOpen: false
+      lightBoxOpen: false,
+      description: ""
     };
   }
 
@@ -128,6 +130,61 @@ class DeliveryScreen extends React.Component<Props, State> {
     }
 
     const updatedDelivery = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    this.updateDeliveries(updatedDelivery);
+    this.props.navigation.navigate("IncomingDeliveries");
+  }
+
+  /**
+   * Check if prodcuts itemgroup is natural
+   * 
+   * @param itemGroupId itemGroupId
+   * @returns if itemgroup is natural or not
+   */
+  private checkIfNatural = async (itemGroupId: string) => {
+    if (!this.props.accessToken) {
+      return false;
+    }
+    const Api = new PakkasmarjaApi();
+    const itemGroupService = Api.getItemGroupsService(this.props.accessToken.access_token);
+    const itemGroup = await itemGroupService.findItemGroup(itemGroupId);
+    const itemGroupDisplayName = itemGroup.displayName;
+    const description = 'Vakuutan, että toimituksessa mainittujen marjojen alkuperämaa on Suomi, ja että liitetty kuva on otettu tämän toimituksen marjoista';
+    const luomuDescription = "Vakuutan, että toimituksessa mainittujen luomumarjojen alkuperämaa on Suomi, ja että liitetty kuva on otettu tämän toimituksen marjoista. Luomumarjat ovat myös neuvoston asetuksen (EY 834/2007) ja komission asetuksen (EY 889/2008) mukaisesti tuotettu tuote."
+    if (itemGroupDisplayName) {
+      const isNatural = itemGroupDisplayName.toLowerCase().includes("luomu");
+      this.setState({ description: isNatural ? luomuDescription : description });
+    }
+  }
+
+  /**
+   * Handles removing delivery
+   */
+  private handleRemoveDelivery = async () => {
+    Alert.alert(
+      'Hylkää toimitus!',
+      `Haluatko varmasti hylkää toimituksen?`,
+      [
+        {
+          text: 'En halua', onPress: () => { }
+        },
+        {
+          text: 'Kyllä', onPress: () => this.removeDelivery()
+        }
+      ]
+    );
+  }
+
+  /**
+   * Removes delivery
+   */
+  private removeDelivery = async () => {
+    if (!this.props.accessToken || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.id || !this.state.deliveryData.product.id) {
+      return;
+    }
+    const Api = new PakkasmarjaApi();
+    const deliveryService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const delivery = this.state.deliveryData.delivery;
+    const updatedDelivery = await deliveryService.updateDelivery({ ...delivery, status: "REJECTED" }, this.state.deliveryData.delivery.id);
     this.updateDeliveries(updatedDelivery);
     this.props.navigation.navigate("IncomingDeliveries");
   }
@@ -195,7 +252,6 @@ class DeliveryScreen extends React.Component<Props, State> {
     const deliveryQuality = deliveryQualities.find((deliveryQuality) => deliveryQuality.id == qualityId);
     this.setState({ deliveryQuality });
 
-
     const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
     const productsService = Api.getProductsService(this.props.accessToken.access_token);
     const delivery: Delivery = await deliveriesService.findDelivery(deliveryId);
@@ -203,6 +259,9 @@ class DeliveryScreen extends React.Component<Props, State> {
     const editable: boolean = this.props.navigation.getParam('editable');
     const deliveryPlace = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).findDeliveryPlace(delivery.deliveryPlaceId);
     const deliveryData = { delivery, product }
+
+    const itemGroupId = product.itemGroupId;
+    this.checkIfNatural(itemGroupId);
     this.setState({ editable: editable, deliveryData: deliveryData, deliveryPlace });
     this.loadDeliveryNotes();
   }
@@ -411,11 +470,21 @@ class DeliveryScreen extends React.Component<Props, State> {
                     </View>
                   </TouchableOpacity>
                 </View>
+                <View style={[styles.center, { flex: 1, marginBottom: 20 }]}>
+                  <Text style={{ color: 'black', fontSize: 15 }}>{this.state.description}</Text>
+                </View>
                 <View style={[styles.center, { flex: 1 }]}>
                   <TouchableOpacity
                     style={[styles.begindeliveryButton, styles.center, { width: "70%", height: 60 }]}
                     onPress={() => { this.handleBeginDelivery() }}>
                     <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Aloita toimitus</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={[styles.center, { flex: 1, marginTop: 20 }]}>
+                  <TouchableOpacity
+                    style={[styles.declineButton, styles.center, { width: "70%", height: 60 }]}
+                    onPress={() => { this.handleRemoveDelivery() }}>
+                    <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Hylkää toimitus</Text>
                   </TouchableOpacity>
                 </View>
               </React.Fragment>

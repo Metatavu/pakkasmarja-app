@@ -144,7 +144,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
               })
             }}
           >
-            <Text style={styles.buttonText}>Aloita toimitus</Text>
+            <Text style={styles.buttonText}>Tarkasta toimitus</Text>
           </TouchableOpacity>
         </View>
       );
