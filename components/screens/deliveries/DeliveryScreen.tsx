@@ -148,11 +148,11 @@ class DeliveryScreen extends React.Component<Props, State> {
     const itemGroupService = Api.getItemGroupsService(this.props.accessToken.access_token);
     const itemGroup = await itemGroupService.findItemGroup(itemGroupId);
     const itemGroupDisplayName = itemGroup.displayName;
-    const Description = 'Vakuutan, että toimituksessa mainittujen marjojen alkuperämaa on Suomi, ja että liitetty kuva on otettu tämän toimituksen marjoista';
-    const LuomuDescription = "Vakuutan, että toimituksessa mainittujen luomumarjojen alkuperämaa on Suomi, ja että liitetty kuva on otettu tämän toimituksen marjoista. Luomumarjat ovat myös neuvoston asetuksen (EY 834/2007) ja komission asetuksen (EY 889/2008) mukaisesti tuotettu tuote."
+    const description = 'Vakuutan, että toimituksessa mainittujen marjojen alkuperämaa on Suomi, ja että liitetty kuva on otettu tämän toimituksen marjoista';
+    const luomuDescription = "Vakuutan, että toimituksessa mainittujen luomumarjojen alkuperämaa on Suomi, ja että liitetty kuva on otettu tämän toimituksen marjoista. Luomumarjat ovat myös neuvoston asetuksen (EY 834/2007) ja komission asetuksen (EY 889/2008) mukaisesti tuotettu tuote."
     if (itemGroupDisplayName) {
       const isNatural = itemGroupDisplayName.toLowerCase().includes("luomu");
-      this.setState({ description: isNatural ? LuomuDescription : Description });
+      this.setState({ description: isNatural ? luomuDescription : description });
     }
   }
 
