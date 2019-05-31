@@ -65,7 +65,6 @@ class ContractAmount extends React.Component<Props, State> {
     this.props.onUserInputChange("quantityComment", value);
   }
 
-  
   /**
    * Render method
    */
