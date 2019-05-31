@@ -84,8 +84,9 @@ class ContractScreen extends React.Component<Props, State> {
    * Component did mount
    */
   public componentDidMount = async () => {
-    if (this.props.navigation.getParam('itemGroup')) {
-      await this.setState({ itemGroup: this.props.navigation.getParam('itemGroup') });
+    const itemGroup = this.props.navigation.getParam('itemGroup');
+    if (itemGroup) {
+      this.setState({ itemGroup: itemGroup });
     }
 
     if (this.props.navigation.getParam('contact')) {
@@ -113,9 +114,9 @@ class ContractScreen extends React.Component<Props, State> {
     }
     const appConfig: AppConfigOptions = await AppConfig.getAppConfig();
 
-    if (appConfig && this.state.itemGroup && this.state.itemGroup.id) {
+    if (appConfig && itemGroup && itemGroup.id) {
       const configItemGroups = appConfig["item-groups"];
-      const itemGroupId = this.state.itemGroup.id;
+      const itemGroupId = itemGroup.id;
       const configItemGroup: AppConfigItemGroupOptions = configItemGroups[itemGroupId];
       const requireAreaDetails = configItemGroup && configItemGroup["require-area-details"] ? true : false;
       const allowDeliveryAll = configItemGroup && configItemGroup["allow-delivery-all"] ? true : false;
