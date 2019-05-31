@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Dimensions, Image } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Dimensions, Image, Alert } from "react-native";
 import { Delivery, Product, ItemGroupCategory, ProductPrice, DeliveryNote } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text } from 'react-native-elements';
@@ -18,6 +18,7 @@ import EntypoIcon from "react-native-vector-icons/Entypo";
 import Lightbox from 'react-native-lightbox';
 import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import moment from "moment";
 
 /**
  * Component props
@@ -121,6 +122,39 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       deliveryPlaceId: this.state.delivery.deliveryPlaceId
     }
     const updatedDelivery = await deliveriesService.updateDelivery(delivery, this.state.delivery.id);
+    this.updateDeliveries(updatedDelivery);
+    this.props.navigation.navigate("Proposals");
+  }
+
+  /**
+   * Handles declining proposal
+   */
+  private handleProposalDecline = async () => {
+    Alert.alert(
+      'Hylkää ehdotus!',
+      `Haluatko varmasti hylkää ehdotuksen?`,
+      [
+        {
+          text: 'En halua', onPress: () => { }
+        },
+        {
+          text: 'Kyllä', onPress: () => this.declineProposal()
+        }
+      ]
+    );
+  }
+
+  /**
+   * Declines proposal
+   */
+  private declineProposal = async () => {
+    if (!this.props.accessToken || !this.state.product || !this.state.product.id || !this.state.delivery || !this.state.delivery.id) {
+      return;
+    }
+    const Api = new PakkasmarjaApi();
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const delivery: Delivery = this.state.delivery;
+    const updatedDelivery = await deliveriesService.updateDelivery({ ...delivery, status: "REJECTED" }, this.state.delivery.id);
     this.updateDeliveries(updatedDelivery);
     this.props.navigation.navigate("Proposals");
   }
@@ -367,6 +401,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
                 <Moment style={{ fontWeight: "bold", fontSize: 16, color: "black" }} element={Text} format="DD.MM.YYYY">
                   {this.state.delivery.time && this.state.delivery.time.toString()}
                 </Moment>
+                <Text style={{ fontWeight: "bold", fontSize: 16, color: "black" }}>{moment(this.state.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 12` : ` - Ennen klo 12`}</Text>
               </View>
             </View>
           </View>
@@ -381,6 +416,13 @@ class ProposalCheckScreen extends React.Component<Props, State> {
                 </TouchableOpacity>
               </View>
               <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end" }}>
+                <TouchableOpacity style={[styles.declineButton, { width: "95%", height: 60 }]} onPress={() => { this.handleProposalDecline() }} >
+                  <Text style={styles.buttonText}>Hylkää</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
+              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
                 <TouchableOpacity style={[styles.deliveriesButton, { width: "95%", height: 60 }]} onPress={() => { this.handleProposalAccept() }} >
                   <Text style={styles.buttonText}>Hyväksy</Text>
                 </TouchableOpacity>
