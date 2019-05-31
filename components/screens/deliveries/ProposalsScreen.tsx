@@ -36,6 +36,7 @@ interface State {
  */
 class ProposalsScreen extends React.Component<Props, State> {
 
+  private refreshInterval: any;
   /**
    * Constructor
    * 
@@ -78,7 +79,27 @@ class ProposalsScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+
     this.setState({ loading: true });
+
+    this.refreshInterval = setInterval(this.refreshDeliveries, 1000 * 30);
+  }
+
+  /**
+   * Component will unmount life-cycle event
+   */
+  public componentWillUnmount = () => {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = undefined;
+    }
+  }
+
+  /**
+   * Refresh deliveries
+   */
+  private refreshDeliveries = () => {
+    this.loadData();
   }
 
   /**

@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { Tabs, Tab } from "native-base";
-import { TouchableOpacity, Image, View, Text, TouchableHighlight, Dimensions } from "react-native";
+import { TouchableOpacity, Image, View, Text, TouchableHighlight, Dimensions, Alert } from "react-native";
 import { styles } from './styles.tsx'
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON, RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
@@ -42,6 +42,8 @@ interface State {
  * Deliveries screen component class
  */
 class DeliveriesScreen extends React.Component<Props, State> {
+
+  private refreshInterval: any;
 
   /**
    * Constructor
@@ -94,6 +96,26 @@ class DeliveriesScreen extends React.Component<Props, State> {
     await this.loadDeliveriesData();
     await this.props.itemGroupCategoryUpdate("FRESH");
     this.loadAmounts();
+
+    this.refreshInterval = setInterval(this.refreshDeliveries, 1000 * 30);
+  }
+
+  /**
+   * Component will unmount life-cycle event
+   */
+  public componentWillUnmount = () => {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = undefined;
+    }
+  }
+
+  /**
+   * Refresh deliveries
+   */
+  private refreshDeliveries = () => {
+    this.loadDeliveriesData();
+    this.loadAmounts();
   }
 
   /**
@@ -110,7 +132,9 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
     const freshDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FRESH", undefined, undefined, undefined, undefined, undefined, 0, 200);
     const frozenDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FROZEN", undefined, undefined, undefined, undefined, undefined, 0, 200);
-    const products: Product[] = await productsService.listProducts();
+    
+    // TODO: Fix this properly
+    const products: Product[] = await productsService.listProducts(undefined, undefined, undefined, 0, 999);
 
     const freshDeliveriesAndProducts: DeliveryProduct[] = freshDeliveries.map((delivery) => {
       return {
