@@ -7,6 +7,27 @@ export interface StoreState {
   unreads: Unread[]
 }
 
+export interface AppConfigDelieryOptions {
+  "fresh-delivery-place-id": string
+}
+
+export interface AppConfigContractsOptions {
+  visible: boolean,
+  except: string[]
+}
+
+export interface AppConfigItemGroupOptions {
+  "allow-delivery-all"?: boolean,
+  "require-area-details": boolean
+}
+
+export interface AppConfigOptions {
+  "delivery": AppConfigDelieryOptions,
+  "contracts-question-group": number,
+  "contracts": AppConfigContractsOptions,
+  "item-groups": { [key: string]: AppConfigItemGroupOptions }
+}
+
 export interface DeliveriesState {
   freshDeliveryData: DeliveryProduct[];
   frozenDeliveryData: DeliveryProduct[];

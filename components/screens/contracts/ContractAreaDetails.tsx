@@ -10,7 +10,7 @@ import { KeyboardType } from "../../../types";
  * Interface for component props
  */
 interface Props {
-  itemGroup?: ItemGroup,
+  itemGroup: ItemGroup,
   areaDetails?: AreaDetail[],
   areaDetailValues: AreaDetail[],
   isActiveContract: boolean,
@@ -35,7 +35,7 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      minimumProfit: 0
+      minimumProfit: 0,
     };
   }
 
@@ -243,11 +243,11 @@ export default class ContractAreaDetails extends React.Component<Props, State> {
           </Grid>
           {
             !this.props.isActiveContract &&
-              <TouchableOpacity style={[styles.bigRedButton, {marginTop:25}]} onPress={this.createEmptyAreaDetail}>
-                <Text style={styles.buttonText}>
-                  LISÄÄ RIVI
+            <TouchableOpacity style={[styles.bigRedButton, { marginTop: 25 }]} onPress={this.createEmptyAreaDetail}>
+              <Text style={styles.buttonText}>
+                LISÄÄ RIVI
                 </Text>
-              </TouchableOpacity>
+            </TouchableOpacity>
           }
         </View>
         <View style={styles.WhiteContentView}>
