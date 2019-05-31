@@ -1,5 +1,5 @@
 import React, { Dispatch } from "react";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, AppConfigOptions, AppConfigItemGroupOptions } from "../../../types";
 import { Text, Form } from "native-base";
 import { View, TouchableOpacity, TextInput, Platform } from "react-native";
 import { Contract, ItemGroup } from "pakkasmarja-client";
@@ -18,12 +18,13 @@ interface Props {
   contract: Contract,
   isActiveContract: boolean,
   accessToken?: AccessToken,
-  onUserInputChange: (key:any, value:any) => void,
+  onUserInputChange: (key: any, value: any) => void,
   proposedAmount: number,
   contractAmount?: number,
   quantityComment: string,
   deliverAllChecked: boolean,
-  styles?: any
+  styles?: any,
+  allowDeliveryAll: boolean
 };
 
 /**
@@ -31,7 +32,7 @@ interface Props {
  */
 interface State {
   showPastContracts: boolean,
-  pastContracts: Contract[],
+  pastContracts: Contract[]
 };
 
 class ContractAmount extends React.Component<Props, State> {
@@ -42,7 +43,7 @@ class ContractAmount extends React.Component<Props, State> {
     super(props);
     this.state = {
       showPastContracts: false,
-      pastContracts: [],
+      pastContracts: []
     };
   }
 
@@ -84,17 +85,17 @@ class ContractAmount extends React.Component<Props, State> {
           </Text>
         </View>
         <View>
-        {
-          this.props.itemGroup.category === "FRESH" &&
-            <Text style={{fontSize:18,paddingBottom:10}}>
+          {
+            this.props.itemGroup.category === "FRESH" &&
+            <Text style={{ fontSize: 18, paddingBottom: 10 }}>
               Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.
             </Text>
-        }
+          }
         </View>
         <View>
           <Form>
             <Text style={styles.textSize}>Määrä</Text>
-            <TextInput 
+            <TextInput
               style={styles.InputStyle}
               editable={!this.props.isActiveContract}
               keyboardType="numeric"
@@ -112,31 +113,33 @@ class ContractAmount extends React.Component<Props, State> {
               Edellisten vuosien sopimusmäärät ja toimitusmäärät
             </Text>
           </TouchableOpacity>
-          <ContractModal 
-            closeModal={() => this.setState({showPastContracts: false})} 
-            pastContracts={true} 
-            modalOpen={this.state.showPastContracts} 
+          <ContractModal
+            closeModal={() => this.setState({ showPastContracts: false })}
+            pastContracts={true}
+            modalOpen={this.state.showPastContracts}
             itemGroupId={this.props.itemGroup.id || ""}
           />
         </View>
-        <View>
-          <CheckBox
-            checked={this.props.deliverAllChecked}
-            onPress={() => {
-              !this.props.isActiveContract && this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked)
-            }}
-            title='Haluaisin toimittaa kaiken tilallani viljeltävän sadon tästä marjasta Pakkasmarjalle pakastettavaksi ja tuorekauppaan (lisätietoja sopimuksen kohdasta 100 % toimittajuus).'
-          />
-        </View>
+        {
+          this.props.allowDeliveryAll &&
+          <View>
+            <CheckBox
+              checked={this.props.deliverAllChecked}
+              onPress={() => {
+                !this.props.isActiveContract && this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked)
+              }}
+              title='Haluaisin toimittaa kaiken tilallani viljeltävän sadon tästä marjasta Pakkasmarjalle pakastettavaksi ja tuorekauppaan (lisätietoja sopimuksen kohdasta 100 % toimittajuus).'
+            />
+          </View>}
         <View>
           <Text style={[styles.textWithSpace, styles.textSize]}>Kommentti</Text>
-          <TextInput 
-            multiline = {true}
+          <TextInput
+            multiline={true}
             numberOfLines={Platform.OS === 'ios' ? undefined : 4}
-            style={{... styles.textInput, height: Platform.OS === "ios" ? 80 : undefined}}
+            style={{ ...styles.textInput, height: Platform.OS === "ios" ? 80 : undefined }}
             editable={!this.props.isActiveContract}
             value={this.props.quantityComment}
-            onChangeText={(text:string) => this.onQuantityCommentChange(text)}
+            onChangeText={(text: string) => this.onQuantityCommentChange(text)}
           />
         </View>
       </View>

@@ -13,11 +13,12 @@ import ContractRejectModal from "./ContractRejectModal";
 import { Contract, ItemGroup, ItemGroupPrice, Contact, AreaDetail, DeliveryPlace } from "pakkasmarja-client";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import PakkasmarjaApi from "../../../api";
-import { AccessToken, StoreState, ContractData, ContractDataKey } from "../../../types";
+import { AccessToken, StoreState, ContractData, ContractDataKey, AppConfigOptions, AppConfigItemGroupOptions } from "../../../types";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import { styles } from "./styles";
 import Icon from "react-native-vector-icons/Feather";
+import AppConfig from "../../../utils/AppConfig";
 
 /**
  * Interface for component props
@@ -42,7 +43,10 @@ interface State {
   showPastPrices: boolean,
   companyApprovalRequired: boolean
   contractData: ContractData,
-  rejectModalOpen: boolean
+  rejectModalOpen: boolean,
+  allowDeliveryAll: boolean,
+  requireAreaDetails: boolean,
+  validationErrorText: string
 };
 
 /**
@@ -56,6 +60,9 @@ class ContractScreen extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      validationErrorText: "",
+      allowDeliveryAll: false,
+      requireAreaDetails: false,
       companyName: "Pakkasmarja Oy",
       companyBusinessId: "0434204-0",
       showPastPrices: false,
@@ -76,9 +83,10 @@ class ContractScreen extends React.Component<Props, State> {
   /**
    * Component did mount
    */
-  public componentDidMount = () => {
-    if (this.props.navigation.getParam('itemGroup')) {
-      this.setState({ itemGroup: this.props.navigation.getParam('itemGroup') });
+  public componentDidMount = async () => {
+    const itemGroup = this.props.navigation.getParam('itemGroup');
+    if (itemGroup) {
+      this.setState({ itemGroup: itemGroup });
     }
 
     if (this.props.navigation.getParam('contact')) {
@@ -104,6 +112,16 @@ class ContractScreen extends React.Component<Props, State> {
       this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment);
       this.updateContractData("deliverAllChecked", contract.deliverAll);
     }
+    const appConfig: AppConfigOptions = await AppConfig.getAppConfig();
+
+    if (appConfig && itemGroup && itemGroup.id) {
+      const configItemGroups = appConfig["item-groups"];
+      const itemGroupId = itemGroup.id;
+      const configItemGroup: AppConfigItemGroupOptions = configItemGroups[itemGroupId];
+      const requireAreaDetails = configItemGroup && configItemGroup["require-area-details"] ? true : false;
+      const allowDeliveryAll = configItemGroup && configItemGroup["allow-delivery-all"] ? true : false;
+      this.setState({ requireAreaDetails, allowDeliveryAll });
+    }
   }
 
   /**
@@ -115,9 +133,16 @@ class ContractScreen extends React.Component<Props, State> {
   private updateContractData = (key: ContractDataKey, value: boolean | string | AreaDetail[]) => {
     const contractData = this.state.contractData;
     contractData[key] = value;
-
     this.setState({ contractData: contractData });
     this.checkIfCompanyApprovalNeeded();
+    if (key === "areaDetailValues" && this.state.requireAreaDetails) {
+      if (this.state.contractData.areaDetailValues.length > 0) {
+        this.setState({ validationErrorText: "" });
+      } else {
+        const validationErrorText = "Täytä tuotannossa olevat hehtaarit taulukkoon"
+        this.setState({ validationErrorText });
+      }
+    }
   }
 
   /**
@@ -134,7 +159,7 @@ class ContractScreen extends React.Component<Props, State> {
     const currentContractPlaceId = this.state.contractData.deliveryPlaceId;
     const contractDeliverAll = this.state.contract.deliverAll;
     const deliverAll = this.state.contractData.deliverAllChecked;
-    
+
     if (contractQuantity != currentQuantity || contractPlaceId != currentContractPlaceId || contractDeliverAll != deliverAll) {
       this.setState({ companyApprovalRequired: true });
     } else {
@@ -289,14 +314,18 @@ class ContractScreen extends React.Component<Props, State> {
             proposedAmount={this.state.contractData.proposedQuantity}
             quantityComment={this.state.contractData.quantityComment}
             deliverAllChecked={this.state.contractData.deliverAllChecked}
+            allowDeliveryAll={this.state.allowDeliveryAll}
           />
-          <ContractAreaDetails
-            itemGroup={this.state.itemGroup}
-            areaDetails={this.state.contract.areaDetails}
-            areaDetailValues={this.state.contractData.areaDetailValues}
-            isActiveContract={this.state.contract.status === "APPROVED"}
-            onUserInputChange={this.updateContractData}
-          />
+          {
+            this.state.requireAreaDetails &&
+            <ContractAreaDetails
+              itemGroup={this.state.itemGroup}
+              areaDetails={this.state.contract.areaDetails}
+              areaDetailValues={this.state.contractData.areaDetailValues}
+              isActiveContract={this.state.contract.status === "APPROVED"}
+              onUserInputChange={this.updateContractData}
+            />
+          }
           <ContractDeliveryPlace
             onUserInputChange={this.updateContractData}
             deliveryPlaces={this.state.deliveryPlaces}
@@ -311,6 +340,7 @@ class ContractScreen extends React.Component<Props, State> {
             declineContract={this.declineContractClicked}
             downloadContractPdf={this.downloadContractPdfClicked}
             approveButtonText={this.state.companyApprovalRequired ? "EHDOTA MUUTOSTA" : "HYVÄKSYN"}
+            validationErrorText={this.state.validationErrorText}
           />
           <ContractRejectModal
             onUserInputChange={this.updateContractData}

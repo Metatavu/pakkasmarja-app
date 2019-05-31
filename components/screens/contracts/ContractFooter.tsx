@@ -13,7 +13,8 @@ interface Props {
   declineContract: () => void,
   downloadContractPdf: () => void,
   approveButtonText: string,
-  styles?: any
+  styles?: any,
+  validationErrorText: string
 };
 
 /**
@@ -56,6 +57,9 @@ export default class ContractFooter extends React.Component<Props, State> {
         {
           !this.props.isActiveContract &&
           <View>
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ fontSize: 18, textAlign: "center", color: "red" }}>{this.props.validationErrorText}</Text>
+            </View>
             <View style={styles.flexView}>
               <TouchableOpacity style={styles.smallRedButton} onPress={this.props.goBack}>
                 <Text style={styles.buttonText}>
@@ -68,14 +72,22 @@ export default class ContractFooter extends React.Component<Props, State> {
                 </Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.bigRedButton} onPress={this.props.acceptContract}>
-              <Text style={styles.buttonText}>
-                {this.props.approveButtonText}
-              </Text>
-            </TouchableOpacity>
+            {
+              !this.props.validationErrorText ?
+                <TouchableOpacity style={styles.bigRedButton} onPress={this.props.acceptContract}>
+                  <Text style={styles.buttonText}>
+                    {this.props.approveButtonText}
+                  </Text>
+                </TouchableOpacity>
+                :
+                <TouchableOpacity style={{ ...styles.bigRedButton, backgroundColor: "lightgray" }}>
+                  <Text style={styles.buttonText}>
+                    {this.props.approveButtonText}
+                  </Text>
+                </TouchableOpacity>
+            }
           </View>
         }
-
       </View>
     );
   }
