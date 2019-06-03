@@ -360,7 +360,7 @@ class EditDelivery extends React.Component<Props, State> {
             <View style={{ flex: 1.1 }}>
               {
                 this.state.productPrice ?
-                  <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} ${this.state.productPrice.unit}`}</Text>
+                  <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
                   :
                   <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>
               }
