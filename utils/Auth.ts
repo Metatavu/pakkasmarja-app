@@ -2,6 +2,9 @@ import * as querystring from "query-string";
 import moment from "moment";
 import { AuthConfig, AccessToken } from "../types";
 import jwt_decode from "jwt-decode";
+import { AsyncStorage } from "react-native";
+
+const ACCESS_TOKEN_STORAGE_KEY = "pakkasmarja-access";
 
 export default class Auth {
 
@@ -26,7 +29,30 @@ export default class Auth {
     });
 
     const tokenData = await response.json();
-    return this.buildToken(tokenData, created, config.url, config.clientId, config.realmId);
+    return await this.buildToken(tokenData, created, config.url, config.clientId, config.realmId);
+  }
+
+    /**
+   * Gets stored token and returns it.
+   * Refreshes expired token if it can be done.
+   * return null if token is not found or cannot be refreshed
+   */
+  static async getToken() {
+    const accessTokenData = await AsyncStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+    if (!accessTokenData) {
+      return null;
+    }
+
+    try {
+      const accessToken = JSON.parse(accessTokenData);
+      if (Auth.isTokenValid(accessToken)) {
+        return accessToken;
+      }
+
+      return await Auth.refreshToken(accessToken);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -53,7 +79,7 @@ export default class Auth {
     });
 
     const tokenData = await response.json();
-    return this.buildToken(tokenData, created, accessToken.url, accessToken.client_id, accessToken.realmId);
+    return await this.buildToken(tokenData, created, accessToken.url, accessToken.client_id, accessToken.realmId);
   }
 
   /**
@@ -95,9 +121,9 @@ export default class Auth {
    * @param clientId client id 
    * @param realmId realm id
    */
-  private static buildToken(tokenData: any, created: Date, url: string, clientId: string, realmId: string): AccessToken {
+  private static async buildToken(tokenData: any, created: Date, url: string, clientId: string, realmId: string) {
     const decodedToken: any = jwt_decode(tokenData.access_token);
-    return {
+    const token = {
       created: created,
       access_token: tokenData.access_token,
       expires_in: tokenData.expires_in,
@@ -110,6 +136,9 @@ export default class Auth {
       lastName: decodedToken.family_name,
       userId: decodedToken.sub
     };
+
+    await AsyncStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, JSON.stringify(token));
+    return token;
   }
 
 }

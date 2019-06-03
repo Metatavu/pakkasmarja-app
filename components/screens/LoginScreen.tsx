@@ -63,8 +63,13 @@ class LoginScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   async componentDidMount() {
-    const accessToken = this.props.accessToken;
-    if (accessToken) {
+    let accessToken = this.props.accessToken;
+    if (!accessToken) {
+      accessToken = await Auth.getToken();
+      if (accessToken) {
+        this.onLogin(accessToken);
+      }
+    } else {
       this.props.navigation.navigate("News");
     }
   }
@@ -95,27 +100,31 @@ class LoginScreen extends React.Component<Props, State> {
       });
 
       if (accessToken) {
-        this.props.onAccessTokenUpdate(accessToken);
-        let pushNotificationPermissions = await firebase.messaging().hasPermission();
-        if (!pushNotificationPermissions) {
-          try {
-            await firebase.messaging().requestPermission();
-            pushNotificationPermissions = true;
-          } catch (error) {
-            pushNotificationPermissions = false;
-          }
-        }
-    
-        if (pushNotificationPermissions) {
-          firebase.messaging().subscribeToTopic(`v3-${accessToken.userId}`);
-        }
-        this.props.navigation.replace("News");
+        await this.onLogin(accessToken);
       } else {
         this.showErrorMessage();
       }
     } catch(error) {
       this.showErrorMessage();
     }
+  }
+
+  private onLogin = async (accessToken: AccessToken) => {
+    this.props.onAccessTokenUpdate(accessToken);
+    let pushNotificationPermissions = await firebase.messaging().hasPermission();
+    if (!pushNotificationPermissions) {
+      try {
+        await firebase.messaging().requestPermission();
+        pushNotificationPermissions = true;
+      } catch (error) {
+        pushNotificationPermissions = false;
+      }
+    }
+
+    if (pushNotificationPermissions) {
+      firebase.messaging().subscribeToTopic(`v3-${accessToken.userId}`);
+    }
+    this.props.navigation.replace("News");
   }
 
   /**
