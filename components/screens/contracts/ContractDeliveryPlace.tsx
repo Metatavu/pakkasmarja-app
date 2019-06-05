@@ -86,7 +86,7 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
                 enabled={!this.props.isActiveContract}
                 style={{height:50,width:"100%", color:"black"}}
                 onValueChange={(itemValue, itemIndex) =>
-                  this.props.onUserInputChange("deliveryPlaceId", itemValue)
+                  this.props.onUserInputChange("proposedDeliveryPlaceId", itemValue)
                 }>
                 {
                   this.props.deliveryPlaces && this.props.deliveryPlaces.map((deliveryPlace) => {

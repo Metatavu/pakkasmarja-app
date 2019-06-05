@@ -75,6 +75,7 @@ class ContractScreen extends React.Component<Props, State> {
         quantityComment: "",
         areaDetailValues: [],
         deliveryPlaceId: "",
+        proposedDeliveryPlaceId: "",
         deliveryPlaceComment: ""
       }
     };
@@ -102,14 +103,14 @@ class ContractScreen extends React.Component<Props, State> {
     }
 
     if (this.props.navigation.getParam('contract')) {
-      const contract = this.props.navigation.getParam('contract');
+      const contract: Contract = this.props.navigation.getParam('contract');
       this.setState({ contract: contract });
 
-      this.updateContractData("quantityComment", contract.quantityComment);
+      this.updateContractData("quantityComment", contract.quantityComment || "");
       this.updateContractData("proposedQuantity", contract.proposedQuantity ? contract.proposedQuantity.toString() : contract.contractQuantity ? contract.contractQuantity.toString() : "");
-      this.updateContractData("areaDetailValues", contract.areaDetails);
-      this.updateContractData("deliveryPlaceId", contract.deliveryPlaceId.toString());
-      this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment);
+      this.updateContractData("areaDetailValues", contract.areaDetails || []);
+      this.updateContractData("proposedDeliveryPlaceId", contract.deliveryPlaceId.toString());
+      this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment || "");
       this.updateContractData("deliverAllChecked", contract.deliverAll);
     }
     const appConfig: AppConfigOptions = await AppConfig.getAppConfig();
@@ -207,8 +208,8 @@ class ContractScreen extends React.Component<Props, State> {
     const contractData = this.state.contractData;
     const contract = this.state.contract;
 
-    contract.deliverAll = contractData.deliverAllChecked;
-    contract.deliveryPlaceId = contractData.deliveryPlaceId;
+    contract.proposedDeliverAll = contractData.deliverAllChecked;
+    contract.proposedDeliveryPlaceId = contractData.proposedDeliveryPlaceId;
     contract.deliveryPlaceComment = contractData.deliveryPlaceComment;
     contract.proposedQuantity = contractData.proposedQuantity;
     contract.quantityComment = contractData.quantityComment;
@@ -329,7 +330,7 @@ class ContractScreen extends React.Component<Props, State> {
           <ContractDeliveryPlace
             onUserInputChange={this.updateContractData}
             deliveryPlaces={this.state.deliveryPlaces}
-            selectedPlaceId={this.state.contractData.deliveryPlaceId}
+            selectedPlaceId={this.state.contractData.proposedDeliveryPlaceId ? this.state.contractData.proposedDeliveryPlaceId : this.state.contractData.deliveryPlaceId}
             deliveryPlaceComment={this.state.contractData.deliveryPlaceComment}
             isActiveContract={this.state.contract.status === "APPROVED"}
           />
