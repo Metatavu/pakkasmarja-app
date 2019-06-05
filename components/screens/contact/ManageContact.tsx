@@ -11,13 +11,17 @@ import TopBar from "../../layout/TopBar";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import ModalSelector from 'react-native-modal-selector';
 import { Icon } from "native-base";
+import BasicScrollLayout from "../../layout/BasicScrollLayout";
+import { StackActions, NavigationActions } from "react-navigation";
+import Auth from "../../../utils/Auth";
 
 /**
  * Component props
  */
 interface Props {
-  accessToken?: AccessToken
-  navigation?: any
+  accessToken?: AccessToken,
+  navigation?: any,
+  onAccessTokenUpdate: (accessToken?: AccessToken) => void
 }
 
 /**
@@ -265,7 +269,12 @@ class ManageContact extends React.Component<Props, State> {
     }];
 
     return (
-      <ScrollView>
+      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+        <TouchableOpacity onPress={this.handleLogOut}>
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", height: 50, backgroundColor: "#E51D2A", marginVertical: 10 }}>
+            <Text style={{ color: "#fff", fontSize: 20 }}>Kirjaudu ulos</Text>
+          </View>
+        </TouchableOpacity>
         <View style={[styles.center, styles.topViewWithButton]}>
           <View style={[styles.center, { flexDirection: "row", paddingVertical: 30 }]}>
             <Icon style={{ fontSize: 30, color: '#E51D2A', marginRight: 15 }} type="FontAwesome" name="user" />
@@ -352,8 +361,21 @@ class ManageContact extends React.Component<Props, State> {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+      </BasicScrollLayout>
     );
+  }
+
+  /**
+   * Handles log out
+   */
+  private handleLogOut = async () => {
+    await Auth.removeToken();
+    this.props.onAccessTokenUpdate(undefined);
+    const resetAction = StackActions.reset({
+      index: 0,
+      actions: [NavigationActions.navigate({ routeName: 'Login' })],
+    });
+    this.props.navigation.dispatch(resetAction);
   }
 
   /**
@@ -470,7 +492,9 @@ function mapStateToProps(state: StoreState) {
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
-  return {};
+  return {
+    onAccessTokenUpdate: (accessToken?: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+  };
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ManageContact);
