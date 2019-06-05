@@ -73,10 +73,8 @@ class ContractsScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    this.props.navigation.addListener('willFocus', (navigation: any) =>{
-      if (navigation.state.params && navigation.state.params.refresh) {
-        this.loadData();
-      }
+    this.props.navigation.addListener('willFocus', () => {
+      this.loadData();
     });
     await this.loadData();
   }
@@ -89,7 +87,7 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    this.setState({ loading: true, freshContracts:[], frozenContracts: [] });
+    this.setState({ loading: true, freshContracts: [], frozenContracts: [] });
 
     const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);

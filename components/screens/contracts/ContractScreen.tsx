@@ -157,11 +157,10 @@ class ContractScreen extends React.Component<Props, State> {
     const contractQuantity = this.state.contract.contractQuantity;
     const currentQuantity = this.state.contractData.proposedQuantity;
     const contractPlaceId = this.state.contract.deliveryPlaceId;
-    const currentContractPlaceId = this.state.contractData.deliveryPlaceId;
+    const currentContractPlaceId = this.state.contractData.proposedDeliveryPlaceId;
     const contractDeliverAll = this.state.contract.deliverAll;
-    const deliverAll = this.state.contractData.deliverAllChecked;
-
-    if (contractQuantity != currentQuantity || contractPlaceId != currentContractPlaceId || contractDeliverAll != deliverAll) {
+    const contractProposedDeliverAll = this.state.contractData.deliverAllChecked;
+    if (contractQuantity != currentQuantity || contractPlaceId != currentContractPlaceId || contractDeliverAll != contractProposedDeliverAll) {
       this.setState({ companyApprovalRequired: true });
     } else {
       this.setState({ companyApprovalRequired: false });
