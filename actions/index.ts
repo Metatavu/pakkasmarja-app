@@ -8,7 +8,7 @@ import { Unread } from 'pakkasmarja-client';
  */
 export interface AccessTokenUpdate {
   type: constants.ACCESS_TOKEN_UPDATE,
-  accessToken: AccessToken
+  accessToken?: AccessToken
 }
 
 /**
@@ -53,7 +53,7 @@ export type AppAction =  AccessTokenUpdate | DeliveriesLoaded | ItemGroupCatego
  * 
  * @param accessToken access token
  */
-export function accessTokenUpdate(accessToken: AccessToken): AccessTokenUpdate {
+export function accessTokenUpdate(accessToken?: AccessToken): AccessTokenUpdate {
   return {
     type: constants.ACCESS_TOKEN_UPDATE,
     accessToken: accessToken

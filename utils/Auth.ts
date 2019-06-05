@@ -32,7 +32,7 @@ export default class Auth {
     return await this.buildToken(tokenData, created, config.url, config.clientId, config.realmId);
   }
 
-    /**
+  /**
    * Gets stored token and returns it.
    * Refreshes expired token if it can be done.
    * return null if token is not found or cannot be refreshed
@@ -53,6 +53,13 @@ export default class Auth {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Removes token from storage
+   */
+  static async removeToken(){
+    await AsyncStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   }
 
   /**
