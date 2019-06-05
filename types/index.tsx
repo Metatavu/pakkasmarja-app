@@ -86,13 +86,14 @@ export interface ContractData {
   quantityComment: string,
   areaDetailValues: AreaDetail[],
   deliveryPlaceId: string,
+  proposedDeliveryPlaceId: string,
   deliveryPlaceComment: string
 }
 
 /**
  * Type for contract data key
  */
-export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAllChecked" | "quantityComment" | "areaDetailValues" | "deliveryPlaceId" | "deliveryPlaceComment";
+export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAllChecked" | "quantityComment" | "areaDetailValues" | "deliveryPlaceId" |  "proposedDeliveryPlaceId" |"deliveryPlaceComment";
 
 /**
  * Type for delivery data key
