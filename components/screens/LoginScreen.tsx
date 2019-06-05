@@ -63,7 +63,6 @@ class LoginScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   async componentDidMount() {
-
     let accessToken = this.props.accessToken;
     if (!accessToken) {
       accessToken = await Auth.getToken();
