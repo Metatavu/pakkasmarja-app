@@ -109,9 +109,9 @@ class ContractScreen extends React.Component<Props, State> {
       this.updateContractData("quantityComment", contract.quantityComment || "");
       this.updateContractData("proposedQuantity", contract.proposedQuantity ? contract.proposedQuantity.toString() : contract.contractQuantity ? contract.contractQuantity.toString() : "");
       this.updateContractData("areaDetailValues", contract.areaDetails || []);
-      this.updateContractData("proposedDeliveryPlaceId", contract.proposedDeliveryPlaceId ? contract.proposedDeliveryPlaceId.toString() : contract.deliveryPlaceId.toString());
+      this.updateContractData("proposedDeliveryPlaceId", contract.deliveryPlaceId.toString());
       this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment || "");
-      this.updateContractData("deliverAllChecked", contract.proposedDeliverAll ? contract.proposedDeliverAll : contract.deliverAll);
+      this.updateContractData("deliverAllChecked", contract.deliverAll);
     }
     const appConfig: AppConfigOptions = await AppConfig.getAppConfig();
 
