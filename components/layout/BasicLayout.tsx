@@ -76,14 +76,14 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
           <View style={styles.footer}>
             <TouchableOpacity  onPress={() => this.goToScreen("News")}>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                { unreadNews > 0 && <Badge style={{position: "absolute"}}><Text>{unreadNews}</Text></Badge> }
+                { unreadNews > 0 && <Badge style={{position: "absolute", height:20}}><Text style={{color:"white"}}>{unreadNews}</Text></Badge> }
                 <Thumbnail source={NEWS_ICON} square style={{ width: 22, height: 26 }} />
                 <Text>{strings.newsFooterLink}</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => this.goToScreen("ChatsList")}>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                { unreadChats > 0 && <Badge style={{position: "absolute"}}><Text>{unreadChats}</Text></Badge> }
+                { unreadChats > 0 && <Badge style={{position: "absolute", height:20, zIndex:99}}><Text style={{color:"white"}}>{unreadChats}</Text></Badge> }
                 <Thumbnail source={MESSAGES_ICON} square style={{ width: 48, height:26 }} />
                 <Text>{strings.messagingFooterLink}</Text>
               </View>

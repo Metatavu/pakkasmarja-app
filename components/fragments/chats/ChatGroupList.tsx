@@ -8,6 +8,7 @@ import strings from "../../../localization/strings";
 import { List, ListItem, Left, Thumbnail, Body, Text, Container, View, Spinner, Fab, Icon, Right, Badge } from "native-base";
 import { AVATAR_PLACEHOLDER } from "../../../static/images";
 import { ScrollView } from "react-native";
+import * as _ from "lodash";
 
 
 /**
@@ -59,8 +60,9 @@ class ChatGroupList extends React.Component<Props, State> {
     this.setState({loading: true});
     try {
       const chatGroups = await new PakkasmarjaApi().getChatGroupsService(this.props.accessToken.access_token).listChatGroups(this.props.type);
+      const sortChatGroupsByUnreads = _.sortBy( chatGroups, (group) => this.hasUnreadThreads(group.id!)).reverse(); 
       this.setState({
-        chatGroups: chatGroups,
+        chatGroups: sortChatGroupsByUnreads,
         loading: false
       });
     } catch (e) {
@@ -130,7 +132,7 @@ class ChatGroupList extends React.Component<Props, State> {
     })
   }
 
-    /**
+  /**
    * Counts unreads by group
    * 
    * @param group id
@@ -142,6 +144,20 @@ class ChatGroupList extends React.Component<Props, State> {
     }).length;
   }
 
+  /**
+   * Check if unread
+   * 
+   * @param groupId groupId
+   * @returns returns true if group has unreads
+   */
+  private hasUnreadThreads = (groupId: number) => {
+    if(!this.props.unreads){
+      return false;
+    }
+    return !!this.props.unreads.find((unread: Unread) => {
+      return (unread.path || "").startsWith(`chat-${groupId}-`);
+    });
+  }
 
   /**
    * selects group
