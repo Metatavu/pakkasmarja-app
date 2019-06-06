@@ -115,7 +115,6 @@ class ContractAmount extends React.Component<Props, State> {
           </TouchableOpacity>
           <ContractModal
             closeModal={() => this.setState({ showPastContracts: false })}
-            pastContracts={true}
             modalOpen={this.state.showPastContracts}
             itemGroupId={this.props.itemGroup.id || ""}
           />

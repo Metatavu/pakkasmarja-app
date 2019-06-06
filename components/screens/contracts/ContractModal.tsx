@@ -9,6 +9,7 @@ import PakkasmarjaApi from "../../../api";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import { styles } from "./styles";
+import * as _ from "lodash";
 
 /**
  * Interface for component props
@@ -16,7 +17,6 @@ import { styles } from "./styles";
 interface Props {
   modalOpen: boolean,
   itemGroupId?: string,
-  pastContracts: boolean
   accessToken?: AccessToken,
   closeModal: () => void
 };
@@ -26,7 +26,7 @@ interface Props {
  */
 interface State {
   modalOpen: boolean,
-  contracts: Contract[]
+  pastContracts: Contract[]
 };
 
 /**
@@ -40,7 +40,7 @@ class ContractModal extends React.Component<Props, State> {
     super(props);
     this.state = {
       modalOpen: false,
-      contracts: []
+      pastContracts: []
     };
   }
 
@@ -54,16 +54,12 @@ class ContractModal extends React.Component<Props, State> {
 
     const api = new PakkasmarjaApi();
     const contractsService = api.getContractsService(this.props.accessToken.access_token);
+    const contracts = await contractsService.listContracts("application/json", true, undefined, this.props.itemGroupId, undefined, "TERMINATED", undefined, 8);
+    const contractsSorted = _.sortBy(contracts, (contract) => contract.year).reverse();
+    const thisYear = new Date().getFullYear();
+    const pastContracts = contractsSorted.filter(contract => contract.year < thisYear);
+    this.setState({ pastContracts });
 
-    const contracts = await contractsService.listContracts("application/json", true, undefined, this.props.itemGroupId);
-
-    if (this.props.pastContracts) {
-      const thisYear = new Date().getFullYear();
-      const pastContracts = contracts.filter(contract => contract.year < thisYear);
-      this.setState({ contracts: pastContracts });
-    } else {
-      this.setState({ contracts: contracts });
-    }
   }
 
   /**
@@ -88,7 +84,7 @@ class ContractModal extends React.Component<Props, State> {
                 <Col><Text>Toteutunut määrä (kg)</Text></Col>
               </Row>
               {
-                this.state.contracts.map((contract) => {
+                this.state.pastContracts.map((contract) => {
                   return (
                     <Row key={contract.itemGroupId}>
                       <Col><Text>{contract.year}</Text></Col>

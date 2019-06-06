@@ -104,7 +104,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
     this.setState({ loading: false });
   }
 
-    /**
+  /**
    * Retuns related unread
    * 
    * @return related unread

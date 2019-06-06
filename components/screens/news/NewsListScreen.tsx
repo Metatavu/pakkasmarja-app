@@ -6,7 +6,7 @@ import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import { Text, List, View, Spinner } from 'native-base';
 import { AccessToken, StoreState } from "../../../types";
-import { NewsArticle } from "pakkasmarja-client";
+import { NewsArticle, Unread } from "pakkasmarja-client";
 import { ListItem } from "react-native-elements";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import * as _ from "lodash"
@@ -17,7 +17,9 @@ import { TouchableOpacity } from "react-native";
  */
 interface Props {
   navigation: any,
-  accessToken?: AccessToken
+  accessToken?: AccessToken,
+  unreads?: Unread[],
+  unreadsUpdate: (unreads: Unread[]) => void
 };
 
 /**
@@ -75,8 +77,21 @@ class NewsListScreen extends React.Component<Props, State> {
     const Api = new PakkasmarjaApi();
     const newsArticleService = await Api.getNewsArticlesService(this.props.accessToken.access_token);
     const newsArticles = await newsArticleService.listNewsArticles();
-    const sortedNewsArticles = _.sortBy(newsArticles, [(newsArticle) => { return newsArticle.updatedAt; }]).reverse();
+    const sortedNewsArticles = newsArticles.sort((a, b) => {
+      return this.getTime(b.createdAt) - this.getTime(a.createdAt)
+    });
+    await this.checkUnreads();
     this.setState({ newsArticles: sortedNewsArticles, loading: false });
+    
+  }
+
+  /**
+   * Get time
+   * 
+   * @param date date
+   */
+  private getTime(date?: Date) {
+    return date ? new Date(date).getTime() : 0;
   }
 
   /**
@@ -109,12 +124,25 @@ class NewsListScreen extends React.Component<Props, State> {
                   <TouchableOpacity key={newsArticle.id} onPress={() => { this.handleListItemClick(newsArticle) }}>
                     <ListItem
                       key={newsArticle.id}
-                      title={newsArticle.title}
-                      titleStyle={{ fontSize: 22, color: "black", paddingBottom: 5, fontWeight: "bold" }}
+                      title={newsArticle.id && this.isUnread(newsArticle.id.toString()) ? newsArticle.title : newsArticle.title}
+                      titleStyle={
+                        newsArticle.id && this.isUnread(newsArticle.id.toString()) ?
+                          { fontSize: 22, color: "black", paddingBottom: 5, fontWeight: "bold" }
+                          :
+                          { fontSize: 22, color: "black", paddingBottom: 5 }
+                      }
                       subtitle={
-                        <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
-                          {newsArticle.createdAt ? newsArticle.createdAt.toString() : undefined}
-                        </Moment>
+                        newsArticle.id && this.isUnread(newsArticle.id.toString()) ?
+                          <View style={{ flex: 1, flexDirection: "row", marginLeft: 10 }}>
+                            <Text style={{ color: "red" }}>(Uusi)</Text>
+                            <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
+                              {newsArticle.createdAt ? newsArticle.createdAt.toString() : undefined}
+                            </Moment>
+                          </View>
+                          :
+                          <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
+                            {newsArticle.createdAt ? newsArticle.createdAt.toString() : undefined}
+                          </Moment>
                       }
                     />
                   </TouchableOpacity>
@@ -126,6 +154,33 @@ class NewsListScreen extends React.Component<Props, State> {
       </BasicScrollLayout>
     );
   }
+
+  /**
+   * Checks for unreads
+   */
+  private checkUnreads = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
+    
+    const unreadsService = await new PakkasmarjaApi().getUnreadsService(this.props.accessToken.access_token);
+    this.props.unreadsUpdate(await unreadsService.listUnreads());
+  }
+
+  /**
+   * Retuns whether news item is unread
+   * 
+   * @return whether news item is unread
+   */
+  private isUnread = (newsId: string) => {
+    if (!this.props.unreads) {
+      return;
+    }
+    return !!this.props.unreads.find((unread: Unread) => {
+      return (unread.path || "").startsWith(`news-${newsId}`);
+    });
+  }
+
 }
 
 /**
@@ -135,7 +190,8 @@ class NewsListScreen extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    unreads: state.unreads
   };
 }
 
@@ -146,7 +202,8 @@ function mapStateToProps(state: StoreState) {
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
+    unreadsUpdate: (unreads: Unread[]) => dispatch(actions.unreadsUpdate(unreads))
   };
 }
 
