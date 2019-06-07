@@ -73,6 +73,20 @@ class NewsListScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    this.props.navigation.addListener('willFocus', () => {
+      this.loadData();
+    });
+    this.loadData();
+
+  }
+
+  /**
+   * Load data
+   */
+  private loadData = async () => {
+    if (!this.props.accessToken) {
+      return;
+    }
     this.setState({ loading: true });
     const Api = new PakkasmarjaApi();
     const newsArticleService = await Api.getNewsArticlesService(this.props.accessToken.access_token);
@@ -82,7 +96,6 @@ class NewsListScreen extends React.Component<Props, State> {
     });
     await this.checkUnreads();
     this.setState({ newsArticles: sortedNewsArticles, loading: false });
-    
   }
 
   /**
