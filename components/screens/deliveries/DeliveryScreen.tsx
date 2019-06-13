@@ -368,6 +368,7 @@ class DeliveryScreen extends React.Component<Props, State> {
         </View>
       );
     }
+    const { status } = this.state.deliveryData.delivery;
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <NavigationEvents onWillFocus={() => this.loadData()} />
@@ -398,11 +399,22 @@ class DeliveryScreen extends React.Component<Props, State> {
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 0.7 }}>
-              <Text style={{ fontSize: 15 }}>Toimituspäivä</Text>
+              {status === "DONE" || status === "NOT_ACCEPTED" ?
+                <Text style={{ fontSize: 15 }}>{status === "DONE" ? "Hyväksytty" : "Hylätty"}</Text>
+                :
+                <Text style={{ fontSize: 15 }}>Toimituspäivä</Text>
+              }
             </View>
             <View style={{ flex: 1, flexDirection: 'row' }}>
-              <Moment element={Text} style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
-              <Text style={{ color: "black", fontSize: 15 }}>{moment(this.state.deliveryData.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 12` : ` - Ennen klo 12`}</Text>
+              {
+                status === "DONE" || status === "NOT_ACCEPTED" ?
+                  <Moment element={Text} style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY HH:mm">{this.state.deliveryData.delivery.time.toString()}</Moment>
+                  :
+                  <React.Fragment>
+                    <Moment element={Text} style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
+                    <Text style={{ color: "black", fontSize: 15 }}>{moment(this.state.deliveryData.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 12` : ` - Ennen klo 12`}</Text>
+                  </React.Fragment>
+              }
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
@@ -490,14 +502,17 @@ class DeliveryScreen extends React.Component<Props, State> {
               </React.Fragment>
               :
               <React.Fragment>
-                <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-                  <View style={{ flex: 0.7 }}>
-                    <Text style={{ fontSize: 15 }}>Maksettu hinta</Text>
+                {
+                  status === "DONE" &&
+                  <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+                    <View style={{ flex: 0.7 }}>
+                      <Text style={{ fontSize: 15 }}>Yksikköhinta</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.price} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""} ALV 0%`}</Text>
+                    </View>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.price} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""} ALV 0%`}</Text>
-                  </View>
-                </View>
+                }
                 <View style={{ flex: 1, marginTop: 30 }}>
                   {this.renderDeliveryNotes()}
                 </View>

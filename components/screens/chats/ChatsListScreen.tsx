@@ -6,7 +6,6 @@ import * as actions from "../../../actions";
 import strings from "../../../localization/strings";
 import ChatGroupList from "../../fragments/chats/ChatGroupList";
 import ChatThreadList from "../../fragments/chats/ChatThreadList";
-import { HeaderProps } from "react-navigation";
 import BasicLayout from "../../layout/BasicLayout";
 import { Tabs, Tab } from "native-base";
 import { ChatThread, ChatGroup } from "pakkasmarja-client";

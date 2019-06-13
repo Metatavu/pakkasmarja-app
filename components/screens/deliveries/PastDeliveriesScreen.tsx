@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Dimensions } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
 import { Thumbnail, Text } from "native-base";
 import { COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
@@ -89,7 +89,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     this.setState({ deliveryQualities });
 
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
-    const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE");
+    const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE" || deliveryData.delivery.status === "NOT_ACCEPTED");
     const sortedPastDeliveries = _.sortBy(pastDeliveries, [(deliveryProduct: DeliveryProduct) => { return deliveryProduct.delivery.time; }]).reverse();
     const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
 
@@ -127,7 +127,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     if (deliveryQuality) {
       const letter = deliveryQuality.name.slice(0, 1).toUpperCase();
       return (
-        <View style={{ flex: 1 , flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingLeft:8 }}>
+        <View style={{ flex: 1, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingLeft: 8 }}>
           <View style={[styles.deliveryQualityRoundView, { backgroundColor: deliveryQuality.color || "gray" }]} >
             <Text style={styles.deliveryQualityRoundViewText}>{letter}</Text>
           </View>
@@ -137,6 +137,22 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
         </View>
       );
     }
+  }
+
+  /**
+   * render not accepted delivery
+   */
+  private renderNotAccepted = () => {
+    return (
+      <View style={{ flex: 1, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingLeft: 8 }}>
+        <View style={[styles.deliveryQualityRoundView, { backgroundColor: "red" }]} >
+          <Text style={styles.deliveryQualityRoundViewText}>H</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text>Hylätty</Text>
+        </View>
+      </View>
+    );
   }
 
   /**
@@ -190,8 +206,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     if (!deliveryData || !deliveryData.product || !deliveryData.delivery.qualityId) {
       return <Text></Text>;
     }
-    const deliveryHour = moment(deliveryData.delivery.time).utc().hours();
-    const time = deliveryHour > 12 ? `Jälkeen klo 12` : `Ennen klo 12`;
+    const time = moment(deliveryData.delivery.time).format("DD.MM.YYYY HH:mm");
     const productName = deliveryData.product.name;
     const productAmount = `${deliveryData.delivery.amount} x ${deliveryData.product.units} ${deliveryData.product.unitName}`;
     const editable = false;
@@ -205,14 +220,20 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
           editable,
         )
       }>
-        <View style={styles.renderCustomListItem}>
+        <View style={[styles.renderCustomListItem, deliveryData.delivery.status === "NOT_ACCEPTED" && { backgroundColor: "whitesmoke", opacity: 0.6 }]}>
           <View style={{ flex: 2 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: 'black' }}>{time}</Text>
               <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
             </View>
           </View>
-          {this.renderQualityStatus(deliveryData.delivery.qualityId)}
+          {
+            deliveryData.delivery.status === "DONE"
+              ?
+              this.renderQualityStatus(deliveryData.delivery.qualityId)
+              :
+              this.renderNotAccepted()
+          }
         </View>
       </TouchableOpacity>
     );
