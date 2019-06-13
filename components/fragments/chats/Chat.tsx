@@ -244,7 +244,7 @@ class Chat extends React.Component<Props, State> {
     this.setState({
       loadingEarlier: true
     })
-    const chatMessages = await new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).listChatMessages(threadId, earliestMessage.toDate(), undefined, 0, 20);
+    const chatMessages = await new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).listChatMessages(threadId, earliestMessage.toDate(), undefined, undefined, 0, 20);
     const messages = await this.translateMessages(chatMessages);
     this.setState((prevState: State) => {
       return {
