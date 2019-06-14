@@ -37,8 +37,6 @@ interface State {
   products?: Product[];
 };
 
-
-
 /**
  * Manage deliveries
  */

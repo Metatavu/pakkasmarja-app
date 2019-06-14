@@ -310,6 +310,9 @@ class ManageDelivery extends React.Component<Props, State> {
     );
   }
 
+  /**
+   * Find contact
+   */
   private findContact = (query: any) => {
     if (query === '') {
       return [];
@@ -319,9 +322,6 @@ class ManageDelivery extends React.Component<Props, State> {
     const regex = new RegExp(`${query.trim()}`, 'i');
     return contacts && contacts.filter(contact => contact.displayName!.search(regex) >= 0);
   }
-
-
-
 
   /**
    * Returns whether form is valid or not
@@ -341,7 +341,6 @@ class ManageDelivery extends React.Component<Props, State> {
    * @param value value
    */
   private renderInputField = (key: boxKey, keyboardType: KeyboardType, label: string) => {
-
     return (
       <View key={key}>
         <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
