@@ -194,7 +194,7 @@ class NewDelivery extends React.Component<Props, State> {
    * @param value value
    */
   private onUserInputChange = async (key: DeliveryDataKey, value: string | number) => {
-    const state: State = this.state;
+    const state: any = this.state;
     state[key] = value;
     this.setState(state);
   }

@@ -31,6 +31,8 @@ import EditDelivery from "./components/screens/deliveries/EditDelivery";
 import ManageContact from "./components/screens/contact/ManageContact";
 import Permissions from 'react-native-permissions';
 import strings from "./localization/strings";
+import ManageDeliveries from "./components/screens/ManageDeliveries/ManageDeliveries";
+import ManageDelivery from "./components/screens/ManageDeliveries/ManageDelivery";
 
 interface State {
   authenticated: boolean
@@ -63,6 +65,8 @@ const RootStack = createStackNavigator({
   NewDelivery: NewDelivery,
   EditDelivery: EditDelivery,
   ManageContact: ManageContact,
+  ManageDeliveries: ManageDeliveries,
+  ManageDelivery: ManageDelivery,
 }, {
     defaultNavigationOptions: {
       headerStyle: {

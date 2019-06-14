@@ -131,6 +131,7 @@ export default class Auth {
   private static async buildToken(tokenData: any, created: Date, url: string, clientId: string, realmId: string) {
     const decodedToken: any = jwt_decode(tokenData.access_token);
     const token = {
+      realmRoles: decodedToken.realm_access.roles,
       created: created,
       access_token: tokenData.access_token,
       expires_in: tokenData.expires_in,

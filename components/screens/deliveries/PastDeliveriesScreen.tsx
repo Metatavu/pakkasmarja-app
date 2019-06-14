@@ -175,10 +175,10 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
                   <ActivityIndicator size="large" color="#E51D2A" />
                 </View>
                 :
-                Array.from(this.state.deliveryData.keys()).map((date: any) => {
+                Array.from(this.state.deliveryData.keys()).map((date, index : number) => {
                   const deliveries = this.state.deliveryData.get(date);
                   return (
-                    <View key={date}>
+                    <View key={date + index}>
                       <Text style={styles.dateContainerText}>
                         {date}
                       </Text>
@@ -203,12 +203,12 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * @param deliveryData DeliveryProduct
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
-    if (!deliveryData || !deliveryData.product || !deliveryData.delivery.qualityId) {
+    if (!deliveryData || !deliveryData.product ) {
       return <Text></Text>;
     }
-    const time = moment(deliveryData.delivery.time).format("DD.MM.YYYY HH:mm");
+    const time = moment(deliveryData.delivery.time).utc().format("DD.MM.YYYY HH:mm");
     const productName = deliveryData.product.name;
-    const productAmount = `${deliveryData.delivery.amount} x ${deliveryData.product.units} ${deliveryData.product.unitName}`;
+    const productAmount = `, ${deliveryData.delivery.amount} x ${deliveryData.product.units} ${deliveryData.product.unitName}`;
     const editable = false;
 
     return (
@@ -230,7 +230,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
           {
             deliveryData.delivery.status === "DONE"
               ?
-              this.renderQualityStatus(deliveryData.delivery.qualityId)
+              deliveryData.delivery.qualityId && this.renderQualityStatus(deliveryData.delivery.qualityId)
               :
               this.renderNotAccepted()
           }

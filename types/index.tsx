@@ -1,4 +1,4 @@
-import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction, Delivery, Product, ItemGroupCategory, Unread } from "pakkasmarja-client";
+import { Contract, ItemGroup, AreaDetail, WeekDeliveryPrediction, Delivery, Product, ItemGroupCategory, Unread, Contact } from "pakkasmarja-client";
 
 export interface StoreState {
   accessToken?: AccessToken,
@@ -42,6 +42,7 @@ export interface AuthConfig {
 }
 
 export interface AccessToken {
+  realmRoles: string[],
   created: Date
   access_token: string
   expires_in: number
@@ -99,6 +100,11 @@ export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAll
  * Type for delivery data key
  */
 export type DeliveryDataKey = "amount" | "deliveryPlaceId" | "deliveryTimeValue";
+
+/**
+ * Type for box key
+ */
+export type boxKey = "redBoxesLoaned" | "redBoxesReturned" | "grayBoxesLoaned" | "grayBoxesReturned";
 
 /**
  * Type for manage contact key
@@ -161,6 +167,15 @@ type Day = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturda
 export interface DeliveryProduct {
   delivery: Delivery;
   product?: Product;
+}
+
+/**
+ * Interface for delivery with contact
+ */
+export interface DeliveryListItem {
+  delivery: Delivery,
+  product?: Product,
+  contact?: Contact
 }
 
 /**

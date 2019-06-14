@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { Tabs, Tab } from "native-base";
-import { TouchableOpacity, Image, View, Text, TouchableHighlight, Dimensions, Alert } from "react-native";
+import { TouchableOpacity, Image, View, Text, TouchableHighlight, Dimensions } from "react-native";
 import { styles } from './styles.tsx'
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON, RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
@@ -92,7 +92,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.itemGroupCategoryUpdate) {
       return;
     }
-
     await this.loadDeliveriesData();
     await this.props.itemGroupCategoryUpdate("FRESH");
     this.loadAmounts();
@@ -132,7 +131,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
     const freshDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FRESH", undefined, undefined, undefined, undefined, undefined, 0, 200);
     const frozenDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FROZEN", undefined, undefined, undefined, undefined, undefined, 0, 200);
-    
+
     // TODO: Fix this properly
     const products: Product[] = await productsService.listProducts(undefined, undefined, undefined, 0, 999);
 
@@ -293,6 +292,8 @@ class DeliveriesScreen extends React.Component<Props, State> {
       icon: COMPLETED_DELIVERIES_LOGO
     }];
 
+    const canManageDeliveries = this.props.accessToken ? this.props.accessToken.realmRoles.indexOf("update-other-deliveries") > -1 : false;
+
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <NavigationEvents onDidFocus={() => this.loadAmounts()} />
@@ -301,10 +302,34 @@ class DeliveriesScreen extends React.Component<Props, State> {
             {
               this.renderDeliveryList(deliveryList, "FRESH")
             }
+            {
+              canManageDeliveries &&
+              <TouchableOpacity onPress={() => { this.onDeliveryItemClick("ManageDeliveries", "FRESH") }}>
+                <View style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 80 }}>
+                  <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
+                    <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
+                      Toimitusten vastaanotto
+                  </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            }
           </Tab>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"PAKASTE"}>
             {
               this.renderDeliveryList(deliveryList, "FROZEN")
+            }
+            {
+              canManageDeliveries &&
+              <TouchableOpacity onPress={() => { this.onDeliveryItemClick("ManageDeliveries", "FROZEN") }}>
+                <View style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 80 }}>
+                  <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
+                    <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
+                      Toimitusten vastaanotto
+                  </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
             }
           </Tab>
         </Tabs>
