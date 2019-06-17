@@ -90,16 +90,14 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       return;
     }
 
-    const time = moment(delivery.delivery.time).format("DD.MM.YYYY");
     const productText = `${delivery.product.name} ${delivery.delivery.amount} x ${delivery.product.units} ${delivery.product.unitName}`;
 
     return (
       <View key={delivery.delivery.id} style={styles.renderCustomListItem}>
         <View style={{ flex: 1.8 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: 'black' }}>
-              {time}
-            </Text>
+            <Text style={{ color: "black", fontSize: 15 }}>{moment(delivery.delivery.time).utc().hours() > 12 ? `Jälkeen klo 12` : `Ennen klo 12`}</Text>
+
             <Text style={{ color: 'black', fontWeight: 'bold' }}>
               {productText}
             </Text>
@@ -173,8 +171,8 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
    */
   private loadData = () => {
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
-    const incomingDeliveriesData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status !== "DONE" && deliveryData.delivery.status !== "REJECTED");
-    const sortedByTimeIncomingDeliveriesData = _.sortBy(incomingDeliveriesData, [(deliveryProduct) => { return deliveryProduct.delivery.time; }]).reverse();
+    const incomingDeliveriesData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status !== "DONE" && deliveryData.delivery.status !== "REJECTED" && deliveryData.delivery.status !== "NOT_ACCEPTED");
+    const sortedByTimeIncomingDeliveriesData = _.sortBy(incomingDeliveriesData, [(deliveryProduct) => { return deliveryProduct.delivery.time; }]);
     const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
 
     sortedByTimeIncomingDeliveriesData.forEach((delivery) => {
@@ -183,8 +181,9 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       existingDeliveries.push(delivery);
       deliveryData.set(deliveryDate, existingDeliveries);
     });
+    const sortedDates = new Map(Array.from(deliveryData).reverse())
 
-    this.setState({ deliveryData: deliveryData, loading: false });
+    this.setState({ deliveryData: sortedDates, loading: false });
   }
 
   /**
