@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryListItem } from "../../../types";
 import * as actions from "../../../actions";
-import { View, TouchableHighlight, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableHighlight, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import * as _ from "lodash";
 import PakkasmarjaApi from "../../../api";
@@ -193,9 +193,10 @@ class ManageDeliveries extends React.Component<Props, State> {
         product: this.state.products!.find(product => product.id === delivery.productId),
         contact: this.state.contacts!.find(contact => contact.id === delivery.userId)
       }
-    })
+    });
+    const sortedItems = _.sortBy(deliveryListItems, listItem => listItem.contact!.displayName);
     return (
-      <View style={{ flex: 1, flexDirection: "column", paddingTop: 15, paddingHorizontal: 10 }}>
+      <View style={{ flex: 1, flexDirection: "column", paddingTop: 15, paddingHorizontal: 10}}>
         {this.renderDatePicker()}
         <View style={{ flexDirection: "row", height: 50, borderColor: "gray", borderBottomWidth: 1, marginTop: 10 }}>
           <View style={listStyle.center}><Text>Viljelijä</Text></View>
@@ -203,22 +204,27 @@ class ManageDeliveries extends React.Component<Props, State> {
           <View style={{ flex: 0.5, justifyContent: "center", alignItems: "center" }}><Text>Määrä</Text></View>
         </View>
         {
-          deliveryListItems.map((deliveryListItem) => {
-            const { delivery, contact, product } = deliveryListItem;
-            return (
-              <TouchableOpacity key={delivery.id} onPress={() => this.handleListItemPress(category, false, deliveryListItem)}>
-                <View style={{ flex: 1, flexDirection: "row", height: 60, borderColor: "gray", borderBottomWidth: 1 }}>
-                  <View style={listStyle.center}><Text>{contact ? contact.displayName : ""}</Text></View>
-                  <View style={listStyle.center}><Text>{product ? product.name : ""}</Text></View>
-                  <View style={{ flex: 0.5, justifyContent: "center", alignItems: "center" }}><Text>{delivery.amount}</Text></View>
-                </View>
-              </TouchableOpacity>
-            );
-          })
+          this.state.loading ?
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color="#E51D2A" />
+            </View>
+            :
+            sortedItems.map((deliveryListItem) => {
+              const { delivery, contact, product } = deliveryListItem;
+              return (
+                <TouchableOpacity key={delivery.id} onPress={() => this.handleListItemPress(category, false, deliveryListItem)}>
+                  <View style={{ flex: 1, flexDirection: "row", height: 60, borderColor: "gray", borderBottomWidth: 1 }}>
+                    <View style={listStyle.center}><Text>{contact ? contact.displayName : ""}</Text></View>
+                    <View style={listStyle.center}><Text>{product ? product.name : ""}</Text></View>
+                    <View style={{ flex: 0.5, justifyContent: "center", alignItems: "center" }}><Text>{delivery.amount}</Text></View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
         }
         <TouchableOpacity
           style={[styles.begindeliveryButton, { width: "70%", height: 60, marginTop: 25, alignSelf: "center" }]}
-          onPress={() =>  this.handleListItemPress(category, true, undefined) }>
+          onPress={() => this.handleListItemPress(category, true, undefined)}>
           <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Uusi toimitus</Text>
         </TouchableOpacity>
       </View>
