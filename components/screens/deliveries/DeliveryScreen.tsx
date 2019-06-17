@@ -259,7 +259,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     const editable: boolean = this.props.navigation.getParam('editable');
     const deliveryPlace = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).findDeliveryPlace(delivery.deliveryPlaceId);
     const deliveryData = { delivery, product }
-
+    
     const itemGroupId = product.itemGroupId;
     this.checkIfNatural(itemGroupId);
     this.setState({ editable: editable, deliveryData: deliveryData, deliveryPlace });

@@ -117,7 +117,7 @@ class EditDelivery extends React.Component<Props, State> {
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
-    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
+    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, undefined, undefined, 999);
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
     const productPrice: ProductPrice[] = await productPricesService.listProductPrices(deliveryData.product.id, "CREATED_AT_DESC", undefined, 0);
 
