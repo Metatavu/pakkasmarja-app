@@ -180,10 +180,8 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
       }
     }
 
-    await this.setState({ itemGroupIndex });
-    await this.setState({ selectedItemGroup: this.state.itemGroups[this.state.itemGroupIndex] });
-    await this.refreshDeliveryData();
-    this.setState({ weekNumber: this.state.weekNumberArray[0] });
+    this.setState({ itemGroupIndex, selectedItemGroup: this.state.itemGroups[itemGroupIndex], weekNumber: this.state.weekNumberArray[0] }, () => this.refreshDeliveryData());
+
   }
 
   /**
@@ -212,9 +210,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
       }
     }
 
-    await this.setState({ weekNumberArrayIndex });
-    await this.setState({ weekNumber: this.state.weekNumberArray[weekNumberArrayIndex] });
-    this.refreshDeliveryData();
+    this.setState({ weekNumberArrayIndex, weekNumber: this.state.weekNumberArray[weekNumberArrayIndex] }, () => this.refreshDeliveryData());
   }
 
   /**
@@ -237,7 +233,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
 
     let deliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, undefined, itemGroupId, undefined, undefined, timeBefore, timeAfter, 0, 100);
     deliveries = _.sortBy(deliveries, 'time').reverse();
-    const products: Product[] = await productsService.listProducts();
+    const products: Product[] = await productsService.listProducts(undefined, undefined, this.props.accessToken.userId, undefined, 999);
 
     const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
 
