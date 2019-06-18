@@ -100,23 +100,25 @@ class NewDelivery extends React.Component<Props, State> {
       return;
     }
 
+    this.setState({ loading: true });
     const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory);
+    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, this.props.accessToken.userId, undefined, 999);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, 1);
+    const productPrice: ProductPrice[] = products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, 1) : [];
     const deliveries = this.getDeliveries();
-    await this.setState({
+    this.setState({
       deliveryPlaces,
       deliveries,
       products,
-      product: products[0],
+      product: products[0] ? products[0] : undefined,
       deliveryPlaceId: deliveryPlaces[0].id,
-      productPrice: productPrice[0]
+      productPrice: productPrice[0],
+      loading: false
     });
-    if (!this.state.productPrice) {
+    if (products[0] && !productPrice[0]) {
       this.renderAlert();
     }
   }
@@ -233,7 +235,6 @@ class NewDelivery extends React.Component<Props, State> {
     time = moment(time, "YYYY-MM-DD HH:mm Z").toDate();
 
     const delivery: Delivery = {
-      id: "",
       productId: this.state.product.id,
       userId: this.props.accessToken.userId,
       time: time,
@@ -368,6 +369,20 @@ class NewDelivery extends React.Component<Props, State> {
   }
 
   /**
+   * Returns whether form is valid or not
+   * 
+   * @return whether form is valid or not
+   */
+  private isValid = () => {
+    return !!(this.state.product
+      && this.state.selectedDate
+      && this.state.amount
+      && this.state.deliveryPlaceId
+      && this.state.deliveryTimeValue
+    );
+  }
+
+  /**
    * Render method
    */
   public render() {
@@ -383,55 +398,61 @@ class NewDelivery extends React.Component<Props, State> {
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={styles.deliveryContainer}>
           <Text style={styles.textWithSpace} >Valitse tuote</Text>
-          <View style={[styles.pickerWrap, { width: "100%" }]}>
-            {
-              Platform.OS !== "ios" &&
-              <Picker
-                selectedValue={this.state.productId}
-                style={{ height: 50, width: "100%" }}
-                onValueChange={(itemValue, itemIndex) =>
-                  this.handleProductChange(itemValue)
-                }>
-                {
-                  this.state.products.map((product) => {
-                    return (
-                      <Picker.Item key={product.id} label={product.name || ""} value={product.id} />
-                    );
-                  })
-                }
-              </Picker>
-            }
-            {
-              Platform.OS === "ios" &&
-              <ModalSelector
-                data={this.state.products && this.state.products.map((product) => {
-                  return {
-                    key: product,
-                    label: product.name
-                  };
-                })}
-                selectedKey={this.state.product}
-                initValue="Valitse tuote"
-                onChange={(option: any) => { this.handleProductChange(option.key) }} />
-            }
-          </View>
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
-            <View style={{ flex: 0.1 }}>
-              <EntypoIcon
-                name='info-with-circle'
-                color='#e01e36'
-                size={20}
-              />
-            </View >
-            <View style={{ flex: 1.1 }}>
-              {
-                this.state.productPrice ?
-                  <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
-                  :
-                  <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>
-              }
-            </View>
-          </View>
+          {
+            this.state.products.length < 1 ?
+              <Text>Ei voimassa olevaa sopimusta. Jos näin ei pitäisi olla, ole yhteydessä Pakkasmarjaan.</Text>
+              :
+              <React.Fragment>
+                <View style={[styles.pickerWrap, { width: "100%" }]}>
+                  {
+                    Platform.OS !== "ios" &&
+                    <Picker
+                      selectedValue={this.state.productId}
+                      style={{ height: 50, width: "100%" }}
+                      onValueChange={(itemValue, itemIndex) =>
+                        this.handleProductChange(itemValue)
+                      }>
+                      {
+                        this.state.products.map((product) => {
+                          return (
+                            <Picker.Item key={product.id} label={product.name || ""} value={product.id} />
+                          );
+                        })
+                      }
+                    </Picker>
+                  }
+                  {
+                    Platform.OS === "ios" &&
+                    <ModalSelector
+                      data={this.state.products && this.state.products.map((product) => {
+                        return {
+                          key: product,
+                          label: product.name
+                        };
+                      })}
+                      selectedKey={this.state.product}
+                      initValue="Valitse tuote"
+                      onChange={(option: any) => { this.handleProductChange(option.key) }} />
+                  }
+                </View>
+                <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
+                  <View style={{ flex: 0.1 }}>
+                    <EntypoIcon
+                      name='info-with-circle'
+                      color='#e01e36'
+                      size={20}
+                    />
+                  </View >
+                  <View style={{ flex: 1.1 }}>
+                    {
+                      this.state.productPrice ?
+                        <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
+                        :
+                        <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>
+                    }
+                  </View>
+                </View>
+              </React.Fragment>}
           <Text style={styles.textWithSpace}>Määrä ({this.state.product && this.state.product.unitName})</Text>
           <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
@@ -609,8 +630,14 @@ class NewDelivery extends React.Component<Props, State> {
                 </View>
               </TouchableOpacity>
             </View>
+            {
+              !this.isValid() &&
+              <View style={[styles.center, { flex: 1, marginTop: 5 }]}>
+                <Text style={{ color: "red" }}>Tarvittavia tietoja puuttuu</Text>
+              </View>
+            }
             <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 }]} onPress={this.handleDeliverySubmit}>
+              <TouchableOpacity disabled={!this.isValid()} style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 }]} onPress={this.handleDeliverySubmit}>
                 <Text style={styles.buttonText}>Tallenna</Text>
               </TouchableOpacity>
             </View>

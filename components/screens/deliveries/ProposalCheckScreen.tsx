@@ -97,8 +97,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    this.setState({ loading: true });
-    await this.loadData();
+    this.loadData();
   }
 
   /**
@@ -213,6 +212,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    this.setState({ loading: true });
     const deliveryId: string = this.props.navigation.getParam('deliveryId');
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const selectedDelivery: DeliveryProduct | undefined = deliveriesAndProducts.find(deliveryData => deliveryData.delivery.id === deliveryId);
@@ -220,15 +220,14 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       const Api = new PakkasmarjaApi();
       const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
       const productPrice: ProductPrice[] = await productPricesService.listProductPrices(selectedDelivery.product.id, "CREATED_AT_DSC", undefined, 1);
-      await this.setState({
+      this.setState({
         delivery: selectedDelivery.delivery,
         product: selectedDelivery.product,
         productPrice: productPrice[0],
         amount: selectedDelivery.delivery.amount
-      });
+      }, () => this.loadDeliveryNotes());
     }
     this.setState({ loading: false });
-    this.loadDeliveryNotes();
   }
 
   /**

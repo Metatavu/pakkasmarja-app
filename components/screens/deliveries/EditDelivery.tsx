@@ -117,14 +117,14 @@ class EditDelivery extends React.Component<Props, State> {
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
-    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, undefined, undefined, 999);
+    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, this.props.accessToken.userId, undefined, 999);
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(deliveryData.product.id, "CREATED_AT_DESC", undefined, 0);
+    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(deliveryData.product.id, "CREATED_AT_DESC", undefined, 1);
 
     if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
       const deliveryTimeValue = moment(deliveryData.delivery.time).utc().hours() > 12 ? 17 : 11;
-      await this.setState({
+      this.setState({
         deliveryData,
         products: products,
         deliveryPlaces: deliveryPlaces,
@@ -137,11 +137,10 @@ class EditDelivery extends React.Component<Props, State> {
         loading: false,
         productPrice: productPrice[0],
         deliveryTimeValue
-      });
-      if (!this.state.productPrice) {
+      }, () => this.loadDeliveryNotes());
+      if (products[0] && !productPrice[0]) {
         this.renderAlert();
       }
-      this.loadDeliveryNotes();
     }
   }
 
@@ -298,6 +297,20 @@ class EditDelivery extends React.Component<Props, State> {
       [
         { text: 'OK', onPress: () => { } },
       ]
+    );
+  }
+
+  /**
+   * Returns whether form is valid or not
+   * 
+   * @return whether form is valid or not
+   */
+  private isValid = () => {
+    return !!(this.state.product
+      && this.state.selectedDate
+      && this.state.amount
+      && this.state.deliveryPlaceId
+      && this.state.deliveryTimeValue
     );
   }
 
@@ -534,8 +547,14 @@ class EditDelivery extends React.Component<Props, State> {
                 </View>
               </TouchableOpacity>
             </View>
+            {
+              !this.isValid() &&
+              <View style={[styles.center, { flex: 1, marginTop: 5 }]}>
+                <Text style={{ color: "red" }}>Tarvittavia tietoja puuttuu</Text>
+              </View>
+            }
             <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 }]} onPress={this.handleDeliveryUpdate}>
+              <TouchableOpacity disabled={!this.isValid()} style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 }]} onPress={this.handleDeliveryUpdate}>
                 <Text style={styles.buttonText}>Tallenna</Text>
               </TouchableOpacity>
             </View>
