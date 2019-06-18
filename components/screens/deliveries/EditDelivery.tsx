@@ -470,7 +470,7 @@ class EditDelivery extends React.Component<Props, State> {
                       };
                     })}
                     selectedKey={this.state.deliveryTimeValue}
-                    initValue="Valitse toimituspaikka"
+                    initValue="Valitse ajankohta"
                     onChange={(option: any) => { this.setState({ deliveryTimeValue: option.key }) }} />
                 }
               </View>

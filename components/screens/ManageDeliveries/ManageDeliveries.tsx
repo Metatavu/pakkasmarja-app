@@ -4,16 +4,17 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryListItem } from "../../../types";
 import * as actions from "../../../actions";
-import { View, TouchableHighlight, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, TouchableHighlight, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import * as _ from "lodash";
 import PakkasmarjaApi from "../../../api";
-import { Tabs, Tab } from "native-base";
+import { Tabs, Tab, Picker } from "native-base";
 import { styles } from "../deliveries/styles.tsx";
-import { ItemGroupCategory, Delivery, Contact, Product } from "pakkasmarja-client";
+import { ItemGroupCategory, Delivery, Contact, Product, DeliveryPlace } from "pakkasmarja-client";
 import moment from "moment";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { Text } from "native-base";
+import ModalSelector from 'react-native-modal-selector';
 
 /**
  * Component props
@@ -35,6 +36,8 @@ interface State {
   datepickerVisible: boolean;
   contacts?: Contact[];
   products?: Product[];
+  deliveryPlaces: DeliveryPlace[];
+  selectedDeliveryPlaceId: string;
 };
 
 /**
@@ -53,7 +56,9 @@ class ManageDeliveries extends React.Component<Props, State> {
       loading: false,
       category: "FRESH",
       date: new Date(),
-      datepickerVisible: false
+      datepickerVisible: false,
+      deliveryPlaces: [],
+      selectedDeliveryPlaceId: ""
     };
   }
 
@@ -88,16 +93,16 @@ class ManageDeliveries extends React.Component<Props, State> {
     }
 
     const Api = new PakkasmarjaApi();
-    const contacts = await Api.getContactsService(this.props.accessToken.access_token).listContacts();
     const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, undefined, undefined, undefined, 999);
-    this.setState({ contacts, products }, this.loadData);
+    const deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
+    this.setState({ products, deliveryPlaces }, () => this.loadData());
   }
 
   /**
    * Component did mount life-cycle event
    */
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    if (prevState.date !== this.state.date) {
+    if (prevState.date !== this.state.date || prevState.selectedDeliveryPlaceId !== this.state.selectedDeliveryPlaceId) {
       this.loadData();
     }
   }
@@ -108,7 +113,7 @@ class ManageDeliveries extends React.Component<Props, State> {
   public render() {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <Tabs onChangeTab={this.loadData} tabBarUnderlineStyle={{ backgroundColor: "#fff" }}>
+        <Tabs tabBarUnderlineStyle={{ backgroundColor: "#fff" }}>
           <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"TUORE"}>
             {
               this.renderDeliveryList("FRESH")
@@ -136,9 +141,15 @@ class ManageDeliveries extends React.Component<Props, State> {
     const startOfDay = moment(date).startOf('day').toDate();
     const endOfDay = moment(date).endOf('day').toDate();
     const Api = new PakkasmarjaApi();
-    const freshDeliveries = await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, "DELIVERY", "FRESH", undefined, undefined, undefined, endOfDay, startOfDay, undefined, 999);
-    const frozenDeliveries = await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, "DELIVERY", "FROZEN", undefined, undefined, undefined, endOfDay, startOfDay, undefined, 999);
-    this.setState({ freshDeliveries, frozenDeliveries, loading: false });
+    const freshDeliveries = await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, "DELIVERY", "FRESH", undefined, undefined, this.state.selectedDeliveryPlaceId, endOfDay, startOfDay, undefined, 999);
+    const frozenDeliveries = await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, "DELIVERY", "FROZEN", undefined, undefined, this.state.selectedDeliveryPlaceId, endOfDay, startOfDay, undefined, 999);
+    const freshContactIds = freshDeliveries.map(delivery => delivery.userId);
+    const frozenContactIds = frozenDeliveries.map(delivery => delivery.userId);
+    const contactUniqIds = _.uniq(freshContactIds.concat(frozenContactIds));
+    const contactService = await Api.getContactsService(this.props.accessToken.access_token);
+    const contactPromises = contactUniqIds.map(id => contactService.findContact(id));
+    const contacts = await Promise.all(contactPromises);
+    this.setState({ freshDeliveries, frozenDeliveries, contacts, loading: false });
   }
 
   /**
@@ -157,7 +168,6 @@ class ManageDeliveries extends React.Component<Props, State> {
             </Text>
           </View>
         </TouchableOpacity>
-
         <DateTimePicker
           mode="date"
           isVisible={this.state.datepickerVisible}
@@ -169,12 +179,59 @@ class ManageDeliveries extends React.Component<Props, State> {
   }
 
   /**
+   * Render delivery place dropdown
+   */
+  private renderDeliveryPlace = () => {
+    return (
+      <View style={{ justifyContent: "center", alignItems: "center" }}>
+        <View style={{ alignItems: "center" }}><Text style={{ fontSize: 18, marginVertical:10}}>Valitse toimituspaikka</Text></View>
+        <View style={[styles.pickerWrap, { width: "90%" }]}>
+          {
+            Platform.OS !== "ios" &&
+            <Picker
+              selectedValue={this.state.selectedDeliveryPlaceId}
+              style={{ height: 50, width: "900%" }}
+              onValueChange={(itemValue) =>
+                this.setState({ selectedDeliveryPlaceId: itemValue })
+              }>
+              {
+                this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
+                  return (
+                    <Picker.Item
+                      key={deliveryPlace.id}
+                      label={deliveryPlace.name || ""}
+                      value={deliveryPlace.id}
+                    />
+                  );
+                })
+              }
+            </Picker>
+          }
+          {
+            Platform.OS === "ios" &&
+            <ModalSelector
+              data={this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
+                return {
+                  key: deliveryPlace.id,
+                  label: deliveryPlace.name
+                };
+              })}
+              selectedKey={this.state.selectedDeliveryPlaceId}
+              initValue="Valitse toimituspaikka"
+              onChange={(option: any) => { this.setState({ selectedDeliveryPlaceId: option.key }) }} />
+          }
+        </View>
+      </View>
+    );
+  }
+
+  /**
    * Renders list of deliveries
    * 
    * @param category category
    */
   private renderDeliveryList = (category: ItemGroupCategory) => {
-    if (!this.state.frozenDeliveries || !this.state.freshDeliveries) {
+    if (!this.state.frozenDeliveries || !this.state.freshDeliveries || !this.state.contacts || !this.state.products) {
       return;
     }
 
@@ -194,10 +251,11 @@ class ManageDeliveries extends React.Component<Props, State> {
         contact: this.state.contacts!.find(contact => contact.id === delivery.userId)
       }
     });
-    const sortedItems = _.sortBy(deliveryListItems, listItem => listItem.contact!.displayName);
+    const sortedItems = _.sortBy(deliveryListItems, listItem => listItem.contact ? listItem.contact.displayName : "");
     return (
-      <View style={{ flex: 1, flexDirection: "column", paddingTop: 15, paddingHorizontal: 10}}>
+      <View style={{ flex: 1, flexDirection: "column", paddingTop: 15, paddingHorizontal: 10 }}>
         {this.renderDatePicker()}
+        {this.renderDeliveryPlace()}
         <View style={{ flexDirection: "row", height: 50, borderColor: "gray", borderBottomWidth: 1, marginTop: 10 }}>
           <View style={listStyle.center}><Text>Viljelijä</Text></View>
           <View style={listStyle.center}><Text>Tuote</Text></View>
