@@ -59,7 +59,6 @@ interface State {
   grayBoxesLoaned: number;
   grayBoxesReturned: number;
 
-  warehouseValue?: string;
   query?: string;
   selectedContact?: Contact;
 };
@@ -199,7 +198,6 @@ class ManageDelivery extends React.Component<Props, State> {
       status: "DONE",
       amount: this.state.amount,
       deliveryPlaceId: this.state.deliveryPlaceId,
-      warehouseCode: this.state.warehouseValue,
       qualityId: this.state.deliveryQualityId,
       loans: [
         { item: "RED_BOX", loaned: this.state.redBoxesLoaned, returned: this.state.redBoxesReturned },
@@ -329,7 +327,7 @@ class ManageDelivery extends React.Component<Props, State> {
    * @return whether form is valid or not
    */
   private isValid = () => {
-    return !!(this.state.product && this.state.selectedDate && this.state.deliveryQualityId && this.state.amount && this.state.deliveryPlaceId && this.state.warehouseValue);
+    return !!(this.state.product && this.state.selectedDate && this.state.deliveryQualityId && this.state.amount && this.state.deliveryPlaceId );
   }
 
   /**
@@ -360,85 +358,6 @@ class ManageDelivery extends React.Component<Props, State> {
           onChangeText={(text: string) => this.setState({ ...this.state, [key]: Number(text) })}
         />
       </View>
-    );
-  }
-
-  /**
-   * Render warehouse dropdown
-   */
-  private renderWarehouseDropdown = () => {
-    const warehouseOptions = [
-      { key: "01", text: "PAKKASMARJA OY, PÄÄVARASTO" },
-      { key: "02", text: "PAKKASMARJA OY, HALLI 3, TUORETUOTTEET JA - TARVIKKEET" },
-      { key: "03", text: "PAKKASMARJA OY, LINTIKKO" },
-      { key: "05", text: "TORIPIHA OY, VESANTO" },
-      { key: "06", text: "MARJA CARELIA, HEINÄVAARA" },
-      { key: "07", text: "KYLMÄSÄILÖ OY, TURKU" },
-      { key: "09", text: "JÄÄSAUKKO OY, PUUMALA" },
-      { key: "10", text: "TAURÉN" },
-      { key: "100", text: "LAATIKKOVARASTO" },
-      { key: "11", text: "RIITAN HERKKU OY, MUSTASAARI / VAASA" },
-      { key: "12", text: "KIMO, MARJA BOTHNIA BERRIES OY LTD" },
-      { key: "14", text: "PYHÄJÄRVI" },
-      { key: "15", text: "JÄÄSAUKKO OY, LEMPÄÄLÄ" },
-      { key: "17", text: "TIKKI" },
-      { key: "18", text: "PUREE" },
-      { key: "19", text: "SALAATTI" },
-      { key: "20", text: "KAINUUN TUOTE OY, HYRYNSALMI" },
-      { key: "22", text: "KIANTAMA OY" },
-      { key: "23", text: "PAKKASMARJA OY, KELLONIEMI" },
-      { key: "24", text: "ATEN MARJA OY" },
-      { key: "25", text: "SIISKOSEN LEIPOMO" },
-      { key: "26", text: "KORVATUNTURIN MARJA OY, SAVUKOSKI" },
-      { key: "27", text: "KIITOLINJA VÄHÄLÄ, VAAJAKOSKI" }
-    ]
-
-    return (
-      <React.Fragment>
-        <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start", marginTop: 5 }}>
-          <Text style={styles.textWithSpace}>Varasto</Text>
-        </View>
-        <View style={[styles.pickerWrap, { width: "100%" }]}>
-          {
-            Platform.OS !== "ios" &&
-            <Picker
-              selectedValue={this.state.warehouseValue}
-              style={{ height: 50, width: "100%" }}
-              onValueChange={(itemValue) =>
-                this.setState({ warehouseValue: itemValue })
-              }>
-              <Picker.Item
-                label={"Valitse varasto"}
-                value={""}
-              />
-              {
-                warehouseOptions.map((option) => {
-                  return (
-                    <Picker.Item
-                      key={option.key}
-                      label={option.text}
-                      value={option.key}
-                    />
-                  );
-                })
-              }
-            </Picker>
-          }
-          {
-            Platform.OS === "ios" &&
-            <ModalSelector
-              data={warehouseOptions.map((option) => {
-                return {
-                  key: option.key,
-                  label: option.text
-                };
-              })}
-              selectedKey={this.state.warehouseValue}
-              initValue="Valitse varasto"
-              onChange={(option: any) => { this.setState({ warehouseValue: option.key }) }} />
-          }
-        </View>
-      </React.Fragment >
     );
   }
 
@@ -651,14 +570,12 @@ class ManageDelivery extends React.Component<Props, State> {
                 onChange={(option: any) => { this.setState({ deliveryPlaceId: option.key }) }} />
             }
           </View>
-          {this.renderWarehouseDropdown()}
           {
             this.state.category === "FROZEN" &&
             boxInputs.map(box => {
               return this.renderInputField(box.key, "numeric", box.label)
             })
           }
-
           <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start", marginTop: 5 }}>
             <Text style={styles.textWithSpace}>Laatu</Text>
           </View>
