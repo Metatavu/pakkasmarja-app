@@ -132,12 +132,10 @@ class ManageDelivery extends React.Component<Props, State> {
     const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, category, undefined, undefined, 999);
     const deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
     const deliveryQualities = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token).listDeliveryQualities(category);
-    const contacts = await Api.getContactsService(this.props.accessToken.access_token).listContacts();
     this.setState({
       deliveryQualities,
       products,
-      deliveryPlaces,
-      contacts
+      deliveryPlaces
     });
 
     if (!isNewDelivery && deliveryData && deliveryData.product && deliveryData.product.id) {
@@ -311,14 +309,16 @@ class ManageDelivery extends React.Component<Props, State> {
   /**
    * Find contact
    */
-  private findContact = (query: any) => {
-    if (query === '') {
+  private findContacts = async (query: any) => {
+    if (query === '' || !this.props.accessToken) {
       return [];
     }
 
-    const { contacts } = this.state;
-    const regex = new RegExp(`${query.trim()}`, 'i');
-    return contacts && contacts.filter(contact => contact.displayName!.search(regex) >= 0);
+    this.setState({ query });
+    const Api = new PakkasmarjaApi();
+    const contacts = await Api.getContactsService(this.props.accessToken.access_token).listContacts(query);
+    this.setState({ contacts});
+    
   }
 
   /**
@@ -327,7 +327,7 @@ class ManageDelivery extends React.Component<Props, State> {
    * @return whether form is valid or not
    */
   private isValid = () => {
-    return !!(this.state.product && this.state.selectedDate && this.state.deliveryQualityId && this.state.amount && this.state.deliveryPlaceId );
+    return !!(this.state.product && this.state.selectedDate && this.state.deliveryQualityId && this.state.amount && this.state.deliveryPlaceId);
   }
 
   /**
@@ -374,7 +374,6 @@ class ManageDelivery extends React.Component<Props, State> {
     }
 
     const { query, selectedContact } = this.state;
-    const contacts = this.findContact(query);
     const comp = (a: any, b: any) => a.toLowerCase().trim() === b.toLowerCase().trim();
 
     const boxInputs: { key: boxKey, label: string }[] = [{
@@ -398,15 +397,15 @@ class ManageDelivery extends React.Component<Props, State> {
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={styles.deliveryContainer}>
           {
-            this.state.isNewDelivery && contacts &&
+            this.state.isNewDelivery &&
             <View>
               <Autocomplete
                 autoCapitalize="none"
                 autoCorrect={false}
-                data={contacts.length === 1 && comp(query, contacts[0].displayName)
-                  ? [] : contacts}
+                data={this.state.contacts && this.state.contacts.length === 1 && comp(query, this.state.contacts[0].displayName)
+                  ? [] : this.state.contacts}
                 defaultValue={query}
-                onChangeText={(text: any) => this.setState({ query: text })}
+                onChangeText={(text: any) => this.findContacts(text)}
                 placeholder="Kirjoita kontaktin nimi"
                 hideResults={selectedContact && selectedContact.displayName === query}
                 renderItem={(contact: any) =>
