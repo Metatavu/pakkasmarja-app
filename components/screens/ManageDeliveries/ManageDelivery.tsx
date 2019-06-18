@@ -195,7 +195,7 @@ class ManageDelivery extends React.Component<Props, State> {
       id: this.state.isNewDelivery ? "" : this.state.deliveryData!.delivery.id,
       productId: this.state.product.id,
       userId: this.state.isNewDelivery && this.state.selectedContact ? this.state.selectedContact.id || "" : this.state.deliveryData && this.state.deliveryData.contact && this.state.deliveryData.contact.id || "",
-      time: date,
+      time: this.state.isNewDelivery ? date : new Date(),
       status: "DONE",
       amount: this.state.amount,
       deliveryPlaceId: this.state.deliveryPlaceId,
@@ -243,7 +243,7 @@ class ManageDelivery extends React.Component<Props, State> {
     }
 
     await deliveryService.updateDelivery(delivery, this.state.deliveryData!.delivery.id!);
-    this.props.navigation.navigate("ManageDeliveries");
+    this.props.navigation.navigate("Deliveries");
   }
 
   /**
@@ -573,37 +573,38 @@ class ManageDelivery extends React.Component<Props, State> {
             />
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 5 }}>
-            <View style={{ flex: 1 }}>
-              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <Text style={styles.textWithSpace}>Toimituspäivä</Text>
-              </View>
-              <TouchableOpacity style={styles.pickerWrap} onPress={() => this.setState({ datepickerVisible: true })}>
-                <View style={{ flex: 1, flexDirection: "row" }}>
-                  <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
-                    <Text style={{ paddingLeft: 10 }}>
-                      {
-                        this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
-                      }
-                    </Text>
-                  </View>
-                  <View style={[styles.center, { flex: 0.6 }]}>
-                    {this.state.selectedDate ?
-                      <Icon
-                        style={{ color: "#e01e36" }}
-                        onPress={this.removeDate}
-                        type={"AntDesign"}
-                        name="close" />
-                      :
-                      <Icon
-                        style={{ color: "#e01e36" }}
-                        type="AntDesign"
-                        name="calendar"
-                      />
-                    }
-                  </View>
+            {this.state.isNewDelivery &&
+              <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+                  <Text style={styles.textWithSpace}>Toimituspäivä</Text>
                 </View>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity style={styles.pickerWrap} onPress={() => this.setState({ datepickerVisible: true })}>
+                  <View style={{ flex: 1, flexDirection: "row" }}>
+                    <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
+                      <Text style={{ paddingLeft: 10 }}>
+                        {
+                          this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
+                        }
+                      </Text>
+                    </View>
+                    <View style={[styles.center, { flex: 0.6 }]}>
+                      {this.state.selectedDate ?
+                        <Icon
+                          style={{ color: "#e01e36" }}
+                          onPress={this.removeDate}
+                          type={"AntDesign"}
+                          name="close" />
+                        :
+                        <Icon
+                          style={{ color: "#e01e36" }}
+                          type="AntDesign"
+                          name="calendar"
+                        />
+                      }
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </View>}
             <DateTimePicker
               mode="date"
               isVisible={this.state.datepickerVisible}

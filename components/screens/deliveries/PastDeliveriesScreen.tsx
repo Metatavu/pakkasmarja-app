@@ -206,7 +206,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     if (!deliveryData || !deliveryData.product ) {
       return <Text></Text>;
     }
-    const time = moment(deliveryData.delivery.time).utc().format("DD.MM.YYYY HH:mm");
+    const time = moment(deliveryData.delivery.time).format("DD.MM.YYYY HH:mm");
     const productName = deliveryData.product.name;
     const productAmount = `, ${deliveryData.delivery.amount} x ${deliveryData.product.units} ${deliveryData.product.unitName}`;
     const editable = false;
