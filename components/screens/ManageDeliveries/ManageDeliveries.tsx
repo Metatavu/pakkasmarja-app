@@ -94,7 +94,16 @@ class ManageDeliveries extends React.Component<Props, State> {
 
     const Api = new PakkasmarjaApi();
     const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, undefined, undefined, undefined, 999);
-    const deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
+    let deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
+    const receiveFromPlaceCode = this.props.accessToken.receiveFromPlaceCode;
+    
+    if (receiveFromPlaceCode) {
+      deliveryPlaces = deliveryPlaces.filter(deliveryPlace => deliveryPlace.id === receiveFromPlaceCode);
+      if (deliveryPlaces.length === 1) {
+        this.setState({ selectedDeliveryPlaceId: receiveFromPlaceCode });
+      }
+    }
+
     this.setState({ products, deliveryPlaces }, () => this.loadData());
   }
 
@@ -141,7 +150,7 @@ class ManageDeliveries extends React.Component<Props, State> {
     const startOfDay = moment(date).startOf('day').toDate();
     const endOfDay = moment(date).endOf('day').toDate();
     const Api = new PakkasmarjaApi();
-    const freshDeliveries = await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, "DELIVERY", "FRESH", undefined, undefined, this.state.selectedDeliveryPlaceId, endOfDay, startOfDay, undefined, 999);
+    const freshDeliveries = await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, "DELIVERY", "FRESH", undefined, undefined, undefined, endOfDay, startOfDay, undefined, 999);
     const frozenDeliveries = await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, "DELIVERY", "FROZEN", undefined, undefined, this.state.selectedDeliveryPlaceId, endOfDay, startOfDay, undefined, 999);
     const freshContactIds = freshDeliveries.map(delivery => delivery.userId);
     const frozenContactIds = frozenDeliveries.map(delivery => delivery.userId);
@@ -184,7 +193,7 @@ class ManageDeliveries extends React.Component<Props, State> {
   private renderDeliveryPlace = () => {
     return (
       <View style={{ justifyContent: "center", alignItems: "center" }}>
-        <View style={{ alignItems: "center" }}><Text style={{ fontSize: 18, marginVertical:10}}>Valitse toimituspaikka</Text></View>
+        <View style={{ alignItems: "center" }}><Text style={{ fontSize: 18, marginVertical: 10 }}>Valitse toimituspaikka</Text></View>
         <View style={[styles.pickerWrap, { width: "90%" }]}>
           {
             Platform.OS !== "ios" &&
@@ -255,7 +264,9 @@ class ManageDeliveries extends React.Component<Props, State> {
     return (
       <View style={{ flex: 1, flexDirection: "column", paddingTop: 15, paddingHorizontal: 10 }}>
         {this.renderDatePicker()}
-        {this.renderDeliveryPlace()}
+        {
+          category === "FROZEN" &&
+          this.renderDeliveryPlace()}
         <View style={{ flexDirection: "row", height: 50, borderColor: "gray", borderBottomWidth: 1, marginTop: 10 }}>
           <View style={listStyle.center}><Text>Viljelijä</Text></View>
           <View style={listStyle.center}><Text>Tuote</Text></View>

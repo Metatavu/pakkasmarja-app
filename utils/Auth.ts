@@ -142,7 +142,8 @@ export default class Auth {
       realmId: realmId,
       firstName: decodedToken.given_name,
       lastName: decodedToken.family_name,
-      userId: decodedToken.sub
+      userId: decodedToken.sub,
+      receiveFromPlaceCode: decodedToken.receiveFromPlaceCode
     };
 
     await AsyncStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, JSON.stringify(token));

@@ -53,7 +53,8 @@ export interface AccessToken {
   realmId: string,
   firstName: string,
   lastName: string,
-  userId: string
+  userId: string,
+  receiveFromPlaceCode?: string 
 }
 
 /**
