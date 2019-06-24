@@ -453,24 +453,27 @@ class ManageDelivery extends React.Component<Props, State> {
                 onChange={(option: any) => this.handleProductChange(option.key)} />
             }
           </View>
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
-            <View style={{ flex: 0.1 }}>
-              <EntypoIcon
-                name='info-with-circle'
-                color='#e01e36'
-                size={20}
-              />
-            </View >
-            <View style={{ flex: 1.1 }}>
-              {
-                this.state.category === "FRESH" &&
-                  this.state.productPrice ?
-                  <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
-                  :
-                  <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>
-              }
-            </View>
-          </View>
+          {
+            this.state.category === "FRESH" ?
+              <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
+                <View style={{ flex: 0.1 }}>
+                  <EntypoIcon
+                    name='info-with-circle'
+                    color='#e01e36'
+                    size={20}
+                  />
+                </View >
+                <View style={{ flex: 1.1 }}>
+                  {
+                    this.state.productPrice ?
+                      <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
+                      :
+                      <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>}
+                </View>
+              </View>
+              :
+              null
+          }
           <Text style={styles.textWithSpace}>Määrä ({this.state.product && this.state.product.unitName})</Text>
           <View style={[styles.center, styles.numericInputContainer]}>
             <NumericInput
