@@ -96,7 +96,7 @@ class ManageDeliveries extends React.Component<Props, State> {
     const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, undefined, undefined, undefined, 999);
     let deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
     const receiveFromPlaceCode = this.props.accessToken.receiveFromPlaceCode;
-    
+
     if (receiveFromPlaceCode) {
       deliveryPlaces = deliveryPlaces.filter(deliveryPlace => deliveryPlace.id === receiveFromPlaceCode);
       if (deliveryPlaces.length === 1) {
@@ -120,19 +120,26 @@ class ManageDeliveries extends React.Component<Props, State> {
    * Render method
    */
   public render() {
+    const canManageFreshDeliveries = this.props.accessToken ? this.props.accessToken.realmRoles.indexOf("receive_fresh_berries") > -1 : false;
+    const canManageFrozenDeliveries = this.props.accessToken ? this.props.accessToken.realmRoles.indexOf("receive_frozen_berries") > -1 : false;
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <Tabs tabBarUnderlineStyle={{ backgroundColor: "#fff" }}>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"TUORE"}>
-            {
-              this.renderDeliveryList("FRESH")
-            }
-          </Tab>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"PAKASTE"}>
-            {
-              this.renderDeliveryList("FROZEN")
-            }
-          </Tab>
+          {
+            canManageFreshDeliveries &&
+            <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"TUORE"}>
+              {
+                this.renderDeliveryList("FRESH")
+              }
+            </Tab>
+          }
+          {
+            canManageFrozenDeliveries &&
+            <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"PAKASTE"}>
+              {
+                this.renderDeliveryList("FROZEN")
+              }
+            </Tab>}
         </Tabs>
       </BasicScrollLayout>
     );
