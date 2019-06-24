@@ -109,7 +109,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     }
     const api = new PakkasmarjaApi();
     const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
-    const itemGroups = await itemGroupService.listItemGroups();
+    const itemGroups = await itemGroupService.listItemGroups(this.props.accessToken.userId);
     const filteredItemGroups: ItemGroup[] = [];
     itemGroups.forEach((itemGroup) => {
       itemGroup.category == this.props.itemGroupCategory && filteredItemGroups.push(itemGroup);
