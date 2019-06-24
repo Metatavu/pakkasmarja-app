@@ -99,7 +99,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
     }
 
     await this.setLastWeeksTotal();
-    const itemGroups: ItemGroup[] = await this.props.navigation.getParam('itemGroups');
+    const itemGroups: ItemGroup[] = this.props.navigation.getParam('itemGroups');
     this.setState({ itemGroups: itemGroups, selectedItemGroup: itemGroups[0] });
   }
 
@@ -257,19 +257,24 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
   public render() {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
-          <View style={styles.center}>
-            <TouchableOpacity onPress={() => { this.changeItemGroup("previous") }} >
-              <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
-            </TouchableOpacity>
-          </View>
-          <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
-            <Text style={{ fontWeight: "bold", fontSize: 20, color: "black" }}>{this.state.selectedItemGroup.displayName}</Text>
-          </View>
-          <TouchableOpacity onPress={() => { this.changeItemGroup("next") }} >
-            <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
-          </TouchableOpacity>
-        </View>
+        {
+          this.state.itemGroups.length > 0 ?
+            <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
+              <View style={styles.center}>
+                <TouchableOpacity onPress={() => { this.changeItemGroup("previous") }} >
+                  <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
+                </TouchableOpacity>
+              </View>
+              <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
+                <Text style={{ fontWeight: "bold", fontSize: 20, color: "black" }}>{this.state.selectedItemGroup.displayName}</Text>
+              </View>
+              <TouchableOpacity onPress={() => { this.changeItemGroup("next") }} >
+                <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
+              </TouchableOpacity>
+            </View>
+            :
+            <View style={{ padding: 15 }}><Text style={{ color: "black" }}>Ei voimassa olevaa sopimusta. Jos näin ei pitäisi olla, ole yhteydessä Pakkasmarjaan.</Text></View>
+        }
         <View style={{ flex: 1, marginBottom: 1 }}>
           <View style={[styles.lightRedBackGroundColor, { flex: 1, flexDirection: "row", paddingVertical: 10 }]}>
             <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start", paddingLeft: 20 }}>

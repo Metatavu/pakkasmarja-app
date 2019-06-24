@@ -317,8 +317,8 @@ class ManageDelivery extends React.Component<Props, State> {
     this.setState({ query });
     const Api = new PakkasmarjaApi();
     const contacts = await Api.getContactsService(this.props.accessToken.access_token).listContacts(query);
-    this.setState({ contacts});
-    
+    this.setState({ contacts });
+
   }
 
   /**
@@ -463,7 +463,8 @@ class ManageDelivery extends React.Component<Props, State> {
             </View >
             <View style={{ flex: 1.1 }}>
               {
-                this.state.productPrice ?
+                this.state.category === "FRESH" &&
+                  this.state.productPrice ?
                   <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
                   :
                   <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>
