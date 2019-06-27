@@ -509,7 +509,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                       <Text style={{ fontSize: 15 }}>Yksikköhinta</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.price} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""} ALV 0%`}</Text>
+                      <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.amount == 0 ? 0 : this.state.deliveryData.delivery.price} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""} ALV 0%`}</Text>
                     </View>
                   </View>
                 }

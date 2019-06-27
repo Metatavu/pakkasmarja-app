@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveriesState, DeliveryListItem, KeyboardType, boxKey } from "../../../types";
+import { AccessToken, StoreState, DeliveriesState, DeliveryListItem, KeyboardType, boxKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert, StyleSheet } from "react-native";
 import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality, Contact } from "pakkasmarja-client";
@@ -19,6 +19,9 @@ import { styles } from "../deliveries/styles.tsx";
 import CreateDeliveryNoteModal from "../deliveries/CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "../deliveries/ViewOrDeleteNoteModal";
 import Autocomplete from 'native-base-autocomplete';
+import DeliveryNoteModal from "../deliveries/DeliveryNoteModal";
+import { FileService, FileResponse } from "../../../api/file.service";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 /**
  * Component props
@@ -44,7 +47,7 @@ interface State {
   modalOpen: boolean;
   loading: boolean;
   amount: number;
-  selectedDate?: Date;
+  selectedDate: Date;
   deliveryNotes?: DeliveryNote[];
   createModal: boolean;
   editModal: boolean;
@@ -53,6 +56,14 @@ interface State {
   product?: Product;
   isNewDelivery?: boolean;
   category?: ItemGroupCategory;
+
+  noteEditable: boolean;
+  deliveryNoteData: DeliveryNoteData;
+  deliveryNoteDatas: DeliveryNoteData[];
+  deliveryNoteFile?: {
+    fileUri: string,
+    fileType: string
+  };
 
   redBoxesLoaned: number;
   redBoxesReturned: number;
@@ -84,6 +95,11 @@ class ManageDelivery extends React.Component<Props, State> {
       createModal: false,
       editModal: false,
       deliveryQualities: [],
+      selectedDate: new Date(),
+
+      noteEditable: false,
+      deliveryNoteData: { text: "", imageType: "", imageUri: "" },
+      deliveryNoteDatas: [],
 
       redBoxesLoaned: 0,
       redBoxesReturned: 0,
@@ -139,7 +155,6 @@ class ManageDelivery extends React.Component<Props, State> {
     });
 
     if (!isNewDelivery && deliveryData && deliveryData.product && deliveryData.product.id) {
-      const productPrice = await Api.getProductPricesService(this.props.accessToken.access_token).listProductPrices(deliveryData.product.id, "CREATED_AT_DESC", undefined, 0);
       const deliveryPlace = deliveryPlaces.find(deliveryPlace => deliveryPlace.id === deliveryData.delivery.deliveryPlaceId);
       this.setState({
         deliveryData,
@@ -147,28 +162,29 @@ class ManageDelivery extends React.Component<Props, State> {
         product: deliveryData.product,
         deliveryPlaceId: deliveryPlace && deliveryPlace.id,
         amount: deliveryData.delivery.amount,
-        selectedDate: deliveryData.delivery.time,
-        loading: false,
-        productPrice: productPrice[0]
-      }, this.loadDeliveryNotes);
+        loading: false
+      }, () => { this.loadDeliveryNotes(); this.getProductPrice() });
 
-      if (!productPrice[0]) {
-        this.renderAlert();
-      }
     } else {
-      const productPrice = await Api.getProductPricesService(this.props.accessToken.access_token).listProductPrices(products[0].id!, "CREATED_AT_DESC", undefined, 0);
       this.setState({
         productId: products[0].id,
         product: products[0],
         deliveryPlaceId: deliveryPlaces[0].id,
         amount: 0,
-        loading: false,
-        productPrice: productPrice[0]
-      })
+        loading: false
+      }, this.getProductPrice);
+    }
+  }
 
-      if (!productPrice[0]) {
-        this.renderAlert();
+  /**
+   * Component did update life-cycle event
+   */
+  public componentDidUpdate = (prevProps: Props, prevState: State) => {
+    if (prevState.selectedDate !== this.state.selectedDate || prevState.productId !== this.state.productId) {
+      if (!this.props.accessToken) {
+        return;
       }
+      this.getProductPrice();
     }
   }
 
@@ -203,10 +219,18 @@ class ManageDelivery extends React.Component<Props, State> {
       ]
     }
 
-    this.state.isNewDelivery
-      ? await deliveryService.createDelivery(delivery)
-      : await deliveryService.updateDelivery(delivery, this.state.deliveryData!.delivery.id!);
-    this.props.navigation.navigate("Deliveries");
+    if (this.state.isNewDelivery) {
+      const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
+      if (this.state.deliveryNoteDatas.length > 0 && createdDelivery.id) {
+        await Promise.all(this.state.deliveryNoteDatas.map((deliveryNote): Promise<DeliveryNote | null> => {
+          return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
+        }));
+        this.props.navigation.navigate("Deliveries");
+      }
+    } else {
+      await deliveryService.updateDelivery(delivery, this.state.deliveryData!.delivery.id!);
+      this.props.navigation.navigate("Deliveries");
+    }
   }
 
   /**
@@ -263,16 +287,7 @@ class ManageDelivery extends React.Component<Props, State> {
     * @return formatted start time
     */
   private printTime(date: Date): string {
-    return moment(date).format("DD.MM.YYYY");
-  }
-
-  /**
-   * Removes currently selected date filter
-   */
-  private removeDate = () => {
-    this.setState({
-      selectedDate: undefined
-    });
+    return moment(date).format("DD.MM.YYYY HH:mm");
   }
 
   /**
@@ -282,15 +297,29 @@ class ManageDelivery extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    const products = this.state.products;
-    const product = products.find((product) => product.id === productId)
+    const { products } = this.state;
+    const product = products.find((product) => product.id === productId);
+    this.setState({ product, productId });
+  }
+
+  /**
+   * Get product price
+   */
+  private getProductPrice = async () => {
+    const { productId, selectedDate } = this.state;
+    if (!this.props.accessToken || !productId) {
+      return;
+    }
+
     const Api = new PakkasmarjaApi();
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, 1);
+    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", selectedDate, undefined, 1);
     if (!productPrice[0]) {
       this.renderAlert();
     }
-    this.setState({ product, productId, productPrice: productPrice[0] });
+
+    this.setState({ productPrice: productPrice[0] });
+
   }
 
   /**
@@ -327,7 +356,7 @@ class ManageDelivery extends React.Component<Props, State> {
    * @return whether form is valid or not
    */
   private isValid = () => {
-    return !!(this.state.product && this.state.selectedDate && this.state.deliveryQualityId && this.state.amount && this.state.deliveryPlaceId);
+    return !!(this.state.product && this.state.selectedDate && this.state.deliveryQualityId && this.state.deliveryPlaceId);
   }
 
   /**
@@ -466,7 +495,7 @@ class ManageDelivery extends React.Component<Props, State> {
                 <View style={{ flex: 1.1 }}>
                   {
                     this.state.productPrice ?
-                      <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
+                      <Text style={styles.textPrediction}>{`Hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
                       :
                       <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>}
                 </View>
@@ -495,40 +524,32 @@ class ManageDelivery extends React.Component<Props, State> {
             />
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 5 }}>
-            {this.state.isNewDelivery &&
-              <View style={{ flex: 1 }}>
-                <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                  <Text style={styles.textWithSpace}>Toimituspäivä</Text>
-                </View>
-                <TouchableOpacity style={styles.pickerWrap} onPress={() => this.setState({ datepickerVisible: true })}>
-                  <View style={{ flex: 1, flexDirection: "row" }}>
-                    <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
-                      <Text style={{ paddingLeft: 10 }}>
-                        {
-                          this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
-                        }
-                      </Text>
-                    </View>
-                    <View style={[styles.center, { flex: 0.6 }]}>
-                      {this.state.selectedDate ?
-                        <Icon
-                          style={{ color: "#e01e36" }}
-                          onPress={this.removeDate}
-                          type={"AntDesign"}
-                          name="close" />
-                        :
-                        <Icon
-                          style={{ color: "#e01e36" }}
-                          type="AntDesign"
-                          name="calendar"
-                        />
+            <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+                <Text style={styles.textWithSpace}>Toimituspäivä</Text>
+              </View>
+              <TouchableOpacity style={styles.pickerWrap} onPress={() => this.setState({ datepickerVisible: true })}>
+                <View style={{ flex: 1, flexDirection: "row" }}>
+                  <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
+                    <Text style={{ paddingLeft: 10 }}>
+                      {
+                        this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
                       }
-                    </View>
+                    </Text>
                   </View>
-                </TouchableOpacity>
-              </View>}
+                  <View style={[styles.center, { flex: 0.6 }]}>
+                    <Icon
+                      style={{ color: "#e01e36" }}
+                      type="AntDesign"
+                      name="calendar"
+                    />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
             <DateTimePicker
-              mode="date"
+              mode="datetime"
+              is24Hour={true}
               isVisible={this.state.datepickerVisible}
               onConfirm={(date) => this.setState({ selectedDate: date, datepickerVisible: false })}
               onCancel={() => { this.setState({ datepickerVisible: false }); }}
@@ -623,40 +644,108 @@ class ManageDelivery extends React.Component<Props, State> {
             }
           </View>
           <View style={{ flex: 1 }}>
+
             {
-              this.state.deliveryNotes ?
-                this.state.deliveryNotes.map((deliveryNote: DeliveryNote, index) => {
-                  return (
-                    <View key={index} style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
-                      <TouchableOpacity onPress={() => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true })}>
-                        <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
-                          <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
-                          <Text style={{ fontSize: 16, color: "#e01e36" }} >
-                            {`Katso/poista huomio ${index + 1}`}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                  );
-                })
-                : null
-            }
-            {
-              !this.state.isNewDelivery &&
-              <View style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
-                <TouchableOpacity onPress={() => this.setState({ createModal: true })}>
-                  <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
-                    <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
-                    <Text style={{ fontSize: 16, color: "#e01e36" }} >
-                      {`Lisää huomio`}
-                    </Text>
+              !this.state.isNewDelivery ?
+                <React.Fragment>
+                  {
+                    this.state.deliveryNotes ?
+                      this.state.deliveryNotes.map((deliveryNote: DeliveryNote, index) => {
+                        return (
+                          <View key={index} style={[styles.center, { paddingVertical: 10 }]}>
+                            <TouchableOpacity onPress={() => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true })}>
+                              <View style={[styles.center, { flexDirection: "row" }]}>
+                                <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
+                                <Text style={{ fontSize: 16, color: "#e01e36" }} >
+                                  {`Katso/poista huomio ${index + 1}`}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })
+                      : null
+                  }
+                  <View style={[styles.center, { paddingTop: 10 }]}>
+                    <TouchableOpacity onPress={() => this.setState({ createModal: true })}>
+                      <View style={[styles.center, { flexDirection: "row" }]}>
+                        <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
+                        <Text style={{ fontSize: 16, color: "#e01e36" }} >
+                          {`Lisää huomio`}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
-              </View>}
+                  <CreateDeliveryNoteModal
+                    loadDeliveryNotes={this.loadDeliveryNotes}
+                    deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
+                    modalClose={() => this.setState({ createModal: false })}
+                    modalOpen={this.state.createModal}
+                  />
+                  <ViewOrDeleteNoteModal
+                    loadDeliveryNotes={this.loadDeliveryNotes}
+                    deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
+                    deliveryNoteId={this.state.deliveryNoteId || ""}
+                    modalClose={() => this.setState({ editModal: false })}
+                    modalOpen={this.state.editModal}
+                  />
+                </React.Fragment>
+                :
+                <React.Fragment>
+                  {
+                    this.state.deliveryNoteDatas.length > 0 ?
+                      this.state.deliveryNoteDatas.map((deliveryNoteData, index) => {
+                        return (
+                          <View key={index} style={[styles.center, { paddingVertical: 15 }]}>
+                            <TouchableOpacity onPress={() => this.setState({ deliveryNoteData, noteEditable: true, modalOpen: true })}>
+                              <View style={[styles.center, { flexDirection: "row" }]}>
+                                <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
+                                <Text style={{ color: "#e01e36" }} >
+                                  {`Katso/poista huomio`}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })
+                      : null
+                  }
+                  <View style={[styles.center, { paddingTop: 10 }]}>
+                    <TouchableOpacity onPress={() =>
+                      this.setState({
+                        deliveryNoteData: {
+                          imageUri: "",
+                          imageType: "",
+                          text: ""
+                        },
+                        noteEditable: false,
+                        modalOpen: true
+                      })}>
+                      <View style={[styles.center, { flexDirection: "row" }]}>
+                        <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
+                        <Text style={{ fontSize: 16, color: "#e01e36" }} >
+                          {`Lisää huomio`}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                  <DeliveryNoteModal
+                    onRemoveNote={this.onRemoveNote}
+                    editable={this.state.noteEditable}
+                    imageUri={this.state.deliveryNoteData ? this.state.deliveryNoteData.imageUri : undefined}
+                    onCreateNoteClick={this.onCreateNoteClick}
+                    deliveryNoteData={this.state.deliveryNoteData}
+                    onDeliveryNoteChange={this.onDeliveryNoteChange}
+                    onDeliveryNoteImageChange={((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType))}
+                    modalClose={() => this.setState({ modalOpen: false })}
+                    modalOpen={this.state.modalOpen}
+                  />
+                </React.Fragment>
+            }
           </View>
           {
             !this.isValid() &&
-            <View style={[styles.center, { flex: 1, marginTop: 5 }]}>
+            <View style={styles.center}>
               <Text style={{ color: "red" }}>Puuttuu tarvittavia tietoja</Text>
             </View>
           }
@@ -674,22 +763,95 @@ class ManageDelivery extends React.Component<Props, State> {
             </View>
           }
         </View>
-        <CreateDeliveryNoteModal
-          loadDeliveryNotes={this.loadDeliveryNotes}
-          deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
-          modalClose={() => this.setState({ createModal: false })}
-          modalOpen={this.state.createModal}
-        />
-        <ViewOrDeleteNoteModal
-          loadDeliveryNotes={this.loadDeliveryNotes}
-          deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
-          deliveryNoteId={this.state.deliveryNoteId || ""}
-          modalClose={() => this.setState({ editModal: false })}
-          modalOpen={this.state.editModal}
-        />
+
       </BasicScrollLayout>
     );
   }
+
+  /**
+   * On delivery note image change
+   */
+  private onDeliveryNoteImageChange = (fileUri?: string, fileType?: string) => {
+    if (!fileUri || !fileType) {
+      this.setState({ deliveryNoteFile: undefined });
+      return;
+    }
+
+    this.setState({
+      deliveryNoteFile: {
+        fileUri: fileUri,
+        fileType: fileType
+      }
+    });
+  }
+
+  /**
+   * Adds a delivery note
+   * 
+   * @param deliveryNoteData deliveryNoteData
+   */
+  private onDeliveryNoteChange = (deliveryNoteData: DeliveryNoteData) => {
+    this.setState({ deliveryNoteData: deliveryNoteData });
+  }
+
+  /**
+   * On create note click
+   */
+  private onCreateNoteClick = () => {
+    const noteData = this.state.deliveryNoteData;
+    const notes = this.state.deliveryNoteDatas;
+    notes.push(noteData);
+
+    this.setState({
+      deliveryNoteDatas: notes,
+      deliveryNoteData: {
+        imageUri: "",
+        imageType: "",
+        text: ""
+      }
+    });
+  }
+
+  /**
+   * On remove note
+   */
+  private onRemoveNote = () => {
+    const deliveryNotes = this.state.deliveryNoteDatas;
+    const deliveryNote = this.state.deliveryNoteData;
+    const newDeliveryNotes = deliveryNotes.filter((deliverynote) => {
+      return deliverynote !== deliveryNote;
+    });
+    this.setState({ deliveryNoteDatas: newDeliveryNotes, modalOpen: false });
+  }
+
+  /**
+   * Create delivery notes
+   * 
+   * @param deliveryId deliveryId
+   * @param deliveryNote deliveryNote
+   */
+  private async createDeliveryNote(deliveryId: string, deliveryNoteData: DeliveryNoteData): Promise<DeliveryNote | null> {
+    if (this.props.accessToken) {
+      const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
+      let image: FileResponse | undefined = undefined;
+
+      if (deliveryNoteData.imageUri && deliveryNoteData.imageType) {
+        image = await fileService.uploadFile(deliveryNoteData.imageUri, deliveryNoteData.imageType);
+      }
+
+      const deliveryNote: DeliveryNote = {
+        text: deliveryNoteData.text,
+        image: image ? image.url : undefined
+      };
+
+      const Api = new PakkasmarjaApi();
+      const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+      return deliveryService.createDeliveryNote(deliveryNote, deliveryId || "");
+    }
+
+    return null;
+  }
+
 }
 
 /**

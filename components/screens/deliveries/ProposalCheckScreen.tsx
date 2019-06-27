@@ -219,7 +219,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     if (selectedDelivery && selectedDelivery.product && selectedDelivery.product.id) {
       const Api = new PakkasmarjaApi();
       const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-      const productPrice: ProductPrice[] = await productPricesService.listProductPrices(selectedDelivery.product.id, "CREATED_AT_DSC", undefined, 1);
+      const productPrice: ProductPrice[] = await productPricesService.listProductPrices(selectedDelivery.product.id, "CREATED_AT_DSC", undefined, undefined, 1);
       this.setState({
         delivery: selectedDelivery.delivery,
         product: selectedDelivery.product,
