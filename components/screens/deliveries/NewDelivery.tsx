@@ -107,7 +107,7 @@ class NewDelivery extends React.Component<Props, State> {
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, 1) : [];
+    const productPrice: ProductPrice[] = products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [];
     const deliveries = this.getDeliveries();
     this.setState({
       deliveryPlaces,
@@ -213,7 +213,7 @@ class NewDelivery extends React.Component<Props, State> {
     const product = products.find((product) => product.id === productId)
     const Api = new PakkasmarjaApi();
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, 1);
+    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1);
     if (!productPrice[0]) {
       this.renderAlert();
     }
@@ -244,14 +244,14 @@ class NewDelivery extends React.Component<Props, State> {
       deliveryPlaceId: this.state.deliveryPlaceId
     }
 
-    if (delivery.amount > 0) {
-      const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
+    const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
+    if (this.state.deliveryNotes.length > 0) {
       await Promise.all(this.state.deliveryNotes.map((deliveryNote): Promise<DeliveryNote | null> => {
         return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
       }));
-      this.updateDeliveries(createdDelivery);
-      this.props.navigation.navigate("IncomingDeliveries");
     }
+    this.updateDeliveries(createdDelivery);
+    this.props.navigation.navigate("IncomingDeliveries");
   }
 
   /**
@@ -376,7 +376,6 @@ class NewDelivery extends React.Component<Props, State> {
   private isValid = () => {
     return !!(this.state.product
       && this.state.selectedDate
-      && this.state.amount
       && this.state.deliveryPlaceId
       && this.state.deliveryTimeValue
     );

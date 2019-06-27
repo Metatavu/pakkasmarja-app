@@ -119,7 +119,7 @@ class EditDelivery extends React.Component<Props, State> {
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
     const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, this.props.accessToken.userId, undefined, 999);
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(deliveryData.product.id, "CREATED_AT_DESC", undefined, 1);
+    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(deliveryData.product.id, "CREATED_AT_DESC", undefined, undefined, 1);
 
     if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
@@ -280,7 +280,7 @@ class EditDelivery extends React.Component<Props, State> {
     const product = products.find((product) => product.id === productId)
     const Api = new PakkasmarjaApi();
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, 1);
+    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1);
     if (!productPrice[0]) {
       this.renderAlert();
     }
@@ -308,7 +308,6 @@ class EditDelivery extends React.Component<Props, State> {
   private isValid = () => {
     return !!(this.state.product
       && this.state.selectedDate
-      && this.state.amount
       && this.state.deliveryPlaceId
       && this.state.deliveryTimeValue
     );
