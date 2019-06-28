@@ -225,8 +225,8 @@ class ManageDelivery extends React.Component<Props, State> {
         await Promise.all(this.state.deliveryNoteDatas.map((deliveryNote): Promise<DeliveryNote | null> => {
           return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
         }));
-        this.props.navigation.navigate("Deliveries");
       }
+      this.props.navigation.navigate("Deliveries");
     } else {
       await deliveryService.updateDelivery(delivery, this.state.deliveryData!.delivery.id!);
       this.props.navigation.navigate("Deliveries");
