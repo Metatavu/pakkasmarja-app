@@ -208,7 +208,7 @@ class ManageDelivery extends React.Component<Props, State> {
       id: this.state.isNewDelivery ? "" : this.state.deliveryData!.delivery.id,
       productId: this.state.product.id,
       userId: this.state.isNewDelivery && this.state.selectedContact ? this.state.selectedContact.id || "" : this.state.deliveryData && this.state.deliveryData.contact && this.state.deliveryData.contact.id || "",
-      time: this.state.isNewDelivery ? date : new Date(),
+      time: date,
       status: "DONE",
       amount: this.state.amount,
       deliveryPlaceId: this.state.deliveryPlaceId,
@@ -251,11 +251,12 @@ class ManageDelivery extends React.Component<Props, State> {
 
     const Api = new PakkasmarjaApi();
     const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
+    const date = moment(this.state.selectedDate).utc().toDate();
     const delivery: Delivery = {
       id: this.state.deliveryData.delivery.id,
       productId: this.state.product.id,
       userId: this.props.accessToken.userId,
-      time: new Date(),
+      time: date,
       status: "NOT_ACCEPTED",
       amount: this.state.amount,
       deliveryPlaceId: this.state.deliveryPlaceId,
