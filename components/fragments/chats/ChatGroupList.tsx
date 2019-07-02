@@ -123,10 +123,10 @@ class ChatGroupList extends React.Component<Props, State> {
           <Left>
             <Thumbnail source={ chatGroup.imageUrl ? { uri: chatGroup.imageUrl, headers: {"Authorization": `Bearer ${accessToken.access_token}`} }: AVATAR_PLACEHOLDER } />
           </Left>
-          <Body>
-            <Text>{chatGroup.title}</Text>
+          <Body style={{ flex:1, flexDirection:"row" }}>
+            <Text style={{ flex:1 }}>{chatGroup.title}</Text>
+            {unreadCount > 0 && <View style={{ flex:0.2, justifyContent:"center", alignItems:"center" }}><Badge><Text>{ unreadCount }</Text></Badge></View>}
           </Body>
-          {unreadCount > 0 && <Right><Badge><Text>{ unreadCount }</Text></Badge></Right>}
         </ListItem>
       );
     })
