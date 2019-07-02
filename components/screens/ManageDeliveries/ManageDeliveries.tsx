@@ -289,7 +289,7 @@ class ManageDeliveries extends React.Component<Props, State> {
               const { delivery, contact, product } = deliveryListItem;
               return (
                 <TouchableOpacity key={delivery.id} onPress={() => this.handleListItemPress(category, false, deliveryListItem)}>
-                  <View style={{ flex: 1, flexDirection: "row", height: 60, borderColor: "gray", borderBottomWidth: 1 }}>
+                  <View style={{ flex: 1, flexDirection: "row", height: 80, borderColor: "gray", borderBottomWidth: 1 }}>
                     <View style={listStyle.center}><Text>{contact ? contact.displayName : ""}</Text></View>
                     <View style={listStyle.center}><Text>{product ? product.name : ""}</Text></View>
                     <View style={{ flex: 0.5, justifyContent: "center", alignItems: "center" }}><Text>{delivery.amount}</Text></View>
