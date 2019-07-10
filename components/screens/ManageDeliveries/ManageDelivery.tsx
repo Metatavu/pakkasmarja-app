@@ -212,8 +212,8 @@ class ManageDelivery extends React.Component<Props, State> {
       if (this.state.selectedContact) {
         const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, category, this.state.selectedContact.id, undefined, 999);
         this.setState({
-          productId: products[0].id,
-          product: products[0],
+          productId: products.length > 0 ? products[0].id : "",
+          product: products.length > 0 ? products[0] : undefined,
           products: products
         }, () => this.getProductPrice());
       }
