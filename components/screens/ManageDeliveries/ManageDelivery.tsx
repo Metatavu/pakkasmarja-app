@@ -145,34 +145,30 @@ class ManageDelivery extends React.Component<Props, State> {
 
     this.setState({ loading: true, isNewDelivery, category });
     const Api = new PakkasmarjaApi();
-    const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, category, undefined, undefined, 999);
     const deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
     const deliveryQualities = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token).listDeliveryQualities(category);
     this.setState({
       deliveryQualities,
-      products,
       deliveryPlaces
     });
 
-    if (!isNewDelivery && deliveryData && deliveryData.product && deliveryData.product.id) {
+    if (!isNewDelivery && deliveryData) {
       const deliveryPlace = deliveryPlaces.find(deliveryPlace => deliveryPlace.id === deliveryData.delivery.deliveryPlaceId);
+      await this.listProducts();
       this.setState({
         deliveryData,
-        productId: deliveryData.product.id,
-        product: deliveryData.product,
         deliveryPlaceId: deliveryPlace && deliveryPlace.id,
         amount: deliveryData.delivery.amount,
         loading: false
-      }, () => { this.loadDeliveryNotes(); this.getProductPrice() });
+      }, () => this.loadDeliveryNotes());
 
     } else {
+      await this.listProducts();
       this.setState({
-        productId: products[0].id,
-        product: products[0],
         deliveryPlaceId: deliveryPlaces[0].id,
         amount: 0,
         loading: false
-      }, this.getProductPrice);
+      });
     }
   }
 
@@ -185,6 +181,42 @@ class ManageDelivery extends React.Component<Props, State> {
         return;
       }
       this.getProductPrice();
+    }
+    if (prevState.selectedContact !== this.state.selectedContact) {
+      this.listProducts();
+    }
+  }
+
+  /**
+   * List products
+   */
+  private listProducts = async () => {
+    const deliveryData: DeliveryListItem = this.props.navigation.state.params.deliveryListItem;
+    const isNewDelivery = this.props.navigation.state.params.isNewDelivery;
+    const category: ItemGroupCategory = this.props.navigation.state.params.category;
+    if (!this.props.accessToken) {
+      return;
+    }
+
+    this.setState({ products: [], productPrice: undefined });
+
+    const Api = new PakkasmarjaApi();
+    if (!isNewDelivery && deliveryData && deliveryData.product && deliveryData.contact) {
+      const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, category, deliveryData.contact.id, undefined, 999);
+      this.setState({
+        productId: deliveryData.product.id,
+        product: deliveryData.product,
+        products: products
+      }, () => this.getProductPrice());
+    } else {
+      if (this.state.selectedContact) {
+        const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, category, this.state.selectedContact.id, undefined, 999);
+        this.setState({
+          productId: products[0].id,
+          product: products[0],
+          products: products
+        }, () => this.getProductPrice());
+      }
     }
   }
 
@@ -451,38 +483,43 @@ class ManageDelivery extends React.Component<Props, State> {
             </View>
           }
           <Text style={styles.textWithSpace} >Tuote</Text>
-          <View style={[styles.pickerWrap, { width: "100%" }]}>
-            {
-              Platform.OS !== "ios" &&
-              <Picker
-                selectedValue={this.state.productId}
-                style={{ height: 50, width: "100%" }}
-                onValueChange={(itemValue, itemIndex) =>
-                  this.handleProductChange(itemValue)
-                }>
+          {
+            this.state.products.length < 1 ?
+              <Text>Kontaktilla ei ole voimassa olevaa sopimusta</Text>
+              :
+              <View style={[styles.pickerWrap, { width: "100%" }]}>
                 {
-                  this.state.products.map((product) => {
-                    return (
-                      <Picker.Item key={product.id} label={product.name || ""} value={product.id} />
-                    );
-                  })
+                  Platform.OS !== "ios" &&
+                  <Picker
+                    selectedValue={this.state.productId}
+                    style={{ height: 50, width: "100%" }}
+                    onValueChange={(itemValue, itemIndex) =>
+                      this.handleProductChange(itemValue)
+                    }>
+                    {
+                      this.state.products.map((product) => {
+                        return (
+                          <Picker.Item key={product.id} label={product.name || ""} value={product.id} />
+                        );
+                      })
+                    }
+                  </Picker>
                 }
-              </Picker>
-            }
-            {
-              Platform.OS === "ios" &&
-              <ModalSelector
-                data={this.state.products && this.state.products.map((product) => {
-                  return {
-                    key: product.id,
-                    label: product.name
-                  };
-                })}
-                selectedKey={this.state.productId}
-                initValue="Valitse tuote"
-                onChange={(option: any) => this.handleProductChange(option.key)} />
-            }
-          </View>
+                {
+                  Platform.OS === "ios" &&
+                  <ModalSelector
+                    data={this.state.products && this.state.products.map((product) => {
+                      return {
+                        key: product.id,
+                        label: product.name
+                      };
+                    })}
+                    selectedKey={this.state.productId}
+                    initValue="Valitse tuote"
+                    onChange={(option: any) => this.handleProductChange(option.key)} />
+                }
+              </View>
+          }
           {
             this.state.category === "FRESH" ?
               <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
