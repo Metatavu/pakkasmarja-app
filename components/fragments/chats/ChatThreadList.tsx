@@ -9,6 +9,7 @@ import { List, ListItem, Left, Thumbnail, Body, Text, Container, View, Spinner, 
 import { AVATAR_PLACEHOLDER } from "../../../static/images";
 import { ScrollView } from "react-native";
 import * as _ from "lodash";
+import moment from "moment";
 
 
 /**
@@ -61,7 +62,13 @@ class ChatThreadList extends React.Component<Props, State> {
     this.setState({loading: true});
     try {
       const chatThreads = await new PakkasmarjaApi().getChatThreadsService(this.props.accessToken.access_token).listChatThreads(this.props.groupId, this.props.type);
-      const sortChatThreadsByUnreads = _.sortBy( chatThreads, (thread) => this.hasUnreadMessages( thread.groupId , thread.id! )).reverse();
+      const validChatThreads = chatThreads.filter( (thread) => {
+        if ( thread.expiresAt ){
+         return moment(moment().format("YYYY-MM-DDTHH:mm:ss.SSSSZ")).isBefore( moment(thread.expiresAt) );
+        }
+        return true;
+      });
+      const sortChatThreadsByUnreads = _.sortBy( validChatThreads, (thread) => this.hasUnreadMessages( thread.groupId , thread.id! )).reverse();
       this.setState({
         chatThreads: sortChatThreadsByUnreads,
         loading: false
@@ -124,10 +131,10 @@ class ChatThreadList extends React.Component<Props, State> {
           <Left>
             <Thumbnail source={ chatThread.imageUrl ? { uri: chatThread.imageUrl, headers: {"Authorization": `Bearer ${accessToken.access_token}`} }: AVATAR_PLACEHOLDER } />
           </Left>
-          <Body>
-            <Text>{chatThread.title ? chatThread.title : strings.noTitleAvailable}</Text>
+          <Body style={{ flex:1, flexDirection:"row" }}>
+            <Text style={{ flex:1 }}>{chatThread.title ? chatThread.title : strings.noTitleAvailable}</Text>
+            {unreadCount > 0 && <View style={{ flex:0.2, justifyContent:"center", alignItems:"center" }}><Badge><Text>{ unreadCount }</Text></Badge></View>}
           </Body>
-          {unreadCount > 0 && <Right><Badge><Text>{ unreadCount }</Text></Badge></Right>}
         </ListItem>
       );
     })

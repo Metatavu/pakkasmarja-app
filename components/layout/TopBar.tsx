@@ -51,7 +51,7 @@ class TopBar extends React.Component<Props, State> {
         <View style={styles.center}>
         </View>
         <View style={styles.center}>
-          <Thumbnail source={TOP_LOGO} />
+          <Thumbnail style={{ width:80, height:80 }} source={TOP_LOGO} />
         </View>
         <View style={styles.center}>
           <TouchableHighlight onPress={() => this.navigateTo("ManageContact")}>
@@ -80,7 +80,7 @@ class TopBar extends React.Component<Props, State> {
     return (
       <View style={{ width: (width / 3) * 2, marginLeft: width / 3, flex: 0, flexDirection: "row", alignContent: "space-around" }}>
         <View style={{ ...styles.center, alignContent: align, justifyContent: align, alignItems: align }}>
-          <Thumbnail source={TOP_LOGO} />
+          <Thumbnail style={{ width:80, height:80 }} source={TOP_LOGO} />
         </View>
         <View style={{ ...styles.center, alignContent: align, alignItems: align }}>
           <TouchableHighlight onPress={() => this.navigateTo("ManageContact")}>

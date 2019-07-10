@@ -502,7 +502,7 @@ class Chat extends React.Component<Props, State> {
       return Promise.reject();
     }
 
-    contact = await new PakkasmarjaApi().getContactsService(accessToken.access_token).findContact(chatMessage.userId!);
+    contact = await new PakkasmarjaApi().getContactsService(accessToken.access_token).findBasicContact(chatMessage.userId!);
     this.userLookup.set(chatMessage.userId!, contact);
     return contact;
   }
