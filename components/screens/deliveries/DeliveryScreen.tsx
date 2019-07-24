@@ -48,6 +48,7 @@ interface State {
   lightBoxOpen: boolean;
   deliveryPlace?: DeliveryPlace;
   description: string;
+  alvAmount: number;
 };
 
 /**
@@ -69,7 +70,8 @@ class DeliveryScreen extends React.Component<Props, State> {
       editModal: false,
       notesLoading: false,
       lightBoxOpen: false,
-      description: ""
+      description: "",
+      alvAmount: 1.14
     };
   }
 
@@ -506,10 +508,10 @@ class DeliveryScreen extends React.Component<Props, State> {
                   status === "DONE" &&
                   <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
                     <View style={{ flex: 0.7 }}>
-                      <Text style={{ fontSize: 15 }}>Yksikköhinta</Text>
+                      <Text style={{ fontSize: 15 }}>Kilohinta</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.amount == 0 ? 0 : this.state.deliveryData.delivery.price} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""} ALV 0%`}</Text>
+                      <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.amount == 0 ? 0 : Number(this.state.deliveryData.delivery.price) * this.state.alvAmount} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""} ALV 14%`}</Text>
                     </View>
                   </View>
                 }
