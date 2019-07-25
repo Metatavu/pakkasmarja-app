@@ -261,7 +261,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     const editable: boolean = this.props.navigation.getParam('editable');
     const deliveryPlace = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).findDeliveryPlace(delivery.deliveryPlaceId);
     const deliveryData = { delivery, product }
-    
+
     const itemGroupId = product.itemGroupId;
     this.checkIfNatural(itemGroupId);
     this.setState({ editable: editable, deliveryData: deliveryData, deliveryPlace });
@@ -376,7 +376,7 @@ class DeliveryScreen extends React.Component<Props, State> {
         <NavigationEvents onWillFocus={() => this.loadData()} />
         <View style={{ flex: 1, padding: 25 }}>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 0.7 }}>
+            <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 15 }}>Tuote</Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -384,7 +384,7 @@ class DeliveryScreen extends React.Component<Props, State> {
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 0.7 }}>
+            <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 15 }}>Määrä ({this.state.deliveryData.product.unitName})</Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -392,7 +392,7 @@ class DeliveryScreen extends React.Component<Props, State> {
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 0.7 }}>
+            <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 15 }}>Kiloa</Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -400,7 +400,7 @@ class DeliveryScreen extends React.Component<Props, State> {
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 0.7 }}>
+            <View style={{ flex: 0.8 }}>
               {status === "DONE" || status === "NOT_ACCEPTED" ?
                 <Text style={{ fontSize: 15 }}>{status === "DONE" ? "Hyväksytty" : "Hylätty"}</Text>
                 :
@@ -420,7 +420,7 @@ class DeliveryScreen extends React.Component<Props, State> {
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-            <View style={{ flex: 0.7 }}>
+            <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 15 }}>Toimituspaikka</Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -429,7 +429,7 @@ class DeliveryScreen extends React.Component<Props, State> {
           </View>
           {this.state.deliveryQuality &&
             <View style={{ flex: 1, flexDirection: 'row', alignItems: "center", paddingVertical: 5, height: 60 }}>
-              <View style={{ flex: 0.7 }}>
+              <View style={{ flex: 0.8 }}>
                 <Text style={{ fontSize: 15 }}>Laatuluokka</Text>
               </View>
               <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
@@ -506,14 +506,24 @@ class DeliveryScreen extends React.Component<Props, State> {
               <React.Fragment>
                 {
                   status === "DONE" &&
-                  <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-                    <View style={{ flex: 0.7 }}>
-                      <Text style={{ fontSize: 15 }}>Kilohinta</Text>
+                  <React.Fragment>
+                    <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+                      <View style={{ flex: 0.8 }}>
+                        <Text style={{ fontSize: 15 }}>Yksikköhinta ALV 0%</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.amount == 0 ? 0 : this.state.deliveryData.delivery.price} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""}`}</Text>
+                      </View>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.amount == 0 ? 0 : Number(this.state.deliveryData.delivery.price) * this.state.alvAmount} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""} ALV 14%`}</Text>
+                    <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+                      <View style={{ flex: 0.8 }}>
+                        <Text style={{ fontSize: 15 }}>Yksikköhinta ALV 14%</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.amount == 0 ? 0 : (Number(this.state.deliveryData.delivery.price) * this.state.alvAmount).toFixed(3)} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""}`}</Text>
+                      </View>
                     </View>
-                  </View>
+                  </React.Fragment>
                 }
                 <View style={{ flex: 1, marginTop: 30 }}>
                   {this.renderDeliveryNotes()}
