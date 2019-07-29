@@ -425,11 +425,11 @@ class NewDelivery extends React.Component<Props, State> {
                     <ModalSelector
                       data={this.state.products && this.state.products.map((product) => {
                         return {
-                          key: product,
+                          key: product.id,
                           label: product.name
                         };
                       })}
-                      selectedKey={this.state.product}
+                      selectedKey={this.state.product ? this.state.product.id : undefined}
                       initValue="Valitse tuote"
                       onChange={(option: any) => { this.handleProductChange(option.key) }} />
                   }
