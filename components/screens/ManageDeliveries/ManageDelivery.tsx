@@ -146,9 +146,7 @@ class ManageDelivery extends React.Component<Props, State> {
     this.setState({ loading: true, isNewDelivery, category });
     const Api = new PakkasmarjaApi();
     const deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
-    const deliveryQualities = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token).listDeliveryQualities(category);
     this.setState({
-      deliveryQualities,
       deliveryPlaces
     });
 
@@ -202,19 +200,25 @@ class ManageDelivery extends React.Component<Props, State> {
 
     const Api = new PakkasmarjaApi();
     if (!isNewDelivery && deliveryData && deliveryData.product && deliveryData.contact) {
+      const deliveryProductId = deliveryData.product.id;
       const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, category, deliveryData.contact.id, undefined, 999);
+      const deliveryQualities = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token).listDeliveryQualities(category, deliveryProductId);
       this.setState({
-        productId: deliveryData.product.id,
+        productId: deliveryProductId,
         product: deliveryData.product,
-        products: products
+        products: products,
+        deliveryQualities: deliveryQualities
       }, () => this.getProductPrice());
     } else {
       if (this.state.selectedContact) {
         const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, category, this.state.selectedContact.id, undefined, 999);
+        const productId = products.length > 0 ? products[0].id : "";
+        const deliveryQualities = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token).listDeliveryQualities(category, productId);
         this.setState({
-          productId: products.length > 0 ? products[0].id : "",
+          productId: productId,
           product: products.length > 0 ? products[0] : undefined,
-          products: products
+          products: products,
+          deliveryQualities
         }, () => this.getProductPrice());
       }
     }
@@ -307,7 +311,7 @@ class ManageDelivery extends React.Component<Props, State> {
       return;
     }
     const Api = new PakkasmarjaApi();
-    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
     const deliveryNotes: DeliveryNote[] = await deliveriesService.listDeliveryNotes(this.state.deliveryData.delivery.id);
     this.setState({ deliveryNotes });
   }
@@ -330,9 +334,18 @@ class ManageDelivery extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+    const category: ItemGroupCategory = this.props.navigation.state.params.category;
     const { products } = this.state;
+    const Api = new PakkasmarjaApi();
+    const deliveryQualitiesService = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token);
+    const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, productId);
     const product = products.find((product) => product.id === productId);
-    this.setState({ product, productId });
+    this.setState({
+      deliveryQualities,
+      product,
+      productId,
+      deliveryQualityId: undefined
+    });
   }
 
   /**

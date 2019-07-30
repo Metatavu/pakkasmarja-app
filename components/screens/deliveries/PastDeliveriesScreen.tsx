@@ -125,14 +125,14 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
   private renderQualityStatus = (deliveryQualityId: string) => {
     const deliveryQuality = this.state.deliveryQualities.find((deliveryQuality) => deliveryQuality.id == deliveryQualityId);
     if (deliveryQuality) {
-      const letter = deliveryQuality.name.slice(0, 1).toUpperCase();
+      const letter = deliveryQuality.displayName.slice(0, 1).toUpperCase();
       return (
         <View style={{ flex: 1, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingLeft: 8 }}>
           <View style={[styles.deliveryQualityRoundView, { backgroundColor: deliveryQuality.color || "gray" }]} >
             <Text style={styles.deliveryQualityRoundViewText}>{letter}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text>{deliveryQuality && deliveryQuality.name}</Text>
+            <Text>{deliveryQuality && deliveryQuality.displayName}</Text>
           </View>
         </View>
       );

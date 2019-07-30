@@ -434,10 +434,10 @@ class DeliveryScreen extends React.Component<Props, State> {
               </View>
               <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
                 <View style={[styles.deliveryQualityRoundView, { backgroundColor: this.state.deliveryQuality.color || "grey" }]} >
-                  <Text style={[styles.deliveryQualityRoundViewText, { fontSize: 15 }]}>{this.state.deliveryQuality.name.slice(0, 1).toUpperCase()}</Text>
+                  <Text style={[styles.deliveryQualityRoundViewText, { fontSize: 15 }]}>{this.state.deliveryQuality.displayName.slice(0, 1).toUpperCase()}</Text>
                 </View>
                 <View >
-                  <Text style={{ color: "black", fontSize: 14, fontWeight: "400", marginBottom: 4 }}>{this.state.deliveryQuality.name}</Text>
+                  <Text style={{ color: "black", fontSize: 14, fontWeight: "400", marginBottom: 4 }}>{this.state.deliveryQuality.displayName}</Text>
                 </View>
               </View>
             </View>
