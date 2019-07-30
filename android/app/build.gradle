@@ -104,8 +104,8 @@ android {
         applicationId "fi.metatavu.pakkasmarjaBerriesApp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 30017
-        versionName "3.0.17"
+        versionCode 30018
+        versionName "3.0.18"
         ndk {
             abiFilters "armeabi-v7a", "x86"
         }
