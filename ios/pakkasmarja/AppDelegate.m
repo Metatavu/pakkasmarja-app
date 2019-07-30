@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-
+#import <Firebase.h>
 #import "AppDelegate.h"
 
 #import <React/RCTBundleURLProvider.h>
@@ -21,7 +21,7 @@
   #else
     jsCodeLocation = [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
   #endif
-
+  [FIRApp configure];
   RCTRootView *rootView = [[RCTRootView alloc] initWithBundleURL:jsCodeLocation
                                                       moduleName:@"pakkasmarja"
                                                initialProperties:nil
