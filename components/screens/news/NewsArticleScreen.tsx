@@ -1,6 +1,6 @@
 import React, { Dispatch } from "react";
 import TopBar from "../../layout/TopBar";
-import AutoResizeHeightWebView from "react-native-autoreheight-webview"
+import MyWebView from 'react-native-webview-autoheight';
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import { View, Spinner } from 'native-base';
@@ -149,10 +149,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={{paddingTop:30}}>
-          <AutoResizeHeightWebView
-            defaultHeight={400}
-            AnimationDuration={0}
-            scalesPageToFit={true}
+          <MyWebView
             source={{
               html: `
             <html>
