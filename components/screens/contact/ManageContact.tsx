@@ -50,6 +50,8 @@ interface State {
   farmPostNumber: string;
   farmPostAddress: string;
   farmCity: string;
+  usersContactCopy: Contact;
+  disableSave: boolean;
 }
 
 /**
@@ -83,7 +85,9 @@ class ManageContact extends React.Component<Props, State> {
       city: '',
       farmPostNumber: '',
       farmPostAddress: '',
-      farmCity: ''
+      farmCity: '',
+      usersContactCopy: {},
+      disableSave: true
     };
   }
 
@@ -135,7 +139,8 @@ class ManageContact extends React.Component<Props, State> {
       IBAN: usersContact.IBAN || '',
       taxCode: usersContact.taxCode || '',
       alv: usersContact.taxCode || '',
-      vatLiable: usersContact.vatLiable || undefined
+      vatLiable: usersContact.vatLiable || undefined,
+      usersContactCopy: usersContact || {}
     });
     if (usersContact.phoneNumbers) {
       if (usersContact.phoneNumbers[0]) {
@@ -171,6 +176,8 @@ class ManageContact extends React.Component<Props, State> {
    * Component render method
    */
   public render() {
+
+    
 
     const basicInfoInputs: ManageContactInput[] = [
       {
@@ -356,7 +363,7 @@ class ManageContact extends React.Component<Props, State> {
             </View>
           </View>
           <View style={[styles.center, { flex: 1 }]}>
-            <TouchableOpacity style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 }]} onPress={this.handleSave}>
+            <TouchableOpacity style={[(this.state.disableSave) ? styles.disabledButton : styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 }]} onPress={this.handleSave} disabled={ this.state.disableSave }>
               <Text style={styles.buttonText}>Tallenna</Text>
             </TouchableOpacity>
           </View>
@@ -388,6 +395,7 @@ class ManageContact extends React.Component<Props, State> {
     const state: State = this.state;
     state[key] = value;
     this.setState(state);
+    this.detectChanges();
   }
 
   /**
@@ -472,6 +480,77 @@ class ManageContact extends React.Component<Props, State> {
         ]
       );
     });
+  }
+
+  /**
+   * Detects changes in users profile information
+   */
+  private detectChanges = () => {
+    let firstName = this.state.usersContactCopy.firstName || '';
+    let lastName = this.state.usersContactCopy.lastName || '';
+    let companyName = this.state.usersContactCopy.companyName || '';
+    let email = this.state.usersContactCopy.email || '';
+    let audit = this.state.usersContactCopy.audit || '';
+    let sapId = this.state.usersContactCopy.sapId || '';
+    let BIC = this.state.usersContactCopy.BIC || '';
+    let IBAN = this.state.usersContactCopy.IBAN || '';
+    let taxCode = this.state.usersContactCopy.taxCode || '';
+    let vatLiable = this.state.usersContactCopy.vatLiable || undefined;
+    let phoneNumber1 = "";
+    let phoneNumber2 = "";
+    let postNumber = "";
+    let postAddress = "";
+    let city = "";
+    let farmPostNumber = "";
+    let farmPostAddress = "";
+    let farmCity = "";
+    
+
+    if (this.state.usersContactCopy.phoneNumbers) {
+      if (this.state.usersContactCopy.phoneNumbers[0]) {
+        phoneNumber1 = this.state.usersContactCopy.phoneNumbers[0];
+      }
+      if (this.state.usersContactCopy.phoneNumbers[1]) {
+        phoneNumber2 = this.state.usersContactCopy.phoneNumbers[1];
+      }
+    }
+    if (this.state.usersContactCopy.addresses) {
+      if (this.state.usersContactCopy.addresses[0]) {
+        postNumber = this.state.usersContactCopy.addresses[0].postalCode || '';
+        postAddress = this.state.usersContactCopy.addresses[0].streetAddress || '';
+        city = this.state.usersContactCopy.addresses[0].city || '';
+      }
+      if (this.state.usersContactCopy.addresses[1]) {
+        farmPostNumber = this.state.usersContactCopy.addresses[1].postalCode || '',
+        farmPostAddress = this.state.usersContactCopy.addresses[1].streetAddress || '',
+        farmCity = this.state.usersContactCopy.addresses[1].city || ''
+      }
+    }
+    if (
+      this.state.firstName === firstName &&
+      this.state.lastName === lastName &&
+      this.state.companyName === companyName &&
+      this.state.phoneNumber1 === phoneNumber1 &&
+      this.state.phoneNumber2 === phoneNumber2 &&
+      this.state.email === email &&
+      this.state.audit === audit &&
+      this.state.sapId === sapId &&
+      this.state.BIC === BIC &&
+      this.state.IBAN === IBAN &&
+      this.state.taxCode === taxCode &&
+      this.state.alv === taxCode &&
+      this.state.postNumber === postNumber &&
+      this.state.postAddress === postAddress &&
+      this.state.city === city &&
+      this.state.farmPostNumber === farmPostNumber &&
+      this.state.farmPostAddress === farmPostAddress &&
+      this.state.farmCity === farmCity &&
+      this.state.vatLiable === vatLiable
+    ) {
+      this.setState({disableSave:true});
+    } else {
+      this.setState({disableSave:false});
+    }
   }
 }
 

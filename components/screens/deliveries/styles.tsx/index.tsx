@@ -30,6 +30,12 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 7
   },
+  disabledButton: {
+    backgroundColor: "#c6c6c6",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 7
+  },
   begindeliveryButton: {
     backgroundColor: "#42AD18",
     justifyContent: "center",
