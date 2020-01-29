@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryListItem } from "../../../types";
 import * as actions from "../../../actions";
-import { View, TouchableHighlight, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Button, NativeSyntheticEvent, NativeTouchEvent } from "react-native";
+import { View, TouchableHighlight, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import * as _ from "lodash";
 import PakkasmarjaApi from "../../../api";
