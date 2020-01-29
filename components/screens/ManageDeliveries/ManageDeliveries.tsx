@@ -300,6 +300,14 @@ class ManageDeliveries extends React.Component<Props, State> {
     );
   }
 
+  /**
+   * Render delivery list items
+   * 
+   * @param deliveryListItems deliveryListItems list
+   * @param category Item group category
+   * 
+   * @return DeliveryListItems mapped to React components
+   */
   private renderdeliveryListItems = (deliveryListItems: DeliveryListItem[], category: ItemGroupCategory) => {
     const listStyle = StyleSheet.create({
       center: {
