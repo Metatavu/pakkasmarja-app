@@ -10,11 +10,12 @@ import * as _ from "lodash";
 import PakkasmarjaApi from "../../../api";
 import { Tabs, Tab, Picker } from "native-base";
 import { styles } from "../deliveries/styles.tsx";
-import { ItemGroupCategory, Delivery, Contact, Product, DeliveryPlace } from "pakkasmarja-client";
+import { ItemGroupCategory, Delivery, Contact, Product, DeliveryPlace, DeliveryStatus } from "pakkasmarja-client";
 import moment from "moment";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import { Text } from "native-base";
 import ModalSelector from 'react-native-modal-selector';
+import strings from "../../../localization/strings";
 
 /**
  * Component props
@@ -157,8 +158,10 @@ class ManageDeliveries extends React.Component<Props, State> {
     const startOfDay = moment(date).startOf('day').toDate();
     const endOfDay = moment(date).endOf('day').toDate();
     const Api = new PakkasmarjaApi();
-    const freshDeliveries = await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, "DELIVERY", "FRESH", undefined, undefined, undefined, endOfDay, startOfDay, undefined, 999);
-    const frozenDeliveries = await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, "DELIVERY", "FROZEN", undefined, undefined, this.state.selectedDeliveryPlaceId, endOfDay, startOfDay, undefined, 999);
+    const [freshDeliveries, frozenDeliveries] = await Promise.all([
+      await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, undefined, "FRESH", undefined, undefined, undefined, endOfDay, startOfDay, undefined, 999),
+      await Api.getDeliveriesService(this.props.accessToken.access_token).listDeliveries(undefined, undefined, "FROZEN", undefined, undefined, this.state.selectedDeliveryPlaceId, endOfDay, startOfDay, undefined, 999)
+    ]);
     const freshContactIds = freshDeliveries.map(delivery => delivery.userId);
     const frozenContactIds = frozenDeliveries.map(delivery => delivery.userId);
     const contactUniqIds = _.uniq(freshContactIds.concat(frozenContactIds));
@@ -260,7 +263,8 @@ class ManageDeliveries extends React.Component<Props, State> {
     });
 
     const deliveries = category === "FRESH" ? this.state.freshDeliveries : this.state.frozenDeliveries;
-    const deliveryListItems: DeliveryListItem[] = deliveries.map((delivery) => {
+    const filteredDeliveries = deliveries.filter(delivery => delivery.status === "DELIVERY" || delivery.status === "PLANNED" || delivery.status === "DONE");
+    const deliveryListItems: DeliveryListItem[] = filteredDeliveries.map((delivery) => {
       return {
         delivery: delivery,
         product: this.state.products!.find(product => product.id === delivery.productId),
@@ -285,20 +289,9 @@ class ManageDeliveries extends React.Component<Props, State> {
               <ActivityIndicator size="large" color="#E51D2A" />
             </View>
             :
-            sortedItems.map((deliveryListItem) => {
-              const { delivery, contact, product } = deliveryListItem;
-              return (
-                <TouchableOpacity key={delivery.id} onPress={() => this.handleListItemPress(category, false, deliveryListItem)}>
-                  <View style={{ flex: 1, flexDirection: "row", height: 80, borderColor: "gray", borderBottomWidth: 1 }}>
-                    <View style={listStyle.center}><Text>{contact ? contact.displayName : ""}</Text></View>
-                    <View style={listStyle.center}><Text>{product ? product.name : ""}</Text></View>
-                    <View style={{ flex: 0.5, justifyContent: "center", alignItems: "center" }}><Text>{delivery.amount}</Text></View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })
+            this.renderdeliveryListItems(sortedItems, category)
         }
-        <TouchableOpacity
+              <TouchableOpacity
           style={[styles.begindeliveryButton, { width: "70%", height: 60, marginTop: 25, alignSelf: "center" }]}
           onPress={() => this.handleListItemPress(category, true, undefined)}>
           <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Uusi toimitus</Text>
@@ -308,11 +301,44 @@ class ManageDeliveries extends React.Component<Props, State> {
   }
 
   /**
-  * Render delivery contact
-  * @param category ItemGroupCategory
-  * @param isNewDelivery isNewDelivery 
-  * @param deliveryListItem deliveryListItem 
-  */
+   * Render delivery list items
+   * 
+   * @param deliveryListItems deliveryListItems list
+   * @param category Item group category
+   * 
+   * @return DeliveryListItems mapped to React components
+   */
+  private renderdeliveryListItems = (deliveryListItems: DeliveryListItem[], category: ItemGroupCategory) => {
+    const listStyle = StyleSheet.create({
+      center: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "flex-start"
+      }
+    });
+
+    return deliveryListItems.map((deliveryListItem) => {
+      const { delivery, contact, product } = deliveryListItem;
+      const listItemColor = this.getDeliveryListItemColor(deliveryListItem.delivery.status);
+
+      return (
+        <TouchableOpacity key={ delivery.id } onPress={ () => this.handleListItemPress(category, false, deliveryListItem) }>
+          <View style={{ flex: 1, flexDirection: "row", height: 80, backgroundColor: listItemColor, borderColor: "gray", borderBottomWidth: 1 }}>
+            <View style={ listStyle.center }><Text>{ contact ? contact.displayName : "" }</Text></View>
+            <View style={ listStyle.center }><Text>{ product ? product.name : "" }</Text></View>
+            <View style={{ flex: 0.5, justifyContent: "center", alignItems: "center" }}><Text>{ delivery.amount }</Text></View>
+          </View>
+        </TouchableOpacity>
+      );
+    });
+  }
+
+  /**
+   * Render delivery contact
+   * @param category ItemGroupCategory
+   * @param isNewDelivery isNewDelivery 
+   * @param deliveryListItem deliveryListItem 
+   */
   private handleListItemPress(category: ItemGroupCategory, isNewDelivery: boolean, deliveryListItem?: DeliveryListItem) {
     this.props.navigation.navigate("ManageDelivery", {
       deliveryListItem,
@@ -322,14 +348,28 @@ class ManageDeliveries extends React.Component<Props, State> {
   }
 
   /**
-  * Prints time
-  * 
-  * @param date
-  * 
-  * @return formatted start time
-  */
+   * Prints time
+   * 
+   * @param date
+   * 
+   * @return formatted start time
+   */
   private printTime(date: Date): string {
     return moment(date).format("DD.MM.YYYY");
+  }
+
+  private getDeliveryListItemColor = (status: DeliveryStatus) => {
+    switch (status) {
+      case "DELIVERY": {
+        return "#FFF9C4"
+      }
+      case "DONE": {
+        return "#DCEDC8"
+      }
+      case "PLANNED": {
+        return "#B3E5FC"
+      }
+    }
   }
 
 }
