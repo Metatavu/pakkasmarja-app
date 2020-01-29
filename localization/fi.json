@@ -16,5 +16,9 @@
   "contractsFooterLink": "Sopimukset",
   "noTitleAvailable": "Ei otsikkoa",
   "addImage": "Lisää kuva",
-  "cancelButton": "Peruuta"
+  "cancelButton": "Peruuta",
+
+  "DeliveryStatusDelivery": "Kuljetus",
+  "DeliveryStatusPlanned": "Suunniteltu",
+  "DeliveryStatusDone": "Valmiit"
 }

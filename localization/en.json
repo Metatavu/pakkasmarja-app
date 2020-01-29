@@ -16,5 +16,9 @@
   "contractsFooterLink": "Contracts",
   "noTitleAvailable": "No title",
   "addImage": "Add image",
-  "cancelButton": "Cancel"
+  "cancelButton": "Cancel",
+
+  "DeliveryStatusDelivery": "Delivery",
+  "DeliveryStatusPlanned": "Planned",
+  "DeliveryStatusDone": "Done"
 }

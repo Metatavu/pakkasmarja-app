@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryListItem } from "../../../types";
 import * as actions from "../../../actions";
-import { View, TouchableHighlight, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from "react-native";
+import { View, TouchableHighlight, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Button, NativeSyntheticEvent, NativeTouchEvent } from "react-native";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import * as _ from "lodash";
 import PakkasmarjaApi from "../../../api";
@@ -39,6 +39,7 @@ interface State {
   products?: Product[];
   deliveryPlaces: DeliveryPlace[];
   selectedDeliveryPlaceId: string;
+  selectedDeliveryStatus: string;
 };
 
 /**
@@ -59,7 +60,8 @@ class ManageDeliveries extends React.Component<Props, State> {
       date: new Date(),
       datepickerVisible: false,
       deliveryPlaces: [],
-      selectedDeliveryPlaceId: ""
+      selectedDeliveryPlaceId: "",
+      selectedDeliveryStatus: "DELIVERY",
     };
   }
 
@@ -272,9 +274,23 @@ class ManageDeliveries extends React.Component<Props, State> {
       }
     });
     const sortedItems = _.sortBy(deliveryListItems, listItem => listItem.contact ? listItem.contact.displayName : "");
+
+    const sortedItemsSelected = sortedItems.filter((item) => item.delivery.status === this.state.selectedDeliveryStatus);
+
     return (
       <View style={{ flex: 1, flexDirection: "column", paddingTop: 15, paddingHorizontal: 10 }}>
         {this.renderDatePicker()}
+        <View style={{ flexDirection: "row", height: 50, marginTop: 10 }}>
+          <TouchableOpacity style={this.state.selectedDeliveryStatus === "DELIVERY" ? styles.buttonGroupSelected : styles.buttonGroup} onPress={()=>{this.handleSelectedStatusChange("DELIVERY")}}>
+            <Text style={{ color:"#fff", padding:15 }}>{strings.DeliveryStatusDelivery}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={this.state.selectedDeliveryStatus === "PLANNED" ? styles.buttonGroupSelected : styles.buttonGroup} onPress={()=>{this.handleSelectedStatusChange("PLANNED")}}>
+            <Text style={{ color:"#fff", padding:15 }}>{strings.DeliveryStatusPlanned}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={this.state.selectedDeliveryStatus === "DONE" ? styles.buttonGroupSelected : styles.buttonGroup} onPress={()=>{this.handleSelectedStatusChange("DONE")}}>
+            <Text style={{ color:"#fff", padding:15 }}>{strings.DeliveryStatusDone}</Text>
+          </TouchableOpacity>
+        </View>
         {
           category === "FROZEN" &&
           this.renderDeliveryPlace()}
@@ -289,7 +305,7 @@ class ManageDeliveries extends React.Component<Props, State> {
               <ActivityIndicator size="large" color="#E51D2A" />
             </View>
             :
-            this.renderdeliveryListItems(sortedItems, category)
+            this.renderdeliveryListItems(sortedItemsSelected, category)
         }
               <TouchableOpacity
           style={[styles.begindeliveryButton, { width: "70%", height: 60, marginTop: 25, alignSelf: "center" }]}
@@ -298,6 +314,15 @@ class ManageDeliveries extends React.Component<Props, State> {
         </TouchableOpacity>
       </View>
     );
+  }
+
+  /**
+   * Handles changing selected status
+   * 
+   * @param status status string
+   */
+  private handleSelectedStatusChange = (status: string) => {
+    this.setState({selectedDeliveryStatus: status});
   }
 
   /**
