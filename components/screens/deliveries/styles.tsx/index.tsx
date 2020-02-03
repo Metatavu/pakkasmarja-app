@@ -252,5 +252,21 @@ export const styles = StyleSheet.create({
     borderWidth: 1.25,
     padding: 20,
     borderRadius: 7
+  },
+  buttonGroup: {
+    flex:3,
+    backgroundColor:"#E51D2A",
+    elevation:3,
+    shadowOffset: {width:0, height:1},
+    alignItems: "center"
+  },
+  buttonGroupSelected: {
+    flex:3,
+    backgroundColor:"#E51D2A",
+    elevation:3,
+    shadowOffset: {width:0, height:1},
+    alignItems: "center",
+    borderBottomColor: "#fff",
+    borderBottomWidth: 5
   }
 });
