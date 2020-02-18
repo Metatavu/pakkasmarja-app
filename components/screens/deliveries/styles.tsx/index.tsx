@@ -36,6 +36,59 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 7
   },
+  freshButton: {
+    width: "60%",
+    marginBottom: 20,
+    padding: 10,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#FF0000",
+    borderRadius: 7,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    elevation: 5
+  },
+  frozenButton: {
+    width: "60%",
+    padding: 10,
+    marginBottom: 20,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#FF0000",
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    elevation: 5
+  },
+  categoryButtonText: {
+    fontWeight: "400",
+    color: "#000000",
+    fontSize: 16,
+    paddingLeft: 5,
+    paddingRight: 5
+  },
+  categorySelectionView: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center"
+  },
   begindeliveryButton: {
     backgroundColor: "#42AD18",
     justifyContent: "center",

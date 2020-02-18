@@ -20,5 +20,9 @@
 
   "DeliveryStatusDelivery": "Delivery",
   "DeliveryStatusPlanned": "Planned",
-  "DeliveryStatusDone": "Done"
+  "DeliveryStatusDone": "Done",
+
+  "freshDeliveries": "Fresh",
+  "frozenDeliveries": "Frozen",
+  "deliveryReception": "Delivery reception"
 }
