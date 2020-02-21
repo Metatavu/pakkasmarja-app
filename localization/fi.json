@@ -20,5 +20,9 @@
 
   "DeliveryStatusDelivery": "Kuljetus",
   "DeliveryStatusPlanned": "Suunniteltu",
-  "DeliveryStatusDone": "Valmiit"
+  "DeliveryStatusDone": "Valmiit",
+
+  "freshDeliveries": "Tuore",
+  "frozenDeliveries": "Pakastukseen",
+  "deliveryReception": "Toimitusten vastaanotto"
 }

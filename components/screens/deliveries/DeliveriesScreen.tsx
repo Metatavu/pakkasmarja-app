@@ -4,14 +4,16 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { Tabs, Tab } from "native-base";
+import { Tabs, Tab, Thumbnail } from "native-base";
 import { TouchableOpacity, Image, View, Text, TouchableHighlight, Dimensions } from "react-native";
 import { styles } from './styles.tsx'
 import PakkasmarjaApi from "../../../api";
-import { PREDICTIONS_ICON, RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
+import { RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO, FRESH_ICON, FROZEN_ICON } from "../../../static/images";
 import { Delivery, Product, ItemGroupCategory } from "pakkasmarja-client";
 import { NavigationEvents } from "react-navigation";
 import Icon from "react-native-vector-icons/Feather";
+import BasicLayout from "../../layout/BasicLayout";
+import strings from "../../../localization/strings";
 
 /**
  * Component props
@@ -22,7 +24,7 @@ interface Props {
   deliveriesLoaded?: (deliveries: DeliveriesState) => void;
   itemGroupCategoryUpdate?: (itemGroupCategory: ItemGroupCategory) => void;
   deliveries?: DeliveriesState;
-  itemGroupCategory?: "FRESH" | "FROZEN";
+  itemGroupCategory?: ItemGroupCategory;
 };
 
 /**
@@ -35,7 +37,8 @@ interface State {
   freshPlannedAmount: number;
   frozenProposalAmount: number;
   frozenPlannedAmount: number;
-  deliveriesState?: DeliveriesState
+  deliveriesState?: DeliveriesState,
+  initialCategory?: ItemGroupCategory
 };
 
 /**
@@ -93,7 +96,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
       return;
     }
     await this.loadDeliveriesData();
-    await this.props.itemGroupCategoryUpdate("FRESH");
     this.loadAmounts();
 
     this.refreshInterval = setInterval(this.refreshDeliveries, 1000 * 30);
@@ -198,6 +200,11 @@ class DeliveriesScreen extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
+
+    if (!this.state.initialCategory) {
+      this.setState({ initialCategory: itemGroupCategory });
+    }
+
     this.props.itemGroupCategoryUpdate && this.props.itemGroupCategoryUpdate(itemGroupCategory);
   }
 
@@ -216,8 +223,15 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * Render list item
    */
   private renderDeliveryList = (deliveryList: {}[], itemGroupCategory: ItemGroupCategory) => {
+    const titleText = itemGroupCategory == "FRESH" ? strings.freshDeliveries : strings.frozenDeliveries;
+    const titleIcon = itemGroupCategory == "FRESH" ? FRESH_ICON : FROZEN_ICON;
+
     return (
       <View style={{ flex: 1, flexDirection: "column", marginTop: 40 }}>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingLeft: 60, marginBottom: 30 }}>
+          <Thumbnail source={ titleIcon } style={{ height: 50, width: 50 }}/>
+          <Text style={{ fontWeight: "400", fontSize: 35, color: "#000", marginLeft: 20 }}>{ titleText }</Text>
+        </View>
         {
           deliveryList.map((listItem: any) => {
             const plannedAmount: number = itemGroupCategory == "FRESH" ? listItem.freshPlannedAmount : listItem.frozenPlannedAmount;
@@ -276,10 +290,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
       screen: "Proposals",
       icon: RED_LOGO
     }, {
-      name: "Viikkoennusteet",
-      screen: "WeekDeliveryPrediction",
-      icon: PREDICTIONS_ICON
-    }, {
       frozenPlannedAmount: this.state.frozenPlannedAmount,
       freshPlannedAmount: this.state.freshPlannedAmount,
       name: "Tulevat toimitukset",
@@ -293,47 +303,71 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
     const canManageDeliveries = this.props.accessToken ? this.props.accessToken.realmRoles.indexOf("update-other-deliveries") > -1 : false;
 
-    return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onDidFocus={() => this.loadAmounts()} />
-        <Tabs tabBarUnderlineStyle={{ backgroundColor: "#fff" }}>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"TUORE"}>
-            {
-              this.renderDeliveryList(deliveryList, "FRESH")
-            }
-            {
-              canManageDeliveries &&
-              <TouchableOpacity onPress={() => { this.onDeliveryItemClick("ManageDeliveries", "FRESH") }}>
-                <View style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 80 }}>
-                  <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
-                    <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
-                      Toimitusten vastaanotto
-                  </Text>
+    if (this.props.itemGroupCategory === undefined) {
+      return (
+        <BasicLayout navigation={ this.props.navigation } displayFooter={ true }>
+          <NavigationEvents onDidFocus={ () => this.loadAmounts() } />
+          <View style={ styles.categorySelectionView }>
+            <TouchableOpacity style={ styles.freshButton } key={ ItemGroupCategory.FRESH } onPress={ () => this.updateItemGroupCategory("FRESH") }>
+              <View style={{ paddingLeft: 5, paddingRight: 5 }}>
+                <Thumbnail source={ FRESH_ICON } small />
+              </View>
+              <Text style={ styles.categoryButtonText }>{ strings.freshDeliveries }</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={ styles.frozenButton } key={ ItemGroupCategory.FROZEN } onPress={ () => this.updateItemGroupCategory("FROZEN") }>
+              <View style={{ paddingLeft: 5, paddingRight: 5 }}>
+                <Thumbnail source={ FROZEN_ICON } small />
+              </View>
+              <Text style={ styles.categoryButtonText }>{ strings.frozenDeliveries }</Text>
+            </TouchableOpacity>
+          </View>
+        </BasicLayout>
+      );
+    } else {
+      const initialTab = this.state.initialCategory === "FRESH" ? 0 : 1;
+
+      return (
+        <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+          <NavigationEvents onDidFocus={() => this.loadAmounts()} />
+          <Tabs initialPage={ initialTab } tabBarUnderlineStyle={{ backgroundColor: "#fff" }}>
+            <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={ strings.freshDeliveries }>
+              {
+                this.renderDeliveryList(deliveryList, "FRESH")
+              }
+              {
+                canManageDeliveries &&
+                <TouchableOpacity onPress={() => { this.onDeliveryItemClick("ManageDeliveries", "FRESH") }}>
+                  <View style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 80 }}>
+                    <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
+                      <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
+                        { strings.deliveryReception }
+                    </Text>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            }
-          </Tab>
-          <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"PAKASTE"}>
-            {
-              this.renderDeliveryList(deliveryList, "FROZEN")
-            }
-            {
-              canManageDeliveries &&
-              <TouchableOpacity onPress={() => { this.onDeliveryItemClick("ManageDeliveries", "FROZEN") }}>
-                <View style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 80 }}>
-                  <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
-                    <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
-                      Toimitusten vastaanotto
-                  </Text>
+                </TouchableOpacity>
+              }
+            </Tab>
+            <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={ strings.frozenDeliveries }>
+              {
+                this.renderDeliveryList(deliveryList, "FROZEN")
+              }
+              {
+                canManageDeliveries &&
+                <TouchableOpacity onPress={() => { this.onDeliveryItemClick("ManageDeliveries", "FROZEN") }}>
+                  <View style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 80 }}>
+                    <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
+                      <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
+                        { strings.deliveryReception }
+                    </Text>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            }
-          </Tab>
-        </Tabs>
-      </BasicScrollLayout>
-    );
+                </TouchableOpacity>
+              }
+            </Tab>
+          </Tabs>
+        </BasicScrollLayout>
+      );
+    }
   }
 }
 

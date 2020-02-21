@@ -10,3 +10,5 @@ export const NEWS_ICON = require("./news_icon.png");
 export const DELIVERIES_ICON = require("./deliveries_icon.png");
 export const CONTRACTS_ICON = require("./contracts_icon.png");
 export const MESSAGES_ICON = require("./messages_icon.png");
+export const FRESH_ICON = require("./fresh-icon.png");
+export const FROZEN_ICON = require("./frozen-icon.png");

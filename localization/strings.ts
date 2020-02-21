@@ -25,6 +25,10 @@ export interface Strings extends LocalizedStringsMethods {
   DeliveryStatusDelivery: string
   DeliveryStatusPlanned: string
   DeliveryStatusDone: string
+
+  freshDeliveries: string
+  frozenDeliveries: string
+  deliveryReception: string
 }
 
 const strings: Strings = new LocalizedStrings({
