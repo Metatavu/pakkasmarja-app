@@ -235,9 +235,7 @@ class Chat extends React.Component<Props, State> {
    * Render messages read segment to chat
    */
   private renderMessagesReadSegment = (): JSX.Element | null => {
-    console.log(this.props.conversationType);
     if (this.props.conversationType === "CHAT") {
-      console.log(this.state.threadPermission);
       return this.state.threadPermission === "MANAGE" ? (
         <View style={{ flexDirection: "row", justifyContent: "flex-end", alignContent: "center", paddingHorizontal: 20, marginBottom: 5 }}>
           <Badge style={{ backgroundColor: '#0084ff' }}><Text style={{ marginTop: 1 }}>{ this.state.readAmount }</Text></Badge>
