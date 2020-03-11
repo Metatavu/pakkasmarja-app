@@ -109,7 +109,7 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   private renderChatTab = (): JSX.Element => {
     if (this.state.selectedChatThreadId) {
-      return (<Chat onBackClick={this.handleChatChatBackClick} threadId={this.state.selectedChatThreadId} onError={this.handleError} />);
+      return (<Chat onBackClick={this.handleChatChatBackClick} threadId={this.state.selectedChatThreadId} conversationType="CHAT" onError={this.handleError} />);
     }
 
     return (<ChatThreadList onThreadSelected={this.handleChatThreadSelected} type="CHAT" onError={this.handleError} />);
@@ -120,7 +120,7 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   private renderQuestionTab = (): JSX.Element => {
     if (this.state.selectedQuestionThreadId) {
-      return (<Chat onBackClick={this.handleQuestionChatBackClick} threadId={this.state.selectedQuestionThreadId} onError={this.handleError} />);
+      return (<Chat onBackClick={this.handleQuestionChatBackClick} threadId={this.state.selectedQuestionThreadId} conversationType="QUESTION" onError={this.handleError} />);
     } else if (this.state.selectedQuestionGroupId) {
       return (<ChatThreadList
                 onBackClick={this.handleQuestionThreadBackClick}
