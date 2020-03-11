@@ -192,3 +192,8 @@ export interface DeliveryNoteData {
   imageType: string;
   text: string;
 }
+
+/**
+ * Type representing chat conversation type
+ */
+export type ConversationType = "CHAT" | "QUESTION";
