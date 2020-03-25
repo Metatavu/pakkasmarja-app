@@ -61,7 +61,7 @@ class ManageContact extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -139,7 +139,7 @@ class ManageContact extends React.Component<Props, State> {
       IBAN: usersContact.IBAN || '',
       taxCode: usersContact.taxCode || '',
       alv: usersContact.taxCode || '',
-      vatLiable: usersContact.vatLiable || undefined,
+      vatLiable: usersContact.vatLiable || "true",
       usersContactCopy: usersContact || {}
     });
     if (usersContact.phoneNumbers) {
@@ -177,7 +177,7 @@ class ManageContact extends React.Component<Props, State> {
    */
   public render() {
 
-    
+
 
     const basicInfoInputs: ManageContactInput[] = [
       {
@@ -258,10 +258,6 @@ class ManageContact extends React.Component<Props, State> {
     ];
 
     const vatLiableOptions: { key: string, value: Contact.VatLiableEnum | undefined, text: string }[] = [{
-      key: "undefined",
-      value: undefined,
-      text: "Valitse..."
-    }, {
       key: "true",
       value: "true",
       text: "Kyllä"
@@ -269,10 +265,6 @@ class ManageContact extends React.Component<Props, State> {
       key: "false",
       value: "false",
       text: "Ei"
-    }, {
-      key: "Eu",
-      value: "EU",
-      text: "EU"
     }];
 
     return (
@@ -323,7 +315,7 @@ class ManageContact extends React.Component<Props, State> {
           }
 
           <View style={{ flex: 1, flexDirection: "column", height: 80, marginBottom: 10 }}>
-            <Text style={{ fontWeight: "bold", fontSize: 16, color: "black", paddingBottom: 5 }}>ALV. velvollisuus</Text>
+            <Text style={{ fontWeight: "bold", fontSize: 16, color: "black", paddingBottom: 5 }}>ALV - velvollisuus</Text>
             <View style={{
               height: Platform.OS === "ios" ? 40 : 50,
               width: "100%",
@@ -387,7 +379,7 @@ class ManageContact extends React.Component<Props, State> {
 
   /**
    * Handle inputchange
-   * 
+   *
    * @param key key
    * @param value value
    */
@@ -400,7 +392,7 @@ class ManageContact extends React.Component<Props, State> {
 
   /**
    * Render input
-   * 
+   *
    * @param label inputs label
    * @param key needs to be the same key with state
    * @param isEditable optional
@@ -504,7 +496,7 @@ class ManageContact extends React.Component<Props, State> {
     let farmPostNumber = "";
     let farmPostAddress = "";
     let farmCity = "";
-    
+
 
     if (this.state.usersContactCopy.phoneNumbers) {
       if (this.state.usersContactCopy.phoneNumbers[0]) {
@@ -556,7 +548,7 @@ class ManageContact extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -566,8 +558,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
