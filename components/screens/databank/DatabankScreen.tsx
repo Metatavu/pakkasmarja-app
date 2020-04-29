@@ -3,15 +3,16 @@ import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import { StoreState, AccessToken } from "../../../types";
-import { View, TouchableHighlight, Image } from "react-native";
-import { ItemGroup, SharedFile } from "pakkasmarja-client";
+import { View, TouchableHighlight, Image, Alert, Platform } from "react-native";
+import { ItemGroup, SharedFile, FileType } from "pakkasmarja-client";
 import * as actions from "../../../actions";
 import TopBar from "../../layout/TopBar";
-import { Text, Fab, Container } from "native-base";
+import { Text, Fab, Container, Toast } from "native-base";
 import { DEFAULT_FILE, PDF_FILE, IMAGE_FILE } from '../../../static/images/';
 import RNFetchBlob from 'rn-fetch-blob'
 import { Icon } from 'react-native-elements'
 import PakkasmarjaApi from "../../../api";
+import { REACT_APP_API_URL } from 'react-native-dotenv';
 
 /**
  * Component props
@@ -66,7 +67,7 @@ class DatabankScreen extends React.Component<Props, State> {
       headerLeft:
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
-            name='arrow-down-left'
+            name='chevron-left'
             color='#fff'
             size={ 40 }
             style={{ marginLeft: 30 }}
@@ -98,18 +99,18 @@ class DatabankScreen extends React.Component<Props, State> {
   public render() {
     return (
       <Container>
+        { this.renderBreadcrumb() }
+        <BasicScrollLayout navigation={ this.props.navigation } backgroundColor="#fff" displayFooter={ true }>
+          { this.renderFolderStructure() }
+        </BasicScrollLayout>
         { this.state.path.length > 0 &&
           <Fab
-            style={{ backgroundColor: '#E51D2A', zIndex:1 }}
+            style={{ backgroundColor: '#E51D2A' }}
             position="topRight"
             onPress={ this.moveBackToFolder }>
             <Icon name="arrow-back" iconStyle={{ color: "#fff" }} />
           </Fab>
         }
-        { this.renderBreadcrumb() }
-        <BasicScrollLayout navigation={ this.props.navigation } backgroundColor="#fff" displayFooter={ true }>
-          { this.renderFolderStructure() }
-        </BasicScrollLayout>
       </Container>
     );
   }
@@ -203,6 +204,84 @@ class DatabankScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Resolves mime type for file
+   */
+  private resolveMimeType = (file: SharedFile): string => {
+    switch (file.fileType) {
+      case FileType.IMAGE:
+        return this.resolveImageType(file);
+      case FileType.PDF:
+        return "application/pdf";
+      case FileType.OTHER:
+        return this.resolveOtherType(file);
+      default:
+        return "application/octet-stream";
+    }
+  }
+
+  /**
+   * Resolves mime type for image file
+   */
+  private resolveImageType = (file: SharedFile): string => {
+    const filename = file.name.trim();
+    if (filename.endsWith(".png")) {
+      return "image/png";
+    } else if(filename.endsWith(".jpg")) {
+      return "image/jpeg";
+    } else if(filename.endsWith(".jpeg")) {
+      return "image/jpeg";
+    }
+
+    return "image/png";
+  }
+
+  /**
+   * Resolves mime type for other files
+   */
+  private resolveOtherType = (file: SharedFile): string => {
+    const filename = file.name.trim();
+    if (filename.endsWith(".doc")) {
+      return "application/msword";
+    } else if(filename.endsWith(".docx")) {
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    } else if(filename.endsWith(".csv")) {
+      return "text/csv";
+    } else if(filename.endsWith(".ppt")) {
+      return "application/vnd.ms-powerpoint";
+    } else if(filename.endsWith(".pptx")) {
+      return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    } else if(filename.endsWith(".xls")) {
+      return "application/vnd.ms-excel";
+    } else if(filename.endsWith(".xlsx")) {
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    } else if(filename.endsWith(".zip")) {
+      return "application/zip";
+    } 
+
+    return "application/octet-stream";
+  }
+
+  /**
+   * Tries to guess file extension if not provided
+   */
+  private createFilenameWithExtension = (file: SharedFile) => {
+    const fileName = file.name;
+    if (fileName.indexOf(".") > -1) {
+      return fileName;
+    }
+
+    switch (file.fileType) {
+      case FileType.IMAGE:
+        return `${fileName}.png`;
+      case FileType.PDF:
+        return `${fileName}.pdf`;
+      default:
+        return fileName;
+    }
+
+  }
+
+  /**
    * Downloads a file
    * 
    * @param file shared file
@@ -214,14 +293,35 @@ class DatabankScreen extends React.Component<Props, State> {
     }
     try {
         RNFetchBlob.config({
-          fileCache: true,
-        }).fetch("GET",`https://staging-api-pakkasmarja.metatavu.io/rest/v1/sharedFiles/download?${file.pathPrefix ? "pathPrefix=" + file.pathPrefix.replace(/\//g, "%2F") + "&" : ""}fileName=${file.name}`, {
+          fileCache : Platform.OS == "ios" ? false : true,
+          addAndroidDownloads : {
+            path: RNFetchBlob.fs.dirs.DownloadDir + "/" + file.name,
+            useDownloadManager : true,
+            notification : true,
+            mime : this.resolveMimeType(file),
+            mediaScannable : true,
+            title : `${file.name} ladattu onnistuneesti`,
+            description : 'Tiedosto ladattu Pakkasmarjan tietopankista'
+          },
+        }).fetch("GET",`${REACT_APP_API_URL}/rest/v1/sharedFiles/download?${file.pathPrefix ? "pathPrefix=" + file.pathPrefix.replace(/\//g, "%2F") + "&" : ""}fileName=${file.name}`, {
           'Authorization': `Bearer ${accessToken.access_token}`
-        }).then((res) => {
-          console.log(res);
+        }).then(async (res) => {
+          Toast.show({
+            type: "success",
+            text: "Tiedosto ladattu"
+          });
+          if (Platform.OS == "ios") {
+            const filePath = `${RNFetchBlob.fs.dirs.DocumentDir}/${this.createFilenameWithExtension(file)}`;
+            const data = await res.base64();
+            await RNFetchBlob.fs.writeFile(filePath, data, "base64");
+            RNFetchBlob.ios.openDocument(filePath);
+          }
         });
     } catch (error) {
-      // error
+      Toast.show({
+        type: "danger",
+        text: "Tiedoston lataus epäonnistui"
+      });
     } 
   }
 
