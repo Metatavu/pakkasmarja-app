@@ -4,12 +4,14 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import { StoreState, AccessToken } from "../../../types";
 import { View, TouchableHighlight, Image } from "react-native";
-import { ItemGroup } from "pakkasmarja-client";
+import { ItemGroup, SharedFile } from "pakkasmarja-client";
 import * as actions from "../../../actions";
 import TopBar from "../../layout/TopBar";
 import { Text, Fab, Container } from "native-base";
 import { DEFAULT_FILE, PDF_FILE, IMAGE_FILE } from '../../../static/images/';
+import RNFetchBlob from 'rn-fetch-blob'
 import { Icon } from 'react-native-elements'
+import PakkasmarjaApi from "../../../api";
 
 /**
  * Component props
@@ -29,9 +31,10 @@ interface State {
    */
   path: string;
   /**
-   * Example folder structure that will be rendered
+   * Files and folders that will be rendered
    */
-  exampleFolderStructure: Array<{type:"file"|"folder"|"pdf"|"image", name:string}>; // This is just example type
+  sharedFiles: SharedFile[];
+  error?:any
 }
 
 /**
@@ -45,7 +48,7 @@ class DatabankScreen extends React.Component<Props, State> {
   constructor(props:Props) {
     super(props);
     this.state = {
-      exampleFolderStructure: [],
+      sharedFiles: [],
       path: ""
     }
   }
@@ -76,39 +79,7 @@ class DatabankScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   componentDidMount() {
-    // make api call here
-    this.setState({
-      exampleFolderStructure:[
-        {
-          type: 'folder',
-          name: 'folder 1'
-        },
-        {
-          type: 'folder',
-          name: 'folder 2'
-        },
-        {
-          type: 'folder',
-          name: 'folder 3'
-        },
-        {
-          type: 'folder',
-          name: 'folder 4'
-        },
-        {
-          type: 'file',
-          name: 'file 5'
-        },
-        {
-          type: 'pdf',
-          name: 'pdf 1'
-        },
-        {
-          type: 'image',
-          name: 'image 1'
-        },
-      ]
-    });
+    this.updateSharedFiles();
   }
 
   /**
@@ -117,7 +88,7 @@ class DatabankScreen extends React.Component<Props, State> {
   componentDidUpdate(prevProps: Props, prevState: State) {
     const { path } = this.state;
     if (prevState.path !== path) {
-      // make api call here
+      this.updateSharedFiles();
     }
   }
 
@@ -129,7 +100,6 @@ class DatabankScreen extends React.Component<Props, State> {
       <Container>
         { this.state.path.length > 0 &&
           <Fab
-            containerStyle={{  }}
             style={{ backgroundColor: '#E51D2A', zIndex:1 }}
             position="topRight"
             onPress={ this.moveBackToFolder }>
@@ -142,6 +112,36 @@ class DatabankScreen extends React.Component<Props, State> {
         </BasicScrollLayout>
       </Container>
     );
+  }
+
+  /**
+   * Updates shared files
+   */
+  private updateSharedFiles = async () => {
+    const { accessToken } = this.props;
+    const { path } = this.state;
+    if (!accessToken || !accessToken.access_token) {
+      return;
+    }
+    try {
+      const api = new PakkasmarjaApi();
+      const sharedFiles = await api.getSharedFilesService(accessToken.access_token).listSharedFiles(path ? `${path}/` : undefined);
+      if (Array.isArray(sharedFiles)) {
+        this.setState({
+          sharedFiles: sharedFiles.map((file) => {
+            return {...file, name: file.name.replace(/\//g, "")}
+          })
+          .sort((a, b) => {
+            return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+          })
+          .sort((a, b) => {
+            return Number(b.fileType === "FOLDER") - Number(a.fileType === "FOLDER");
+          })
+        });
+      }
+    } catch (error) {
+      // error
+    }
   }
 
   /**
@@ -161,17 +161,17 @@ class DatabankScreen extends React.Component<Props, State> {
    * Renders folder structure
    */
   private renderFolderStructure = () => {
-    const { exampleFolderStructure } = this.state;
-    if (!exampleFolderStructure) {
+    const { sharedFiles } = this.state;
+    if (!sharedFiles) {
       return null;
     }
-    return exampleFolderStructure.map((item, index) => {
+    return sharedFiles.map((item, index) => {
       return (
-        <TouchableHighlight onPress={ (item.type === "folder") ? () => { this.moveToFolder(item.name) } : () => { this.downloadFile() } }>
+        <TouchableHighlight key={ index } onPress={ (item.fileType === "FOLDER") ? () => { this.moveToFolder(item.name) } : () => { this.downloadFile(item) } }>
           <View key={ index } style={{ display: "flex", flexDirection: "row", height: 70, padding: 10, borderBottomWidth: 1, borderBottomColor: "#000", backgroundColor: "#fff" }}>
-            { item.type !== "folder" && <Image source={ this.getImage(item.type) } style={{ flex: 1, height: undefined, width: undefined, marginRight: 10 }} resizeMode="contain" /> }
-            { item.type === "folder" && <Icon name='folder' color={ "#e01e37" } iconStyle={{ fontSize: 32, marginRight: 10 }} /> }
-            <Text style={{ flex: 9, fontSize: 25, textAlignVertical: "center" }}>{ item.name }</Text>
+            { item.fileType !== "FOLDER" && <Image source={ this.getImage(item.fileType) } style={{ flex: 1, height: undefined, width: undefined, marginRight: 10 }} resizeMode="contain" /> }
+            { item.fileType === "FOLDER" && <Icon name='folder' color={ "#e01e37" } iconStyle={{ fontSize: 32, marginRight: 10 }} /> }
+            <Text style={{ flex: 9, fontSize: 25, textAlignVertical: "center", textTransform: "capitalize" }}>{ item.name }</Text>
           </View>
         </TouchableHighlight>
       )
@@ -203,10 +203,26 @@ class DatabankScreen extends React.Component<Props, State> {
   }
 
   /**
-   * Downloads a file to the users phone
+   * Downloads a file
+   * 
+   * @param file shared file
    */
-  private downloadFile = () => {
-
+  private downloadFile = async (file: SharedFile) => {
+    const { accessToken } = this.props;
+    if (!accessToken || !accessToken.access_token) {
+      return;
+    }
+    try {
+        RNFetchBlob.config({
+          fileCache: true,
+        }).fetch("GET",`https://staging-api-pakkasmarja.metatavu.io/rest/v1/sharedFiles/download?${file.pathPrefix ? "pathPrefix=" + file.pathPrefix.replace(/\//g, "%2F") + "&" : ""}fileName=${file.name}`, {
+          'Authorization': `Bearer ${accessToken.access_token}`
+        }).then((res) => {
+          console.log(res);
+        });
+    } catch (error) {
+      // error
+    } 
   }
 
   /**
@@ -216,13 +232,13 @@ class DatabankScreen extends React.Component<Props, State> {
    */
   private getImage = (type: string) => {
     switch(type) {
-      case "file": {
+      case "OTHER": {
         return DEFAULT_FILE;
       }
-      case "pdf": {
+      case "PDF": {
         return PDF_FILE;
       }
-      case "image": {
+      case "IMAGE": {
         return IMAGE_FILE;
       }
     }
