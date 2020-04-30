@@ -12,3 +12,6 @@ export const CONTRACTS_ICON = require("./contracts_icon.png");
 export const MESSAGES_ICON = require("./messages_icon.png");
 export const FRESH_ICON = require("./fresh-icon.png");
 export const FROZEN_ICON = require("./frozen-icon.png");
+export const IMAGE_FILE = require("./kuvatiedosto.png");
+export const PDF_FILE = require("./pdfikoni.png");
+export const DEFAULT_FILE = require("./tiedostoikoni.png");

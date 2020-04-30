@@ -33,6 +33,8 @@ import Permissions from 'react-native-permissions';
 import strings from "./localization/strings";
 import ManageDeliveries from "./components/screens/ManageDeliveries/ManageDeliveries";
 import ManageDelivery from "./components/screens/ManageDeliveries/ManageDelivery";
+import DatabankScreen from "./components/screens/databank/DatabankScreen";
+import { TouchableOpacity } from "react-native";
 
 interface State {
   authenticated: boolean
@@ -67,12 +69,13 @@ const RootStack = createStackNavigator({
   ManageContact: ManageContact,
   ManageDeliveries: ManageDeliveries,
   ManageDelivery: ManageDelivery,
+  Databank: DatabankScreen
 }, {
     defaultNavigationOptions: {
       headerStyle: {
         backgroundColor: "#E51D2A",
         height: 70
-      },
+      }
     },
     initialRouteName: "Login"
   });

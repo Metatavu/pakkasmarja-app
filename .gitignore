@@ -67,3 +67,5 @@ test-data
 
 # Google services.json
 google-services.json
+
+ios/Pods
