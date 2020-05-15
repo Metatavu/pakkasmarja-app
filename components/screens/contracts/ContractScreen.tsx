@@ -19,6 +19,7 @@ import { connect } from "react-redux";
 import { styles } from "./styles";
 import Icon from "react-native-vector-icons/Feather";
 import AppConfig from "../../../utils/AppConfig";
+import strings from "../../../localization/strings";
 
 /**
  * Interface for component props
@@ -122,6 +123,12 @@ class ContractScreen extends React.Component<Props, State> {
       const requireAreaDetails = configItemGroup && configItemGroup["require-area-details"] ? true : false;
       const allowDeliveryAll = configItemGroup && configItemGroup["allow-delivery-all"] ? true : false;
       this.setState({ requireAreaDetails, allowDeliveryAll });
+
+      const { areaDetailValues } = this.state.contractData;
+      if (requireAreaDetails && (areaDetailValues.length < 1 || !this.allFieldsFilled(areaDetailValues))) {
+        const validationErrorText = strings.fillAllAreaDetailFields;
+        this.setState({ validationErrorText });
+      }
     }
   }
 
@@ -137,10 +144,11 @@ class ContractScreen extends React.Component<Props, State> {
     this.setState({ contractData: contractData });
     this.checkIfCompanyApprovalNeeded();
     if (key === "areaDetailValues" && this.state.requireAreaDetails) {
-      if (this.state.contractData.areaDetailValues.length > 0) {
+      const { areaDetailValues } = this.state.contractData;
+      if (areaDetailValues.length > 0 && this.allFieldsFilled(areaDetailValues)) {
         this.setState({ validationErrorText: "" });
       } else {
-        const validationErrorText = "Täytä tuotannossa olevat hehtaarit taulukkoon"
+        const validationErrorText = strings.fillAllAreaDetailFields;
         this.setState({ validationErrorText });
       }
     }
@@ -273,6 +281,21 @@ class ContractScreen extends React.Component<Props, State> {
         { text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {}) },
       ]
     );
+  }
+
+  /**
+   * Returns true if all fields of area detail values are filled
+   * @param areaDetailValues area detail values
+   */
+  private allFieldsFilled = (areaDetailValues: AreaDetail[]): boolean => {
+    for (const areaDetail of areaDetailValues) {
+      const { name, size, species, profitEstimation } = areaDetail;
+      if (!name || !size || !species || !profitEstimation) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**

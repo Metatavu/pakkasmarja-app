@@ -24,5 +24,7 @@
 
   "freshDeliveries": "Tuore",
   "frozenDeliveries": "Pakastukseen",
-  "deliveryReception": "Toimitusten vastaanotto"
+  "deliveryReception": "Toimitusten vastaanotto",
+
+  "fillAllAreaDetailFields": "Täytä tuotannossa olevat hehtaarit taulukkoon"
 }
