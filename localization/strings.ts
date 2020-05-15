@@ -29,6 +29,8 @@ export interface Strings extends LocalizedStringsMethods {
   freshDeliveries: string
   frozenDeliveries: string
   deliveryReception: string
+
+  fillAllAreaDetailFields: string
 }
 
 const strings: Strings = new LocalizedStrings({

@@ -58,7 +58,7 @@ class ContractTerms extends React.Component<Props, State> {
       ssn: "",
       signAuthenticationUrl: "",
       modalOpen: false,
-      type: "2019",
+      type: "2020",
       loading: false
     };
   }
