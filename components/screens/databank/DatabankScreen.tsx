@@ -53,7 +53,11 @@ class DatabankScreen extends React.Component<Props, State> {
       path: ""
     }
   }
-
+/**
+ * Returns navigation options
+ * @param navigation navigation
+ * @returns navigation options object
+ */
   static navigationOptions = ({ navigation }: any) => {
     return {
       headerTitle: <TopBar navigation={navigation}
@@ -205,6 +209,8 @@ class DatabankScreen extends React.Component<Props, State> {
 
   /**
    * Resolves mime type for file
+   * @param file shared file
+   * @returns mime type as string
    */
   private resolveMimeType = (file: SharedFile): string => {
     switch (file.fileType) {
@@ -221,6 +227,8 @@ class DatabankScreen extends React.Component<Props, State> {
 
   /**
    * Resolves mime type for image file
+   * @param file shared file
+   * @returns resolved MIME type as string
    */
   private resolveImageType = (file: SharedFile): string => {
     const filename = file.name.trim();
@@ -237,6 +245,8 @@ class DatabankScreen extends React.Component<Props, State> {
 
   /**
    * Resolves mime type for other files
+   * @param file shared file
+   * @returns resolved MIME type as string
    */
   private resolveOtherType = (file: SharedFile): string => {
     const filename = file.name.trim();
@@ -263,6 +273,8 @@ class DatabankScreen extends React.Component<Props, State> {
 
   /**
    * Tries to guess file extension if not provided
+   * @param file shared file
+   * @returns either file name itself or file name with extension as string
    */
   private createFilenameWithExtension = (file: SharedFile) => {
     const fileName = file.name;

@@ -221,6 +221,9 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Render list item
+   * @param deliveryList list of deliveries
+   * @param itemGroupCategory item group category
+   * @returns delivery list component structure
    */
   private renderDeliveryList = (deliveryList: {}[], itemGroupCategory: ItemGroupCategory) => {
     const titleText = itemGroupCategory == "FRESH" ? strings.freshDeliveries : strings.frozenDeliveries;

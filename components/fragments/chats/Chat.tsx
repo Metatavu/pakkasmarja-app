@@ -34,15 +34,15 @@ interface Props {
  * Component state
  */
 interface State {
-  messages: IChatMessage[],
-  read: boolean,
-  readAmount: number,
-  user?: Contact,
-  thread?: ChatThread,
-  threadPermission?: ChatThread.PermissionTypeEnum,
-  loading: boolean,
-  loadingEarlier: boolean
-  pollAnswer?: string
+  messages: IChatMessage[];
+  read: boolean;
+  readAmount: number;
+  user?: Contact;
+  thread?: ChatThread;
+  threadPermission?: ChatThread.PermissionTypeEnum;
+  loading: boolean;
+  loadingEarlier: boolean;
+  pollAnswer?: string;
   savingPollAnswer: boolean
 };
 
@@ -394,6 +394,7 @@ class Chat extends React.Component<Props, State> {
 
   /**
    * Custom rendering method for images with message
+   * @param messageProps message props
    */
   private renderMessageImage = (messageProps: MessageImageProps<IMessage>) => {
     const { accessToken } = this.props;

@@ -308,6 +308,7 @@ class ContractScreen extends React.Component<Props, State> {
   /**
    * Returns true if all fields of area detail values are filled
    * @param areaDetailValues area detail values
+   * @returns true if all fields are filled, otherwise false
    */
   private allFieldsFilled = (areaDetailValues: AreaDetail[]): boolean => {
     for (const areaDetail of areaDetailValues) {
@@ -323,6 +324,7 @@ class ContractScreen extends React.Component<Props, State> {
   /**
    * Returns if contract proposed quantity is at least the total amount calculated from area details
    * @param totalAmount total amount calculated from area details
+   * @returns true if proposed quantity is at least the total amount, otherwise false
    */
   private isValidContractMinimumAmount = (totalAmount: number): boolean => {
     const { proposedQuantity } = this.state.contractData;
@@ -333,6 +335,7 @@ class ContractScreen extends React.Component<Props, State> {
    * Returns total amount from area detail values
    * @param areaDetailValues area detail values
    * @param minimumProfit minimum profit, if predefined in contract
+   * @returns total amount as number
    */
   private calculateTotalAmount = (areaDetailValues: AreaDetail[], minimumProfit?: number): number => {
     const hasItems = areaDetailValues.length > 0;
