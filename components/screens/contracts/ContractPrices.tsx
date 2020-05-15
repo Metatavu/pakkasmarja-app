@@ -146,7 +146,7 @@ export default class ContractPrices extends React.Component<Props, State> {
       );
     }
     return (
-      <View style={styles.WhiteContentView}>
+      <View style={ styles.WhiteContentView }>
         <Text style={ styles.ContentHeader }>Tuoremarjojen hinnottelu</Text>
         <Text>{ strings.contractDetailsReadFromContract }</Text>
       </View>
