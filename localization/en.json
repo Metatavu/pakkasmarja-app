@@ -26,5 +26,8 @@
   "frozenDeliveries": "Frozen",
   "deliveryReception": "Delivery reception",
 
-  "fillAllAreaDetailFields": "Fill all details of areas in production"
+  "fillAllAreaDetailFields": "Fill all details of areas in production",
+  "insufficientContractAmount": "Proposed amount is less than minimum contract amount calculated from given hectare amount.",
+
+  "contractDetailsReadFromContract": "Details about pricing and quality control of fresh berries can be read from the contract."
 }

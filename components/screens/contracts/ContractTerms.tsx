@@ -82,24 +82,6 @@ class ContractTerms extends React.Component<Props, State> {
   }
 
   /**
-   * Download contract as pdf
-   */
-  private downloadContractPdfClicked = async () => {
-    if (!this.props.accessToken || !this.state.contract || !this.state.contract.id) {
-      return;
-    }
-
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}`);
-    const pdfService = api.getPdfService(this.props.accessToken.access_token);
-    const pdfPath = await pdfService.findPdf(this.state.contract.id, new Date().getFullYear().toString(), `${new Date().toLocaleDateString()}.pdf`);
-
-    const header = "Lataus onnistui!";
-    const content = `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`;
-    const buttons = [{ text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {}) }];
-    this.displayAlert(header, content, buttons);
-  }
-
-  /**
    * Accept contract
    */
   private signContractClicked = async () => {
@@ -219,13 +201,6 @@ class ContractTerms extends React.Component<Props, State> {
             <Text style={styles.Text}>
               {`Satokautta ${this.state.contract ? this.state.contract.year : ""} koskeva sopimus`}
             </Text>
-          </View>
-          <View>
-            <TouchableOpacity onPress={this.downloadContractPdfClicked}>
-              <Text style={styles.linkStyle}>
-                Lataa sopimus PDF - muodossa.
-                </Text>
-            </TouchableOpacity>
           </View>
           <View>
             <CheckBox
