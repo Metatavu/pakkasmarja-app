@@ -31,6 +31,9 @@ export interface Strings extends LocalizedStringsMethods {
   deliveryReception: string
 
   fillAllAreaDetailFields: string
+  insufficientContractAmount: string
+
+  contractDetailsReadFromContract: string
 }
 
 const strings: Strings = new LocalizedStrings({

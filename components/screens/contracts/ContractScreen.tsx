@@ -125,9 +125,13 @@ class ContractScreen extends React.Component<Props, State> {
       this.setState({ requireAreaDetails, allowDeliveryAll });
 
       const { areaDetailValues } = this.state.contractData;
+      const totalAmount = this.calculateTotalAmount(areaDetailValues, itemGroup.minimumProfitEstimation);
       if (requireAreaDetails && (areaDetailValues.length < 1 || !this.allFieldsFilled(areaDetailValues))) {
-        const validationErrorText = strings.fillAllAreaDetailFields;
-        this.setState({ validationErrorText });
+        this.setState({ validationErrorText: strings.fillAllAreaDetailFields });
+      } else if (!this.isValidContractMinimumAmount(totalAmount)) {
+        this.setState({ validationErrorText: strings.insufficientContractAmount });
+      } else {
+        this.setState({ validationErrorText: "" });
       }
     }
   }
@@ -139,18 +143,36 @@ class ContractScreen extends React.Component<Props, State> {
    * @param value value
    */
   private updateContractData = (key: ContractDataKey, value: boolean | string | AreaDetail[]) => {
-    const contractData = this.state.contractData;
+    const { contractData, itemGroup } = this.state;
+    const minimumProfitEstimation = itemGroup ? itemGroup.minimumProfitEstimation : undefined;
     contractData[key] = value;
     this.setState({ contractData: contractData });
     this.checkIfCompanyApprovalNeeded();
+
+    if (key === "proposedQuantity") {
+      const totalAmount = this.calculateTotalAmount(contractData.areaDetailValues, minimumProfitEstimation);
+      if (!this.isValidContractMinimumAmount(totalAmount)) {
+        this.setState({ validationErrorText: strings.insufficientContractAmount });
+      } else {
+        this.setState({ validationErrorText: "" });
+      }
+      return;
+    } 
+    
     if (key === "areaDetailValues" && this.state.requireAreaDetails) {
       const { areaDetailValues } = this.state.contractData;
-      if (areaDetailValues.length > 0 && this.allFieldsFilled(areaDetailValues)) {
-        this.setState({ validationErrorText: "" });
-      } else {
-        const validationErrorText = strings.fillAllAreaDetailFields;
-        this.setState({ validationErrorText });
+      if (areaDetailValues.length < 1 && !this.allFieldsFilled(areaDetailValues)) {
+        this.setState({ validationErrorText: strings.fillAllAreaDetailFields });
+        return;
       }
+
+      const totalAmount = this.calculateTotalAmount(contractData.areaDetailValues, minimumProfitEstimation);
+      if (!this.isValidContractMinimumAmount(totalAmount)) {
+        this.setState({ validationErrorText: strings.insufficientContractAmount });
+        return;
+      }
+
+      this.setState({ validationErrorText: "" });
     }
   }
 
@@ -296,6 +318,29 @@ class ContractScreen extends React.Component<Props, State> {
     }
 
     return true;
+  }
+
+  /**
+   * Returns if contract proposed quantity is at least the total amount calculated from area details
+   * @param totalAmount total amount calculated from area details
+   */
+  private isValidContractMinimumAmount = (totalAmount: number): boolean => {
+    const { proposedQuantity } = this.state.contractData;
+    return proposedQuantity >= totalAmount;
+  }
+
+  /**
+   * Returns total amount from area detail values
+   * @param areaDetailValues area detail values
+   * @param minimumProfit minimum profit, if predefined in contract
+   */
+  private calculateTotalAmount = (areaDetailValues: AreaDetail[], minimumProfit?: number): number => {
+    const hasItems = areaDetailValues.length > 0;
+    return hasItems ? areaDetailValues.reduce((total, areaDetailValue) => {
+      const estimation = minimumProfit || areaDetailValue.profitEstimation || 0;
+      const hectares = areaDetailValue.size ? areaDetailValue.size : 0;
+      return total += estimation * hectares;
+    }, 0) : 0;
   }
 
   /**
