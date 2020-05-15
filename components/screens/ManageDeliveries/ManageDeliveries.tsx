@@ -322,7 +322,7 @@ class ManageDeliveries extends React.Component<Props, State> {
    * @param status status string
    */
   private handleSelectedStatusChange = (status: string) => {
-    this.setState({selectedDeliveryStatus: status});
+    this.setState({ selectedDeliveryStatus: status });
   }
 
   /**

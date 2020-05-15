@@ -9,8 +9,8 @@ import * as actions from "../../../actions";
 import TopBar from "../../layout/TopBar";
 import { Text, Fab, Container, Toast } from "native-base";
 import { DEFAULT_FILE, PDF_FILE, IMAGE_FILE } from '../../../static/images/';
-import RNFetchBlob from 'rn-fetch-blob'
-import { Icon } from 'react-native-elements'
+import RNFetchBlob from 'rn-fetch-blob';
+import { Icon } from 'react-native-elements';
 import PakkasmarjaApi from "../../../api";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 
@@ -18,8 +18,8 @@ import { REACT_APP_API_URL } from 'react-native-dotenv';
  * Component props
  */
 interface Props {
-  navigation: any,
-  accessToken?: AccessToken
+  navigation: any;
+  accessToken?: AccessToken;
 }
 
 /**

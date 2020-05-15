@@ -1,5 +1,5 @@
 import React, { Dispatch } from "react";
-import { GiftedChat, IChatMessage, IMessage, Actions, MessageImageProps, LoadEarlierProps, LoadEarlier, User } from 'react-native-gifted-chat'
+import { GiftedChat, IChatMessage, IMessage, Actions, MessageImageProps, LoadEarlierProps, LoadEarlier, User } from 'react-native-gifted-chat';
 import { connect } from "react-redux";
 import { AccessToken, StoreState, ConversationType } from "../../../types";
 import * as actions from "../../../actions";
@@ -20,9 +20,9 @@ const FAILSAFE_POLL_RATE = 5000;
  * Component properties
  */
 interface Props {
-  accessToken?: AccessToken,
-  threadId: number,
-  conversationType: ConversationType,
+  accessToken?: AccessToken;
+  threadId: number;
+  conversationType: ConversationType;
   unreads?: Unread[],
   unreadRemoved?: (unread: Unread) => void;
   unreadsUpdate?: (unreads: Unread[]) => void;

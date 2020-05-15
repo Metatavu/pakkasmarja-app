@@ -37,8 +37,8 @@ interface State {
   freshPlannedAmount: number;
   frozenProposalAmount: number;
   frozenPlannedAmount: number;
-  deliveriesState?: DeliveriesState,
-  initialCategory?: ItemGroupCategory
+  deliveriesState?: DeliveriesState;
+  initialCategory?: ItemGroupCategory;
 };
 
 /**
