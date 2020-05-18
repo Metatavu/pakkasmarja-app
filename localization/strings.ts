@@ -30,6 +30,7 @@ export interface Strings extends LocalizedStringsMethods {
   frozenDeliveries: string
   deliveryReception: string
 
+  fillAreaDetails: string
   fillAllAreaDetailFields: string
   insufficientContractAmount: string
 
