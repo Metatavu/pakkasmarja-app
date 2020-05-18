@@ -312,8 +312,8 @@ class ContractScreen extends React.Component<Props, State> {
    */
   private allFieldsFilled = (areaDetailValues: AreaDetail[]): boolean => {
     for (const areaDetail of areaDetailValues) {
-      const { name, size, species, profitEstimation } = areaDetail;
-      if (!name || !size || !species || !profitEstimation) {
+      const { name, size, species } = areaDetail;
+      if (!name || !size || !species) {
         return false;
       }
     }
