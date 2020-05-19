@@ -57,7 +57,17 @@ class AuthRefresh extends React.Component<Props, State> {
         }
       }
     }, 30000);
+
     this.unreadTimer = setInterval(this.checkUnreads, 1000 * 30);
+  }
+
+  /**
+   * Component did update lifecycle event
+   */
+  componentDidUpdate = (prevProps: Props) => {
+    if (!prevProps.accessToken && this.props.accessToken) {
+      this.checkUnreads();
+    }
   }
 
   /**

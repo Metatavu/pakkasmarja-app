@@ -103,7 +103,8 @@ class NewDelivery extends React.Component<Props, State> {
     this.setState({ loading: true });
     const Api = new PakkasmarjaApi();
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, this.props.accessToken.userId, undefined, 999);
+    const unfilteredProducts: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, this.props.accessToken.userId, undefined, 999);
+    const products = unfilteredProducts.filter(product => product.active === true);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
@@ -136,7 +137,7 @@ class NewDelivery extends React.Component<Props, State> {
       headerLeft:
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
-            name='arrow-down-left'
+            name='chevron-left'
             color='#fff'
             size={40}
             style={{ marginLeft: 30 }}

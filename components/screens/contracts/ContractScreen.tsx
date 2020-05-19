@@ -19,6 +19,7 @@ import { connect } from "react-redux";
 import { styles } from "./styles";
 import Icon from "react-native-vector-icons/Feather";
 import AppConfig from "../../../utils/AppConfig";
+import strings from "../../../localization/strings";
 
 /**
  * Interface for component props
@@ -122,6 +123,7 @@ class ContractScreen extends React.Component<Props, State> {
       const requireAreaDetails = configItemGroup && configItemGroup["require-area-details"] ? true : false;
       const allowDeliveryAll = configItemGroup && configItemGroup["allow-delivery-all"] ? true : false;
       this.setState({ requireAreaDetails, allowDeliveryAll });
+      this.validateContractData(this.state.contractData);
     }
   }
 
@@ -132,18 +134,38 @@ class ContractScreen extends React.Component<Props, State> {
    * @param value value
    */
   private updateContractData = (key: ContractDataKey, value: boolean | string | AreaDetail[]) => {
-    const contractData = this.state.contractData;
+    const { contractData } = this.state;
     contractData[key] = value;
     this.setState({ contractData: contractData });
     this.checkIfCompanyApprovalNeeded();
-    if (key === "areaDetailValues" && this.state.requireAreaDetails) {
-      if (this.state.contractData.areaDetailValues.length > 0) {
-        this.setState({ validationErrorText: "" });
-      } else {
-        const validationErrorText = "Täytä tuotannossa olevat hehtaarit taulukkoon"
-        this.setState({ validationErrorText });
+    this.validateContractData(contractData);
+  }
+
+  /**
+   * Sets validation error text if contract data is not valid
+   * @param contractData contract data
+   */
+  private validateContractData = (contractData: ContractData) => {
+    const { itemGroup } = this.state;
+    const minimumProfitEstimation = itemGroup ? itemGroup.minimumProfitEstimation : undefined;
+    if (this.state.requireAreaDetails) {
+      const { areaDetailValues } = this.state.contractData;
+      if (areaDetailValues.length < 1) {
+        this.setState({ validationErrorText: strings.fillAreaDetails });
+        return;
+      } else if (!this.allFieldsFilled(areaDetailValues)) {
+        this.setState({ validationErrorText: strings.fillAllAreaDetailFields });
+        return;
       }
     }
+
+    const totalAmount = this.calculateTotalAmount(contractData.areaDetailValues, minimumProfitEstimation);
+    if (!this.isValidContractMinimumAmount(totalAmount)) {
+      this.setState({ validationErrorText: strings.insufficientContractAmount });
+      return;
+    }
+
+    this.setState({ validationErrorText: "" });
   }
 
   /**
@@ -180,7 +202,7 @@ class ContractScreen extends React.Component<Props, State> {
       headerLeft:
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
-            name='arrow-down-left'
+            name='chevron-left'
             color='#fff'
             size={40}
             style={{ marginLeft: 30 }}
@@ -273,6 +295,47 @@ class ContractScreen extends React.Component<Props, State> {
         { text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {}) },
       ]
     );
+  }
+
+  /**
+   * Returns true if all fields of area detail values are filled
+   * @param areaDetailValues area detail values
+   * @returns true if all fields are filled, otherwise false
+   */
+  private allFieldsFilled = (areaDetailValues: AreaDetail[]): boolean => {
+    for (const areaDetail of areaDetailValues) {
+      const { name, size, species } = areaDetail;
+      if (!name || !size || !species) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Returns if contract proposed quantity is at least the total amount calculated from area details
+   * @param totalAmount total amount calculated from area details
+   * @returns true if proposed quantity is at least the total amount, otherwise false
+   */
+  private isValidContractMinimumAmount = (totalAmount: number): boolean => {
+    const { proposedQuantity } = this.state.contractData;
+    return proposedQuantity >= totalAmount;
+  }
+
+  /**
+   * Returns total amount from area detail values
+   * @param areaDetailValues area detail values
+   * @param minimumProfit minimum profit, if predefined in contract
+   * @returns total amount as number
+   */
+  private calculateTotalAmount = (areaDetailValues: AreaDetail[], minimumProfit?: number): number => {
+    const hasItems = areaDetailValues.length > 0;
+    return hasItems ? areaDetailValues.reduce((total, areaDetailValue) => {
+      const estimation = minimumProfit || areaDetailValue.profitEstimation || 0;
+      const hectares = areaDetailValue.size ? areaDetailValue.size : 0;
+      return total += estimation * hectares;
+    }, 0) : 0;
   }
 
   /**

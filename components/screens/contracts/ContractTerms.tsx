@@ -58,7 +58,7 @@ class ContractTerms extends React.Component<Props, State> {
       ssn: "",
       signAuthenticationUrl: "",
       modalOpen: false,
-      type: "2019",
+      type: "2020",
       loading: false
     };
   }
@@ -79,24 +79,6 @@ class ContractTerms extends React.Component<Props, State> {
     const signAuthenticationServicesService = api.getSignAuthenticationServicesService(this.props.accessToken.access_token);
     const signAuthenticationServices = await signAuthenticationServicesService.listSignAuthenticationServices();
     this.setState({ authServices: signAuthenticationServices });
-  }
-
-  /**
-   * Download contract as pdf
-   */
-  private downloadContractPdfClicked = async () => {
-    if (!this.props.accessToken || !this.state.contract || !this.state.contract.id) {
-      return;
-    }
-
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}`);
-    const pdfService = api.getPdfService(this.props.accessToken.access_token);
-    const pdfPath = await pdfService.findPdf(this.state.contract.id, new Date().getFullYear().toString(), `${new Date().toLocaleDateString()}.pdf`);
-
-    const header = "Lataus onnistui!";
-    const content = `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`;
-    const buttons = [{ text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {}) }];
-    this.displayAlert(header, content, buttons);
   }
 
   /**
@@ -188,7 +170,7 @@ class ContractTerms extends React.Component<Props, State> {
       headerLeft:
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
-            name='arrow-down-left'
+            name='chevron-left'
             color='#fff'
             size={40}
             style={{ marginLeft: 30 }}
@@ -219,13 +201,6 @@ class ContractTerms extends React.Component<Props, State> {
             <Text style={styles.Text}>
               {`Satokautta ${this.state.contract ? this.state.contract.year : ""} koskeva sopimus`}
             </Text>
-          </View>
-          <View>
-            <TouchableOpacity onPress={this.downloadContractPdfClicked}>
-              <Text style={styles.linkStyle}>
-                Lataa sopimus PDF - muodossa.
-                </Text>
-            </TouchableOpacity>
           </View>
           <View>
             <CheckBox

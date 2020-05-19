@@ -185,5 +185,13 @@ export default class PakkasmarjaApi {
   public getFileService(token: string) {
     return new FileService(REACT_APP_API_URL, token);
   }
+
+  /**
+   * Get shared files service
+   * @param token token
+   */
+  public getSharedFilesService(token: string) {
+    return this.getApi().getSharedFilesService(token);
+  }
   
 }

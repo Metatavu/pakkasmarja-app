@@ -16,5 +16,19 @@
   "contractsFooterLink": "Sopimukset",
   "noTitleAvailable": "Ei otsikkoa",
   "addImage": "Lisää kuva",
-  "cancelButton": "Peruuta"
+  "cancelButton": "Peruuta",
+
+  "DeliveryStatusDelivery": "Kuljetus",
+  "DeliveryStatusPlanned": "Suunniteltu",
+  "DeliveryStatusDone": "Valmiit",
+
+  "freshDeliveries": "Tuore",
+  "frozenDeliveries": "Pakastukseen",
+  "deliveryReception": "Toimitusten vastaanotto",
+
+  "fillAreaDetails": "Täytä tuotannossa olevat hehtaarit taulukkoon",
+  "fillAllAreaDetailFields": "Tuotannossa olevien hehtaarien taulukosta puuttuu tietoja. Täytä puuttuvat tiedot.",
+  "insufficientContractAmount": "Annettu sopimusmäärä on vähemmän kuin tuotannossa olevista hehtaareista arvioitu minimisopimusmäärä. Kasvata sopimusmäärää.",
+
+  "contractDetailsReadFromContract": "Tuoremarjojen hinnoittelusta ja laatuluokittelusta voit lukea sopimuksesta."
 }

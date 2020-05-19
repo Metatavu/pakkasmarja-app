@@ -21,6 +21,20 @@ export interface Strings extends LocalizedStringsMethods {
   noTitleAvailable: string
   addImage: string
   cancelButton: string
+
+  DeliveryStatusDelivery: string
+  DeliveryStatusPlanned: string
+  DeliveryStatusDone: string
+
+  freshDeliveries: string
+  frozenDeliveries: string
+  deliveryReception: string
+
+  fillAreaDetails: string
+  fillAllAreaDetailFields: string
+  insufficientContractAmount: string
+
+  contractDetailsReadFromContract: string
 }
 
 const strings: Strings = new LocalizedStrings({

@@ -95,7 +95,7 @@ class EditDelivery extends React.Component<Props, State> {
       headerLeft:
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
-            name='arrow-down-left'
+            name='chevron-left'
             color='#fff'
             size={40}
             style={{ marginLeft: 30 }}
@@ -117,7 +117,8 @@ class EditDelivery extends React.Component<Props, State> {
     const productsService = await Api.getProductsService(this.props.accessToken.access_token);
     const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
     const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
-    const products: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, this.props.accessToken.userId, undefined, 999);
+    const unfilteredProducts: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, this.props.accessToken.userId, undefined, 999);
+    const products = unfilteredProducts.filter(product => product.active === true);
     const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
     const productPrice: ProductPrice[] = await productPricesService.listProductPrices(deliveryData.product.id, "CREATED_AT_DESC", undefined, undefined, 1);
 

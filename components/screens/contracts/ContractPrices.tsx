@@ -5,6 +5,7 @@ import { Col, Row, Grid } from "react-native-easy-grid";
 import { ItemGroup, ItemGroupPrice } from "pakkasmarja-client";
 import ContractPriceModal from "./ContractPriceModal";
 import { styles } from "./styles";
+import strings from "../../../localization/strings";
 
 /**
  * Interface for component props
@@ -64,9 +65,9 @@ export default class ContractPrices extends React.Component<Props, State> {
         return (
             <Text style={{ fontSize: 18 }}>
               Takuuhinnan lisäksi yhtiö maksaa viljelijälle bonusta sopimuksen täyttöasteen mukaisesti.
-              Lisätietoja sopimuksen kohdasta Sopimuksen mukaiset toimitusmäärät, takuuhinnat ja bonus satokaudella 2019. Sopimusmäärän ylittävältä osalta mahdollinen lisämäärä, mahdollinen bonus ja maksuehto neuvotellaan aina erikseen.
+              Lisätietoja sopimuksen kohdasta Sopimuksen mukaiset toimitusmäärät, takuuhinnat ja bonus satokaudella 2020. Sopimusmäärän ylittävältä osalta mahdollinen lisämäärä, mahdollinen bonus ja maksuehto neuvotellaan aina erikseen.
               Kaikki hinnat ovat vähimmäishintoja ja ALV 0%. Toimitusehto on vapaasti yhtiön osoittaman pakastevaraston laiturilla (viljelijä maksaa rahdin). Yhtiöllä on oikeus markkinatilanteen vaatiessa korottaa hintoja haluamallaan tavalla.
-              Takuuhinnan maksuehto on viljely- ja ostosopimuksen mukainen. Bonukset tarkistetaan satokauden jälkeen, yhtiö tekee niistä ostolaskut bonukseen oikeutetuille viljelijöille ja ne pyritään maksamaan satovuoden joulukuussa. Bonusta ei makseta, jos sopimus on tehty 9.6. jälkeen.
+              Takuuhinnan maksuehto on viljely- ja ostosopimuksen mukainen. Bonukset tarkistetaan satokauden jälkeen, yhtiö tekee niistä ostolaskut bonukseen oikeutetuille viljelijöille ja ne pyritään maksamaan satovuoden joulukuussa. Bonusta ei makseta, jos sopimus on tehty 5.6. jälkeen.
             </Text>
         );
       case "304400/Mustaherukka":
@@ -145,15 +146,9 @@ export default class ContractPrices extends React.Component<Props, State> {
       );
     }
     return (
-      <View style={styles.WhiteContentView}>
-        <Text style={styles.ContentHeader}>Tuotemarjojen hinnottelu</Text>
-        <List>
-          <ListItem style={styles.listItem}><Text> Vähimmäislaatuvaatimukset täyttävästä tuoremarjasta yhtiö maksaa päivän hinnan.</Text></ListItem>
-          <ListItem style={styles.listItem}><Text> Yhtiö voi huomioida max. 0,20 eur Alv 0%/ kg -suuruisella bonuksella BONUS-laatuiset marjat.</Text></ListItem>
-          <ListItem style={styles.listItem}><Text> Tunneli-/ kasvihuonetuotannosta ostettavalle marjalle pyritään maksamaan korkeampi päivän hinta.</Text></ListItem>
-          <ListItem style={styles.listItem}><Text> Jos marjaerä ei täytä yhtiön vähimmäislaatuvaatimuksia neuvotellaan erän hinnasta aina erikseen viljelijän kanssa.</Text></ListItem>
-          <ListItem style={styles.listItem}><Text> Yhtiö voi myös maksaa kyseisellä viikolla toimittaneille viljelijöille lisäbonuksen hyvin onnistuneen sopimusyhteistyön johdosta.</Text></ListItem>
-        </List>
+      <View style={ styles.WhiteContentView }>
+        <Text style={ styles.ContentHeader }>Tuoremarjojen hinnottelu</Text>
+        <Text>{ strings.contractDetailsReadFromContract }</Text>
       </View>
     );
 

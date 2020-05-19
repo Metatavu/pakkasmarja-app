@@ -1,6 +1,6 @@
 import React, { Dispatch } from "react";
 import { connect } from "react-redux";
-import { AccessToken, StoreState } from "../../../types";
+import { AccessToken, StoreState, ConversationType } from "../../../types";
 import * as actions from "../../../actions";
 import { ChatGroup, Unread } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
@@ -16,7 +16,7 @@ import * as _ from "lodash";
  */
 interface Props {
   accessToken?: AccessToken
-  type: "CHAT" | "QUESTION",
+  type: ConversationType,
   unreads?: Unread[],
   onGroupSelected: (group: ChatGroup) => void
   onBackClick?: () => void

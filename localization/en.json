@@ -16,5 +16,19 @@
   "contractsFooterLink": "Contracts",
   "noTitleAvailable": "No title",
   "addImage": "Add image",
-  "cancelButton": "Cancel"
+  "cancelButton": "Cancel",
+
+  "DeliveryStatusDelivery": "Delivery",
+  "DeliveryStatusPlanned": "Planned",
+  "DeliveryStatusDone": "Done",
+
+  "freshDeliveries": "Fresh",
+  "frozenDeliveries": "Frozen",
+  "deliveryReception": "Delivery reception",
+
+  "fillAreaDetails": "Add details of hectares in production",
+  "fillAllAreaDetailFields": "Hectares in poduction table has empty fields. Fill in missing information.",
+  "insufficientContractAmount": "Proposed amount is less than minimum contract amount calculated from given hectare amount.",
+
+  "contractDetailsReadFromContract": "Details about pricing and quality control of fresh berries can be read from the contract."
 }

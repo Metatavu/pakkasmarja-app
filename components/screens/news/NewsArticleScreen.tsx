@@ -1,17 +1,17 @@
 import React, { Dispatch } from "react";
 import TopBar from "../../layout/TopBar";
-import MyWebView from 'react-native-webview-autoheight';
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import { View, Spinner } from 'native-base';
 import { AccessToken, StoreState } from "../../../types";
 import { NewsArticle, Unread } from "pakkasmarja-client";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
-import { TouchableHighlight } from "react-native";
+import { TouchableHighlight, Dimensions } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import moment from "moment";
 import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import AutoHeightWebView from 'react-native-autoheight-webview'
 import PakkasmarjaApi from "../../../api";
 
 /**
@@ -70,7 +70,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
       headerLeft:
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
-            name='arrow-down-left'
+            name='chevron-left'
             color='#fff'
             size={40}
             style={{ marginLeft: 30 }}
@@ -148,33 +148,30 @@ class NewsArticleScreen extends React.Component<Props, State> {
 
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View style={{paddingTop:30}}>
-          <MyWebView
-            source={{
-              html: `
-            <html>
-            <head>
-              <meta charset="utf-8"/>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <link rel="stylesheet" href="https://cdn.metatavu.io/libs/bootstrap/4.0.0/css/bootstrap.css"/>
-              <style>
-                h1{ 
-                  font-size: 24px
-                }
-              </style>
-            </head>
-            <body>
+        <AutoHeightWebView
+          style={{ width: Dimensions.get('window').width - 20, marginLeft: 10, marginRight: 10, marginTop: 20 }}
+          scrollEnabled={false}
+          customStyle={`
+            h1{ 
+              font-size: 24px
+            }
+          `}
+          files={[{
+            href: 'https://cdn.metatavu.io/libs/bootstrap/4.0.0/css/bootstrap.css',
+            type: 'text/css',
+            rel: 'stylesheet'
+          }]}
+          source={{ html: `
             <div class="container">
               <h1>${title}</h1>
               <p>${date}</p>
               ${imageData ? '<img src="data:image/jpeg;base64,' + imageData + '" style="width:100%;"/>' : ''}
               ${this.state.newsArticle.contents}
             </div>
-            </body>
-            </html>`
-            }}
-          />
-        </View>
+          ` }}
+          scalesPageToFit={false}
+          viewportContent={'width=device-width, user-scalable=no'}
+        />
       </BasicScrollLayout>
     );
   }
