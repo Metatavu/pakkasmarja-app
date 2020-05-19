@@ -17,11 +17,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>3.1</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -39,6 +39,8 @@
 	</dict>
 	<key>NSAppleMusicUsageDescription</key>
 	<string>To see media</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>To use bluetooth</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>To access device</string>
 	<key>NSCalendarsUsageDescription</key>
@@ -46,9 +48,11 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Pakkasmarja would like to use your camera</string>
 	<key>NSHumanReadableCopyright</key>
-	<string/>
+	<string></string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>To use location</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string/>
+	<string></string>
 	<key>NSMotionUsageDescription</key>
 	<string>To capture motion</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
