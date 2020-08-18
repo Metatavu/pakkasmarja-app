@@ -96,7 +96,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       <View key={delivery.delivery.id} style={styles.renderCustomListItem}>
         <View style={{ flex: 1.8 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: "black", fontSize: 15 }}>{moment(delivery.delivery.time).utc().hours() > 12 ? `Jälkeen klo 12` : `Ennen klo 12`}</Text>
+            <Text style={{ color: "black", fontSize: 15 }}>{`klo ${moment(delivery.delivery.time).format("HH.mm")}`}</Text>
 
             <Text style={{ color: 'black', fontWeight: 'bold' }}>
               {productText}

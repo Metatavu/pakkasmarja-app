@@ -2,22 +2,27 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
+import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
-import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice } from "pakkasmarja-client";
+import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
-import moment from "moment"
+import DateTimePicker from 'react-native-modal-datetime-picker';
+import moment from "moment";
 import PakkasmarjaApi from "../../../api";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import ModalSelector from 'react-native-modal-selector';
-import IconPen from "react-native-vector-icons/EvilIcons";
+import EntypoIcon from "react-native-vector-icons/Entypo";
+import { extendMoment } from "moment-range";
+import _ from "lodash";
 import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
-import DateTimePicker from "react-native-modal-datetime-picker";
-import EntypoIcon from "react-native-vector-icons/Entypo";
+
+const Moment = require("moment");
+const extendedMoment = extendMoment(Moment);
+extendedMoment.locale("fi");
 
 /**
  * Component props
@@ -26,6 +31,7 @@ interface Props {
   navigation: any;
   accessToken?: AccessToken;
   deliveries?: DeliveriesState;
+  products?: Product[],
   itemGroupCategory?: ItemGroupCategory;
   deliveriesLoaded?: (deliveries: DeliveriesState) => void;
 };
@@ -45,19 +51,22 @@ interface State {
   userId?: string;
   price: string;
   amount: number;
+  deliveries: DeliveryProduct[];
   selectedDate?: Date;
   deliveryNotes?: DeliveryNote[];
   createModal: boolean;
   editModal: boolean;
   deliveryNoteId?: string;
-  deliveryTimeOptions: { label: string, value: number }[];
-  deliveryTimeValue: number;
+  deliveryPlaceOpeningHours?: OpeningHourInterval[];
+  defaultOpeningHours: OpeningHourInterval[];
+  selectedTime?: Date;
   productPrice?: ProductPrice;
   product?: Product;
+  noteEditable: boolean;
 };
 
 /**
- * Edit delivery component class
+ * New delivery component class
  */
 class EditDelivery extends React.Component<Props, State> {
 
@@ -73,12 +82,20 @@ class EditDelivery extends React.Component<Props, State> {
       datepickerVisible: false,
       modalOpen: false,
       amount: 0,
-      price: "0",
+      price: "",
       products: [],
       createModal: false,
       editModal: false,
-      deliveryTimeOptions: [{ label: "Ennen klo 12", value: 11 }, { label: "Jälkeen klo 12", value: 17 }],
-      deliveryTimeValue: 11
+      deliveries: [],
+      selectedDate: new Date(),
+      selectedTime: new Date(),
+      deliveryNotes: [],
+      noteEditable: false,
+      deliveryPlaceOpeningHours: [],
+      defaultOpeningHours: [{
+        opens: moment().startOf("day").toDate(),
+        closes: moment().endOf("day").toDate()
+      }]
     };
   }
 
@@ -105,39 +122,44 @@ class EditDelivery extends React.Component<Props, State> {
   };
 
   /**
-   * Component did mount life-cycle event
+   * Component did mount life cycle event
    */
-  public async componentDidMount() {
-    const deliveryData: DeliveryProduct = this.props.navigation.state.params.deliveryData;
-    if (!this.props.accessToken || !deliveryData.product || !deliveryData.product.id) {
+  public componentDidMount = async () => {
+    const { accessToken, itemGroupCategory, navigation } = this.props;
+    const deliveryData: DeliveryProduct = navigation.state.params.deliveryData;
+    if (!accessToken || !deliveryData.product || !deliveryData.product.id) {
       return;
     }
+
     this.setState({ loading: true });
     const Api = new PakkasmarjaApi();
-    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
-    const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
-    const unfilteredProducts: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, this.props.accessToken.userId, undefined, 999);
+    const productsService = Api.getProductsService(accessToken.access_token);
+    const unfilteredProducts: Product[] = await productsService.listProducts(undefined, itemGroupCategory, accessToken.userId, undefined, 999);
     const products = unfilteredProducts.filter(product => product.active === true);
-    const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(deliveryData.product.id, "CREATED_AT_DESC", undefined, undefined, 1);
-
+    const deliveryPlacesService = Api.getDeliveryPlacesService(accessToken.access_token);
+    const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
+    const productPricesService = Api.getProductPricesService(accessToken.access_token);
+    const productPrice: ProductPrice[] = products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [];
     if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
-      const deliveryTimeValue = moment(deliveryData.delivery.time).utc().hours() > 12 ? 17 : 11;
+      if (!deliveryPlace.id) {
+        return;
+      }
+      const deliveryPlaceOpeningHours = await this.getDeliveryPlaceOpeningHours(deliveryData.delivery.time, deliveryPlace.id);
       this.setState({
         deliveryData,
         products: products,
         deliveryPlaces: deliveryPlaces,
-        userId: this.props.accessToken.userId,
+        userId: accessToken.userId,
         productId: deliveryData.product.id,
         product: deliveryData.product,
         deliveryPlaceId: deliveryPlace.id || "",
         amount: deliveryData.delivery.amount,
-        selectedDate: deliveryData.delivery.time,
+        selectedDate: new Date(deliveryData.delivery.time),
+        selectedTime: new Date(deliveryData.delivery.time),
+        deliveryPlaceOpeningHours: deliveryPlaceOpeningHours,
         loading: false,
-        productPrice: productPrice[0],
-        deliveryTimeValue
+        productPrice: productPrice[0]
       }, () => this.loadDeliveryNotes());
       if (products[0] && !productPrice[0]) {
         this.renderAlert();
@@ -146,46 +168,132 @@ class EditDelivery extends React.Component<Props, State> {
   }
 
   /**
-   * Handles delivery update
+   * Component did update life cycle method
+   * 
+   * @param prevProps previous props
+   * @param prevState previous state
    */
-  private handleDeliveryUpdate = async () => {
-    if (!this.props.accessToken
-      || !this.state.product
-      || !this.state.product.id
-      || !this.state.deliveryPlaceId
-      || !this.state.selectedDate
-      || !this.state.deliveryData
-      || !this.state.deliveryData.product
-      || !this.state.deliveryData.delivery.id
-      || !this.state.userId
+  public componentDidUpdate = async (prevProps: Props, prevState: State) => {
+    const { deliveryPlaceId, selectedDate, selectedTime } = this.state;
+    if (
+      selectedDate &&
+      deliveryPlaceId &&
+      (prevState.selectedDate !== selectedDate ||
+       prevState.deliveryPlaceId !== deliveryPlaceId)
+    ) {
+      const deliveryPlaceOpeningHours = await this.getDeliveryPlaceOpeningHours(selectedDate, deliveryPlaceId);
+      this.setState({ deliveryPlaceOpeningHours });
+      
+      if (!this.getOpeningHours().find(time => this.matchTime(time, selectedTime))) {
+        this.setState({ selectedTime: undefined });
+      }
+    }
+  }
+
+    /**
+   * Gets delivery place opening hours on a given date
+   * 
+   * @param date date object
+   * @param deliveryPlaceId delivery place id
+   */
+  private getDeliveryPlaceOpeningHours = async (date: Date, deliveryPlaceId: string): Promise<OpeningHourInterval[] | undefined> => {
+    const { accessToken } = this.props;
+    if (!accessToken || !accessToken.access_token) {
+      return;
+    }
+
+    try {
+      const openingHoursService = Api.getOpeningHoursService(accessToken.access_token);
+      const rangeStart = moment(date).startOf("day").toDate();
+      const rangeEnd = moment(date).endOf("day").toDate();
+      const openingHourPeriods = await openingHoursService.listOpeningHourPeriods(deliveryPlaceId, rangeStart, rangeEnd);
+      const openingHourExceptions = await openingHoursService.listOpeningHourExceptions(deliveryPlaceId);
+      const chosenDate = moment(date);
+
+      const exception = openingHourExceptions.find(item => {
+        const exceptionDate = moment(item.exceptionDate);
+        return exceptionDate.format("YYYY-MM-DD") === chosenDate.format("YYYY-MM-DD");
+      });
+
+      if (exception) {
+        return exception.hours;
+      }
+
+      const period = openingHourPeriods.find(period => {
+        const periodBegin = moment(period.beginDate);
+        const periodEnd = moment(period.endDate);
+        const sameAsBegin = chosenDate.format("YYYY-MM-DD") === periodBegin.format("YYYY-MM-DD");
+        const sameAsEnd = chosenDate.format("YYYY-MM-DD") === periodEnd.format("YYYY-MM-DD");
+        return chosenDate.isBetween(periodBegin, periodEnd) || sameAsBegin || sameAsEnd;
+      });
+
+      if (period) {
+        const periodDay = period.weekdays.find((item, index) => {
+          const day = moment(period.beginDate).add(index, "days");
+          return day.format("YYYY-MM-DD") === chosenDate.format("YYYY-MM-DD");
+        });
+
+        if (periodDay) {
+          return periodDay.hours;
+        }
+      };
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+  }
+
+  /**
+   * Handles delivery submit
+   */
+  private handleDeliverySubmit = async () => {
+    const { accessToken, navigation } = this.props;
+    const {
+      deliveryPlaceId,
+      product,
+      selectedDate,
+      selectedTime,
+      amount,
+      price,
+      deliveryData,
+      userId
+    } = this.state;
+
+    if (
+      !accessToken ||
+      !product ||
+      !product.id ||
+      !deliveryPlaceId ||
+      !selectedDate ||
+      !deliveryData ||
+      !deliveryData.product ||
+      !deliveryData.delivery.id ||
+      !userId
     ) {
       return;
     }
 
     const Api = new PakkasmarjaApi();
-    const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-
-    let time: string | Date = moment(this.state.selectedDate).format("YYYY-MM-DD");
-    time = `${time} ${this.state.deliveryTimeValue}:00 +0000`
-    time = moment(time, "YYYY-MM-DD HH:mm Z").toDate();
+    const deliveryService = Api.getDeliveriesService(accessToken.access_token);
+    const deliveryTime = moment(selectedTime);
+    const time = moment(selectedDate)
+      .set({ "hour": deliveryTime.hour(), "minute": deliveryTime.minute() })
+      .toDate();
 
     const delivery: Delivery = {
-      id: this.state.deliveryData.delivery.id,
-      productId: this.state.product.id,
-      userId: this.state.userId,
+      id: deliveryData.delivery.id,
+      productId: product.id,
+      userId: userId,
       time: time,
       status: "PLANNED",
-      amount: this.state.amount,
-      price: this.state.price,
-      deliveryPlaceId: this.state.deliveryPlaceId || ""
+      amount: amount,
+      price: price,
+      deliveryPlaceId: deliveryPlaceId
     }
 
-    const updatedDelivery = await deliveryService.updateDelivery(delivery, this.state.deliveryData.delivery.id);
+    const updatedDelivery = await deliveryService.updateDelivery(delivery, deliveryData.delivery.id);
     this.updateDeliveries(updatedDelivery);
-    this.props.navigation.navigate("Delivery", {
-      deliveryId: this.state.deliveryData.delivery.id,
-      productId: this.state.productId
-    });
+    navigation.navigate("IncomingDeliveries");
   }
 
   /**
@@ -198,7 +306,7 @@ class EditDelivery extends React.Component<Props, State> {
 
     const product = this.state.products.find(product => product.id === delivery.productId);
     const deliveries = this.getDeliveries();
-    const updatedDeliveries = deliveries.map((deliveryData) => {
+    const updatedDeliveries = deliveries.map(deliveryData => {
       if (deliveryData.delivery.id === delivery.id) {
         return {
           delivery: delivery,
@@ -216,7 +324,7 @@ class EditDelivery extends React.Component<Props, State> {
       deliveriesState.freshDeliveryData = updatedDeliveries;
     }
 
-    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState)
+    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState);
   }
 
   /**
@@ -250,14 +358,23 @@ class EditDelivery extends React.Component<Props, State> {
   }
 
   /**
-    * Prints time
-    * 
-    * @param date
-    * 
-    * @return formatted start time
-    */
-  private printTime(date: Date): string {
+  * Prints date from Date
+  * 
+  * @param date date
+  * @returns date string formatted to finnish locale
+  */
+  private printDate(date: Date): string {
     return moment(date).format("DD.MM.YYYY");
+  }
+
+  /**
+   * Prints time from Date
+   * 
+   * @param date date
+   * @returns time string formatted to finnish locale
+   */
+  private printTime = (date: Date): string => {
+    return moment(date).format("HH.mm");
   }
 
   /**
@@ -265,7 +382,9 @@ class EditDelivery extends React.Component<Props, State> {
    */
   private removeDate = () => {
     this.setState({
-      selectedDate: undefined
+      selectedDate: undefined,
+      selectedTime: undefined,
+      deliveryPlaceOpeningHours: undefined
     });
   }
 
@@ -310,87 +429,114 @@ class EditDelivery extends React.Component<Props, State> {
     return !!(this.state.product
       && this.state.selectedDate
       && this.state.deliveryPlaceId
-      && this.state.deliveryTimeValue
+      && this.state.selectedTime
     );
+  }
+
+  /**
+   * Gets opening hours if selected delivery place has ones set for selected date
+   * 
+   * @returns date array if opening hours are found, otherwise undefined
+   */
+  private getOpeningHours = (): Date[] => {
+    const { deliveryPlaceOpeningHours, defaultOpeningHours } = this.state;
+    return deliveryPlaceOpeningHours ?
+      this.convertToDateArray(deliveryPlaceOpeningHours) :
+      this.convertToDateArray(defaultOpeningHours);
+  }
+
+  /**
+   * Converts opening hours to date array
+   * 
+   * @param openingHours array of opening hours
+   * @return array of dates
+   */
+  private convertToDateArray = (openingHours: OpeningHourInterval[]) => {
+    return _.flatten(openingHours.map(this.mapToDateArray));
+  }
+
+  /**
+   * Maps single opening hour interval to date array
+   * 
+   * @param interval opening hour interval
+   * @returns array of dates
+   */
+  private mapToDateArray = (interval: OpeningHourInterval): Date[] => {
+    const { opens, closes } = interval;
+    const dateRange = extendedMoment.range(
+      moment(opens),
+      moment(closes)
+    );
+    const momentDateArray = Array.from(dateRange.by("minutes", { step: 15, excludeEnd: true }));
+    return momentDateArray.map(date => date.toDate());
+  }
+
+  /**
+   * Checks if time of day matches
+   */
+  private matchTime = (a: Date | undefined, b: Date | undefined) => {
+    return a && b ?
+      moment(a).format("HH.mm") === moment(b).format("HH.mm") :
+      false;
   }
 
   /**
    * Render method
    */
   public render() {
-    if (this.state.loading) {
+    const { navigation } = this.props;
+    const {
+      loading,
+      products,
+      product,
+      amount,
+      deliveryData,
+      deliveryNoteId,
+      createModal,
+      editModal,
+      deliveryPlaceOpeningHours
+    } = this.state;
+    
+    if (loading) {
       return (
-        <View style={styles.loaderContainer}>
+        <View style={ styles.loaderContainer }>
           <ActivityIndicator size="large" color="#E51D2A" />
         </View>
       );
     }
 
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View style={styles.deliveryContainer}>
-          <Text style={styles.textWithSpace} >Valitse tuote</Text>
-          <View style={[styles.pickerWrap, { width: "100%" }]}>
-            {
-              Platform.OS !== "ios" &&
-              <Picker
-                selectedValue={this.state.productId}
-                style={{ height: 50, width: "100%" }}
-                onValueChange={(itemValue, itemIndex) =>
-                  this.handleProductChange(itemValue)
-                }>
+      <BasicScrollLayout navigation={ navigation } backgroundColor="#fff" displayFooter={ true }>
+        <View style={ styles.deliveryContainer }>
+          <Text style={ styles.textWithSpace }>Valitse tuote</Text>
+          { products.length < 1 ?
+            <Text>Ei voimassa olevaa sopimusta. Jos näin ei pitäisi olla, ole yhteydessä Pakkasmarjaan.</Text>
+            :
+            <React.Fragment>
+              <View style={[ styles.pickerWrap, { width: "100%" } ]}>
                 {
-                  this.state.products.map((product) => {
-                    return (
-                      <Picker.Item key={product.id} label={product.name || ""} value={product.id} />
-                    );
-                  })
+                  this.renderProductSelection()
                 }
-              </Picker>
-            }
-            {
-              Platform.OS === "ios" &&
-              <ModalSelector
-                data={this.state.products && this.state.products.map((product) => {
-                  return {
-                    key: product.id,
-                    label: product.name
-                  };
-                })}
-                selectedKey={this.state.productId}
-                initValue="Valitse tuote"
-                onChange={(option: any) => this.handleProductChange(option.key)} />
-            }
-          </View>
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
-            <View style={{ flex: 0.1 }}>
-              <EntypoIcon
-                name='info-with-circle'
-                color='#e01e36'
-                size={20}
-              />
-            </View >
-            <View style={{ flex: 1.1 }}>
-              {
-                this.state.productPrice ?
-                  <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
-                  :
-                  <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>
-              }
-            </View>
-          </View>
-          <Text style={styles.textWithSpace}>Määrä ({this.state.product && this.state.product.unitName})</Text>
-          <View style={[styles.center, styles.numericInputContainer]}>
+              </View>
+              <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
+                {
+                  this.renderProductPrice()
+                }
+              </View>
+            </React.Fragment>
+          }
+          <Text style={ styles.textWithSpace }>Määrä ({ product && product.unitName })</Text>
+          <View style={[ styles.center, styles.numericInputContainer ]}>
             <NumericInput
-              value={this.state.amount}
-              initValue={this.state.amount}
-              onChange={(value: number) => this.setState({ amount: value })}
-              totalWidth={Dimensions.get('window').width - (styles.deliveryContainer.padding * 2) - 20}
-              totalHeight={50}
-              iconSize={35}
-              step={10}
+              value={ amount }
+              initValue={ amount }
+              onChange={ (value: number) => this.setState({ amount: value }) }
+              totalWidth={ Dimensions.get('window').width - (styles.deliveryContainer.padding * 2) - 20 }
+              totalHeight={ 50 }
+              iconSize={ 35 }
+              step={ 10 }
               valueType='real'
-              minValue={0}
+              minValue={ 0 }
               textColor='black'
               iconStyle={{ color: 'white' }}
               rightButtonBackgroundColor='#e01e36'
@@ -400,180 +546,345 @@ class EditDelivery extends React.Component<Props, State> {
             />
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}><Text>= {this.state.product && this.state.amount * (this.state.product.units * this.state.product.unitSize)} KG</Text></View>
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+              <Text>= { product && amount * (product.units * product.unitSize) } KG</Text>
+            </View>
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
             <View style={{ flex: 1 }}>
-              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <Text style={styles.textWithSpace}>Toimituspäivä</Text>
-              </View>
-              <TouchableOpacity style={[styles.pickerWrap, { width: "98%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
-                <View style={{ flex: 1, flexDirection: "row" }}>
-                  <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
-                    <Text style={{ paddingLeft: 10 }}>
-                      {
-                        this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
-                      }
-                    </Text>
-                  </View>
-                  <View style={[styles.center, { flex: 0.6 }]}>
-                    {this.state.selectedDate ?
-                      <Icon
-                        style={{ color: "#e01e36" }}
-                        onPress={this.removeDate}
-                        type={"AntDesign"}
-                        name="close" />
-                      :
-                      <Icon
-                        style={{ color: "#e01e36" }}
-                        type="AntDesign"
-                        name="calendar"
-                      />
-                    }
-                  </View>
-                </View>
-              </TouchableOpacity>
+              {
+                this.renderDeliveryDateSelection()
+              }
             </View>
             <View style={{ flex: 1, marginLeft: "4%" }}>
-              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <Text style={styles.textWithSpace}>Ajankohta</Text>
-              </View>
-              <View style={[styles.pickerWrap, { width: "100%" }]}>
-                {
-                  Platform.OS !== "ios" &&
-                  <Picker
-                    selectedValue={this.state.deliveryTimeValue}
-                    style={{ height: 50, width: "100%" }}
-                    onValueChange={(itemValue) =>
-                      this.setState({ deliveryTimeValue: itemValue })
-                    }>
-                    {
-                      this.state.deliveryTimeOptions.map((deliveryTime) => {
-                        return (
-                          <Picker.Item
-                            key={deliveryTime.label}
-                            label={deliveryTime.label || ""}
-                            value={deliveryTime.value}
-                          />
-                        );
-                      })
-                    }
-                  </Picker>
-                }
-                {
-                  Platform.OS === "ios" &&
-                  <ModalSelector
-                    data={this.state.deliveryTimeOptions.map((deliveryTimeOption) => {
-                      return {
-                        key: deliveryTimeOption.value,
-                        label: deliveryTimeOption.label
-                      };
-                    })}
-                    selectedKey={this.state.deliveryTimeValue}
-                    initValue="Valitse ajankohta"
-                    onChange={(option: any) => { this.setState({ deliveryTimeValue: option.key }) }} />
-                }
-              </View>
-              <DateTimePicker
-                mode="date"
-                isVisible={this.state.datepickerVisible}
-                onConfirm={(date) => this.setState({ selectedDate: date, datepickerVisible: false })}
-                onCancel={() => { this.setState({ datepickerVisible: false }); }}
-              />
+              {
+                this.renderDeliveryTimeSelection()
+              }
             </View>
           </View>
-          <View style={[styles.pickerWrap, { width: "100%", marginTop: 25 }]}>
-            {
-              Platform.OS !== "ios" &&
-              <Picker
-                selectedValue={this.state.deliveryPlaceId}
-                style={{ height: 50, width: "100%" }}
-                onValueChange={(itemValue) =>
-                  this.setState({ deliveryPlaceId: itemValue })
-                }>
-                {
-                  this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
-                    return (
-                      <Picker.Item
-                        key={deliveryPlace.id}
-                        label={deliveryPlace.name || ""}
-                        value={deliveryPlace.id}
-                      />
-                    );
-                  })
-                }
-              </Picker>
+          <View style={{ flex: 1, flexDirection: "row", marginTop: 15, justifyContent: "center" }}>
+            { !deliveryPlaceOpeningHours &&
+              <Text style={{ color: "red" }}>Aukioloajat voivat vielä muuttua</Text>
             }
+          </View>
+          <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+            <Text style={ styles.textWithSpace }>Toimituspaikka</Text>
+          </View>
+          <View style={[ styles.pickerWrap, { width: "100%" } ]}>
             {
-              Platform.OS === "ios" &&
-              <ModalSelector
-                data={this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
-                  return {
-                    key: deliveryPlace.id,
-                    label: deliveryPlace.name
-                  };
-                })}
-                selectedKey={this.state.deliveryPlaceId}
-                initValue="Valitse toimituspaikka"
-                onChange={(option: any) => { this.setState({ deliveryPlaceId: option.key }) }} />
+              this.renderDeliveryPlaceSelection()
             }
           </View>
           <View style={{ flex: 1 }}>
             {
-              this.state.deliveryNotes ?
-                this.state.deliveryNotes.map((deliveryNote: DeliveryNote, index) => {
-                  return (
-                    <View key={index} style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
-                      <TouchableOpacity onPress={() => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true })}>
-                        <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
-                          <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
-                          <Text style={{ fontSize: 16, color: "#e01e36" }} >
-                            {`Katso/poista huomio ${index + 1}`}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                  );
-                })
-                : null
+              this.renderDeliveryNotes()
             }
-            <View style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
-              <TouchableOpacity onPress={() => this.setState({ createModal: true })}>
-                <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
-                  <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
-                  <Text style={{ fontSize: 16, color: "#e01e36" }} >
-                    {`Lisää huomio`}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
+            {
+              this.renderAddDeliveryNote()
+            }
             {
               !this.isValid() &&
-              <View style={[styles.center, { flex: 1, marginTop: 5 }]}>
+              <View style={[ styles.center, { flex: 1, marginTop: 5 } ]}>
                 <Text style={{ color: "red" }}>Tarvittavia tietoja puuttuu</Text>
               </View>
             }
-            <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity disabled={!this.isValid()} style={[styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 }]} onPress={this.handleDeliveryUpdate}>
+            <View style={[ styles.center, { flex: 1 } ]}>
+              <TouchableOpacity
+                disabled={ !this.isValid() }
+                style={[ styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 } ]}
+                onPress={ this.handleDeliverySubmit }
+              >
                 <Text style={styles.buttonText}>Tallenna</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
         <CreateDeliveryNoteModal
-          loadDeliveryNotes={this.loadDeliveryNotes}
-          deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
-          modalClose={() => this.setState({ createModal: false })}
-          modalOpen={this.state.createModal}
+          loadDeliveryNotes={ this.loadDeliveryNotes }
+          deliveryId={ deliveryData && deliveryData.delivery.id || ""}
+          modalClose={ () => this.setState({ createModal: false }) }
+          modalOpen={ createModal }
         />
         <ViewOrDeleteNoteModal
-          loadDeliveryNotes={this.loadDeliveryNotes}
-          deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
-          deliveryNoteId={this.state.deliveryNoteId || ""}
-          modalClose={() => this.setState({ editModal: false })}
-          modalOpen={this.state.editModal}
+          loadDeliveryNotes={ this.loadDeliveryNotes }
+          deliveryId={ deliveryData && deliveryData.delivery.id || "" }
+          deliveryNoteId={ deliveryNoteId || "" }
+          modalClose={ () => this.setState({ editModal: false }) }
+          modalOpen={ editModal }
         />
       </BasicScrollLayout>
+    );
+  }
+
+  /**
+   * Renders product selection
+   */
+  private renderProductSelection = () => {
+    const { products, product, productId } = this.state;
+    if (Platform.OS !== "ios") {
+      return (
+        <Picker
+          selectedValue={ productId }
+          style={{ height: 50, width: "100%" }}
+          onValueChange={(itemValue, itemIndex) =>
+            this.handleProductChange(itemValue)
+          }>
+          {
+            products.map((product) => {
+              return (
+                <Picker.Item key={ product.id } label={ product.name || "" } value={ product.id } />
+              );
+            })
+          }
+        </Picker>
+      );
+    } else {
+      return (
+        <ModalSelector
+          data={products && products.map((product) => {
+            return {
+              key: product.id,
+              label: product.name
+            };
+          })}
+          selectedKey={ product ? product.id : undefined }
+          initValue="Valitse tuote"
+          onChange={ (option: any) => { this.handleProductChange(option.key) }}
+        />
+      );
+    }
+  }
+
+  /**
+   * Renders product price
+   */
+  private renderProductPrice = () => {
+    const { productPrice } = this.state;
+    return (
+      <>
+        <View style={{ flex: 0.1 }}>
+          <EntypoIcon
+            name='info-with-circle'
+            color='#e01e36'
+            size={ 20 }
+          />
+        </View >
+        <View style={{ flex: 1.1 }}>
+          { productPrice ?
+            <Text style={ styles.textPrediction }>
+              {`Tämän hetkinen hinta ${productPrice.price} € / ${productPrice.unit.toUpperCase()} ALV 0%`}
+            </Text> :
+            <Text style={ styles.textPrediction }>
+              {`Tuotteelle ei löydy hintaa`}
+            </Text>
+          }
+        </View>
+      </>
+    );
+  }
+
+  /**
+   * Renders delivery date selection
+   */
+  private renderDeliveryDateSelection = () => {
+    const { datepickerVisible, selectedDate } = this.state;
+    return (
+      <>
+        <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+          <Text style={ styles.textWithSpace }>Toimituspäivä</Text>
+        </View>
+        <TouchableOpacity
+          style={[ styles.pickerWrap, { width: "98%" } ]}
+          onPress={ () => this.setState({ datepickerVisible: true }) }
+        >
+          <View style={{ flex: 1, flexDirection: "row" }}>
+            <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
+              <Text style={{ paddingLeft: 10 }}>
+                { selectedDate ?
+                  this.printDate(selectedDate) :
+                  "Valitse päivä"
+                }
+              </Text>
+            </View>
+            <View style={[ styles.center, { flex: 0.6 } ]}>
+              { selectedDate ?
+                <Icon
+                  style={{ color: "#e01e36" }}
+                  onPress={ this.removeDate }
+                  type="AntDesign"
+                  name="close"
+                /> :
+                <Icon
+                  style={{ color: "#e01e36" }}
+                  type="AntDesign"
+                  name="calendar"
+                />
+              }
+            </View>
+          </View>
+        </TouchableOpacity>
+        <DateTimePicker
+          date={ selectedDate }
+          mode="date"
+          isVisible={ datepickerVisible }
+          onConfirm={ date => this.setState({ selectedDate: date, datepickerVisible: false }) }
+          onCancel={ () => this.setState({ datepickerVisible: false }) }
+        />
+      </>
+    );
+  }
+
+  /**
+   * Renders delivery time selection
+   */
+  private renderDeliveryTimeSelection = () => {
+    const includedHours = this.getOpeningHours();
+
+    return (
+      <>
+        <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+          <Text style={ styles.textWithSpace }>Ajankohta</Text>
+        </View>
+        <View style={[ styles.pickerWrap, { width: "100%" } ]}>
+          { includedHours.length > 0 ?
+            this.renderTimePicker(includedHours) :
+            <Text style={{ flex: 1, textAlignVertical: "center", paddingLeft: 5 }}>Suljettu</Text>
+          }
+        </View>
+      </>
+    );
+  }
+
+  /**
+   * Renders time picker element
+   * 
+   * @param hours included hours list
+   */
+  private renderTimePicker = (hours: Date[]) => {
+    const { selectedTime } = this.state;
+    if (Platform.OS !== "ios") {
+      return (
+        <Picker
+          selectedValue={ hours.find(time => this.matchTime(time, selectedTime)) }
+          style={{ height: 50, width: "100%" }}
+          onValueChange={ itemValue => this.setState({ selectedTime: itemValue as Date }) }
+        >
+          {
+            hours.map(time => {
+              const timeString = this.printTime(time);
+              return (
+                <Picker.Item
+                  key={ timeString }
+                  label={ timeString }
+                  value={ time }
+                />
+              );
+            })
+          }
+        </Picker>
+      );
+    }
+
+    return (
+      <ModalSelector
+        data={
+          hours.map(time => {
+            const timeString = this.printTime(time);
+            return {
+              key: time,
+              label: timeString
+            };
+          })
+        }
+        selectedKey={ selectedTime }
+        initValue="Valitse toimitusaika"
+        onChange={ (option: any) => this.setState({ selectedTime: option.key }) }
+      />
+    );
+  }
+
+  /**
+   * Renders delivery place selection
+   */
+  private renderDeliveryPlaceSelection = () => {
+    const { deliveryPlaces, deliveryPlaceId } = this.state;
+    if (Platform.OS !== "ios") {
+      return (
+        <Picker
+          selectedValue={ deliveryPlaceId }
+          style={{ height: 50, width: "100%" }}
+          onValueChange={ itemValue => this.setState({ deliveryPlaceId: itemValue }) }
+        >
+          {
+            (deliveryPlaces || []).map(deliveryPlace => {
+              return (
+                <Picker.Item
+                  key={ deliveryPlace.id }
+                  label={ deliveryPlace.name || "" }
+                  value={ deliveryPlace.id }
+                />
+              );
+            })
+          }
+        </Picker>
+      );
+    } else {
+      return (
+        <ModalSelector
+          data={
+            (deliveryPlaces || []).map(deliveryPlace => {
+              return {
+                key: deliveryPlace.id,
+                label: deliveryPlace.name
+              };
+            })
+          }
+          selectedKey={ deliveryPlaceId }
+          initValue="Valitse toimituspaikka"
+          onChange={ (option: any) => this.setState({ deliveryPlaceId: option.key }) }
+        />
+      );
+    }
+  }
+
+  /**
+   * Renders delivery notes
+   */
+  private renderDeliveryNotes = () => {
+    const { deliveryNotes } = this.state;
+    if (!deliveryNotes) {
+      return null;
+    }
+
+    return deliveryNotes.map((deliveryNote: DeliveryNote, index) =>
+      <View key={ index } style={[ styles.center, { flex: 1, paddingVertical: 15 } ]}>
+        <TouchableOpacity onPress={ () => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true }) }>
+          <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
+            <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
+            <Text style={{ color: "#e01e36" }} >
+              {`Katso/poista huomio ${index + 1}`}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  /**
+   * Render add delivery note
+   */
+  private renderAddDeliveryNote = () => {
+    return (
+      <View style={[ styles.center, { flex: 1, paddingVertical: 15 } ]}>
+        <TouchableOpacity onPress={ () => this.setState({ createModal: true }) }>
+          <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
+            <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
+            <Text style={{ color: "#e01e36" }} >
+              {`Lisää huomio`}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
     );
   }
 }
@@ -586,8 +897,8 @@ class EditDelivery extends React.Component<Props, State> {
 function mapStateToProps(state: StoreState) {
   return {
     accessToken: state.accessToken,
-    itemGroupCategory: state.itemGroupCategory,
-    deliveries: state.deliveries
+    deliveries: state.deliveries,
+    itemGroupCategory: state.itemGroupCategory
   };
 }
 

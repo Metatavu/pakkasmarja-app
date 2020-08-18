@@ -414,7 +414,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                   :
                   <React.Fragment>
                     <Moment element={Text} style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
-                    <Text style={{ color: "black", fontSize: 15 }}>{moment(this.state.deliveryData.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 12` : ` - Ennen klo 12`}</Text>
+                    <Text style={{ color: "black", fontSize: 15 }}>{` - klo ${moment(this.state.deliveryData.delivery.time).format("HH.mm")}`}</Text>
                   </React.Fragment>
               }
             </View>
