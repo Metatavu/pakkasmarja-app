@@ -19,6 +19,7 @@ import Lightbox from 'react-native-lightbox';
 import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import moment from "moment";
+import { roundPrice } from "../../../utils/utility-functions";
 
 /**
  * Component props
@@ -206,15 +207,6 @@ class ProposalCheckScreen extends React.Component<Props, State> {
   }
 
   /**
-   * Rounds price to 2 decimal precision
-   * 
-   * @param num number
-   */
-  private roundPrice = (num: number) => {
-    return +(Math.round(parseFloat(`${num}` + "e+2")) + "e-2");
-  }
-
-  /**
    * Load data
    */
   private loadData = async () => {
@@ -370,7 +362,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
             <View style={{ flex: 1.1 }}>
               {
                 this.state.productPrice &&
-                <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0% (${this.roundPrice(parseFloat(this.state.productPrice.price) * 1.14)})`}</Text>
+                <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0% (${roundPrice(parseFloat(this.state.productPrice.price) * 1.14)})`}</Text>
               }
             </View>
           </View>
