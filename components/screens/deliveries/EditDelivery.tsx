@@ -18,6 +18,7 @@ import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import EntypoIcon from "react-native-vector-icons/Entypo";
+import { roundPrice } from "../../../utils/utility-functions";
 
 /**
  * Component props
@@ -373,7 +374,7 @@ class EditDelivery extends React.Component<Props, State> {
             <View style={{ flex: 1.1 }}>
               {
                 this.state.productPrice ?
-                  <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0%`}</Text>
+                  <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0% (${roundPrice(parseFloat(this.state.productPrice.price) * 1.14)})`}</Text>
                   :
                   <Text style={styles.textPrediction}>{`Tuotteelle ei löydy hintaa`}</Text>
               }
