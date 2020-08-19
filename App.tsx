@@ -34,16 +34,15 @@ import strings from "./localization/strings";
 import ManageDeliveries from "./components/screens/ManageDeliveries/ManageDeliveries";
 import ManageDelivery from "./components/screens/ManageDeliveries/ManageDelivery";
 import DatabankScreen from "./components/screens/databank/DatabankScreen";
-import { TouchableOpacity } from "react-native";
 
 interface State {
   authenticated: boolean
 }
-const initalStoreState: StoreState = {
+const initialStoreState: StoreState = {
   unreads: []
 };
 
-const store = createStore<StoreState, AppAction, any, any>(reducer as any, initalStoreState);
+const store = createStore<StoreState, AppAction, any, any>(reducer as any, initialStoreState);
 
 const RootStack = createStackNavigator({
   Main: MainScreen,

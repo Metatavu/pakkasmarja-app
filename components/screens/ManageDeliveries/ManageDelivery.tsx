@@ -157,6 +157,7 @@ class ManageDelivery extends React.Component<Props, State> {
         deliveryData,
         deliveryPlaceId: deliveryPlace && deliveryPlace.id,
         amount: deliveryData.delivery.amount,
+        selectedDate: new Date(deliveryData.delivery.time),
         loading: false
       }, () => this.loadDeliveryNotes());
 
@@ -599,6 +600,7 @@ class ManageDelivery extends React.Component<Props, State> {
               </TouchableOpacity>
             </View>
             <DateTimePicker
+              date={ this.state.selectedDate }
               mode="datetime"
               is24Hour={true}
               isVisible={this.state.datepickerVisible}
