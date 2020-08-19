@@ -19,6 +19,9 @@ import { extendMoment } from "moment-range";
 import _ from "lodash";
 import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
+import DateTimePicker from "react-native-modal-datetime-picker";
+import EntypoIcon from "react-native-vector-icons/Entypo";
+import { roundPrice } from "../../../utils/utility-functions";
 
 const Moment = require("moment");
 const extendedMoment = extendMoment(Moment);
@@ -672,7 +675,7 @@ class EditDelivery extends React.Component<Props, State> {
         <View style={{ flex: 1.1 }}>
           { productPrice ?
             <Text style={ styles.textPrediction }>
-              {`Tämän hetkinen hinta ${productPrice.price} € / ${productPrice.unit.toUpperCase()} ALV 0%`}
+              {`Tämän hetkinen hinta ${productPrice.price} € / ${productPrice.unit.toUpperCase()} ALV 0% (${roundPrice(parseFloat(this.state.productPrice.price) * 1.14)})`}
             </Text> :
             <Text style={ styles.textPrediction }>
               {`Tuotteelle ei löydy hintaa`}
