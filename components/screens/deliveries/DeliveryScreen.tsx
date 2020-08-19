@@ -363,32 +363,52 @@ class DeliveryScreen extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    if (this.state.loading || !this.state.deliveryData || !this.state.deliveryData.product || !this.state.deliveryData.delivery.time) {
+    const { navigation } = this.props;
+    const {
+      loading,
+      deliveryData,
+      deliveryPlace,
+      deliveryQuality,
+      editable,
+      deliveryNotes,
+      alvAmount,
+      createModal,
+      editModal,
+      deliveryNoteId
+    } = this.state;
+
+    if (loading || !deliveryData || !deliveryData.product || !deliveryData.delivery.time) {
       return (
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#E51D2A" />
         </View>
       );
     }
-    const { status } = this.state.deliveryData.delivery;
+    const { status } = deliveryData.delivery;
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onWillFocus={() => this.loadData()} />
+      <BasicScrollLayout navigation={ this.props.navigation } backgroundColor="#fff" displayFooter={ true }>
+        <NavigationEvents onWillFocus={ () => this.loadData() } />
         <View style={{ flex: 1, padding: 25 }}>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 15 }}>Tuote</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.product.name}`}</Text>
+              <Text style={{ fontSize: 15, color: "black" }}>
+                { `${deliveryData.product.name}` }
+              </Text>
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
-              <Text style={{ fontSize: 15 }}>Määrä ({this.state.deliveryData.product.unitName})</Text>
+              <Text style={{ fontSize: 15 }}>
+                Määrä ({ deliveryData.product.unitName })
+              </Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, color: "black" }}>{this.state.deliveryData.delivery.amount}</Text>
+              <Text style={{ fontSize: 15, color: "black" }}>
+                { deliveryData.delivery.amount }
+              </Text>
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
@@ -396,26 +416,35 @@ class DeliveryScreen extends React.Component<Props, State> {
               <Text style={{ fontSize: 15 }}>Kiloa</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, color: "black" }}>{this.state.deliveryData.delivery.amount * (this.state.deliveryData.product.units * this.state.deliveryData.product.unitSize)}</Text>
+              <Text style={{ fontSize: 15, color: "black" }}>
+                { deliveryData.delivery.amount * (deliveryData.product.units * deliveryData.product.unitSize) }
+              </Text>
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
-              {status === "DONE" || status === "NOT_ACCEPTED" ?
-                <Text style={{ fontSize: 15 }}>{status === "DONE" ? "Hyväksytty" : "Hylätty"}</Text>
+              { status === "DONE" || status === "NOT_ACCEPTED" ?
+                <Text style={{ fontSize: 15 }}>
+                  { status === "DONE" ? "Hyväksytty" : "Hylätty" }
+                </Text>
                 :
                 <Text style={{ fontSize: 15 }}>Toimituspäivä</Text>
               }
             </View>
             <View style={{ flex: 1, flexDirection: 'row' }}>
-              {
-                status === "DONE" || status === "NOT_ACCEPTED" ?
-                  <Moment element={Text} style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY HH:mm">{this.state.deliveryData.delivery.time.toString()}</Moment>
-                  :
-                  <React.Fragment>
-                    <Moment element={Text} style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY">{this.state.deliveryData.delivery.time.toString()}</Moment>
-                    <Text style={{ color: "black", fontSize: 15 }}>{` - klo ${moment(this.state.deliveryData.delivery.time).format("HH.mm")}`}</Text>
-                  </React.Fragment>
+              { status === "DONE" || status === "NOT_ACCEPTED" ?
+                <Moment element={ Text } style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY HH:mm">
+                  { deliveryData.delivery.time.toString() }
+                </Moment>
+                :
+                <React.Fragment>
+                  <Moment element={ Text } style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY">
+                    { deliveryData.delivery.time.toString() }
+                  </Moment>
+                  <Text style={{ color: "black", fontSize: 15 }}>
+                    {` - klo ${moment(deliveryData.delivery.time).format("HH.mm")}`}
+                  </Text>
+                </React.Fragment>
               }
             </View>
           </View>
@@ -424,125 +453,130 @@ class DeliveryScreen extends React.Component<Props, State> {
               <Text style={{ fontSize: 15 }}>Toimituspaikka</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, color: "black" }}>{this.state.deliveryPlace ? this.state.deliveryPlace.name : ""}</Text>
+              <Text style={{ fontSize: 15, color: "black" }}>{deliveryPlace ? deliveryPlace.name : ""}</Text>
             </View>
           </View>
-          {this.state.deliveryQuality &&
+          { deliveryQuality &&
             <View style={{ flex: 1, flexDirection: 'row', alignItems: "center", paddingVertical: 5, height: 60 }}>
               <View style={{ flex: 0.8 }}>
                 <Text style={{ fontSize: 15 }}>Laatuluokka</Text>
               </View>
               <View style={{ flex: 1, flexDirection: "row", alignItems: "center" }}>
-                <View style={[styles.deliveryQualityRoundView, { backgroundColor: this.state.deliveryQuality.color || "grey" }]} >
-                  <Text style={[styles.deliveryQualityRoundViewText, { fontSize: 15 }]}>{this.state.deliveryQuality.displayName.slice(0, 1).toUpperCase()}</Text>
+                <View style={[ styles.deliveryQualityRoundView, { backgroundColor: deliveryQuality.color || "grey" } ]}>
+                  <Text style={[ styles.deliveryQualityRoundViewText, { fontSize: 15 } ]}>
+                    { deliveryQuality.displayName.slice(0, 1).toUpperCase() }
+                  </Text>
                 </View>
                 <View >
-                  <Text style={{ color: "black", fontSize: 14, fontWeight: "400", marginBottom: 4 }}>{this.state.deliveryQuality.displayName}</Text>
+                  <Text style={{ color: "black", fontSize: 14, fontWeight: "400", marginBottom: 4 }}>
+                    { deliveryQuality.displayName }
+                  </Text>
                 </View>
               </View>
             </View>
           }
-          {
-            this.state.editable ?
-              <React.Fragment>
-                {
-                  this.state.deliveryNotes ?
-                    this.state.deliveryNotes.map((deliveryNote: DeliveryNote, index) => {
-                      return (
-                        <View key={index} style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
-                          <TouchableOpacity onPress={() => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true })}>
-                            <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
-                              <Icon size={25} style={{ color: "#e01e36" }} name="pencil" />
-                              <Text style={{ fontSize: 15, color: "#e01e36" }} >
-                                {`Katso/poista huomio`}
-                              </Text>
-                            </View>
-                          </TouchableOpacity>
+          { editable ?
+            <React.Fragment>
+              { deliveryNotes ?
+                deliveryNotes.map((deliveryNote: DeliveryNote, index) => {
+                  return (
+                    <View key={index} style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
+                      <TouchableOpacity onPress={() => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true })}>
+                        <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
+                          <Icon size={25} style={{ color: "#e01e36" }} name="pencil" />
+                          <Text style={{ fontSize: 15, color: "#e01e36" }} >
+                            {`Katso/poista huomio`}
+                          </Text>
                         </View>
-                      );
-                    })
-                    : null
-                }
-                <View style={[styles.center, { flex: 1, paddingVertical: 10 }]}>
-                  <TouchableOpacity onPress={() => this.setState({ createModal: true })}>
-                    <View style={[styles.center, { flex: 1, flexDirection: "row" }]}>
-                      <Icon size={25} style={{ color: "#e01e36" }} name="pencil" />
-                      <Text style={{ fontSize: 15, color: "#e01e36" }} >
-                        {`Lisää huomio`}
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })
+                :
+                null
+              }
+              <View style={[ styles.center, { flex: 1, paddingVertical: 10 } ]}>
+                <TouchableOpacity onPress={ () => this.setState({ createModal: true }) }>
+                  <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
+                    <Icon size={ 25 } style={{ color: "#e01e36" }} name="pencil" />
+                    <Text style={{ fontSize: 15, color: "#e01e36" }} >
+                      { `Lisää huomio` }
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+              <View style={[ styles.center, { flex: 1, paddingVertical: 25 } ]}>
+                <TouchableOpacity onPress={ () => navigation.navigate("EditDelivery", { deliveryData }) }>
+                  <View style={[ styles.center, { flexDirection: "row" } ]}>
+                    <Text style={[ styles.red, { fontWeight: "bold", fontSize: 18, textDecorationLine: "underline" } ]}>
+                      Muokkaa
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+              <View style={[ styles.center, { flex: 1, marginBottom: 20 } ]}>
+                <Text style={{ color: 'black', fontSize: 15 }}>{ this.state.description }</Text>
+              </View>
+              <View style={[ styles.center, { flex: 1 } ]}>
+                <TouchableOpacity
+                  style={[ styles.begindeliveryButton, styles.center, { width: "70%", height: 60 } ]}
+                  onPress={ () => this.handleBeginDelivery() }>
+                  <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Aloita toimitus</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={[ styles.center, { flex: 1, marginTop: 20 } ]}>
+                <TouchableOpacity
+                  style={[ styles.declineButton, styles.center, { width: "70%", height: 60 } ]}
+                  onPress={ () => this.handleRemoveDelivery() }>
+                  <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Hylkää toimitus</Text>
+                </TouchableOpacity>
+              </View>
+            </React.Fragment>
+            :
+            <React.Fragment>
+              {
+                status === "DONE" &&
+                <React.Fragment>
+                  <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+                    <View style={{ flex: 0.8 }}>
+                      <Text style={{ fontSize: 15 }}>Yksikköhinta ALV 0%</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, color: "black" }}>
+                        {`${deliveryData.delivery.amount == 0 ? 0 : deliveryData.delivery.price} € / ${deliveryData.product ? deliveryData.product.unitName.toUpperCase() : ""}`}
                       </Text>
                     </View>
-                  </TouchableOpacity>
-                </View>
-                <View style={[styles.center, { flex: 1, paddingVertical: 25 }]}>
-                  <TouchableOpacity onPress={() => {
-                    this.props.navigation.navigate("EditDelivery", {
-                      deliveryData: this.state.deliveryData
-                    })
-                  }}>
-                    <View style={[styles.center, { flexDirection: "row" }]}>
-                      <Text style={[styles.red, { fontWeight: "bold", fontSize: 18, textDecorationLine: "underline" }]} >Muokkaa</Text>
+                  </View>
+                  <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+                    <View style={{ flex: 0.8 }}>
+                      <Text style={{ fontSize: 15 }}>Yksikköhinta ALV 14%</Text>
                     </View>
-                  </TouchableOpacity>
-                </View>
-                <View style={[styles.center, { flex: 1, marginBottom: 20 }]}>
-                  <Text style={{ color: 'black', fontSize: 15 }}>{this.state.description}</Text>
-                </View>
-                <View style={[styles.center, { flex: 1 }]}>
-                  <TouchableOpacity
-                    style={[styles.begindeliveryButton, styles.center, { width: "70%", height: 60 }]}
-                    onPress={() => { this.handleBeginDelivery() }}>
-                    <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Aloita toimitus</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={[styles.center, { flex: 1, marginTop: 20 }]}>
-                  <TouchableOpacity
-                    style={[styles.declineButton, styles.center, { width: "70%", height: 60 }]}
-                    onPress={() => { this.handleRemoveDelivery() }}>
-                    <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Hylkää toimitus</Text>
-                  </TouchableOpacity>
-                </View>
-              </React.Fragment>
-              :
-              <React.Fragment>
-                {
-                  status === "DONE" &&
-                  <React.Fragment>
-                    <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-                      <View style={{ flex: 0.8 }}>
-                        <Text style={{ fontSize: 15 }}>Yksikköhinta ALV 0%</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.amount == 0 ? 0 : this.state.deliveryData.delivery.price} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""}`}</Text>
-                      </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 15, color: "black" }}>
+                        {`${deliveryData.delivery.amount == 0 ? 0 : (Number(deliveryData.delivery.price) * alvAmount).toFixed(3)} € / ${deliveryData.product ? deliveryData.product.unitName.toUpperCase() : ""}`}
+                      </Text>
                     </View>
-                    <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
-                      <View style={{ flex: 0.8 }}>
-                        <Text style={{ fontSize: 15 }}>Yksikköhinta ALV 14%</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 15, color: "black" }}>{`${this.state.deliveryData.delivery.amount == 0 ? 0 : (Number(this.state.deliveryData.delivery.price) * this.state.alvAmount).toFixed(3)} € / ${this.state.deliveryData.product ? this.state.deliveryData.product.unitName.toUpperCase() : ""}`}</Text>
-                      </View>
-                    </View>
-                  </React.Fragment>
-                }
-                <View style={{ flex: 1, marginTop: 30 }}>
-                  {this.renderDeliveryNotes()}
-                </View>
-              </React.Fragment>
+                  </View>
+                </React.Fragment>
+              }
+              <View style={{ flex: 1, marginTop: 30 }}>
+                { this.renderDeliveryNotes() }
+              </View>
+            </React.Fragment>
           }
         </View>
         <CreateDeliveryNoteModal
-          loadDeliveryNotes={this.loadDeliveryNotes}
-          deliveryId={this.state.deliveryData.delivery.id || ""}
-          modalClose={() => this.setState({ createModal: false })}
-          modalOpen={this.state.createModal}
+          loadDeliveryNotes={ this.loadDeliveryNotes }
+          deliveryId={ deliveryData.delivery.id || "" }
+          modalClose={ () => this.setState({ createModal: false }) }
+          modalOpen={ createModal }
         />
         <ViewOrDeleteNoteModal
-          loadDeliveryNotes={this.loadDeliveryNotes}
-          deliveryId={this.state.deliveryData.delivery.id || ""}
-          deliveryNoteId={this.state.deliveryNoteId || ""}
-          modalClose={() => this.setState({ editModal: false })}
-          modalOpen={this.state.editModal}
+          loadDeliveryNotes={ this.loadDeliveryNotes }
+          deliveryId={ deliveryData.delivery.id || "" }
+          deliveryNoteId={ deliveryNoteId || "" }
+          modalClose={ () => this.setState({ editModal: false }) }
+          modalOpen={ editModal }
         />
       </BasicScrollLayout>
     );
