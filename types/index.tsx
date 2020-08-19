@@ -100,7 +100,7 @@ export type ContractDataKey = "rejectComment" | "proposedQuantity" | "deliverAll
 /**
  * Type for delivery data key
  */
-export type DeliveryDataKey = "amount" | "deliveryPlaceId" | "deliveryTimeValue";
+export type DeliveryDataKey = "amount" | "deliveryPlaceId" | "deliveryTimeValue" | "selectedTime";
 
 /**
  * Type for box key

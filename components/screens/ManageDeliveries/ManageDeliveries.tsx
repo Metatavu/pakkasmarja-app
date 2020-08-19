@@ -177,6 +177,7 @@ class ManageDeliveries extends React.Component<Props, State> {
    * Render date picker
    */
   private renderDatePicker = () => {
+    const { date, datepickerVisible } = this.state;
     return (
       <View style={{ justifyContent: "center", alignItems: "center" }}>
         <View style={{ alignItems: "center" }}><Text style={{ fontSize: 18, paddingBottom: 10 }}>Valitse päivä</Text></View>
@@ -190,10 +191,11 @@ class ManageDeliveries extends React.Component<Props, State> {
           </View>
         </TouchableOpacity>
         <DateTimePicker
+          date={ date }
           mode="date"
-          isVisible={this.state.datepickerVisible}
-          onConfirm={(date) => this.setState({ date: date, datepickerVisible: false })}
-          onCancel={() => { this.setState({ datepickerVisible: false }); }}
+          isVisible={ datepickerVisible }
+          onConfirm={ date => this.setState({ date: date, datepickerVisible: false }) }
+          onCancel={() => this.setState({ datepickerVisible: false }) }
         />
       </View>
     );
