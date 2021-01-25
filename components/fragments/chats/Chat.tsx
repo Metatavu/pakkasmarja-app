@@ -199,6 +199,7 @@ class Chat extends React.Component<Props, State> {
             isLoadingEarlier={ this.state.loadingEarlier }
             onLoadEarlier={ this.loadEarlierMessages }
             renderUsernameOnMessage={ true }
+            onLongPress={ this.openMessageOptions }
             renderActions={ this.renderCustomActions }
             renderMessageImage={ this.renderMessageImage }
             renderLoadEarlier={ this.renderLoadEarlier }
@@ -294,58 +295,121 @@ class Chat extends React.Component<Props, State> {
   }
 
   /**
+   * Method for opening message options
+   *
+   * @param context context
+   * @param message message
+   */
+  private openMessageOptions = (context: any, message: IChatMessage) => {
+    const options = [strings.deleteButton, strings.cancelButton];
+    const cancelButtonIndex = options.length - 1;
+    context.actionSheet().showActionSheetWithOptions({ options, cancelButtonIndex },
+    (buttonIndex: number) => {
+      switch (buttonIndex) {
+        case 0:
+          this.deleteMessage(message._id);
+          break;
+      }
+    });
+  }
+
+  /**
+   * Method for deleting a message
+   *
+   * @param id message id
+   */
+  private deleteMessage = async (id: string | number) => {
+    const { accessToken, threadId } = this.props;
+    const { messages } = this.state;
+
+    if (!accessToken) {
+      return;
+    }
+
+    try {
+      const Api = new PakkasmarjaApi();
+      const messagesService = Api.getChatMessagesService(accessToken.access_token);
+      await messagesService.deleteChatMessage(threadId, Number(id));
+
+      const updatedMessages = messages.filter((message) => message._id !== id);
+
+      this.setState({
+        messages: updatedMessages
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  /**
    * Callback for receiving message from mqtt
    */
   private onMqttMessage = async (mqttMessage: any) => {
     try {
-      if (mqttMessage.threadId && mqttMessage.threadId == this.props.threadId) {
-        switch (mqttMessage.operation) {
-          case "CREATED": {
-            const { threadId, accessToken } = this.props;
-            const mqttMessageId = mqttMessage.messageId;
-            if (!accessToken || !threadId || !mqttMessageId) {
-              return;
-            }
+      switch (mqttMessage.operation) {
+        case "CREATED": {
+          const { threadId, accessToken } = this.props;
 
-            const messagesService = new PakkasmarjaApi().getChatMessagesService(accessToken.access_token);
-            const newMessage = await messagesService.findChatMessage(mqttMessage.threadId, mqttMessage.messageId);
-            if (newMessage.userId === accessToken.userId) {
-              return;
-            }
-
-            const latestMessage = this.getLatestMessage();
-            const chatMessages = await messagesService.listChatMessages(threadId, undefined, latestMessage.toDate());
-            const messages = await this.translateMessages(chatMessages);
-
-            this.setState((prevState: State) => {
-              return {
-                loading: false,
-                messages: GiftedChat.append(prevState.messages, messages)
-              }
-            });
-
-            const unreadsService = new PakkasmarjaApi().getUnreadsService(accessToken.access_token);
-            const updatedUnreads = await unreadsService.listUnreads();
-            this.props.unreadsUpdate && this.props.unreadsUpdate(updatedUnreads);
-
-            const { thread } = this.state;
-            thread && this.removeUnreads(thread);
-
-            break;
+          if (!(mqttMessage.threadId && mqttMessage.threadId == threadId)) {
+            return;
           }
-          case "READ": {
-            if (!this.state.thread || this.state.thread.answerType !== "TEXT") {
-              return;
-            }
-
-            if (this.props.conversationType === "QUESTION") {
-              this.checkThreadRead();
-            } else if (this.state.threadPermission === "MANAGE") {
-              this.checkThreadReadAmount();
-            }
-
-            break;
+          
+          const mqttMessageId = mqttMessage.messageId;
+          if (!accessToken || !threadId || !mqttMessageId) {
+            return;
           }
+
+          const messagesService = new PakkasmarjaApi().getChatMessagesService(accessToken.access_token);
+          const newMessage = await messagesService.findChatMessage(mqttMessage.threadId, mqttMessage.messageId);
+
+          if (newMessage.userId === accessToken.userId) {
+            return;
+          }
+
+          const latestMessage = this.getLatestMessage();
+          const chatMessages = await messagesService.listChatMessages(threadId, undefined, latestMessage.toDate());
+          const messages = await this.translateMessages(chatMessages);
+
+          this.setState((prevState: State) => {
+            return {
+              loading: false,
+              messages: GiftedChat.append(prevState.messages, messages)
+            }
+          });
+
+          const unreadsService = new PakkasmarjaApi().getUnreadsService(accessToken.access_token);
+          const updatedUnreads = await unreadsService.listUnreads();
+          this.props.unreadsUpdate && this.props.unreadsUpdate(updatedUnreads);
+
+          const { thread } = this.state;
+          thread && this.removeUnreads(thread);
+
+          break;
+        }
+        case "READ": {
+
+          if (!(mqttMessage.threadId && mqttMessage.threadId == this.props.threadId) || !this.state.thread || this.state.thread.answerType !== "TEXT") {
+            return;
+          }
+
+          if (this.props.conversationType === "QUESTION") {
+            this.checkThreadRead();
+          } else if (this.state.threadPermission === "MANAGE") {
+            this.checkThreadReadAmount();
+          }
+
+          break;
+        }
+        case "DELETED": {
+          const { id } = mqttMessage;
+          const { messages } = this.state;
+
+          const updatedMessages = messages.filter((message) => message._id !== id);
+
+          this.setState({
+            messages: updatedMessages
+          });
+          break;
         }
       }
     } catch(e) {

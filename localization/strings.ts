@@ -21,6 +21,7 @@ export interface Strings extends LocalizedStringsMethods {
   noTitleAvailable: string
   addImage: string
   cancelButton: string
+  deleteButton: string
 
   DeliveryStatusDelivery: string
   DeliveryStatusPlanned: string
