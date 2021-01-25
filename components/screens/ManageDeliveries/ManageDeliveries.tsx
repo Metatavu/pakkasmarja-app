@@ -311,7 +311,7 @@ class ManageDeliveries extends React.Component<Props, State> {
         }
         <TouchableOpacity
           style={[styles.begindeliveryButton, { width: "70%", height: 60, marginTop: 25, alignSelf: "center" }]}
-          onPress={() => this.handleListItemPress(category, true, undefined)}
+          onPress={ () => this.handleListItemPress(category, true, undefined) }
         >
           <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Uusi toimitus</Text>
         </TouchableOpacity>
