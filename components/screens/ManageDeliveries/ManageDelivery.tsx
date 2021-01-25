@@ -136,14 +136,16 @@ class ManageDelivery extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    const selectedDate: Date = this.props.navigation.state.params.date;
     const deliveryData: DeliveryListItem = this.props.navigation.state.params.deliveryListItem;
     const category: ItemGroupCategory = this.props.navigation.state.params.category;
     const isNewDelivery = this.props.navigation.state.params.isNewDelivery;
+
     if (!this.props.accessToken) {
       return;
     }
 
-    this.setState({ loading: true, isNewDelivery, category });
+    this.setState({ loading: true, isNewDelivery, category, selectedDate });
     const Api = new PakkasmarjaApi();
     const deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
     this.setState({
