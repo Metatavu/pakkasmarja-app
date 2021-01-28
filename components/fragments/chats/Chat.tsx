@@ -372,12 +372,10 @@ class Chat extends React.Component<Props, State> {
           const chatMessages = await messagesService.listChatMessages(threadId, undefined, latestMessage.toDate());
           const messages = await this.translateMessages(chatMessages);
 
-          this.setState((prevState: State) => {
-            return {
-              loading: false,
-              messages: GiftedChat.append(prevState.messages, messages)
-            }
-          });
+          this.setState((prevState: State) => ({
+            loading: false,
+            messages: GiftedChat.append(prevState.messages, messages)
+          }));
 
           const unreadsService = new PakkasmarjaApi().getUnreadsService(accessToken.access_token);
           const updatedUnreads = await unreadsService.listUnreads();
