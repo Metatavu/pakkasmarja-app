@@ -17,6 +17,7 @@
   "noTitleAvailable": "Ei otsikkoa",
   "addImage": "Lisää kuva",
   "cancelButton": "Peruuta",
+  "deleteButton": "Poista",
 
   "DeliveryStatusDelivery": "Kuljetus",
   "DeliveryStatusPlanned": "Suunniteltu",

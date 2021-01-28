@@ -1,4 +1,5 @@
 import React, { Dispatch } from "react";
+
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
@@ -661,6 +662,7 @@ class EditDelivery extends React.Component<Props, State> {
    */
   private renderProductPrice = () => {
     const { productPrice } = this.state;
+
     return (
       <>
         <View style={{ flex: 0.1 }}>
