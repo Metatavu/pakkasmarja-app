@@ -388,7 +388,12 @@ class Chat extends React.Component<Props, State> {
         }
         case "READ": {
 
-          if (!(mqttMessage.threadId && mqttMessage.threadId == this.props.threadId) || !this.state.thread || this.state.thread.answerType !== "TEXT") {
+          if (
+            !mqttMessage.threadId ||
+            mqttMessage.threadId !== this.props.threadId ||
+            !this.state.thread ||
+            this.state.thread.answerType !== "TEXT"
+          ) {
             return;
           }
 
