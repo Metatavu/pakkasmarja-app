@@ -352,7 +352,7 @@ class Chat extends React.Component<Props, State> {
         case "CREATED": {
           const { threadId, accessToken } = this.props;
 
-          if (!(mqttMessage.threadId && mqttMessage.threadId == threadId)) {
+          if (!mqttMessage.threadId || mqttMessage.threadId !== threadId) {
             return;
           }
           
