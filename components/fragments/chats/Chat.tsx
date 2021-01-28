@@ -303,14 +303,16 @@ class Chat extends React.Component<Props, State> {
   private openMessageOptions = (context: any, message: IChatMessage) => {
     const options = [strings.deleteButton, strings.cancelButton];
     const cancelButtonIndex = options.length - 1;
-    context.actionSheet().showActionSheetWithOptions({ options, cancelButtonIndex },
-    (buttonIndex: number) => {
-      switch (buttonIndex) {
-        case 0:
-          this.deleteMessage(message._id);
+    context.actionSheet().showActionSheetWithOptions(
+      { options, cancelButtonIndex },
+      (buttonIndex: number) => {
+        switch (buttonIndex) {
+          case 0:
+            this.deleteMessage(message._id);
           break;
+        }
       }
-    });
+    );
   }
 
   /**
