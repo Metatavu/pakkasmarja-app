@@ -318,14 +318,15 @@ class Chat extends React.Component<Props, State> {
     const options = [strings.deleteButton, strings.cancelButton];
     const cancelButtonIndex = options.length - 1;
     context.actionSheet().showActionSheetWithOptions({ options, cancelButtonIndex },
-    (buttonIndex: number) => {
-      switch (buttonIndex) {
-        case 0:
-          const userId = message.user._id;
-          this.deleteMessage(message._id, userId);
+      (buttonIndex: number) => {
+        switch (buttonIndex) {
+          case 0:
+            const userId = message.user._id;
+            this.deleteMessage(message._id, userId);
           break;
+        }
       }
-    });
+    );
   }
 
   /**
@@ -365,7 +366,7 @@ class Chat extends React.Component<Props, State> {
         case "CREATED": {
           const { threadId, accessToken } = this.props;
 
-          if (!(mqttMessage.threadId && mqttMessage.threadId == threadId)) {
+          if (!mqttMessage.threadId || mqttMessage.threadId !== threadId) {
             return;
           }
           
@@ -385,12 +386,10 @@ class Chat extends React.Component<Props, State> {
           const chatMessages = await messagesService.listChatMessages(threadId, undefined, latestMessage.toDate());
           const messages = await this.translateMessages(chatMessages);
 
-          this.setState((prevState: State) => {
-            return {
-              loading: false,
-              messages: GiftedChat.append(prevState.messages, messages)
-            }
-          });
+          this.setState((prevState: State) => ({
+            loading: false,
+            messages: GiftedChat.append(prevState.messages, messages)
+          }));
 
           const unreadsService = new PakkasmarjaApi().getUnreadsService(accessToken.access_token);
           const updatedUnreads = await unreadsService.listUnreads();
@@ -403,7 +402,12 @@ class Chat extends React.Component<Props, State> {
         }
         case "READ": {
 
-          if (!(mqttMessage.threadId && mqttMessage.threadId == this.props.threadId) || !this.state.thread || this.state.thread.answerType !== "TEXT") {
+          if (
+            !mqttMessage.threadId ||
+            mqttMessage.threadId !== this.props.threadId ||
+            !this.state.thread ||
+            this.state.thread.answerType !== "TEXT"
+          ) {
             return;
           }
 
