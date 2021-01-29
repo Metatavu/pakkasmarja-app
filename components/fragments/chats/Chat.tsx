@@ -301,13 +301,28 @@ class Chat extends React.Component<Props, State> {
    * @param message message
    */
   private openMessageOptions = (context: any, message: IChatMessage) => {
+    const { accessToken } = this.props;
+    const currentUserId = String(accessToken?.userId);
+    const userId = String(message.user._id);
+
+    if (!accessToken) {
+      return;
+    }
+
+    const adminRole = accessToken.realmRoles.find(role => role === "manage-threads");
+
+    if (currentUserId !== userId && !adminRole) {
+      return;
+    }
+
     const options = [strings.deleteButton, strings.cancelButton];
     const cancelButtonIndex = options.length - 1;
     context.actionSheet().showActionSheetWithOptions({ options, cancelButtonIndex },
     (buttonIndex: number) => {
       switch (buttonIndex) {
         case 0:
-          this.deleteMessage(message._id);
+          const userId = message.user._id;
+          this.deleteMessage(message._id, userId);
           break;
       }
     });
@@ -318,7 +333,7 @@ class Chat extends React.Component<Props, State> {
    *
    * @param id message id
    */
-  private deleteMessage = async (id: string | number) => {
+  private deleteMessage = async (id: string | number, userId: string | number) => {
     const { accessToken, threadId } = this.props;
     const { messages } = this.state;
 
