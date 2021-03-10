@@ -6,13 +6,14 @@ import { View, Spinner } from 'native-base';
 import { AccessToken, StoreState } from "../../../types";
 import { NewsArticle, Unread } from "pakkasmarja-client";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
-import { TouchableHighlight, Dimensions } from "react-native";
+import { TouchableHighlight, Dimensions, Linking } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import moment from "moment";
 import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import AutoHeightWebView from 'react-native-autoheight-webview'
 import PakkasmarjaApi from "../../../api";
+import WebView from "react-native-webview";
 
 /**
  * Component props
@@ -37,6 +38,11 @@ interface State {
  * NewsArticle screen component
  */
 class NewsArticleScreen extends React.Component<Props, State> {
+
+  /**
+   * Web view component reference
+   */
+  private webView = React.createRef<AutoHeightWebView>();
 
   /**
    * Constructor
@@ -149,6 +155,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <AutoHeightWebView
+          ref={ this.webView }
           style={{ width: Dimensions.get('window').width - 20, marginLeft: 10, marginRight: 10, marginTop: 20 }}
           scrollEnabled={false}
           customStyle={`
@@ -171,6 +178,12 @@ class NewsArticleScreen extends React.Component<Props, State> {
           ` }}
           scalesPageToFit={false}
           viewportContent={'width=device-width, user-scalable=no'}
+          onNavigationStateChange={ event => {
+            if (event.url !== "about:blank") {
+              Linking.openURL(event.url);
+              (this.webView.current as WebView).goBack();
+            }
+          }}
         />
       </BasicScrollLayout>
     );
