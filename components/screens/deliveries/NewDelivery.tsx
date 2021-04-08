@@ -133,7 +133,7 @@ class NewDelivery extends React.Component<Props, State> {
     
     const [ productPrice, deliveryQualities ] = await Promise.all([
       products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [],
-      (await deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, products[0].id || "")).reverse()
+      deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, products[0].id || "")
     ]);
 
     this.setState({
@@ -336,7 +336,7 @@ class NewDelivery extends React.Component<Props, State> {
     const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
     const [ productPrice, deliveryQualities ] = await Promise.all([
       productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1),
-      (await deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, productId)).reverse()
+      deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, productId)
     ]);
     if (!productPrice[0]) {
       this.renderAlert();
