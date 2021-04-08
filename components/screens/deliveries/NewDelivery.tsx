@@ -341,7 +341,11 @@ class NewDelivery extends React.Component<Props, State> {
     if (!productPrice[0]) {
       this.renderAlert();
     }
-    this.setState({ product, productPrice: productPrice[0], deliveryQualities });
+
+    this.setState({
+      product,
+      productPrice: productPrice[0], deliveryQualities
+    });
   }
 
   /**
