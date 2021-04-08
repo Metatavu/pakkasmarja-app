@@ -1023,7 +1023,6 @@ class NewDelivery extends React.Component<Props, State> {
             const name = deliveryQuality.displayName;
             const priceBonus = deliveryQuality.priceBonus;
             const priceBonusVAT = roundPrice(priceBonus * 1.14);
-            const unit = productPrice?.unit.toUpperCase();
             const active = deliveryQuality.deliveryQualityProductIds.some(id => id === productId);
 
             if (!active) {
@@ -1032,7 +1031,7 @@ class NewDelivery extends React.Component<Props, State> {
 
             return (
               <Text key={ index } style={ styles.listItem }>
-                { `${ name } ${ priceBonus } €/kg ALV 0% (${ priceBonusVAT } €/${ unit } ALV 14%)` }
+                { `${ name } ${ priceBonus } €/kg ALV 0% (${ priceBonusVAT } €/kg ALV 14%)` }
               </Text>
             );
           })
