@@ -627,9 +627,7 @@ class NewDelivery extends React.Component<Props, State> {
                 }
               </View>
               <View>
-                {
-                  this.renderFreshProductQualityPrices()
-                }
+                { this.renderFreshProductQualityPrices() }
               </View>
             </React.Fragment>
           }
