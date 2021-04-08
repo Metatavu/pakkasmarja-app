@@ -338,6 +338,7 @@ class NewDelivery extends React.Component<Props, State> {
       productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1),
       deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, productId)
     ]);
+
     if (!productPrice[0]) {
       this.renderAlert();
     }
