@@ -418,6 +418,7 @@ class EditDelivery extends React.Component<Props, State> {
     const Api = new PakkasmarjaApi();
     const productPricesService = await Api.getProductPricesService(accessToken.access_token);
     const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
+
     const [ productPrice, deliveryQualities ] = await Promise.all([
       productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1),
       deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, productId)
