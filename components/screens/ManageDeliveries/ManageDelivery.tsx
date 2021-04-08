@@ -456,19 +456,19 @@ class ManageDelivery extends React.Component<Props, State> {
 
     const boxInputs: { key: boxKey, label: string }[] = [{
       key: "redBoxesLoaned",
-      label: "Palautettu (Punaiset laatikot)"
-    },
-    {
-      key: "redBoxesReturned",
       label: "Lainattu (Punaiset laatikot)"
     },
     {
+      key: "redBoxesReturned",
+      label: "Palautettu (Punaiset laatikot)"
+    },
+    {
       key: "grayBoxesLoaned",
-      label: "Palautettu (Harmaat laatikot)"
+      label: "Lainattu (Harmaat laatikot)"
     },
     {
       key: "grayBoxesReturned",
-      label: "Lainattu (Harmaat laatikot)"
+      label: "Palautettu (Harmaat laatikot)"
     }]
 
     return (

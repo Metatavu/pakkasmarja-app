@@ -321,5 +321,14 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     borderBottomColor: "#fff",
     borderBottomWidth: 5
+  },
+  smallHeader: {
+    marginTop: 10,
+    marginBottom: 10
+  },
+  listItem: {
+    fontSize: 16,
+    marginTop: 5,
+    marginBottom: 5
   }
 });
