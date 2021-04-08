@@ -921,6 +921,7 @@ class EditDelivery extends React.Component<Props, State> {
    private renderFreshProductQualityPrices = () => {
     const { itemGroupCategory } = this.props;
     const { deliveryQualities, productPrice, productId } = this.state;
+    const deliveryQualitiesSorted = deliveryQualities.sort((a, b) => b.priceBonus - a.priceBonus);
 
     if (itemGroupCategory !== ItemGroupCategory.FRESH || !deliveryQualities.length) {
       return null;
@@ -932,7 +933,7 @@ class EditDelivery extends React.Component<Props, State> {
           Mahdolliset laatubonukset alla, lopullinen laatuluokka varmistuu vastaanoton yhteydessä
         </Text>
         {
-          deliveryQualities.map((deliveryQuality, index) => {
+          deliveryQualitiesSorted.map((deliveryQuality, index) => {
             const name = deliveryQuality.displayName;
             const priceBonus = deliveryQuality.priceBonus;
             const priceBonusVAT = roundPrice(priceBonus * 1.14);
