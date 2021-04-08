@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
-import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval } from "pakkasmarja-client";
+import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval, DeliveryQuality } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -65,6 +65,7 @@ interface State {
   selectedTime?: Date;
   noteEditable: boolean;
   productPrice?: ProductPrice;
+  deliveryQualities: DeliveryQuality[];
 };
 
 /**
@@ -99,7 +100,8 @@ class NewDelivery extends React.Component<Props, State> {
       defaultOpeningHours: [{
         opens: moment().startOf("day").toDate(),
         closes: moment().endOf("day").toDate()
-      }]
+      }],
+      deliveryQualities: []
     };
   }
 
@@ -107,30 +109,45 @@ class NewDelivery extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    const { accessToken } = this.props;
     const { selectedDate } = this.state;
-    if (!this.props.accessToken) {
+
+    if (!accessToken) {
       return;
     }
 
     this.setState({ loading: true });
     const Api = new PakkasmarjaApi();
-    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
-    const unfilteredProducts: Product[] = await productsService.listProducts(undefined, this.props.itemGroupCategory, this.props.accessToken.userId, undefined, 999);
+    const productsService = Api.getProductsService(accessToken.access_token);
+    const productPricesService = Api.getProductPricesService(accessToken.access_token);
+    const deliveryPlacesService = Api.getDeliveryPlacesService(accessToken.access_token);
+    const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
+
+    const [ unfilteredProducts, deliveryPlaces ] = await Promise.all([
+      productsService.listProducts(undefined, this.props.itemGroupCategory, accessToken.userId, undefined, 999),
+      deliveryPlacesService.listDeliveryPlaces()
+    ]);
+
     const products = unfilteredProducts.filter(product => product.active === true);
-    const deliveryPlacesService = await Api.getDeliveryPlacesService(this.props.accessToken.access_token);
-    const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
-    const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [];
     const deliveries = this.getDeliveries();
+    
+    const [ productPrice, deliveryQualities ] = await Promise.all([
+      products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [],
+      (await deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, products[0].id || "")).reverse()
+    ]);
+
     this.setState({
       deliveryPlaces,
       deliveries,
       products,
+      productId: products[0] ? products[0].id : undefined,
       product: products[0] ? products[0] : undefined,
       deliveryPlaceId: deliveryPlaces[0].id,
       productPrice: productPrice[0],
+      deliveryQualities,
       loading: false,
     });
+
     if (products[0] && !productPrice[0]) {
       this.renderAlert();
     }
@@ -305,19 +322,26 @@ class NewDelivery extends React.Component<Props, State> {
    * Handles product change
    */
   private handleProductChange = async (productId: string) => {
-    if (!this.props.accessToken) {
+    const { accessToken } = this.props;
+
+    if (!accessToken) {
       return;
     }
+
     this.setState({ productId });
     const products = this.state.products;
     const product = products.find((product) => product.id === productId)
     const Api = new PakkasmarjaApi();
-    const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1);
+    const productPricesService = Api.getProductPricesService(accessToken.access_token);
+    const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
+    const [ productPrice, deliveryQualities ] = await Promise.all([
+      productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1),
+      (await deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, productId)).reverse()
+    ]);
     if (!productPrice[0]) {
       this.renderAlert();
     }
-    this.setState({ product, productPrice: productPrice[0] });
+    this.setState({ product, productPrice: productPrice[0], deliveryQualities });
   }
 
   /**
@@ -597,6 +621,11 @@ class NewDelivery extends React.Component<Props, State> {
                   this.renderProductPrice()
                 }
               </View>
+              <View>
+                {
+                  this.renderFreshProductQualityPrices()
+                }
+              </View>
             </React.Fragment>
           }
           <Text style={ styles.textWithSpace }>Määrä ({ product && product.unitName })</Text>
@@ -743,11 +772,11 @@ class NewDelivery extends React.Component<Props, State> {
         </View >
         <View style={{ flex: 1.1 }}>
           { productPrice ?
+              <Text style={ styles.textPrediction }>
+                {`Tämän hetkinen hinta ${productPrice.price} € / ${productPrice.unit.toUpperCase()} ALV 0% (${roundPrice(parseFloat(this.state.productPrice?.price) * 1.14)} ALV 14%)`}
+              </Text> :
             <Text style={ styles.textPrediction }>
-              {`Tämän hetkinen hinta ${productPrice.price} € / ${productPrice.unit.toUpperCase()} ALV 0% (${roundPrice(parseFloat(this.state.productPrice.price) * 1.14)})`}
-            </Text> :
-            <Text style={ styles.textPrediction }>
-              {`Tuotteelle ei löydy hintaa`}
+              { `Tuotteelle ei löydy hintaa` }
             </Text>
           }
         </View>
@@ -971,6 +1000,46 @@ class NewDelivery extends React.Component<Props, State> {
       </View>
     );
   }
+
+  /**
+   * Method for rendering fresh product prices
+   */
+  private renderFreshProductQualityPrices = () => {
+    const { itemGroupCategory } = this.props;
+    const { deliveryQualities, productPrice, productId } = this.state;
+
+    if (itemGroupCategory !== ItemGroupCategory.FRESH || !deliveryQualities.length) {
+      return null;
+    }
+
+    return (
+      <>
+        <Text style={ styles.smallHeader }>
+          Mahdolliset laatubonukset alla, lopullinen laatuluokka varmistuu vastaanoton yhteydessä
+        </Text>
+        {
+          deliveryQualities.map((deliveryQuality, index) => {
+            const name = deliveryQuality.displayName;
+            const priceBonus = deliveryQuality.priceBonus;
+            const priceBonusVAT = roundPrice(priceBonus * 1.14);
+            const unit = productPrice?.unit.toUpperCase();
+            const active = deliveryQuality.deliveryQualityProductIds.some(id => id === productId);
+
+            if (!active) {
+              return null;
+            }
+
+            return (
+              <Text key={ index } style={ styles.listItem }>
+                { `${ name } ${ priceBonus } €/kg ALV 0% (${ priceBonusVAT } €/${ unit } ALV 14%)` }
+              </Text>
+            );
+          })
+        }
+      </>
+    );
+  }
+
 }
 
 /**
