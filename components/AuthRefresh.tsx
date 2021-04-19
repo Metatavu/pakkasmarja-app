@@ -10,9 +10,9 @@ import PakkasmarjaApi from "../api";
  * Component props
  */
 interface Props {
-  accessToken?: AccessToken,
-  onAccessTokenUpdate: (accessToken: AccessToken) => void
-  unreadsUpdate: (unreads: Unread[]) => void
+  accessToken?: AccessToken;
+  unreadsUpdate: (unreads: Unread[]) => void;
+  onAccessTokenUpdate: (accessToken: AccessToken) => void;
 };
 
 /**

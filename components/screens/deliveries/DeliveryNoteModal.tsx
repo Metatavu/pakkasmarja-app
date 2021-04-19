@@ -6,6 +6,7 @@ import { AccessToken, StoreState, DeliveryNoteData, DeliveryNoteDataKeys } from 
 import { View, TouchableOpacity, TextInput, Modal, Image, Platform } from "react-native";
 import { styles } from "./styles.tsx";
 import ImagePicker from 'react-native-image-picker';
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Interface for component props
@@ -183,9 +184,9 @@ class DeliveryNoteModal extends React.Component<Props, State> {
                 !this.props.imageUri && !this.props.editable &&
                 <View>
                   <Text style={styles.text}>Lisää kuva</Text>
-                  <TouchableOpacity style={styles.whiteButton} onPress={this.openImagePicker}>
+                  <AsyncButton style={styles.whiteButton} onPress={this.openImagePicker}>
                     <Text style={styles.smallWhiteButtonText}>Lisää kuva</Text>
-                  </TouchableOpacity>
+                  </AsyncButton>
                 </View>
               }
               {

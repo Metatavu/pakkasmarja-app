@@ -21,6 +21,7 @@ import EntypoIcon from "react-native-vector-icons/Entypo";
 import { extendMoment } from "moment-range";
 import _ from "lodash";
 import { roundPrice } from "../../../utils/utility-functions";
+import AsyncButton from "../../generic/async-button";
 
 const Moment = require("moment");
 const extendedMoment = extendMoment(Moment);
@@ -695,13 +696,13 @@ class NewDelivery extends React.Component<Props, State> {
               </View>
             }
             <View style={[ styles.center, { flex: 1 } ]}>
-              <TouchableOpacity
+              <AsyncButton
                 disabled={ !this.isValid() }
                 style={[ styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 } ]}
                 onPress={ this.handleDeliverySubmit }
               >
                 <Text style={styles.buttonText}>Tallenna</Text>
-              </TouchableOpacity>
+              </AsyncButton>
             </View>
           </View>
         </View>

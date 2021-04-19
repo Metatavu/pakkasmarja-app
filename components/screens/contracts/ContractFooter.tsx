@@ -2,6 +2,7 @@ import React from "react";
 import { Text } from "native-base";
 import { View, TouchableOpacity } from "react-native";
 import { styles } from "./styles";
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Interface for component props
@@ -42,11 +43,11 @@ export default class ContractFooter extends React.Component<Props, State> {
         {
           this.props.isActiveContract &&
           <View>
-            <TouchableOpacity style={{ marginBottom: 25 }} onPress={this.props.downloadContractPdf}>
+            <AsyncButton style={{ marginBottom: 25 }} onPress={this.props.downloadContractPdf}>
               <Text style={styles.linkStyle}>
                 Lataa sopimus PDF - muodossa.
                 </Text>
-            </TouchableOpacity>
+            </AsyncButton>
             <TouchableOpacity style={styles.bigRedButton} onPress={this.props.goBack}>
               <Text style={styles.buttonText}>
                 TAKAISIN
@@ -66,19 +67,19 @@ export default class ContractFooter extends React.Component<Props, State> {
                   TAKAISIN
               </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.smallWhiteButton} onPress={this.props.declineContract}>
+              <AsyncButton style={styles.smallWhiteButton} onPress={this.props.declineContract}>
                 <Text style={styles.smallWhiteButtonText}>
                   EN HYVÄKSY
                 </Text>
-              </TouchableOpacity>
+              </AsyncButton>
             </View>
             {
               !this.props.validationErrorText ?
-                <TouchableOpacity style={styles.bigRedButton} onPress={this.props.acceptContract}>
+                <AsyncButton style={styles.bigRedButton} onPress={this.props.acceptContract}>
                   <Text style={styles.buttonText}>
                     {this.props.approveButtonText}
                   </Text>
-                </TouchableOpacity>
+                </AsyncButton>
                 :
                 <TouchableOpacity style={{ ...styles.bigRedButton, backgroundColor: "lightgray" }}>
                   <Text style={styles.buttonText}>

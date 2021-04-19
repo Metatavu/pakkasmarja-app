@@ -8,6 +8,7 @@ import PakkasmarjaApi from "../../../api";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import { styles } from "./styles";
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Interface for component props
@@ -95,9 +96,9 @@ class ContractRejectModal extends React.Component<Props, State> {
               <TouchableOpacity style={styles.whiteButton} onPress={this.closeModal}>
                 <Text style={styles.whiteButtonText}>Peruuta</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.redButton} onPress={this.rejectContract}>
+              <AsyncButton style={styles.redButton} onPress={this.rejectContract}>
                 <Text style={styles.redButtonText}>Hylkää sopimus</Text>
-              </TouchableOpacity>
+              </AsyncButton>
             </View>
           </View>
         </Modal>

@@ -5,6 +5,7 @@ import Modal from "react-native-modal";
 import { ItemGroup } from "pakkasmarja-client";
 import { styles } from "./styles";
 import ModalSelector from 'react-native-modal-selector';
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Interface for component props
@@ -127,9 +128,9 @@ export default class ContractProposalModal extends React.Component<Props, State>
               <TouchableOpacity style={styles.smallWhiteButton} onPress={this.closeModal}>
                 <Text style={styles.smallWhiteButtonText}>Sulje</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.smallRedButton} onPress={this.props.sendContractProposalClicked}>
+              <AsyncButton style={styles.smallRedButton} onPress={this.props.sendContractProposalClicked}>
                 <Text style={styles.buttonText}>Lähetä</Text>
-              </TouchableOpacity>
+              </AsyncButton>
             </View>
           </View>
         </Modal>

@@ -22,6 +22,7 @@ import Autocomplete from 'native-base-autocomplete';
 import DeliveryNoteModal from "../deliveries/DeliveryNoteModal";
 import { FileService, FileResponse } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Component props
@@ -805,16 +806,16 @@ class ManageDelivery extends React.Component<Props, State> {
             </View>
           }
           <View style={[styles.center, { flex: 1 }]}>
-            <TouchableOpacity disabled={!this.isValid()} style={[styles.deliveriesButton, styles.center, { width: "70%", height: 60, marginTop: 15 }]} onPress={this.handleDeliveryAccept}>
+            <AsyncButton disabled={!this.isValid()} style={[styles.deliveriesButton, styles.center, { width: "70%", height: 60, marginTop: 15 }]} onPress={this.handleDeliveryAccept}>
               <Text style={styles.buttonText}>Hyväksy toimitus</Text>
-            </TouchableOpacity>
+            </AsyncButton>
           </View>
           {
             !this.state.isNewDelivery &&
             <View style={[styles.center, { flex: 1 }]}>
-              <TouchableOpacity disabled={!this.isValid()} style={[styles.declineButton, styles.center, { width: "70%", height: 60, marginTop: 15, }]} onPress={this.handleDeliveryReject}>
+              <AsyncButton disabled={!this.isValid()} style={[styles.declineButton, styles.center, { width: "70%", height: 60, marginTop: 15, }]} onPress={this.handleDeliveryReject}>
                 <Text style={styles.buttonText}>Hylkää toimitus</Text>
-              </TouchableOpacity>
+              </AsyncButton>
             </View>
           }
         </View>

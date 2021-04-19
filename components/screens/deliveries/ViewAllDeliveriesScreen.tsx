@@ -12,6 +12,7 @@ import { Delivery, Product, ItemGroup } from "pakkasmarja-client";
 import moment from "moment";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import * as _ from "lodash";
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Component props
@@ -262,34 +263,34 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
         <View>
           <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
             <View style={styles.center}>
-              <TouchableOpacity onPress={() => { this.changeItemGroup("previous") }} >
+              <AsyncButton onPress={async () => { await this.changeItemGroup("previous") }} >
                 <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
-              </TouchableOpacity>
+              </AsyncButton>
             </View>
             <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
               <Text style={{ fontWeight: "bold", fontSize: 24, color: "black" }}>
                 {this.state.selectedItemGroup ? this.state.selectedItemGroup.displayName : "-"}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => { this.changeItemGroup("next") }} >
+            <AsyncButton onPress={async () => { await this.changeItemGroup("next") }} >
               <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
-            </TouchableOpacity>
+            </AsyncButton>
           </View>
 
           <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
             <View style={styles.center}>
-              <TouchableOpacity onPress={() => { this.changeWeekNumber("previous") }} >
+              <AsyncButton onPress={async () => { await this.changeWeekNumber("previous") }} >
                 <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
-              </TouchableOpacity>
+              </AsyncButton>
             </View>
             <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
               <Text style={{ fontWeight: "bold", fontSize: 24, color: "black" }}>
                 {`Viikko ${this.state.weekNumber}`}
               </Text>
             </View>
-            <TouchableOpacity onPress={() => { this.changeWeekNumber("next") }} >
+            <AsyncButton onPress={async () => { await this.changeWeekNumber("next") }} >
               <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
-            </TouchableOpacity>
+            </AsyncButton>
           </View>
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
