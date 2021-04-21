@@ -417,7 +417,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
                 </TouchableOpacity>
               </View>
               <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end" }}>
-                <AsyncButton style={[styles.declineButton, { width: "95%", height: 60 }]} onPress={ this.handleProposalDecline }>
+                <AsyncButton style={[styles.declineButton, { width: "95%", height: 60 }]} onPress={this.handleProposalDecline}>
                   <Text style={styles.buttonText}>Hylkää</Text>
                 </AsyncButton>
               </View>
