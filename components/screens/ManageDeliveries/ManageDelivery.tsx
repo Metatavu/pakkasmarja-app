@@ -817,7 +817,11 @@ class ManageDelivery extends React.Component<Props, State> {
           {
             !this.state.isNewDelivery &&
             <View style={[styles.center, { flex: 1 }]}>
-              <AsyncButton disabled={!this.isValid()} style={[styles.declineButton, styles.center, { width: "70%", height: 60, marginTop: 15, }]} onPress={this.handleDeliveryReject}>
+              <AsyncButton
+                disabled={ !this.isValid() }
+                style={[ styles.declineButton, styles.center, { width: "70%", height: 60, marginTop: 15, } ]}
+                onPress={ this.handleDeliveryReject }
+              >
                 <Text style={styles.buttonText}>Hylkää toimitus</Text>
               </AsyncButton>
             </View>
