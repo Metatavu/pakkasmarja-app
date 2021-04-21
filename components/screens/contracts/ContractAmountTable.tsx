@@ -77,7 +77,7 @@ class ContractAmountTable extends React.Component<Props, State> {
     return sortedContracts.map((contractTableData) => {
       const contractStatus = contractTableData.contract.status;
       return (
-        <AsyncButton key={contractTableData.contract.id} onPress={ async () => await this.props.onContractClick(contractTableData.contract) }>
+        <AsyncButton key={contractTableData.contract.id} onPress={async () => await this.props.onContractClick(contractTableData.contract)}>
           {
             contractStatus !== "APPROVED" ?
               this.renderNotApproved(contractStatus, contractTableData.itemGroup) :
@@ -215,4 +215,3 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ContractAmountTable);
-
