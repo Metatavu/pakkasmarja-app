@@ -269,7 +269,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
               <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
                 <Text style={{ fontWeight: "bold", fontSize: 20, color: "black" }}>{this.state.selectedItemGroup.displayName}</Text>
               </View>
-              <AsyncButton onPress={async () => { await this.changeItemGroup("next") }} >
+              <AsyncButton onPress={async () => await this.changeItemGroup("next")}>
                 <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
               </AsyncButton>
             </View>
