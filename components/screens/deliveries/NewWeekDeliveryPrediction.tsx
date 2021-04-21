@@ -262,7 +262,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
           this.state.itemGroups.length > 0 ?
             <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
               <View style={styles.center}>
-                <AsyncButton onPress={async () => { await this.changeItemGroup("previous") }} >
+                <AsyncButton onPress={async () => await this.changeItemGroup("previous")}>
                   <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
                 </AsyncButton>
               </View>
