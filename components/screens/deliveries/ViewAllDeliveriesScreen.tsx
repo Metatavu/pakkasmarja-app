@@ -279,7 +279,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
 
           <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
             <View style={styles.center}>
-              <AsyncButton onPress={async () => { await this.changeWeekNumber("previous") }} >
+              <AsyncButton onPress={async () => await this.changeWeekNumber("previous")}>
                 <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
               </AsyncButton>
             </View>
