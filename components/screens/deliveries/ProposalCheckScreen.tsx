@@ -424,7 +424,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
             </View>
             <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
               <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <AsyncButton style={[styles.deliveriesButton, { width: "95%", height: 60 }]} onPress={ this.handleProposalAccept }>
+                <AsyncButton style={[styles.deliveriesButton, { width: "95%", height: 60 }]} onPress={this.handleProposalAccept}>
                   <Text style={styles.buttonText}>Hyväksy</Text>
                 </AsyncButton>
               </View>
