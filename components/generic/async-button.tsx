@@ -42,7 +42,11 @@ class AsyncButton extends React.Component<Props, State> {
     const { loading } = this.state;
 
     return (
-      <Button {...this.props} disabled={ loading ?? disabled } onPress={ this.handlePress }>
+      <Button
+        { ...this.props }
+        disabled={ loading ?? disabled }
+        onPress={ this.handlePress }
+      >
         { loading ? <ActivityIndicator /> : children }
       </Button>
     );
