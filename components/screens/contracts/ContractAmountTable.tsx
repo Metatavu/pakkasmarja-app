@@ -1,7 +1,7 @@
 import React, { Dispatch } from "react";
 import TopBar from "../../layout/TopBar";
 import { Text } from "native-base";
-import { View, TouchableOpacity, TouchableHighlight } from "react-native";
+import { View, TouchableHighlight } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { Contract, ItemGroup } from "pakkasmarja-client";
 import { AccessToken, StoreState, ContractTableData } from "../../../types";
@@ -11,6 +11,7 @@ import { styles } from "./styles";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import _ from "lodash";
 import { Icon } from "native-base";
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Component props
@@ -76,13 +77,13 @@ class ContractAmountTable extends React.Component<Props, State> {
     return sortedContracts.map((contractTableData) => {
       const contractStatus = contractTableData.contract.status;
       return (
-        <TouchableOpacity key={contractTableData.contract.id} onPress={() => { this.props.onContractClick(contractTableData.contract) }}>
+        <AsyncButton key={contractTableData.contract.id} onPress={async () => await this.props.onContractClick(contractTableData.contract)}>
           {
             contractStatus !== "APPROVED" ?
               this.renderNotApproved(contractStatus, contractTableData.itemGroup) :
               this.renderApproved(contractTableData.contract, contractTableData.itemGroup)
           }
-        </TouchableOpacity>
+        </AsyncButton>
       );
     });
   }
@@ -179,13 +180,13 @@ class ContractAmountTable extends React.Component<Props, State> {
           </Grid>
         </View>
         <View style={styles.WhiteContentView}>
-          <TouchableOpacity style={styles.bigRedButton} onPress={() => this.props.onProposeNewContractClick(this.props.type)}>
+          <AsyncButton style={styles.bigRedButton} onPress={async () => await this.props.onProposeNewContractClick(this.props.type)}>
             <Text style={styles.buttonText}>
               {
                 this.props.type === "FROZEN" ? "Ehdota uutta pakastesopimusta" : "Ehdota uutta tuoresopimusta"
               }
             </Text>
-          </TouchableOpacity>
+          </AsyncButton>
         </View>
       </View>
     );
@@ -214,4 +215,3 @@ function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ContractAmountTable);
-

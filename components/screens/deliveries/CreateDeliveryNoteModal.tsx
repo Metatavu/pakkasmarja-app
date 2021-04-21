@@ -10,6 +10,7 @@ import { FileService, FileResponse } from "../../../api/file.service";
 import { DeliveryNote } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Interface for component props
@@ -211,9 +212,9 @@ class CreateDeliveryNoteModal extends React.Component<Props, State> {
                 !this.state.deliveryNoteData.imageUri &&
                 <View>
                   <Text style={styles.text}>Lisää kuva</Text>
-                  <TouchableOpacity style={styles.whiteButton} onPress={this.openImagePicker}>
+                  <AsyncButton style={styles.whiteButton} onPress={this.openImagePicker}>
                     <Text style={styles.smallWhiteButtonText}>Lisää kuva</Text>
-                  </TouchableOpacity>
+                  </AsyncButton>
                 </View>
               }
               {
@@ -243,9 +244,9 @@ class CreateDeliveryNoteModal extends React.Component<Props, State> {
                 <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.discardDeliveryMessage}>
                   <Text style={styles.smallWhiteButtonText}>Peruuta</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.smallRedButton} onPress={this.createDeliveryNote}>
+                <AsyncButton style={styles.smallRedButton} onPress={this.createDeliveryNote}>
                   <Text style={styles.buttonText}>Tallenna</Text>
-                </TouchableOpacity>
+                </AsyncButton>
               </View>
             </View>
           </View>

@@ -9,6 +9,7 @@ import { FileService } from "../../../api/file.service";
 import { DeliveryNote } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Interface for component props
@@ -133,9 +134,9 @@ class ViewOrDeleteNoteModal extends React.Component<Props, State> {
                 <TouchableOpacity style={[styles.smallWhiteButton]} onPress={this.props.modalClose}>
                   <Text style={styles.smallWhiteButtonText}>Takaisin</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.smallRedButton} onPress={this.deleteDeliveryNote}>
+                <AsyncButton style={styles.smallRedButton} onPress={this.deleteDeliveryNote}>
                   <Text style={styles.buttonText}>Poista huomio</Text>
-                </TouchableOpacity>
+                </AsyncButton>
               </View>
             </View>
           </View>
