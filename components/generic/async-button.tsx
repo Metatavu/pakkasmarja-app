@@ -3,6 +3,9 @@ import React from "react";
 import { Button, NativeBase } from "native-base";
 import { ActivityIndicator } from "react-native";
 
+/**
+ * Interface describing component properties
+ */
 interface Props extends Omit<NativeBase.Button, "onPress"> {
   onPress?: () => void | Promise<void>;
 }
