@@ -1100,7 +1100,7 @@ class NewDelivery extends React.Component<Props, State> {
               }
 
               return (
-                <View style={[{ flex: 1, flexDirection: "row" }]}>
+                <View style={{ flex: 1, flexDirection: "row" }}>
                   <Text style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
                     { name }
                   </Text>
