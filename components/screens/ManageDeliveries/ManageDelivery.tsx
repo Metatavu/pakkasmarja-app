@@ -806,7 +806,11 @@ class ManageDelivery extends React.Component<Props, State> {
             </View>
           }
           <View style={[styles.center, { flex: 1 }]}>
-            <AsyncButton disabled={!this.isValid()} style={[styles.deliveriesButton, styles.center, { width: "70%", height: 60, marginTop: 15 }]} onPress={this.handleDeliveryAccept}>
+            <AsyncButton
+              disabled={ !this.isValid() }
+              style={[ styles.deliveriesButton, styles.center, { width: "70%", height: 60, marginTop: 15 } ]}
+              onPress={ this.handleDeliveryAccept }
+            >
               <Text style={styles.buttonText}>Hyväksy toimitus</Text>
             </AsyncButton>
           </View>
