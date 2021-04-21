@@ -337,7 +337,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
           </View>
         </View>
         <View style={styles.center}>
-          <AsyncButton style={[styles.deliveriesButton, { width: "70%", height: 60, marginTop: 10, marginBottom: 20 }]} onPress={ this.createNewWeekDeliveryPrediction }>
+          <AsyncButton style={[styles.deliveriesButton, { width: "70%", height: 60, marginTop: 10, marginBottom: 20 }]} onPress={this.createNewWeekDeliveryPrediction}>
             <Text style={styles.buttonText}>Lähetä viikkoennuste</Text>
           </AsyncButton>
         </View>
