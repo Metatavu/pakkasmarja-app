@@ -272,7 +272,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
                 {this.state.selectedItemGroup ? this.state.selectedItemGroup.displayName : "-"}
               </Text>
             </View>
-            <AsyncButton onPress={async () => { await this.changeItemGroup("next") }} >
+            <AsyncButton onPress={async () => await this.changeItemGroup("next")}>
               <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
             </AsyncButton>
           </View>
