@@ -288,7 +288,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
                 {`Viikko ${this.state.weekNumber}`}
               </Text>
             </View>
-            <AsyncButton onPress={async () => { await this.changeWeekNumber("next") }} >
+            <AsyncButton onPress={async () => await this.changeWeekNumber("next")}>
               <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
             </AsyncButton>
           </View>
