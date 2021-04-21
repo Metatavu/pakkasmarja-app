@@ -952,12 +952,11 @@ class EditDelivery extends React.Component<Props, State> {
   }
 
   /**
-   * Method for rendering fresh product prices
+   * Method for rendering fresh product quality prices
    */
   private renderFreshProductQualityPrices = () => {
     const { itemGroupCategory } = this.props;
-    const { deliveryQualities, productId } = this.state;
-    const deliveryQualitiesSorted = deliveryQualities.sort((a, b) => b.priceBonus - a.priceBonus);
+    const { deliveryQualities } = this.state;
 
     if (itemGroupCategory !== ItemGroupCategory.FRESH || !deliveryQualities.length) {
       return null;
@@ -966,11 +965,6 @@ class EditDelivery extends React.Component<Props, State> {
     const headerBaseStyles: StyleProp<TextStyle> = {
       width: "33.33%",
       color: "#fff",
-      padding: 10
-    };
-
-    const rowBaseStyles: StyleProp<TextStyle> = {
-      width: "33.33%",
       padding: 10
     };
 
@@ -1002,35 +996,48 @@ class EditDelivery extends React.Component<Props, State> {
               {`ALV 14%`}
             </Text>
           </View>
-          {
-            deliveryQualitiesSorted.map(deliveryQuality => {
-              const name = deliveryQuality.displayName;
-              const priceBonus = deliveryQuality.priceBonus;
-              const priceBonusVAT = roundPrice(priceBonus * 1.14);
-              const active = deliveryQuality.deliveryQualityProductIds.some(id => id === productId);
-
-              if (!active) {
-                return null;
-              }
-
-              return (
-                <View style={{ flex: 1, flexDirection: "row" }}>
-                  <Text style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
-                    { name }
-                  </Text>
-                  <Text style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
-                    {`${ priceBonus } €/kg`}
-                  </Text>
-                  <Text style={ rowBaseStyles }>
-                    {`${ priceBonusVAT } €/kg`}
-                  </Text>
-                </View>
-              );
-            })
-          }
+          { this.renderProductQualityPriceRows() }
         </View>
       </>
     );
+  }
+
+  /**
+   * Renders product quality price rows
+   */
+  private renderProductQualityPriceRows = () => {
+    const { deliveryQualities, productId } = this.state;
+    const deliveryQualitiesSorted = deliveryQualities.sort((a, b) => b.priceBonus - a.priceBonus);
+
+    const rowBaseStyles: StyleProp<TextStyle> = {
+      width: "33.33%",
+      padding: 10
+    };
+
+    return deliveryQualitiesSorted.map(deliveryQuality => {
+      const name = deliveryQuality.displayName;
+      const priceBonus = deliveryQuality.priceBonus;
+      const priceBonusVAT = roundPrice(priceBonus * 1.14);
+      const active = deliveryQuality.deliveryQualityProductIds.some(id => id === productId);
+
+      if (!active) {
+        return null;
+      }
+
+      return (
+        <View style={{ flex: 1, flexDirection: "row" }}>
+          <Text style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
+            { name }
+          </Text>
+          <Text style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
+            {`${ priceBonus } €/kg`}
+          </Text>
+          <Text style={ rowBaseStyles }>
+            {`${ priceBonusVAT } €/kg`}
+          </Text>
+        </View>
+      );
+    })
   }
 
 }
