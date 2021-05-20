@@ -156,7 +156,7 @@ class ChatThreadList extends React.Component<Props, State> {
         <ListItem
           avatar
           key={ item.id }
-          onPress={ () => this.props.onThreadSelected(item) }
+          onPress={ () => onThreadSelected(item) }
         >
           <Left>
             <Thumbnail source={ imageUrl } />
