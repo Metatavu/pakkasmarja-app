@@ -137,7 +137,7 @@ class ChatThreadList extends React.Component<Props, State> {
    * Renders list items
    */
   private renderListItems = (): JSX.Element[] => {
-    const { accessToken, onError } = this.props;
+    const { accessToken, onError, onThreadSelected } = this.props;
     if (!accessToken) {
       onError && onError(strings.accessTokenExpired);
       return [];
