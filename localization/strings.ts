@@ -2,6 +2,9 @@ import LocalizedStrings, { LocalizedStringsMethods } from 'localized-strings';
 import en from "./en.json";
 import fi from "./fi.json";
 
+/**
+ * Interface describing localized strings
+ */
 export interface Strings extends LocalizedStringsMethods {
   loginScreenHeader: string;
   loginScreenUsernameLabel: string;
