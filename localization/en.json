@@ -31,5 +31,7 @@
   "fillAllAreaDetailFields": "Hectares in poduction table has empty fields. Fill in missing information.",
   "insufficientContractAmount": "Proposed amount is less than minimum contract amount calculated from given hectare amount.",
 
-  "contractDetailsReadFromContract": "Details about pricing and quality control of fresh berries can be read from the contract."
+  "contractDetailsReadFromContract": "Details about pricing and quality control of fresh berries can be read from the contract.",
+
+  "noMessages": "No messages"
 }

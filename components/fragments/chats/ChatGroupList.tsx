@@ -5,7 +5,7 @@ import * as actions from "../../../actions";
 import { ChatGroup, Unread } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import strings from "../../../localization/strings";
-import { List, ListItem, Left, Thumbnail, Body, Text, Container, View, Spinner, Fab, Icon, Right, Badge } from "native-base";
+import { List, ListItem, Left, Thumbnail, Body, Text, View, Spinner, Fab, Icon, Badge } from "native-base";
 import { AVATAR_PLACEHOLDER } from "../../../static/images";
 import { ScrollView } from "react-native";
 import * as _ from "lodash";
@@ -15,20 +15,20 @@ import * as _ from "lodash";
  * Component properties
  */
 interface Props {
-  accessToken?: AccessToken
-  type: ConversationType,
-  unreads?: Unread[],
-  onGroupSelected: (group: ChatGroup) => void
-  onBackClick?: () => void
-  onError?: (errorMsg: string) => void
+  accessToken?: AccessToken;
+  type: ConversationType;
+  unreads?: Unread[];
+  onGroupSelected: (group: ChatGroup) => void;
+  onBackClick?: () => void;
+  onError?: (errorMsg: string) => void;
 };
 
 /**
  * Component state
  */
 interface State {
-  chatGroups: ChatGroup[],
-  loading: boolean
+  chatGroups: ChatGroup[];
+  loading: boolean;
 };
 
 /**
@@ -53,23 +53,31 @@ class ChatGroupList extends React.Component<Props, State> {
    * Component did mount life cycle method
    */
   public componentDidMount = async() => {
-    if (!this.props.accessToken) {
+    const { accessToken, type, onError } = this.props;
+
+    if (!accessToken) {
       return;
     }
 
-    this.setState({loading: true});
+    this.setState({ loading: true });
     try {
-      const chatGroups = await new PakkasmarjaApi().getChatGroupsService(this.props.accessToken.access_token).listChatGroups(this.props.type);
-      const sortChatGroupsByUnreads = _.sortBy( chatGroups, (group) => this.hasUnreadThreads(group.id!)).reverse(); 
+      const chatGroups = await new PakkasmarjaApi()
+        .getChatGroupsService(accessToken.access_token)
+        .listChatGroups(type);
+
+      const sortedGroups = _.orderBy(
+        chatGroups,
+        [ group => this.hasUnreadThreads(group.id!), group => group.title ],
+        [ "desc", "asc" ]
+      );
+
       this.setState({
-        chatGroups: sortChatGroupsByUnreads,
+        chatGroups: sortedGroups,
         loading: false
       });
     } catch (e) {
-      this.props.onError && this.props.onError(strings.errorCommunicatingWithServer);
-      this.setState({
-        loading: false
-      });
+      onError && onError(strings.errorCommunicatingWithServer);
+      this.setState({ loading: false });
     }
   }
 
@@ -77,10 +85,11 @@ class ChatGroupList extends React.Component<Props, State> {
    * Render
    */
   public render() {
+    const { onBackClick } = this.props;
 
     if (this.state.loading) {
       return (
-        <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Spinner color="red" />
         </View>
       );
@@ -90,18 +99,18 @@ class ChatGroupList extends React.Component<Props, State> {
       <View>
         <ScrollView>
           <List>
-            {this.renderListItems()}
+            { this.renderListItems() }
           </List>
         </ScrollView>
-        {this.props.onBackClick && (
+        { onBackClick &&
           <Fab
-            containerStyle={{ }}
             style={{ backgroundColor: '#E51D2A' }}
             position="bottomRight"
-            onPress={() => this.props.onBackClick && this.props.onBackClick()}>
+            onPress={ onBackClick }
+          >
             <Icon name="arrow-back" />
           </Fab>
-        )}
+        }
       </View>
     );
   }
@@ -110,22 +119,44 @@ class ChatGroupList extends React.Component<Props, State> {
    * Renders list items
    */
   private renderListItems = (): JSX.Element[] => {
-    const { accessToken } = this.props;
+    const { accessToken, onError } = this.props;
+
     if (!accessToken) {
-      this.props.onError && this.props.onError(strings.accessTokenExpired);
+      onError && onError(strings.accessTokenExpired);
       return [];
     }
 
-    return this.state.chatGroups.map((chatGroup: ChatGroup) => {
+    return this.state.chatGroups.map(chatGroup => {
       const unreadCount = this.countUnreadsByGroup(chatGroup.id!);
+      const imageUrl = chatGroup.imageUrl ?
+        {
+          uri: chatGroup.imageUrl,
+          headers: { "Authorization": `Bearer ${accessToken.access_token}` }
+        } :
+        AVATAR_PLACEHOLDER;
+
       return (
-        <ListItem onPress={() => this.selectGroup(chatGroup)} key={chatGroup.id} avatar>
+        <ListItem
+          avatar
+          key={ chatGroup.id }
+          onPress={ () => this.props.onGroupSelected(chatGroup) }
+        >
           <Left>
-            <Thumbnail source={ chatGroup.imageUrl ? { uri: chatGroup.imageUrl, headers: {"Authorization": `Bearer ${accessToken.access_token}`} }: AVATAR_PLACEHOLDER } />
+            <Thumbnail source={ imageUrl }/>
           </Left>
-          <Body style={{ flex:1, flexDirection:"row" }}>
-            <Text style={{ flex:1 }}>{chatGroup.title}</Text>
-            {unreadCount > 0 && <View style={{ flex:0.2, justifyContent:"center", alignItems:"center" }}><Badge><Text>{ unreadCount }</Text></Badge></View>}
+          <Body style={{ flex: 1, flexDirection:"row" }}>
+            <Text style={{ flex: 1 }}>
+              { chatGroup.title }
+            </Text>
+            { unreadCount > 0 &&
+              <View style={{ flex: 0.2, justifyContent:"center", alignItems:"center" }}>
+                <Badge>
+                  <Text>
+                    { unreadCount }
+                  </Text>
+                </Badge>
+              </View>
+            }
           </Body>
         </ListItem>
       );
@@ -135,35 +166,25 @@ class ChatGroupList extends React.Component<Props, State> {
   /**
    * Counts unreads by group
    * 
-   * @param group id
-   * @return unreads
+   * @param groupId group ID
+   * @return unread messages count
    */
   private countUnreadsByGroup = (groupId: number) => {
-    return (this.props.unreads || []).filter((unread: Unread) => {
-      return (unread.path || "").startsWith(`chat-${groupId}-`);
-    }).length;
+    return (this.props.unreads || []).filter(unread =>
+      !!unread.path?.startsWith(`chat-${groupId}-`)
+    ).length;
   }
 
   /**
-   * Check if unread
+   * Check if group has unread messages
    * 
-   * @param groupId groupId
-   * @returns returns true if group has unreads
+   * @param groupId group ID
+   * @returns true if group has unread messages, otherwise false
    */
   private hasUnreadThreads = (groupId: number) => {
-    if(!this.props.unreads){
-      return false;
-    }
-    return !!this.props.unreads.find((unread: Unread) => {
-      return (unread.path || "").startsWith(`chat-${groupId}-`);
-    });
-  }
-
-  /**
-   * selects group
-   */
-  private selectGroup = async (chatGroup: ChatGroup) => {
-    this.props.onGroupSelected(chatGroup);
+    return !!this.props.unreads?.some(unread =>
+      !!unread.path?.startsWith(`chat-${groupId}-`)
+    );
   }
 }
 
