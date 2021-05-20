@@ -5,10 +5,10 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
-import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval } from "pakkasmarja-client";
+import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert, StyleProp, TextStyle, ViewStyle } from "react-native";
+import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval, DeliveryQuality } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
-import { Text, Icon } from "native-base";
+import { Text, Icon, H1 } from "native-base";
 import NumericInput from 'react-native-numeric-input'
 import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment";
@@ -21,6 +21,7 @@ import _ from "lodash";
 import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
 import { roundPrice } from "../../../utils/utility-functions";
+import AsyncButton from "../../generic/async-button";
 
 const Moment = require("moment");
 const extendedMoment = extendMoment(Moment);
@@ -65,6 +66,7 @@ interface State {
   productPrice?: ProductPrice;
   product?: Product;
   noteEditable: boolean;
+  deliveryQualities: DeliveryQuality[];
 };
 
 /**
@@ -97,7 +99,8 @@ class EditDelivery extends React.Component<Props, State> {
       defaultOpeningHours: [{
         opens: moment().startOf("day").toDate(),
         closes: moment().endOf("day").toDate()
-      }]
+      }],
+      deliveryQualities: []
     };
   }
 
@@ -136,12 +139,22 @@ class EditDelivery extends React.Component<Props, State> {
     this.setState({ loading: true });
     const Api = new PakkasmarjaApi();
     const productsService = Api.getProductsService(accessToken.access_token);
-    const unfilteredProducts: Product[] = await productsService.listProducts(undefined, itemGroupCategory, accessToken.userId, undefined, 999);
-    const products = unfilteredProducts.filter(product => product.active === true);
-    const deliveryPlacesService = Api.getDeliveryPlacesService(accessToken.access_token);
-    const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
     const productPricesService = Api.getProductPricesService(accessToken.access_token);
-    const productPrice: ProductPrice[] = products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [];
+    const deliveryPlacesService = Api.getDeliveryPlacesService(accessToken.access_token);
+    const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
+    
+    const [ unfilteredProducts, deliveryPlaces ] = await Promise.all([
+      productsService.listProducts(undefined, itemGroupCategory, accessToken.userId, undefined, 999),
+      deliveryPlacesService.listDeliveryPlaces()
+    ]);
+
+    const products = unfilteredProducts.filter(product => product.active === true);
+
+    const [ productPrice, deliveryQualities ] = await Promise.all([
+      products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [],
+      deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, products[0].id || "")
+    ]);
+    
     if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
       if (!deliveryPlace.id) {
@@ -151,6 +164,7 @@ class EditDelivery extends React.Component<Props, State> {
       this.setState({
         deliveryData,
         products: products,
+        deliveryQualities,
         deliveryPlaces: deliveryPlaces,
         userId: accessToken.userId,
         productId: deliveryData.product.id,
@@ -394,19 +408,31 @@ class EditDelivery extends React.Component<Props, State> {
    * Handles product change
    */
   private handleProductChange = async (productId: string) => {
-    if (!this.props.accessToken) {
+    const { accessToken } = this.props;
+
+    if (!accessToken) {
       return;
     }
     this.setState({ productId });
     const products = this.state.products;
     const product = products.find((product) => product.id === productId)
     const Api = new PakkasmarjaApi();
-    const productPricesService = await Api.getProductPricesService(this.props.accessToken.access_token);
-    const productPrice: ProductPrice[] = await productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1);
+    const productPricesService = await Api.getProductPricesService(accessToken.access_token);
+    const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
+
+    const [ productPrice, deliveryQualities ] = await Promise.all([
+      productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1),
+      deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, productId)
+    ]);
+
     if (!productPrice[0]) {
       this.renderAlert();
     }
-    this.setState({ product, productPrice: productPrice[0] });
+
+    this.setState({
+      product,
+      productPrice: productPrice[0], deliveryQualities
+    });
   }
 
   /**
@@ -514,18 +540,17 @@ class EditDelivery extends React.Component<Props, State> {
           { products.length < 1 ?
             <Text>Ei voimassa olevaa sopimusta. Jos näin ei pitäisi olla, ole yhteydessä Pakkasmarjaan.</Text>
             :
-            <React.Fragment>
+            <>
               <View style={[ styles.pickerWrap, { width: "100%" } ]}>
-                {
-                  this.renderProductSelection()
-                }
+                { this.renderProductSelection() }
               </View>
-              <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
-                {
-                  this.renderProductPrice()
-                }
+              <View>
+                { this.renderProductPrice() }
               </View>
-            </React.Fragment>
+              <View style={{ marginBottom: 20 }}>
+                { this.renderFreshProductQualityPrices() }
+              </View>
+            </>
           }
           <Text style={ styles.textWithSpace }>Määrä ({ product && product.unitName })</Text>
           <View style={[ styles.center, styles.numericInputContainer ]}>
@@ -591,13 +616,13 @@ class EditDelivery extends React.Component<Props, State> {
               </View>
             }
             <View style={[ styles.center, { flex: 1 } ]}>
-              <TouchableOpacity
+              <AsyncButton
                 disabled={ !this.isValid() }
                 style={[ styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 } ]}
                 onPress={ this.handleDeliverySubmit }
               >
                 <Text style={styles.buttonText}>Tallenna</Text>
-              </TouchableOpacity>
+              </AsyncButton>
             </View>
           </View>
         </View>
@@ -663,25 +688,60 @@ class EditDelivery extends React.Component<Props, State> {
   private renderProductPrice = () => {
     const { productPrice } = this.state;
 
+    const rowBaseStyles: StyleProp<ViewStyle> = {
+      width: "50%",
+      padding: 10,
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center"
+    };
+
+    const alvTextStyles: StyleProp<TextStyle> = {
+      fontSize: 14,
+      marginLeft: 10
+    };
+
     return (
       <>
-        <View style={{ flex: 0.1 }}>
-          <EntypoIcon
-            name='info-with-circle'
-            color='#e01e36'
-            size={ 20 }
-          />
-        </View >
-        <View style={{ flex: 1.1 }}>
-          { productPrice ?
-            <Text style={ styles.textPrediction }>
-              {`Tämän hetkinen hinta ${productPrice.price} € / ${productPrice.unit.toUpperCase()} ALV 0% (${roundPrice(parseFloat(productPrice.price) * 1.14)})`}
-            </Text> :
-            <Text style={ styles.textPrediction }>
-              {`Tuotteelle ei löydy hintaa`}
-            </Text>
-          }
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15, paddingBottom: 10 }}>
+          <View style={{ flex: 0.1 }}>
+            <EntypoIcon
+              name='info-with-circle'
+              color='#e01e36'
+              size={ 20 }
+            />
+          </View >
+          <View style={{ flex: 1.1 }}>
+            { productPrice?.price ?
+              <Text style={ styles.textPrediction }>
+                { `Tämänhetkinen hinta / ${productPrice.unit.toUpperCase()}` }
+              </Text> :
+              <Text style={ styles.textPrediction }>
+                { `Tuotteelle ei löydy hintaa` }
+              </Text>
+            }
+          </View>
         </View>
+        { productPrice?.price &&
+          <View style={{ borderWidth: 1, borderColor: "#e01e36", borderRadius: 8, flex: 1, flexDirection: "row" }}>
+            <View style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
+              <H1>
+                {`${productPrice.price} €`}
+              </H1>
+              <Text style={ alvTextStyles }>
+                {`ALV 0%`}
+              </Text>
+            </View>
+            <View style={ rowBaseStyles }>
+              <H1>
+                {`${roundPrice(parseFloat(productPrice.price) * 1.14)} €`}
+              </H1>
+              <Text style={ alvTextStyles }>
+                {`ALV 14%`}
+              </Text>
+            </View>
+          </View>
+        }
       </>
     );
   }
@@ -890,6 +950,96 @@ class EditDelivery extends React.Component<Props, State> {
       </View>
     );
   }
+
+  /**
+   * Method for rendering fresh product quality prices
+   */
+  private renderFreshProductQualityPrices = () => {
+    const { itemGroupCategory } = this.props;
+    const { deliveryQualities } = this.state;
+
+    if (itemGroupCategory !== ItemGroupCategory.FRESH || !deliveryQualities.length) {
+      return null;
+    }
+
+    const headerBaseStyles: StyleProp<TextStyle> = {
+      width: "33.33%",
+      color: "#fff",
+      padding: 10
+    };
+
+    return (
+      <>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingTop: 15 }}>
+          <View style={{ flex: 0.1 }}>
+            <EntypoIcon
+              name='info-with-circle'
+              color='#e01e36'
+              size={ 20 }
+            />
+          </View >
+          <View style={{ flex: 1.1 }}>
+            <Text style={ styles.smallHeader }>
+              {`Mahdolliset laatubonukset alla, lopullinen laatuluokka varmistuu vastaanoton yhteydessä`}
+            </Text>
+          </View>
+        </View>
+        <View style={{ borderWidth: 1, borderColor: "#e01e36", borderRadius: 8 }}>
+          <View style={{ flex: 1, flexDirection: "row", backgroundColor: "#e01e36", borderTopLeftRadius: 6, borderTopRightRadius: 6 }}>
+            <Text style={{ ...headerBaseStyles, borderRightWidth: 1, borderRightColor: "#fff" }}>
+              {`Laatu`}
+            </Text>
+            <Text style={{ ...headerBaseStyles, borderRightWidth: 1, borderRightColor: "#fff" }}>
+              {`ALV 0%`}
+            </Text>
+            <Text style={ headerBaseStyles }>
+              {`ALV 14%`}
+            </Text>
+          </View>
+          { this.renderProductQualityPriceRows() }
+        </View>
+      </>
+    );
+  }
+
+  /**
+   * Renders product quality price rows
+   */
+  private renderProductQualityPriceRows = () => {
+    const { deliveryQualities, productId } = this.state;
+    const deliveryQualitiesSorted = deliveryQualities.sort((a, b) => b.priceBonus - a.priceBonus);
+
+    const rowBaseStyles: StyleProp<TextStyle> = {
+      width: "33.33%",
+      padding: 10
+    };
+
+    return deliveryQualitiesSorted.map(deliveryQuality => {
+      const name = deliveryQuality.displayName;
+      const priceBonus = deliveryQuality.priceBonus;
+      const priceBonusVAT = roundPrice(priceBonus * 1.14);
+      const active = deliveryQuality.deliveryQualityProductIds.some(id => id === productId);
+
+      if (!active) {
+        return null;
+      }
+
+      return (
+        <View style={{ flex: 1, flexDirection: "row" }}>
+          <Text style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
+            { name }
+          </Text>
+          <Text style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
+            {`${ priceBonus } €/kg`}
+          </Text>
+          <Text style={ rowBaseStyles }>
+            {`${ priceBonusVAT } €/kg`}
+          </Text>
+        </View>
+      );
+    })
+  }
+
 }
 
 /**

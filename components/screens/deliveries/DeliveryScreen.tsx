@@ -19,6 +19,7 @@ import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
 import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import Lightbox from 'react-native-lightbox';
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Component props
@@ -518,18 +519,18 @@ class DeliveryScreen extends React.Component<Props, State> {
                 <Text style={{ color: 'black', fontSize: 15 }}>{ this.state.description }</Text>
               </View>
               <View style={[ styles.center, { flex: 1 } ]}>
-                <TouchableOpacity
+                <AsyncButton
                   style={[ styles.begindeliveryButton, styles.center, { width: "70%", height: 60 } ]}
-                  onPress={ () => this.handleBeginDelivery() }>
+                  onPress={ this.handleBeginDelivery }>
                   <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Aloita toimitus</Text>
-                </TouchableOpacity>
+                </AsyncButton>
               </View>
               <View style={[ styles.center, { flex: 1, marginTop: 20 } ]}>
-                <TouchableOpacity
+                <AsyncButton
                   style={[ styles.declineButton, styles.center, { width: "70%", height: 60 } ]}
-                  onPress={ () => this.handleRemoveDelivery() }>
+                  onPress={ this.handleRemoveDelivery }>
                   <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Hylkää toimitus</Text>
-                </TouchableOpacity>
+                </AsyncButton>
               </View>
             </React.Fragment>
             :

@@ -5,33 +5,39 @@ import * as actions from "../../../actions";
 import { ChatThread, Unread } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import strings from "../../../localization/strings";
-import { List, ListItem, Left, Thumbnail, Body, Text, Container, View, Spinner, Fab, Icon, Right, Badge } from "native-base";
+import { List, ListItem, Left, Thumbnail, Body, Text, View, Spinner, Fab, Icon, Badge } from "native-base";
 import { AVATAR_PLACEHOLDER } from "../../../static/images";
 import { ScrollView } from "react-native";
 import * as _ from "lodash";
 import moment from "moment";
 
-
 /**
  * Component properties
  */
 interface Props {
-  accessToken?: AccessToken
-  groupId?: number,
-  type: "CHAT" | "QUESTION",
-  unreads?: Unread[],
-  onThreadSelected: (thread: ChatThread) => void
-  onBackClick?: () => void
-  onError?: (errorMsg: string) => void
+  accessToken?: AccessToken;
+  groupId?: number;
+  type: "CHAT" | "QUESTION";
+  unreads?: Unread[];
+  onThreadSelected: (thread: ChatThread) => void;
+  onBackClick?: () => void;
+  onError?: (errorMsg: string) => void;
 };
 
 /**
  * Component state
  */
 interface State {
-  chatThreads: ChatThread[],
-  loading: boolean
+  conversationListItems: ConversationListItem[];
+  loading: boolean;
 };
+
+/**
+ * Conversation list item
+ */
+interface ConversationListItem extends ChatThread {
+  latestMessageDate?: Date;
+}
 
 /**
  * Component for displaying list of available chat groups
@@ -47,7 +53,7 @@ class ChatThreadList extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
-      chatThreads: []
+      conversationListItems: []
     };
   }
 
@@ -55,29 +61,42 @@ class ChatThreadList extends React.Component<Props, State> {
    * Component did mount life cycle method
    */
   public componentDidMount = async() => {
-    if (!this.props.accessToken) {
+    const { accessToken, groupId, type, onError } = this.props;
+    if (!accessToken) {
       return;
     }
 
-    this.setState({loading: true});
+    this.setState({ loading: true });
     try {
-      const chatThreads = await new PakkasmarjaApi().getChatThreadsService(this.props.accessToken.access_token).listChatThreads(this.props.groupId, this.props.type);
-      const validChatThreads = chatThreads.filter( (thread) => {
-        if ( thread.expiresAt ){
-         return moment(moment().format("YYYY-MM-DDTHH:mm:ss.SSSSZ")).isBefore( moment(thread.expiresAt) );
-        }
-        return true;
-      });
-      const sortChatThreadsByUnreads = _.sortBy( validChatThreads, (thread) => this.hasUnreadMessages( thread.groupId , thread.id! )).reverse();
+      const chatThreads = await new PakkasmarjaApi()
+        .getChatThreadsService(accessToken.access_token)
+        .listChatThreads(groupId, type);
+
+      const validChatThreads = chatThreads.filter(thread =>
+        thread.expiresAt ?
+          moment(moment().format("YYYY-MM-DDTHH:mm:ss.SSSSZ")).isBefore(moment(thread.expiresAt)) :
+          true
+      );
+
+      const conversationListItems = await Promise.all(
+        validChatThreads.map(this.createConversationListItem)
+      );
+
+      const itemsWithUnreads = conversationListItems.filter(({ groupId, id }) => this.hasUnreadMessages(groupId, id!));
+      const itemsWithoutUnreads = conversationListItems.filter(({ groupId, id }) => !this.hasUnreadMessages(groupId, id!));
+
+      const sortedItems = [
+        ...itemsWithUnreads.sort(this.sortItems),
+        ...itemsWithoutUnreads.sort(this.sortItems)
+      ];
+
       this.setState({
-        chatThreads: sortChatThreadsByUnreads,
+        conversationListItems: sortedItems,
         loading: false
       });
     } catch (e) {
-      this.props.onError && this.props.onError(strings.errorCommunicatingWithServer);
-      this.setState({
-        loading: false,
-      });
+      onError && onError(strings.errorCommunicatingWithServer);
+      this.setState({ loading: false });
     }
   }
 
@@ -85,6 +104,7 @@ class ChatThreadList extends React.Component<Props, State> {
    * Render
    */
   public render() {
+    const { onBackClick } = this.props;
 
     if (this.state.loading) {
       return (
@@ -98,18 +118,17 @@ class ChatThreadList extends React.Component<Props, State> {
       <View>
         <ScrollView>
           <List>
-            {this.renderListItems()}
+            { this.renderListItems() }
           </List>
         </ScrollView>
-        {this.props.onBackClick && (
+        { onBackClick &&
           <Fab
-            containerStyle={{ }}
             style={{ backgroundColor: '#E51D2A' }}
             position="bottomRight"
-            onPress={() => this.props.onBackClick && this.props.onBackClick()}>
+            onPress={ onBackClick }>
             <Icon name="arrow-back" />
           </Fab>
-        )}
+        }
       </View>
     );
   }
@@ -118,22 +137,51 @@ class ChatThreadList extends React.Component<Props, State> {
    * Renders list items
    */
   private renderListItems = (): JSX.Element[] => {
-    const { accessToken } = this.props;
+    const { accessToken, onError, onThreadSelected } = this.props;
     if (!accessToken) {
-      this.props.onError && this.props.onError(strings.accessTokenExpired);
+      onError && onError(strings.accessTokenExpired);
       return [];
     }
 
-    return this.state.chatThreads.map((chatThread: ChatThread) => {
-      const unreadCount = this.countUnreads(chatThread.groupId, chatThread.id!);
+    return this.state.conversationListItems.map(item => {
+      const unreadCount = this.countUnreads(item.groupId, item.id!);
+      const imageUrl = item.imageUrl ?
+        {
+          uri: item.imageUrl,
+          headers: {"Authorization": `Bearer ${accessToken.access_token}`}
+        } :
+        AVATAR_PLACEHOLDER;
+
       return (
-        <ListItem onPress={() => this.selectThread(chatThread)} key={chatThread.id} avatar>
+        <ListItem
+          avatar
+          key={ item.id }
+          onPress={ () => onThreadSelected(item) }
+        >
           <Left>
-            <Thumbnail source={ chatThread.imageUrl ? { uri: chatThread.imageUrl, headers: {"Authorization": `Bearer ${accessToken.access_token}`} }: AVATAR_PLACEHOLDER } />
+            <Thumbnail source={ imageUrl } />
           </Left>
-          <Body style={{ flex:1, flexDirection:"row" }}>
-            <Text style={{ flex:1 }}>{chatThread.title ? chatThread.title : strings.noTitleAvailable}</Text>
-            {unreadCount > 0 && <View style={{ flex:0.2, justifyContent:"center", alignItems:"center" }}><Badge><Text>{ unreadCount }</Text></Badge></View>}
+          <Body style={{ flex: 1, flexDirection:"row" }}>
+            <View style={{ flex: 1 }}>
+              <Text>
+                { item.title ?? strings.noTitleAvailable }
+              </Text>
+              <Text style={{ color: "#888", fontSize: 14 }}>
+                { item.latestMessageDate ?
+                  moment(item.latestMessageDate).fromNow() :
+                  strings.noMessages
+                }
+              </Text>
+            </View>
+            { unreadCount > 0 &&
+              <View style={{ flex: 0.2, justifyContent:"center", alignItems:"center" }}>
+                <Badge>
+                  <Text>
+                    { unreadCount }
+                  </Text>
+                </Badge>
+              </View>
+            }
           </Body>
         </ListItem>
       );
@@ -141,37 +189,90 @@ class ChatThreadList extends React.Component<Props, State> {
   }
 
   /**
+   * Creates conversation list item
+   *
+   * @param chatThread chat thread
+   * @returns Promise of ConversationListItem
+   */
+  private createConversationListItem = async (chatThread: ChatThread): Promise<ConversationListItem> => {
+    const { accessToken } = this.props;
+
+    if (!accessToken) {
+      return { ...chatThread };
+    }
+
+    const [ latestMessage ] = await new PakkasmarjaApi()
+      .getChatMessagesService(accessToken.access_token)
+      .listChatMessages(chatThread.id!, undefined, undefined, undefined, 0, 1);
+
+    return {
+      ...chatThread,
+      latestMessageDate: latestMessage?.updatedAt
+    };
+  }
+
+  /**
    * Counts unreads by group
    * 
-   * @param group id
-   * @return unreads
+   * @param group group ID
+   * @param threadId thread ID
+   * @returns unread messages count
    */
   private countUnreads = (groupId: number, threadId: number) => {
-    return (this.props.unreads || []).filter((unread: Unread) => {
-      return (unread.path || "").startsWith(`chat-${groupId}-${threadId}-`);
-    }).length;
+    return (this.props.unreads || []).filter(unread =>
+      !!unread.path?.startsWith(`chat-${groupId}-${threadId}-`)
+    ).length;
   }
 
   /**
-   * Check if unread
+   * Check if thread has unread messages
    * 
-   * @param groupId groupId
-   * @param threadId threadId
+   * @param groupId group ID
+   * @param threadId thread ID
+   * @returns true if thread has unread messages, otherwise false
    */
   private hasUnreadMessages = (groupId: number, threadId: number) => {
-    if(!this.props.unreads){
-      return false;
-    }
-    return !!this.props.unreads.find((unread: Unread) => {
-      return (unread.path || "").startsWith(`chat-${groupId}-${threadId}-`);
-    });
+    return !!this.props.unreads?.some(unread =>
+      !!unread.path?.startsWith(`chat-${groupId}-${threadId}-`)
+    );
   }
 
   /**
-   * Opens chat
+   * Sorts conversation list items by date and time
+   *
+   * @param a item a
+   * @param b item b
    */
-  private selectThread = async (chatThread: ChatThread) => {
-    this.props.onThreadSelected(chatThread);
+  private sortItems = (a: ConversationListItem, b: ConversationListItem) => {
+    return !a.latestMessageDate && !b.latestMessageDate ?
+      this.sortTitlesAsc(a.title, b.title) :
+      this.sortDatesDesc(a.latestMessageDate, b.latestMessageDate);
+  }
+
+  /**
+   * Sorts titles ascending
+   *
+   * @param a title a
+   * @param b title b
+   */
+  private sortTitlesAsc = (a: string, b: string) => {
+    if (!a && !b) return 0;
+    if (!a) return 1;
+    if (!b) return -1;
+    return a.localeCompare(b);
+  }
+
+  /**
+   * Sorts dates descending
+   *
+   * @param a date a
+   * @param b date b
+   */
+  private sortDatesDesc = (a?: Date, b?: Date) => {
+    if (!a && !b) return 0;
+    if (!a) return 1;
+    if (!b) return -1;
+    return moment(b).diff(a);
   }
 }
 

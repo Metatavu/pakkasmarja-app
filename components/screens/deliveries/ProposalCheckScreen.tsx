@@ -20,6 +20,7 @@ import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import moment from "moment";
 import { roundPrice } from "../../../utils/utility-functions";
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Component props
@@ -362,7 +363,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
             <View style={{ flex: 1.1 }}>
               {
                 this.state.productPrice &&
-                <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0% (${roundPrice(parseFloat(this.state.productPrice.price) * 1.14)})`}</Text>
+                <Text style={styles.textPrediction}>{`Tämän hetkinen hinta ${this.state.productPrice.price} € / ${this.state.productPrice.unit.toUpperCase()} ALV 0% (${roundPrice(parseFloat(this.state.productPrice.price) * 1.14)} ALV 14%)`}</Text>
               }
             </View>
           </View>
@@ -416,16 +417,16 @@ class ProposalCheckScreen extends React.Component<Props, State> {
                 </TouchableOpacity>
               </View>
               <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end" }}>
-                <TouchableOpacity style={[styles.declineButton, { width: "95%", height: 60 }]} onPress={() => { this.handleProposalDecline() }} >
+                <AsyncButton style={[styles.declineButton, { width: "95%", height: 60 }]} onPress={this.handleProposalDecline}>
                   <Text style={styles.buttonText}>Hylkää</Text>
-                </TouchableOpacity>
+                </AsyncButton>
               </View>
             </View>
             <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
               <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <TouchableOpacity style={[styles.deliveriesButton, { width: "95%", height: 60 }]} onPress={() => { this.handleProposalAccept() }} >
+                <AsyncButton style={[styles.deliveriesButton, { width: "95%", height: 60 }]} onPress={this.handleProposalAccept}>
                   <Text style={styles.buttonText}>Hyväksy</Text>
-                </TouchableOpacity>
+                </AsyncButton>
               </View>
             </View>
           </View>

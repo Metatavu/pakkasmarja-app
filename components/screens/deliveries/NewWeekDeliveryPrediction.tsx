@@ -13,6 +13,7 @@ import moment from "moment";
 import PakkasmarjaApi from "../../../api";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import * as _ from "lodash";
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Component props
@@ -261,16 +262,16 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
           this.state.itemGroups.length > 0 ?
             <View style={{ flex: 1, flexDirection: "row", padding: 15 }}>
               <View style={styles.center}>
-                <TouchableOpacity onPress={() => { this.changeItemGroup("previous") }} >
+                <AsyncButton onPress={async () => await this.changeItemGroup("previous")}>
                   <Icon style={styles.red} type="Entypo" name="chevron-left"></Icon>
-                </TouchableOpacity>
+                </AsyncButton>
               </View>
               <View style={{ flex: 8, justifyContent: "center", alignItems: "center" }}>
                 <Text style={{ fontWeight: "bold", fontSize: 20, color: "black" }}>{this.state.selectedItemGroup.displayName}</Text>
               </View>
-              <TouchableOpacity onPress={() => { this.changeItemGroup("next") }} >
+              <AsyncButton onPress={async () => await this.changeItemGroup("next")}>
                 <Icon style={styles.red} type="Entypo" name="chevron-right"></Icon>
-              </TouchableOpacity>
+              </AsyncButton>
             </View>
             :
             <View style={{ padding: 15 }}><Text style={{ color: "black" }}>Ei voimassa olevaa sopimusta. Jos näin ei pitäisi olla, ole yhteydessä Pakkasmarjaan.</Text></View>
@@ -336,9 +337,9 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
           </View>
         </View>
         <View style={styles.center}>
-          <TouchableOpacity style={[styles.deliveriesButton, { width: "70%", height: 60, marginTop: 10, marginBottom: 20 }]} onPress={() => { this.createNewWeekDeliveryPrediction() }}>
+          <AsyncButton style={[styles.deliveriesButton, { width: "70%", height: 60, marginTop: 10, marginBottom: 20 }]} onPress={this.createNewWeekDeliveryPrediction}>
             <Text style={styles.buttonText}>Lähetä viikkoennuste</Text>
-          </TouchableOpacity>
+          </AsyncButton>
         </View>
       </BasicScrollLayout>
     );

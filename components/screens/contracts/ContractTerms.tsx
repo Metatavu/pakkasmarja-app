@@ -14,6 +14,7 @@ import Modal from "react-native-modal";
 import { styles } from "./styles";
 import Icon from "react-native-vector-icons/Feather";
 import ModalSelector from 'react-native-modal-selector';
+import AsyncButton from "../../generic/async-button";
 
 /**
  * Interface for component props
@@ -257,16 +258,16 @@ class ContractTerms extends React.Component<Props, State> {
             />
           </View>
           <View style={styles.flexView}>
-            <TouchableOpacity style={styles.smallRedButton} onPress={this.backButtonClicked}>
+            <AsyncButton style={styles.smallRedButton} onPress={this.backButtonClicked}>
               <Text style={styles.buttonText}>
                 TAKAISIN
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.smallRedButton} onPress={this.signContractClicked}>
+            </AsyncButton>
+            <AsyncButton style={styles.smallRedButton} onPress={this.signContractClicked}>
               <Text style={styles.buttonText}>
                 ALLEKIRJOITA
               </Text>
-            </TouchableOpacity>
+            </AsyncButton>
           </View>
         </View>
         <Modal isVisible={this.state.modalOpen} style={{ height: "100%", width: "100%" }}>
