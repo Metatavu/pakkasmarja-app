@@ -139,7 +139,7 @@ class ChatGroupList extends React.Component<Props, State> {
         <ListItem
           avatar
           key={ chatGroup.id }
-          onPress={ () => this.props.onGroupSelected(chatGroup) }
+          onPress={ () => onGroupSelected(chatGroup) }
         >
           <Left>
             <Thumbnail source={ imageUrl }/>
