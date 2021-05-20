@@ -196,6 +196,7 @@ class ChatThreadList extends React.Component<Props, State> {
    */
   private createConversationListItem = async (chatThread: ChatThread): Promise<ConversationListItem> => {
     const { accessToken } = this.props;
+
     if (!accessToken) {
       return { ...chatThread };
     }
