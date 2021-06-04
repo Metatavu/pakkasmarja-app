@@ -311,10 +311,19 @@ class ManageDeliveries extends React.Component<Props, State> {
         }
         <TouchableOpacity
           style={[styles.begindeliveryButton, { width: "70%", height: 60, marginTop: 25, alignSelf: "center" }]}
-          onPress={ () => this.handleListItemPress(category, true, undefined) }
+          onPress={ () => this.handleListItemPress(category, true, "ManageDelivery", undefined) }
         >
           <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Uusi toimitus</Text>
         </TouchableOpacity>
+        {
+          category === "FROZEN" &&
+            <TouchableOpacity
+              style={[styles.begindeliveryButton, { width: "70%", height: 60, marginTop: 25, alignSelf: "center" }]}
+              onPress={ () => this.handleListItemPress(category, true, "ManageBoxDelivery", undefined) }
+            >
+              <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Uusi Muovilaatsa</Text>
+            </TouchableOpacity>
+        }
       </View>
     );
   }
@@ -350,7 +359,7 @@ class ManageDeliveries extends React.Component<Props, State> {
       const listItemColor = this.getDeliveryListItemColor(deliveryListItem.delivery.status);
 
       return (
-        <TouchableOpacity key={ delivery.id } onPress={ () => this.handleListItemPress(category, false, deliveryListItem) }>
+        <TouchableOpacity key={ delivery.id } onPress={ () => this.handleListItemPress(category, false, "ManageDelivery", deliveryListItem) }>
           <View style={{ flex: 1, flexDirection: "row", height: 80, backgroundColor: listItemColor, borderColor: "gray", borderBottomWidth: 1 }}>
             <View style={ listStyle.center }><Text>{ contact ? contact.displayName : "" }</Text></View>
             <View style={ listStyle.center }><Text>{ product ? product.name : "" }</Text></View>
@@ -367,10 +376,10 @@ class ManageDeliveries extends React.Component<Props, State> {
    * @param isNewDelivery isNewDelivery 
    * @param deliveryListItem deliveryListItem 
    */
-  private handleListItemPress(category: ItemGroupCategory, isNewDelivery: boolean, deliveryListItem?: DeliveryListItem) {
+  private handleListItemPress(category: ItemGroupCategory, isNewDelivery: boolean, delivery: string, deliveryListItem?: DeliveryListItem) {
     const { date } = this.state;
 
-    this.props.navigation.navigate("ManageDelivery", {
+    this.props.navigation.navigate(delivery, {
       date,
       deliveryListItem,
       category,
