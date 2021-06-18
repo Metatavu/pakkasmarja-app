@@ -64,15 +64,8 @@ class ChatsListScreen extends React.Component<Props, State> {
    * Component did mount lifecycle method
    */
   componentDidMount() {
-    if (this.props.navigation &&
-        this.props.navigation.state &&
-        this.props.navigation.state.params &&
-        this.props.navigation.state.params.selectedQuestionThreadId) {
-
-      this.setState({
-        selectedQuestionThreadId: this.props.navigation.state.params.selectedQuestionThreadId
-      });
-    }
+    const selectedQuestionThreadId = this.props.navigation?.state?.params?.selectedQuestionThreadId;
+    selectedQuestionThreadId && this.setState({ selectedQuestionThreadId });
   }
 
 
