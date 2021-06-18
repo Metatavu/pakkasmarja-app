@@ -60,6 +60,21 @@ class ChatsListScreen extends React.Component<Props, State> {
     this.state = {};
   }
 
+  /**
+   * Component did mount lifecycle method
+   */
+  componentDidMount() {
+    if (this.props.navigation &&
+        this.props.navigation.state &&
+        this.props.navigation.state.params &&
+        this.props.navigation.state.params.selectedQuestionThreadId) {
+
+      this.setState({
+        selectedQuestionThreadId: this.props.navigation.state.params.selectedQuestionThreadId
+      });
+    }
+  }
+
 
   /**
    * Navigation options property
@@ -90,9 +105,18 @@ class ChatsListScreen extends React.Component<Props, State> {
    * Render
    */
   public render() {
+    let initialTab = 0;
+    if (this.props.navigation &&
+      this.props.navigation.state &&
+      this.props.navigation.state.params &&
+      this.props.navigation.state.params.selectedQuestionThreadId) {
+
+      initialTab = 1;
+    }
+
     return (
       <BasicLayout displayFooter={true} navigation={this.props.navigation}>
-        <Tabs tabBarUnderlineStyle={{backgroundColor: "#fff"}}>
+        <Tabs initialPage={initialTab} tabBarUnderlineStyle={{backgroundColor: "#fff"}}>
           <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} textStyle={{color:"#fff"}} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={strings.chatsNavHeader}>
             { this.renderChatTab() }
           </Tab>

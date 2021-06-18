@@ -1,12 +1,14 @@
 import React, { Dispatch } from "react";
 import * as actions from "../../actions"
 import { connect } from "react-redux";
-import { Toast, Spinner, Thumbnail, Badge } from "native-base";
+import { Toast, Spinner, Thumbnail, Badge, Icon, Fab } from "native-base";
 import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity } from "react-native";
 import strings from "../../localization/strings";
 import { CONTRACTS_ICON, DELIVERIES_ICON, MESSAGES_ICON, NEWS_ICON, DEFAULT_FILE } from "../../static/images";
-import { StoreState } from "../../types";
+import { AccessToken, StoreState } from "../../types";
 import { Unread } from "pakkasmarja-client";
+import AppConfig from "../../utils/AppConfig";
+import PakkasmarjaApi from "../../api";
 
 /**
  * Component properties
@@ -16,7 +18,8 @@ export interface BasicLayoutProps {
   displayFooter?: boolean
   errorMsg?: string,
   navigation: any,
-  unreads?: Unread[]
+  unreads?: Unread[],
+  accessToken?: AccessToken
 }
 
 /**
@@ -72,6 +75,15 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
     return (
       <SafeAreaView style={{ flex: 1 }}>
         {this.props.children}
+        { this.props.accessToken && <Fab
+          active={true}
+          direction="up"
+          containerStyle={{ bottom: "11%" }}
+          style={{ backgroundColor: '#e01e36' }}
+          position="bottomRight"
+          onPress={() => { this.onHelpClick() }}>
+            <Icon name="help" />
+        </Fab> }
         {this.props.displayFooter &&
           <View style={styles.footer}>
             <TouchableOpacity  onPress={() => this.goToScreen("News")}>
@@ -110,6 +122,28 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
         }
       </SafeAreaView>
     );
+  }
+
+  /**
+   * Handles help button click
+   */
+  private onHelpClick = async () => {
+    const appConfig = await AppConfig.getAppConfig();
+    const questionGroupId = appConfig['help-question-group'];
+    const { accessToken } = this.props;
+    if (!questionGroupId || !accessToken) {
+      return
+    }
+
+    const api = new PakkasmarjaApi();
+    const questionGroupThreads = await api.getChatThreadsService(accessToken.access_token).listChatThreads(questionGroupId, "QUESTION", accessToken.userId);
+    if (questionGroupThreads.length != 1) {
+      return; //Application is misconfigured, bail out.
+    }
+
+    this.props.navigation.push("ChatsList", {
+      selectedQuestionThreadId: questionGroupThreads[0].id
+    });
   }
 
     /**
