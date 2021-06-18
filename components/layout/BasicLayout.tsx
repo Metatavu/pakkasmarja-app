@@ -138,8 +138,9 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
       return
     }
 
-    const api = new PakkasmarjaApi();
-    const questionGroupThreads = await api.getChatThreadsService(accessToken.access_token).listChatThreads(questionGroupId, "QUESTION", accessToken.userId);
+    const questionGroupThreads = await new PakkasmarjaApi()
+      .getChatThreadsService(accessToken.access_token)
+      .listChatThreads(questionGroupId, "QUESTION", accessToken.userId);
     if (questionGroupThreads.length !== 1) {
       return; //Application is misconfigured, bail out.
     }
