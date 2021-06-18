@@ -98,14 +98,7 @@ class ChatsListScreen extends React.Component<Props, State> {
    * Render
    */
   public render() {
-    let initialTab = 0;
-    if (this.props.navigation &&
-      this.props.navigation.state &&
-      this.props.navigation.state.params &&
-      this.props.navigation.state.params.selectedQuestionThreadId) {
-
-      initialTab = 1;
-    }
+    const initialTab = this.props.navigation?.state?.params?.selectedQuestionThreadId ? 1 : 0;
 
     return (
       <BasicLayout displayFooter={true} navigation={this.props.navigation}>
