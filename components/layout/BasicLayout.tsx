@@ -75,15 +75,18 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
     return (
       <SafeAreaView style={{ flex: 1 }}>
         {this.props.children}
-        { this.props.accessToken && <Fab
-          active={true}
-          direction="up"
-          containerStyle={{ bottom: "11%" }}
-          style={{ backgroundColor: '#e01e36' }}
-          position="bottomRight"
-          onPress={() => { this.onHelpClick() }}>
+        { this.props.accessToken &&
+          <Fab
+            active
+            direction="up"
+            containerStyle={{ bottom: "11%" }}
+            style={{ backgroundColor: '#e01e36' }}
+            position="bottomRight"
+            onPress={ () => this.onHelpClick() }
+          >
             <Icon name="help" />
-        </Fab> }
+          </Fab>
+        }
         {this.props.displayFooter &&
           <View style={styles.footer}>
             <TouchableOpacity  onPress={() => this.goToScreen("News")}>
