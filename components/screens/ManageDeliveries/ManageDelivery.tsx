@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryListItem, KeyboardType, boxKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
-import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality, Contact } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality, Contact, Contract } from "pakkasmarja-client";
 import { Text, Icon, Input, ListItem } from "native-base";
 import NumericInput from 'react-native-numeric-input'
 import moment from "moment"
@@ -23,6 +23,8 @@ import DeliveryNoteModal from "../deliveries/DeliveryNoteModal";
 import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import AsyncButton from "../../generic/async-button";
+import strings from "../../../localization/strings";
+import { Divider } from "react-native-elements";
 
 /**
  * Component props
@@ -70,6 +72,7 @@ interface State {
   grayBoxesReturned: number;
   query?: string;
   selectedContact?: Contact;
+  contracts?: Contract[]; 
 };
 
 /**
@@ -170,6 +173,8 @@ class ManageDelivery extends React.Component<Props, State> {
         deliveryPlace.id === deliveryData.delivery.deliveryPlaceId
       );
 
+    await this.fetchContracts(deliveryData.product);
+
       this.setState({
         deliveryData,
         deliveryPlaceId: deliveryPlace?.id,
@@ -244,6 +249,7 @@ class ManageDelivery extends React.Component<Props, State> {
       const productId = products.length ? products[0].id : "";
       const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, productId);
 
+      await this.fetchContracts(products.length ? products[0] : undefined);
       this.setState({
         productId: productId,
         product: products.length ? products[0] : undefined,
@@ -390,6 +396,8 @@ class ManageDelivery extends React.Component<Props, State> {
     const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, productId);
     const product = products.find((product) => product.id === productId);
 
+    await this.fetchContracts(product);
+
     this.setState({
       deliveryQualities,
       product,
@@ -501,6 +509,47 @@ class ManageDelivery extends React.Component<Props, State> {
     );
   }
 
+  private renderContractInfo = () => {
+    const { contracts, amount, product } = this.state;
+
+    if (!product || !contracts?.length) {
+      return null;
+    }
+
+    var contractQuantity = 0;
+    var delivered = 0
+    var remainer = 0;
+
+    contracts?.forEach(contract => {
+      delivered = delivered + (contract.deliveredQuantity || 0);
+      contractQuantity = contractQuantity + (contract.contractQuantity || 0);
+    })
+
+    remainer = contractQuantity - delivered - (amount * product.units * product.unitSize);
+
+    return (
+      <View>
+        <Text>
+          { strings.contractQuantity }: { contractQuantity }Kg
+        </Text>
+        <Text>
+          { strings.deliveredQuantity }: { delivered }Kg
+        </Text>
+        <View
+          style={{
+            borderBottomColor: 'black',
+            borderBottomWidth: 2,
+            width: 190
+          }}
+        />
+        { remainer >= 0 ?
+            <Text>{ strings.contractRemainer }: { remainer }Kg</Text> :
+            <Text style={{ color: "red" }}>{ strings.contractExceeded }: { Math.abs(remainer) }Kg</Text> 
+        }
+      </View>
+    )
+  }
+
   /**
    * Render method
    */
@@ -569,6 +618,8 @@ class ManageDelivery extends React.Component<Props, State> {
         displayFooter
       >
         <View style={ styles.deliveryContainer }>
+    
+        { this.renderContractInfo() }
           {
             isNewDelivery &&
             <View>
@@ -1012,6 +1063,47 @@ class ManageDelivery extends React.Component<Props, State> {
     );
   }
 
+    /**
+   * @param deliveryProduct product witch contracts will be fetched
+   */
+    private fetchContracts = async (product?: Product) => {
+      const { accessToken, navigation } = this.props;
+      const { selectedContact, isNewDelivery } = this.state;
+
+      const params = navigation.state.params;
+      const deliveryData: DeliveryListItem = params.deliveryListItem;
+  
+      const yearNow = parseInt(moment(new Date()).format("YYYY"));
+  
+      if (!accessToken || !accessToken.access_token || !product) {
+        return;
+      }
+
+      this.setState({
+        loading: true
+      });
+
+      const Api = new PakkasmarjaApi();
+      const contractsService = await Api.getContractsService(accessToken.access_token);
+      const contractsData = await contractsService.listContracts("application/json", true, undefined, product.itemGroupId, 2019, "APPROVED", 0, 1000);
+
+
+      if (isNewDelivery && selectedContact) {
+        const contracts = contractsData.filter(contract => contract.contactId === selectedContact?.id);
+
+        this.setState({
+          contracts: contracts,
+          loading: false
+        });
+      } else {
+        const contracts = contractsData.filter(contract => contract.contactId === deliveryData.delivery.userId);
+
+        this.setState({
+          contracts: contracts,
+          loading: false
+        });
+      }
+    }
 }
 
 /**
