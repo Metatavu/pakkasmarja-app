@@ -24,7 +24,6 @@ import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import AsyncButton from "../../generic/async-button";
 import strings from "../../../localization/strings";
-import { Divider } from "react-native-elements";
 
 /**
  * Component props
@@ -250,6 +249,7 @@ class ManageDelivery extends React.Component<Props, State> {
       const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, productId);
 
       await this.fetchContracts(products.length ? products[0] : undefined);
+
       this.setState({
         productId: productId,
         product: products.length ? products[0] : undefined,
@@ -618,8 +618,7 @@ class ManageDelivery extends React.Component<Props, State> {
         displayFooter
       >
         <View style={ styles.deliveryContainer }>
-    
-        { this.renderContractInfo() }
+          { this.renderContractInfo() }
           {
             isNewDelivery &&
             <View>
@@ -1085,7 +1084,7 @@ class ManageDelivery extends React.Component<Props, State> {
 
       const Api = new PakkasmarjaApi();
       const contractsService = await Api.getContractsService(accessToken.access_token);
-      const contractsData = await contractsService.listContracts("application/json", true, undefined, product.itemGroupId, 2019, "APPROVED", 0, 1000);
+      const contractsData = await contractsService.listContracts("application/json", true, undefined, product.itemGroupId, yearNow, "APPROVED", 0, 1000);
 
 
       if (isNewDelivery && selectedContact) {
