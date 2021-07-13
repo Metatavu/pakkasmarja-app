@@ -33,5 +33,10 @@
 
   "contractDetailsReadFromContract": "Tuoremarjojen hinnoittelusta ja laatuluokittelusta voit lukea sopimuksesta.",
 
-  "noMessages": "Ei viestejä"
+  "noMessages": "Ei viestejä",
+
+  "contractRemainer": "Sopimusta jäljellä",
+  "contractExceeded": "Sopimus ylitetty",
+  "contractQuantity": "Sopimusmäärä",
+  "deliveredQuantity": "Toimitettu määrä"
 }
