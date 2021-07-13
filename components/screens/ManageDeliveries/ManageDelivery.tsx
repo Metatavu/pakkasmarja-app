@@ -163,7 +163,9 @@ class ManageDelivery extends React.Component<Props, State> {
     });
 
     const deliveryPlaces = await new PakkasmarjaApi().getDeliveryPlacesService(accessToken.access_token).listDeliveryPlaces();
-    this.setState({ deliveryPlaces });
+    this.setState({ 
+      deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.name !== "Muu")
+    });
 
     await this.listProducts();
 
