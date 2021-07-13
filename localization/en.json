@@ -38,5 +38,8 @@
   "contractRemainer": "Contract remainin",
   "contractExceeded": "Contract exceeded",
   "contractQuantity": "Contract quantity",
-  "deliveredQuantity": "Delivered quantity"
+  "deliveredQuantity": "Delivered quantity",
+
+  "comment": "Comment",
+  "newDeliveryLoan": "New delivery loan"
 }

@@ -47,6 +47,9 @@ export interface Strings extends LocalizedStringsMethods {
   contractExceeded: string;
   contractQuantity: string;
   deliveredQuantity: string;
+
+  comment: string;
+  newDeliveryLoan: string;
 }
 
 const strings: Strings = new LocalizedStrings({ en, fi });

@@ -2,27 +2,19 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveriesState, DeliveryListItem, KeyboardType, boxKey, DeliveryNoteData } from "../../../types";
+import { AccessToken, StoreState, DeliveryListItem, KeyboardType, boxKey } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert, StyleSheet } from "react-native";
-import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality, Contact } from "pakkasmarja-client";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
+import { Product, DeliveryPlace, ItemGroupCategory, Contact, Body1 } from "pakkasmarja-client";
 import { Text, Icon, Input, ListItem } from "native-base";
-import NumericInput from 'react-native-numeric-input'
 import moment from "moment"
 import PakkasmarjaApi from "../../../api";
 import FeatherIcon from "react-native-vector-icons/Feather";
-import ModalSelector from 'react-native-modal-selector';
-import IconPen from "react-native-vector-icons/EvilIcons";
 import DateTimePicker from "react-native-modal-datetime-picker";
-import EntypoIcon from "react-native-vector-icons/Entypo";
 import { styles } from "../deliveries/styles.tsx";
-import CreateDeliveryNoteModal from "../deliveries/CreateDeliveryNoteModal";
-import ViewOrDeleteNoteModal from "../deliveries/ViewOrDeleteNoteModal";
 import Autocomplete from 'native-base-autocomplete';
-import DeliveryNoteModal from "../deliveries/DeliveryNoteModal";
-import { FileService, FileResponse } from "../../../api/file.service";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
 import AsyncButton from "../../generic/async-button";
+import strings from "../../../localization/strings";
 
 /**
  * Component props
@@ -36,40 +28,24 @@ interface Props {
  * Component state
  */
 interface State {
-  deliveryQualities?: DeliveryQuality[]
-  deliveryData?: DeliveryListItem;
   deliveryPlaces?: DeliveryPlace[];
   contacts?: Contact[];
   deliveryPlaceId?: string;
-  deliveryQualityId?: string;
   products: Product[];
-  productId?: string;
   datepickerVisible: boolean,
   modalOpen: boolean;
   loading: boolean;
   amount: number;
   selectedDate: Date;
-  deliveryNotes?: DeliveryNote[];
   createModal: boolean;
   editModal: boolean;
-  deliveryNoteId?: string;
-  productPrice?: ProductPrice;
-  product?: Product;
-  isNewDelivery?: boolean;
   category?: ItemGroupCategory;
-
-  noteEditable: boolean;
-  deliveryNoteData: DeliveryNoteData;
-  deliveryNoteDatas: DeliveryNoteData[];
-  deliveryNoteFile?: {
-    fileUri: string,
-    fileType: string
-  };
 
   redBoxesLoaned: number;
   redBoxesReturned: number;
   grayBoxesLoaned: number;
   grayBoxesReturned: number;
+  deliveryLoanComment: string;
 
   query?: string;
   selectedContact?: Contact;
@@ -95,17 +71,13 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       products: [],
       createModal: false,
       editModal: false,
-      deliveryQualities: [],
       selectedDate: new Date(),
-
-      noteEditable: false,
-      deliveryNoteData: { text: "", imageType: "", imageUri: "" },
-      deliveryNoteDatas: [],
 
       redBoxesLoaned: 0,
       redBoxesReturned: 0,
       grayBoxesLoaned: 0,
       grayBoxesReturned: 0,
+      deliveryLoanComment: "",
 
       query: ""
     };
@@ -140,39 +112,24 @@ class ManageBoxDelivery extends React.Component<Props, State> {
     const selectedDate: Date = this.props.navigation.state.params.date;
     const deliveryData: DeliveryListItem = this.props.navigation.state.params.deliveryListItem;
     const category: ItemGroupCategory = this.props.navigation.state.params.category;
-    const isNewDelivery = this.props.navigation.state.params.isNewDelivery;
 
     if (!this.props.accessToken) {
       return;
     }
 
-    this.setState({ loading: true, isNewDelivery, category, selectedDate });
+    this.setState({ loading: true, category, selectedDate });
     const Api = new PakkasmarjaApi();
     const deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
     this.setState({
       deliveryPlaces
     });
 
-    console.log(this.state.deliveryPlaces)
-
-    if (!isNewDelivery && deliveryData) {
-      const deliveryPlace = deliveryPlaces.find(deliveryPlace => deliveryPlace.id === deliveryData.delivery.deliveryPlaceId);
-      this.setState({
-        deliveryData,
-        deliveryPlaceId: deliveryPlace && deliveryPlace.id,
-        amount: deliveryData.delivery.amount,
-        selectedDate: new Date(deliveryData.delivery.time),
-        loading: false
-      }, () => this.loadDeliveryNotes());
-
-    } else {
-      this.setState({
-        deliveryPlaceId: deliveryPlaces[0].id,
-        amount: 0,
-        loading: false
-      });
-    }
-  }
+    this.setState({
+      deliveryPlaceId: deliveryPlaces[0].id,
+      amount: 0,
+      loading: false
+    });
+}
 
   /**
    * Component did update life-cycle event
@@ -184,93 +141,31 @@ class ManageBoxDelivery extends React.Component<Props, State> {
   /**
    * Handles accept delivery
    */
-  private handleDeliveryAccept = async () => {
-    if (!this.props.accessToken
-      || !this.state.product
-      || !this.state.product.id
-      || !this.state.deliveryPlaceId
-      || !this.state.selectedDate
-    ) {
+  private handleDeliveryLoanAccept = async () => {
+    const { deliveryPlaceId, selectedDate, selectedContact, deliveryLoanComment, redBoxesLoaned, redBoxesReturned, grayBoxesLoaned, grayBoxesReturned } = this.state;
+    const { accessToken, navigation } = this.props;
+    if (!accessToken|| !deliveryPlaceId|| !selectedDate || !selectedContact || !selectedContact.id) {
       return;
     }
 
     const Api = new PakkasmarjaApi();
-    const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const date = moment(this.state.selectedDate).utc().toDate();
-    const delivery: Delivery = {
-      id: this.state.isNewDelivery ? "" : this.state.deliveryData!.delivery.id,
-      productId: this.state.product.id,
-      userId: this.state.isNewDelivery && this.state.selectedContact ? this.state.selectedContact.id || "" : this.state.deliveryData && this.state.deliveryData.contact && this.state.deliveryData.contact.id || "",
-      time: date,
-      status: "DONE",
-      amount: this.state.amount,
-      deliveryPlaceId: this.state.deliveryPlaceId,
-      qualityId: this.state.deliveryQualityId,
+    const deliveryLoansService = await Api.getDeliveryLoansService(accessToken.access_token);
+
+    const deliveryLoan: Body1 = {
+      contactId: selectedContact.id,
+      comment: deliveryLoanComment,
       loans: [
-        { item: "RED_BOX", loaned: this.state.redBoxesLoaned, returned: this.state.redBoxesReturned },
-        { item: "GRAY_BOX", loaned: this.state.grayBoxesLoaned, returned: this.state.grayBoxesReturned }
+        { item: "RED_BOX", loaned: redBoxesLoaned, returned: redBoxesReturned },
+        { item: "GRAY_BOX", loaned: grayBoxesLoaned, returned: grayBoxesReturned }
       ]
     }
 
-    if (this.state.isNewDelivery) {
-      const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
-      if (this.state.deliveryNoteDatas.length > 0 && createdDelivery.id) {
-        await Promise.all(this.state.deliveryNoteDatas.map((deliveryNote): Promise<DeliveryNote | null> => {
-          return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
-        }));
-      }
-      this.props.navigation.navigate("Deliveries");
-    } else {
-      await deliveryService.updateDelivery(delivery, this.state.deliveryData!.delivery.id!);
-      this.props.navigation.navigate("Deliveries");
+    try {
+      await deliveryLoansService.createDeliveryLoan(deliveryLoan)
+      navigation.navigate("Deliveries");
+    } catch(error) {
+      console.log(error);
     }
-  }
-
-  /**
-   * Handles delivery reject
-   */
-  private handleDeliveryReject = async () => {
-    if (!this.props.accessToken
-      || !this.state.product
-      || !this.state.product.id
-      || !this.state.deliveryPlaceId
-      || !this.state.deliveryData
-      || !this.state.deliveryData.product
-      || !this.state.deliveryData.delivery.id
-      || !this.state.deliveryQualities
-    ) {
-      return;
-    }
-
-    const Api = new PakkasmarjaApi();
-    const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const date = moment(this.state.selectedDate).utc().toDate();
-    const delivery: Delivery = {
-      id: this.state.deliveryData.delivery.id,
-      productId: this.state.product.id,
-      userId: this.props.accessToken.userId,
-      time: date,
-      status: "NOT_ACCEPTED",
-      amount: this.state.amount,
-      deliveryPlaceId: this.state.deliveryPlaceId,
-      qualityId: this.state.deliveryQualityId
-    }
-
-    await deliveryService.updateDelivery(delivery, this.state.deliveryData!.delivery.id!);
-    this.props.navigation.navigate("Deliveries");
-  }
-
-  /**
-   * Load delivery notes
-   */
-  private loadDeliveryNotes = async () => {
-    if (!this.props.accessToken || !this.state.deliveryData || !this.state.deliveryData.delivery.id) {
-      return;
-    }
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const deliveryNotes: DeliveryNote[] = await deliveriesService.listDeliveryNotes(this.state.deliveryData.delivery.id);
-    this.setState({ deliveryNotes });
   }
 
   /**
@@ -305,7 +200,7 @@ class ManageBoxDelivery extends React.Component<Props, State> {
    * @return whether form is valid or not
    */
   private isValid = () => {
-    return !!(this.state.product && this.state.selectedDate && this.state.deliveryQualityId && this.state.deliveryPlaceId);
+    return !!(this.state.selectedContact && this.state.selectedDate && this.state.deliveryPlaceId);
   }
 
   /**
@@ -338,7 +233,7 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       </View>
     );
   }
-
+  
   /**
    * Render method
    */
@@ -374,8 +269,6 @@ class ManageBoxDelivery extends React.Component<Props, State> {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
         <View style={styles.deliveryContainer}>
-          {
-            this.state.isNewDelivery &&
             <View>
               <Autocomplete
                 autoCapitalize="none"
@@ -397,7 +290,6 @@ class ManageBoxDelivery extends React.Component<Props, State> {
                   </ListItem>}
               />
             </View>
-          }
           <View style={{ flex: 1, flexDirection: "row", marginTop: 5 }}>
             <View style={{ flex: 1 }}>
               <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
@@ -437,104 +329,23 @@ class ManageBoxDelivery extends React.Component<Props, State> {
               return this.renderInputField(box.key, "numeric", box.label)
             })
           }
-          <View style={{ flex: 1 }}>
-            {
-              !this.state.isNewDelivery ?
-                <React.Fragment>
-                  {
-                    this.state.deliveryNotes ?
-                      this.state.deliveryNotes.map((deliveryNote: DeliveryNote, index) => {
-                        return (
-                          <View key={index} style={[styles.center, { paddingVertical: 10 }]}>
-                            <TouchableOpacity onPress={() => this.setState({ deliveryNoteId: deliveryNote.id, editModal: true })}>
-                              <View style={[styles.center, { flexDirection: "row" }]}>
-                                <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
-                                <Text style={{ fontSize: 16, color: "#e01e36" }} >
-                                  {`Katso/poista huomio ${index + 1}`}
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          </View>
-                        );
-                      })
-                      : null
-                  }
-                  <View style={[styles.center, { paddingTop: 10 }]}>
-                    <TouchableOpacity onPress={() => this.setState({ createModal: true })}>
-                      <View style={[styles.center, { flexDirection: "row" }]}>
-                        <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
-                        <Text style={{ fontSize: 16, color: "#e01e36" }} >
-                          {`Lisää huomio`}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                  <CreateDeliveryNoteModal
-                    loadDeliveryNotes={this.loadDeliveryNotes}
-                    deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
-                    modalClose={() => this.setState({ createModal: false })}
-                    modalOpen={this.state.createModal}
-                  />
-                  <ViewOrDeleteNoteModal
-                    loadDeliveryNotes={this.loadDeliveryNotes}
-                    deliveryId={this.state.deliveryData && this.state.deliveryData.delivery.id || ""}
-                    deliveryNoteId={this.state.deliveryNoteId || ""}
-                    modalClose={() => this.setState({ editModal: false })}
-                    modalOpen={this.state.editModal}
-                  />
-                </React.Fragment>
-                :
-                <React.Fragment>
-                  {
-                    this.state.deliveryNoteDatas.length > 0 ?
-                      this.state.deliveryNoteDatas.map((deliveryNoteData, index) => {
-                        return (
-                          <View key={index} style={[styles.center, { paddingVertical: 15 }]}>
-                            <TouchableOpacity onPress={() => this.setState({ deliveryNoteData, noteEditable: true, modalOpen: true })}>
-                              <View style={[styles.center, { flexDirection: "row" }]}>
-                                <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
-                                <Text style={{ color: "#e01e36" }} >
-                                  {`Katso/poista huomio`}
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          </View>
-                        );
-                      })
-                      : null
-                  }
-                  <View style={[styles.center, { paddingTop: 10 }]}>
-                    <TouchableOpacity onPress={() =>
-                      this.setState({
-                        deliveryNoteData: {
-                          imageUri: "",
-                          imageType: "",
-                          text: ""
-                        },
-                        noteEditable: false,
-                        modalOpen: true
-                      })}>
-                      <View style={[styles.center, { flexDirection: "row" }]}>
-                        <IconPen size={25} style={{ color: "#e01e36" }} name="pencil" />
-                        <Text style={{ fontSize: 16, color: "#e01e36" }} >
-                          {`Lisää huomio`}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                  <DeliveryNoteModal
-                    onRemoveNote={this.onRemoveNote}
-                    editable={this.state.noteEditable}
-                    imageUri={this.state.deliveryNoteData ? this.state.deliveryNoteData.imageUri : undefined}
-                    onCreateNoteClick={this.onCreateNoteClick}
-                    deliveryNoteData={this.state.deliveryNoteData}
-                    onDeliveryNoteChange={this.onDeliveryNoteChange}
-                    onDeliveryNoteImageChange={((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType))}
-                    modalClose={() => this.setState({ modalOpen: false })}
-                    modalOpen={this.state.modalOpen}
-                  />
-                </React.Fragment>
-            }
+          <View>
+            <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+              <Text style={styles.textWithSpace}>{ strings.comment }</Text>
+            </View>
+            <Input
+              style={{
+                height: 50,
+                borderColor: "red",
+                backgroundColor: "white",
+                borderWidth: 1,
+                borderRadius: 8,
+                textAlign: "center"
+              }}
+              keyboardType="default"
+              value={this.state.deliveryLoanComment || ""}
+              onChangeText={(text: string) => this.setState({ deliveryLoanComment: text })}
+            />
           </View>
           {
             !this.isValid() &&
@@ -546,111 +357,15 @@ class ManageBoxDelivery extends React.Component<Props, State> {
             <AsyncButton
               disabled={ !this.isValid() }
               style={[ styles.deliveriesButton, styles.center, { width: "70%", height: 60, marginTop: 15 } ]}
-              onPress={ this.handleDeliveryAccept }
+              onPress={ this.handleDeliveryLoanAccept }
             >
               <Text style={styles.buttonText}>Hyväksy toimitus</Text>
             </AsyncButton>
           </View>
-          {
-            !this.state.isNewDelivery &&
-            <View style={[styles.center, { flex: 1 }]}>
-              <AsyncButton
-                disabled={ !this.isValid() }
-                style={[ styles.declineButton, styles.center, { width: "70%", height: 60, marginTop: 15, } ]}
-                onPress={ this.handleDeliveryReject }
-              >
-                <Text style={styles.buttonText}>Hylkää toimitus</Text>
-              </AsyncButton>
-            </View>
-          }
         </View>
 
       </BasicScrollLayout>
     );
-  }
-
-  /**
-   * On delivery note image change
-   */
-  private onDeliveryNoteImageChange = (fileUri?: string, fileType?: string) => {
-    if (!fileUri || !fileType) {
-      this.setState({ deliveryNoteFile: undefined });
-      return;
-    }
-
-    this.setState({
-      deliveryNoteFile: {
-        fileUri: fileUri,
-        fileType: fileType
-      }
-    });
-  }
-
-  /**
-   * Adds a delivery note
-   * 
-   * @param deliveryNoteData deliveryNoteData
-   */
-  private onDeliveryNoteChange = (deliveryNoteData: DeliveryNoteData) => {
-    this.setState({ deliveryNoteData: deliveryNoteData });
-  }
-
-  /**
-   * On create note click
-   */
-  private onCreateNoteClick = () => {
-    const noteData = this.state.deliveryNoteData;
-    const notes = this.state.deliveryNoteDatas;
-    notes.push(noteData);
-
-    this.setState({
-      deliveryNoteDatas: notes,
-      deliveryNoteData: {
-        imageUri: "",
-        imageType: "",
-        text: ""
-      }
-    });
-  }
-
-  /**
-   * On remove note
-   */
-  private onRemoveNote = () => {
-    const deliveryNotes = this.state.deliveryNoteDatas;
-    const deliveryNote = this.state.deliveryNoteData;
-    const newDeliveryNotes = deliveryNotes.filter((deliverynote) => {
-      return deliverynote !== deliveryNote;
-    });
-    this.setState({ deliveryNoteDatas: newDeliveryNotes, modalOpen: false });
-  }
-
-  /**
-   * Create delivery notes
-   * 
-   * @param deliveryId deliveryId
-   * @param deliveryNote deliveryNote
-   */
-  private async createDeliveryNote(deliveryId: string, deliveryNoteData: DeliveryNoteData): Promise<DeliveryNote | null> {
-    if (this.props.accessToken) {
-      const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
-      let image: FileResponse | undefined = undefined;
-
-      if (deliveryNoteData.imageUri && deliveryNoteData.imageType) {
-        image = await fileService.uploadFile(deliveryNoteData.imageUri, deliveryNoteData.imageType);
-      }
-
-      const deliveryNote: DeliveryNote = {
-        text: deliveryNoteData.text,
-        image: image ? image.url : undefined
-      };
-
-      const Api = new PakkasmarjaApi();
-      const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-      return deliveryService.createDeliveryNote(deliveryNote, deliveryId || "");
-    }
-
-    return null;
   }
 }
 
@@ -675,7 +390,6 @@ function mapStateToProps(state: StoreState) {
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
   return {
     onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken)),
-    deliveriesLoaded: (deliveries: DeliveriesState) => dispatch(actions.deliveriesLoaded(deliveries))
   };
 }
 
