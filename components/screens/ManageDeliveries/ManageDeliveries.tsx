@@ -23,6 +23,7 @@ import strings from "../../../localization/strings";
 interface Props {
   navigation: any;
   accessToken?: AccessToken;
+  itemGroupCategory?: ItemGroupCategory;
 };
 
 /**
@@ -91,14 +92,18 @@ class ManageDeliveries extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    if (!this.props.accessToken) {
+    const { accessToken, itemGroupCategory } = this.props;
+
+    if (!accessToken) {
       return;
     }
 
     const Api = new PakkasmarjaApi();
-    const products = await Api.getProductsService(this.props.accessToken.access_token).listProducts(undefined, undefined, undefined, undefined, 999);
-    let deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
-    const receiveFromPlaceCode = this.props.accessToken.receiveFromPlaceCode;
+    const productsService = Api.getProductsService(accessToken.access_token);
+    const deliveryPlacesService = Api.getDeliveryPlacesService(accessToken.access_token);
+    const products = await productsService.listProducts(undefined, undefined, undefined, undefined, 999);
+    let deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
+    const receiveFromPlaceCode = accessToken.receiveFromPlaceCode;
 
     if (receiveFromPlaceCode) {
       deliveryPlaces = deliveryPlaces.filter(deliveryPlace => deliveryPlace.id === receiveFromPlaceCode);
@@ -107,11 +112,14 @@ class ManageDeliveries extends React.Component<Props, State> {
       }
     }
 
-    this.setState({ products, deliveryPlaces }, () => this.loadData());
+    this.setState({ products, deliveryPlaces, category: itemGroupCategory || "FRESH" }, () => this.loadData());
   }
 
   /**
    * Component did mount life-cycle event
+   *
+   * @param prevProps previous component properties
+   * @param prevState previous component state
    */
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     if (prevState.date !== this.state.date || prevState.selectedDeliveryPlaceId !== this.state.selectedDeliveryPlaceId) {
@@ -123,26 +131,45 @@ class ManageDeliveries extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    const canManageFreshDeliveries = this.props.accessToken ? this.props.accessToken.realmRoles.indexOf("receive_fresh_berries") > -1 : false;
-    const canManageFrozenDeliveries = this.props.accessToken ? this.props.accessToken.realmRoles.indexOf("receive_frozen_berries") > -1 : false;
+    const { accessToken, navigation } = this.props;
+    const { category } = this.state;
+
+    const canManageFreshDeliveries = accessToken?.realmRoles.some(role => role === "receive_fresh_berries");
+    const canManageFrozenDeliveries = accessToken?.realmRoles.some(role => role === "receive_frozen_berries");
+
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <Tabs tabBarUnderlineStyle={{ backgroundColor: "#fff" }}>
-          {
-            canManageFreshDeliveries &&
-            <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"TUORE"}>
-              {
-                this.renderDeliveryList("FRESH")
-              }
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter
+      >
+        <Tabs
+          page={ category === "FRESH" ? 0 : 1 }
+          tabBarUnderlineStyle={{ backgroundColor: "#fff" }}
+          onChangeTab={ ({ i }: any) => this.setState({ category: i === 0 ? "FRESH" : "FROZEN" }) }
+        >
+          { canManageFreshDeliveries &&
+            <Tab
+              activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
+              activeTextStyle={ styles.activeText }
+              textStyle={{ color: "#fff" }}
+              tabStyle={ styles.tab }
+              heading="TUORE"
+            >
+              { this.renderDeliveryList("FRESH") }
             </Tab>
           }
-          {
-            canManageFrozenDeliveries &&
-            <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={"PAKASTE"}>
-              {
-                this.renderDeliveryList("FROZEN")
-              }
-            </Tab>}
+          { canManageFrozenDeliveries &&
+            <Tab
+              activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
+              activeTextStyle={ styles.activeText }
+              textStyle={{ color: "#fff" }}
+              tabStyle={ styles.tab }
+              heading="PAKASTE"
+            >
+              { this.renderDeliveryList("FROZEN") }
+            </Tab>
+          }
         </Tabs>
       </BasicScrollLayout>
     );
@@ -307,7 +334,7 @@ class ManageDeliveries extends React.Component<Props, State> {
               <ActivityIndicator size="large" color="#E51D2A" />
             </View>
             :
-            this.renderdeliveryListItems(sortedItemsSelected, category)
+            this.renderDeliveryListItems(sortedItemsSelected, category)
         }
         <TouchableOpacity
           style={[styles.begindeliveryButton, { width: "70%", height: 60, marginTop: 25, alignSelf: "center" }]}
@@ -345,7 +372,7 @@ class ManageDeliveries extends React.Component<Props, State> {
    * 
    * @return DeliveryListItems mapped to React components
    */
-  private renderdeliveryListItems = (deliveryListItems: DeliveryListItem[], category: ItemGroupCategory) => {
+  private renderDeliveryListItems = (deliveryListItems: DeliveryListItem[], category: ItemGroupCategory) => {
     const listStyle = StyleSheet.create({
       center: {
         flex: 1,
@@ -421,7 +448,8 @@ class ManageDeliveries extends React.Component<Props, State> {
  */
 function mapStateToProps(state: StoreState) {
   return {
-    accessToken: state.accessToken
+    accessToken: state.accessToken,
+    itemGroupCategory: state.itemGroupCategory
   };
 }
 
