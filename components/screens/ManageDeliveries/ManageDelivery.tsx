@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryListItem, KeyboardType, boxKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
-import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality, Contact, Contract } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality, Contact, ContractQuantities } from "pakkasmarja-client";
 import { Text, Icon, Input, ListItem } from "native-base";
 import NumericInput from 'react-native-numeric-input'
 import moment from "moment"
@@ -71,7 +71,7 @@ interface State {
   grayBoxesReturned: number;
   query?: string;
   selectedContact?: Contact;
-  contracts?: Contract[]; 
+  contractQuantities?: ContractQuantities[]; 
 };
 
 /**
@@ -510,9 +510,9 @@ class ManageDelivery extends React.Component<Props, State> {
   }
 
   private renderContractInfo = () => {
-    const { contracts, amount, product } = this.state;
+    const { contractQuantities, amount, product } = this.state;
 
-    if (!product || !contracts?.length) {
+    if (!product || !contractQuantities || !contractQuantities?.length) {
       return null;
     }
 
@@ -520,7 +520,7 @@ class ManageDelivery extends React.Component<Props, State> {
     var delivered = 0
     var remainer = 0;
 
-    contracts?.forEach(contract => {
+    contractQuantities?.forEach(contract => {
       delivered = delivered + (contract.deliveredQuantity || 0);
       contractQuantity = contractQuantity + (contract.contractQuantity || 0);
     })
@@ -1062,8 +1062,8 @@ class ManageDelivery extends React.Component<Props, State> {
     );
   }
 
-    /**
-   * @param deliveryProduct product witch contracts will be fetched
+  /**
+   * @param product product witch contracts will be fetched
    */
     private fetchContracts = async (product?: Product) => {
       const { accessToken, navigation } = this.props;
@@ -1084,26 +1084,26 @@ class ManageDelivery extends React.Component<Props, State> {
 
       const Api = new PakkasmarjaApi();
       const contractsService = await Api.getContractsService(accessToken.access_token);
-      const contractsData = await contractsService.listContracts("application/json", true, undefined, product.itemGroupId, yearNow, "APPROVED", 0, 1000);
 
-
-      if (isNewDelivery && selectedContact) {
-        const contracts = contractsData.filter(contract => contract.contactId === selectedContact?.id);
+      if (isNewDelivery && selectedContact && selectedContact.id) {
+        const contractQuantities = await contractsService.listContractQuantities(product.itemGroupId, selectedContact.id);
 
         this.setState({
-          contracts: contracts,
+          contractQuantities: contractQuantities,
           loading: false
         });
-      } else {
-        const contracts = contractsData.filter(contract => contract.contactId === deliveryData.delivery.userId);
+      } 
+
+      if (!isNewDelivery && deliveryData && deliveryData.product && deliveryData.contact?.id) {
+      const contractQuantities = await contractsService.listContractQuantities(deliveryData.product?.itemGroupId, deliveryData.contact?.id);
 
         this.setState({
-          contracts: contracts,
+          contractQuantities: contractQuantities,
           loading: false
         });
       }
     }
-}
+  }
 
 /**
  * Redux mapper for mapping store state to component props

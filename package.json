@@ -27,7 +27,7 @@
     "mqtt": "^2.18.8",
     "native-base": "^2.13.8",
     "native-base-autocomplete": "^1.3.2",
-    "pakkasmarja-client": "0.0.71",
+    "pakkasmarja-client": "0.0.88",
     "process": "^0.11.10",
     "query-string": "^6.2.0",
     "react": "16.8.3",
