@@ -172,7 +172,7 @@ class ManageDelivery extends React.Component<Props, State> {
         deliveryPlace.id === deliveryData.delivery.deliveryPlaceId
       );
 
-    await this.fetchContracts(deliveryData.product);
+    await this.fetchContractQuantities(deliveryData.product);
 
       this.setState({
         deliveryData,
@@ -248,7 +248,7 @@ class ManageDelivery extends React.Component<Props, State> {
       const productId = products.length ? products[0].id : "";
       const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, productId);
 
-      await this.fetchContracts(products.length ? products[0] : undefined);
+      await this.fetchContractQuantities(products.length ? products[0] : undefined);
 
       this.setState({
         productId: productId,
@@ -396,7 +396,7 @@ class ManageDelivery extends React.Component<Props, State> {
     const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, productId);
     const product = products.find((product) => product.id === productId);
 
-    await this.fetchContracts(product);
+    await this.fetchContractQuantities(product);
 
     this.setState({
       deliveryQualities,
@@ -1065,7 +1065,7 @@ class ManageDelivery extends React.Component<Props, State> {
   /**
    * @param product product witch contracts will be fetched
    */
-    private fetchContracts = async (product?: Product) => {
+    private fetchContractQuantities = async (product?: Product) => {
       const { accessToken, navigation } = this.props;
       const { selectedContact, isNewDelivery } = this.state;
 
