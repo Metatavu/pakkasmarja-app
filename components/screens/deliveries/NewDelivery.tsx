@@ -138,7 +138,7 @@ class NewDelivery extends React.Component<Props, State> {
     ]);
 
     this.setState({
-      deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.name !== "Muu"),
+      deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.id !== "OTHER"),
       deliveries,
       products,
       productId: products[0] ? products[0].id : undefined,

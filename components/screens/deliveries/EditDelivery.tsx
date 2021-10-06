@@ -165,7 +165,7 @@ class EditDelivery extends React.Component<Props, State> {
         deliveryData,
         products: products,
         deliveryQualities,
-        deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.name !== "Muu"),
+        deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.id !== "OTHER"),
         userId: accessToken.userId,
         productId: deliveryData.product.id,
         product: deliveryData.product,
