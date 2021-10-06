@@ -33,5 +33,13 @@
 
   "contractDetailsReadFromContract": "Details about pricing and quality control of fresh berries can be read from the contract.",
 
-  "noMessages": "No messages"
+  "noMessages": "No messages",
+
+  "contractRemainer": "Contract remainin",
+  "contractExceeded": "Contract exceeded",
+  "contractQuantity": "Contract quantity",
+  "deliveredQuantity": "Delivered quantity",
+
+  "comment": "Comment",
+  "newDeliveryLoan": "New delivery loan"
 }

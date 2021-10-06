@@ -94,6 +94,16 @@ export default class PakkasmarjaApi {
   }
 
   /**
+   * Get delivery loans service
+   * 
+   * @param token token
+   * @return Delivery loans service
+   */
+  public getDeliveryLoansService(token: string) {
+    return this.getApi().getDeliveryLoansService(token);
+  }
+
+  /**
    * Get deliveries service
    * 
    * @param token token

@@ -34,6 +34,7 @@ import strings from "./localization/strings";
 import ManageDeliveries from "./components/screens/ManageDeliveries/ManageDeliveries";
 import ManageDelivery from "./components/screens/ManageDeliveries/ManageDelivery";
 import DatabankScreen from "./components/screens/databank/DatabankScreen";
+import ManageBoxDelivery from "./components/screens/ManageDeliveries/ManageBoxDelivery";
 
 interface State {
   authenticated: boolean
@@ -68,7 +69,9 @@ const RootStack = createStackNavigator({
   ManageContact: ManageContact,
   ManageDeliveries: ManageDeliveries,
   ManageDelivery: ManageDelivery,
-  Databank: DatabankScreen
+  Databank: DatabankScreen,
+  ManageBoxDelivery: ManageBoxDelivery
+
 }, {
     defaultNavigationOptions: {
       headerStyle: {
