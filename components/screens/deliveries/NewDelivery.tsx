@@ -76,7 +76,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -131,7 +131,7 @@ class NewDelivery extends React.Component<Props, State> {
 
     const products = unfilteredProducts.filter(product => product.active === true);
     const deliveries = this.getDeliveries();
-    
+
     const [ productPrice, deliveryQualities ] = await Promise.all([
       products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [],
       deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, products[0].id || "")
@@ -153,7 +153,7 @@ class NewDelivery extends React.Component<Props, State> {
       this.renderAlert();
     }
 
-    
+
     if (selectedDate && deliveryPlaces[0].id) {
       this.getDeliveryPlaceOpeningHours(selectedDate, deliveryPlaces[0].id);
     }
@@ -161,17 +161,17 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Component did update life cycle method
-   * 
+   *
    * @param prevProps previous props
    * @param prevState previous state
    */
   public componentDidUpdate = (prevProps: Props, prevState: State) => {
     const { deliveryPlaceId, selectedDate } = this.state;
+
     if (
       selectedDate &&
       deliveryPlaceId &&
-      (prevState.selectedDate !== selectedDate ||
-       prevState.deliveryPlaceId !== deliveryPlaceId)
+      (prevState.selectedDate !== selectedDate || prevState.deliveryPlaceId !== deliveryPlaceId)
     ) {
       this.getDeliveryPlaceOpeningHours(selectedDate, deliveryPlaceId);
     }
@@ -182,11 +182,7 @@ class NewDelivery extends React.Component<Props, State> {
    */
   static navigationOptions = ({ navigation }: any) => {
     return {
-      headerTitle: <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
+      headerTitle: <TopBar navigation={ navigation } showMenu showUser/>,
       headerTitleContainerStyle: {
         left: 0,
       },
@@ -204,7 +200,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Get deliveries
-   * 
+   *
    * @return deliveries
    */
   private getDeliveries = () => {
@@ -221,7 +217,7 @@ class NewDelivery extends React.Component<Props, State> {
 
     /**
    * Gets delivery place opening hours on a given date
-   * 
+   *
    * @param date date object
    * @param deliveryPlaceId delivery place id
    */
@@ -284,7 +280,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Adds a delivery note
-   * 
+   *
    * @param deliveryNoteData deliveryNoteData
    */
   private onDeliveryNoteChange = (deliveryNoteData: DeliveryNoteData) => {
@@ -311,7 +307,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Handles new delivery data
-   * 
+   *
    * @param key key
    * @param value value
    */
@@ -398,7 +394,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Create delivery notes
-   * 
+   *
    * @param deliveryId deliveryId
    * @param deliveryNote deliveryNote
    */
@@ -452,7 +448,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
   * Prints date from Date
-  * 
+  *
   * @param date date
   * @returns date string formatted to finnish locale
   */
@@ -462,7 +458,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Prints time from Date
-   * 
+   *
    * @param date date
    * @returns time string formatted to finnish locale
    */
@@ -483,7 +479,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * On delivery note image change
-   * 
+   *
    * @param fileUri file uri
    * @param fileType file type
    */
@@ -503,7 +499,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Gets opening hours if selected delivery place has ones set for selected date
-   * 
+   *
    * @returns date array if opening hours are found, otherwise undefined
    */
   private getOpeningHours = (): Date[] => {
@@ -515,7 +511,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Converts opening hours to date array
-   * 
+   *
    * @param openingHours array of opening hours
    * @return array of dates
    */
@@ -525,7 +521,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Maps single opening hour interval to date array
-   * 
+   *
    * @param interval opening hour interval
    * @returns array of dates
    */
@@ -575,7 +571,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Returns whether form is valid or not
-   * 
+   *
    * @return whether form is valid or not
    */
   private isValid = () => {
@@ -600,7 +596,7 @@ class NewDelivery extends React.Component<Props, State> {
       deliveryNoteData,
       deliveryPlaceOpeningHours,
       modalOpen } = this.state;
-    
+
     if (loading) {
       return (
         <View style={ styles.loaderContainer }>
@@ -894,7 +890,7 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Renders time picker element
-   * 
+   *
    * @param hours included hours list
    */
   private renderTimePicker = (hours: Date[]) => {
@@ -1130,7 +1126,7 @@ class NewDelivery extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -1142,8 +1138,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

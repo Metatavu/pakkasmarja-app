@@ -71,7 +71,7 @@ interface State {
   grayBoxesReturned: number;
   query?: string;
   selectedContact?: Contact;
-  contractQuantities?: ContractQuantities[]; 
+  contractQuantities?: ContractQuantities[];
 };
 
 /**
@@ -83,7 +83,7 @@ class ManageDelivery extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -163,7 +163,7 @@ class ManageDelivery extends React.Component<Props, State> {
     });
 
     const deliveryPlaces = await new PakkasmarjaApi().getDeliveryPlacesService(accessToken.access_token).listDeliveryPlaces();
-    this.setState({ 
+    this.setState({
       deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.name !== "Muu")
     });
 
@@ -302,7 +302,7 @@ class ManageDelivery extends React.Component<Props, State> {
     const deliveryService = new PakkasmarjaApi().getDeliveriesService(accessToken.access_token);
 
     if (isNewDelivery) {
-      const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
+      const createdDelivery: Delivery = await deliveryService.createDelivery({ ...delivery, status: "PROPOSAL" });
 
       if (deliveryNoteDatas.length && createdDelivery.id) {
         await Promise.all(
@@ -311,6 +311,8 @@ class ManageDelivery extends React.Component<Props, State> {
           )
         );
       }
+
+      await deliveryService.updateDelivery({ ...createdDelivery, status: "DONE" }, createdDelivery.id!);
     } else {
       deliveryData && await deliveryService.updateDelivery(delivery, deliveryData.delivery.id!);
     }
@@ -471,7 +473,7 @@ class ManageDelivery extends React.Component<Props, State> {
 
   /**
    * Returns whether form is valid or not
-   * 
+   *
    * @return whether form is valid or not
    */
   private isValid = () => {
@@ -546,7 +548,7 @@ class ManageDelivery extends React.Component<Props, State> {
         />
         { remainer >= 0 ?
             <Text>{ strings.contractRemainer }: { remainer }Kg</Text> :
-            <Text style={{ color: "red" }}>{ strings.contractExceeded }: { Math.abs(remainer) }Kg</Text> 
+            <Text style={{ color: "red" }}>{ strings.contractExceeded }: { Math.abs(remainer) }Kg</Text>
         }
       </View>
     )
@@ -968,7 +970,7 @@ class ManageDelivery extends React.Component<Props, State> {
               </AsyncButton>
             </View>
           }
-          { deliveryData?.delivery.status !== "DONE" && !isNewDelivery && 
+          { deliveryData?.delivery.status !== "DONE" && !isNewDelivery &&
             <View style={[ styles.center, { flex: 1 } ]}>
               <AsyncButton
                 disabled={ !this.isValid() }
@@ -1002,7 +1004,7 @@ class ManageDelivery extends React.Component<Props, State> {
 
   /**
    * Adds a delivery note
-   * 
+   *
    * @param deliveryNoteData deliveryNoteData
    */
   private onDeliveryNoteChange = (deliveryNoteData: DeliveryNoteData) => {
@@ -1038,7 +1040,7 @@ class ManageDelivery extends React.Component<Props, State> {
 
   /**
    * Create delivery notes
-   * 
+   *
    * @param deliveryId delivery ID
    * @param deliveryNoteData delivery note data
    * @returns promise of created delivery note
@@ -1073,9 +1075,9 @@ class ManageDelivery extends React.Component<Props, State> {
 
       const params = navigation.state.params;
       const deliveryData: DeliveryListItem = params.deliveryListItem;
-  
+
       const yearNow = parseInt(moment(new Date()).format("YYYY"));
-  
+
       if (!accessToken || !accessToken.access_token || !product) {
         return;
       }
@@ -1094,7 +1096,7 @@ class ManageDelivery extends React.Component<Props, State> {
           contractQuantities: contractQuantities,
           loading: false
         });
-      } 
+      }
 
       if (!isNewDelivery && deliveryData && deliveryData.product && deliveryData.contact?.id) {
       const contractQuantities = await contractsService.listContractQuantities(deliveryData.product?.itemGroupId, deliveryData.contact?.id);
@@ -1109,7 +1111,7 @@ class ManageDelivery extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 const mapStateToProps = (state: StoreState) => ({
@@ -1119,8 +1121,8 @@ const mapStateToProps = (state: StoreState) => ({
 });
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 const mapDispatchToProps = (dispatch: Dispatch<actions.AppAction>) => ({
