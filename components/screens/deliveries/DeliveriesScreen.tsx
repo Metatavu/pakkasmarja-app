@@ -169,13 +169,12 @@ class DeliveriesScreen extends React.Component<Props, State> {
     }
 
     const Api = new PakkasmarjaApi();
-    const deliveriesService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = await Api.getProductsService(this.props.accessToken.access_token);
+    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
+    const productsService = Api.getProductsService(this.props.accessToken.access_token);
 
-    const freshDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FRESH", undefined, undefined, undefined, undefined, undefined, 0, 200);
-    const frozenDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FROZEN", undefined, undefined, undefined, undefined, undefined, 0, 200);
-    // TODO: Fix this properly
-    const products: Product[] = await productsService.listProducts(undefined, undefined, undefined, 0, 999);
+    const freshDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FRESH", undefined, undefined, undefined, undefined, undefined, 0, 10000);
+    const frozenDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FROZEN", undefined, undefined, undefined, undefined, undefined, 0, 10000);
+    const products: Product[] = await productsService.listProducts(undefined, undefined, undefined, 0, 10000);
 
     const freshDeliveriesAndProducts: DeliveryProduct[] = freshDeliveries.map((delivery) => {
       return {
