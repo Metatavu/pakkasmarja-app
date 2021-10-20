@@ -16,6 +16,7 @@ import BasicLayout from "../../layout/BasicLayout";
 import strings from "../../../localization/strings";
 import 'moment/locale/fi';
 import { extendMoment } from "moment-range";
+import _ from "lodash";
 
 /**
  * Moment extended with moment-range
@@ -203,22 +204,25 @@ class DeliveriesScreen extends React.Component<Props, State> {
    */
   private fetchDeliveryPlacesFromContract = async () => {
     const { accessToken } = this.props;
+
     if (!accessToken) {
       return;
     }
+
     const { access_token } = accessToken;
+
     if (!access_token) {
       return;
     }
+
     const contractsService = Api.getContractsService(access_token);
-    const deliveryPlacesService = Api.getDeliveryPlacesService(access_token);
     const userContracts = await contractsService.listContracts("application/json", undefined, undefined, undefined, new Date().getFullYear());
-    const deliveryPlaces = await Promise.all(
-      userContracts.map(contract =>
-        deliveryPlacesService.findDeliveryPlace(contract.deliveryPlaceId)
-      )
-    );
-    this.setState({ deliveryPlaces });
+
+    const uniqueDeliveryPlaceIds = _.uniq(userContracts.map(contract => contract.deliveryPlaceId));
+    const deliveryPlacesService = Api.getDeliveryPlacesService(access_token);
+    const deliveryPlaces = await Promise.all(uniqueDeliveryPlaceIds.map(id => deliveryPlacesService.findDeliveryPlace(id)));
+
+    this.setState({ deliveryPlaces: deliveryPlaces });
   }
 
   /**
