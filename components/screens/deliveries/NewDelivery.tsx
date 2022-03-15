@@ -827,7 +827,7 @@ class NewDelivery extends React.Component<Props, State> {
    * Renders delivery date selection
    */
   private renderDeliveryDateSelection = () => {
-    const { datepickerVisibl, selectedDate } = this.state;
+    const { datepickerVisible, selectedDate } = this.state;
 
     return (
       <>
