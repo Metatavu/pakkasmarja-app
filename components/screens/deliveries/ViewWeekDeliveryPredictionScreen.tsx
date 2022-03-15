@@ -10,12 +10,14 @@ import NumericInput from 'react-native-numeric-input';
 import moment from "moment";
 import 'moment/min/locales';
 import Icon from "react-native-vector-icons/Feather";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
  */
 interface Props {
   navigation: any;
+  route: any;
   accessToken?: AccessToken;
 };
 
@@ -34,7 +36,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -44,9 +46,9 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -54,7 +56,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
             name='chevron-left'
@@ -70,10 +72,12 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    const { route } = this.props;
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.accessToken) {
       return;
     }
-    const predictionData: WeekDeliveryPredictionTableData = await this.props.navigation.getParam('predictionData');
+    const predictionData: WeekDeliveryPredictionTableData = await route.params.predictionData;
     const averageDailyAmount: number = Math.round(predictionData.weekDeliveryPrediction.amount / 7);
     this.setState({ predictionData: predictionData, averageDailyAmount: averageDailyAmount });
   }
@@ -111,7 +115,6 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
                 valueType='real'
                 minValue={0}
                 textColor='black'
-                iconStyle={{ color: 'white' }}
                 rightButtonBackgroundColor='#B4B4B4'
                 leftButtonBackgroundColor='#B4B4B4'
                 borderColor='transparent'
@@ -172,7 +175,7 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -182,8 +185,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

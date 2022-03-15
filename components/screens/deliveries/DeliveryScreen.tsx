@@ -4,14 +4,11 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Image, Dimensions, Alert, } from "react-native";
-import { Delivery, Product, DeliveryNote, DeliveryQuality, DeliveryPlace } from "pakkasmarja-client";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Image, Dimensions, Alert } from "react-native";
+import { Delivery, DeliveryNote, DeliveryQuality, DeliveryPlace } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
-import { Text } from 'react-native-elements';
-import Moment from "react-moment";
 import moment from "moment";
 import PakkasmarjaApi from "../../../api";
-import { NavigationEvents } from 'react-navigation';
 import FeatherIcon from "react-native-vector-icons/Feather";
 import Icon from "react-native-vector-icons/EvilIcons";
 import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
@@ -20,12 +17,15 @@ import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import Lightbox from 'react-native-lightbox';
 import AsyncButton from "../../generic/async-button";
+import { StackNavigationOptions } from '@react-navigation/stack';
+import { Text } from "native-base";
 
 /**
  * Component props
  */
 interface Props {
   navigation: any;
+  route: any;
   accessToken?: AccessToken;
   deliveries?: DeliveriesState;
   itemGroupCategory?: "FRESH" | "FROZEN";
@@ -57,9 +57,11 @@ interface State {
  */
 class DeliveryScreen extends React.Component<Props, State> {
 
+  private navigationFocusEventSubscription: any;
+
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -76,9 +78,9 @@ class DeliveryScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -86,7 +88,7 @@ class DeliveryScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
             name='chevron-left'
@@ -102,12 +104,22 @@ class DeliveryScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.accessToken) {
       return;
     }
     this.setState({ loading: true });
     await this.loadData();
     this.setState({ loading: false });
+
+    this.navigationFocusEventSubscription = this.props.navigation.addListener('focus', this.loadData);
+  }
+
+  /**
+   * Component will unmount life-cycle event
+   */
+  componentWillUnmount = () => {
+    this.props.navigation.removeListener(this.navigationFocusEventSubscription);
   }
 
   /**
@@ -139,7 +151,7 @@ class DeliveryScreen extends React.Component<Props, State> {
 
   /**
    * Check if prodcuts itemgroup is natural
-   * 
+   *
    * @param itemGroupId itemGroupId
    * @returns if itemgroup is natural or not
    */
@@ -224,7 +236,7 @@ class DeliveryScreen extends React.Component<Props, State> {
 
   /**
    * Get deliveries
-   * 
+   *
    * @return deliveries
    */
   private getDeliveries = () => {
@@ -243,29 +255,29 @@ class DeliveryScreen extends React.Component<Props, State> {
    * Load data
    */
   private loadData = async () => {
-    if (!this.props.accessToken) {
+    const { accessToken, route, itemGroupCategory } = this.props;
+    const { deliveryId, productId, qualityId, editable } = route.params;
+    const { access_token } = accessToken || {};
+
+    if (!access_token) {
       return;
     }
+
     const Api = new PakkasmarjaApi();
-    const deliveryId: string = this.props.navigation.getParam('deliveryId');
-    const productId: string = this.props.navigation.getParam('productId');
-    const qualityId: string = this.props.navigation.getParam('qualityId');
-    const deliveryQualitiesService = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token);
-    const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(this.props.itemGroupCategory);
-    const deliveryQuality = deliveryQualities.find((deliveryQuality) => deliveryQuality.id == qualityId);
-    this.setState({ deliveryQuality });
+    const deliveryQualities = await Api.getDeliveryQualitiesService(access_token).listDeliveryQualities(itemGroupCategory);
+    const delivery = await Api.getDeliveriesService(access_token).findDelivery(deliveryId);
+    const product = await Api.getProductsService(access_token).findProduct(productId);
+    const deliveryPlace = await Api.getDeliveryPlacesService(access_token).findDeliveryPlace(delivery.deliveryPlaceId);
 
-    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = Api.getProductsService(this.props.accessToken.access_token);
-    const delivery: Delivery = await deliveriesService.findDelivery(deliveryId);
-    const product: Product = await productsService.findProduct(productId);
-    const editable: boolean = this.props.navigation.getParam('editable');
-    const deliveryPlace = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).findDeliveryPlace(delivery.deliveryPlaceId);
-    const deliveryData = { delivery, product }
+    this.checkIfNatural(product.itemGroupId);
 
-    const itemGroupId = product.itemGroupId;
-    this.checkIfNatural(itemGroupId);
-    this.setState({ editable: editable, deliveryData: deliveryData, deliveryPlace });
+    this.setState({
+      editable: editable,
+      deliveryData: { delivery, product },
+      deliveryPlace: deliveryPlace,
+      deliveryQuality: deliveryQualities.find(({ id }) => id == qualityId)
+    });
+
     this.loadDeliveryNotes();
   }
 
@@ -325,7 +337,7 @@ class DeliveryScreen extends React.Component<Props, State> {
       );
     }
     if (!this.state.notes64) {
-      return <React.Fragment></React.Fragment>;
+      return <></>;
     }
     return (
       <View style={{ flex: 1 }}>
@@ -388,7 +400,6 @@ class DeliveryScreen extends React.Component<Props, State> {
     const { status } = deliveryData.delivery;
     return (
       <BasicScrollLayout navigation={ this.props.navigation } backgroundColor="#fff" displayFooter={ true }>
-        <NavigationEvents onWillFocus={ () => this.loadData() } />
         <View style={{ flex: 1, padding: 25 }}>
           <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
@@ -434,18 +445,18 @@ class DeliveryScreen extends React.Component<Props, State> {
             </View>
             <View style={{ flex: 1, flexDirection: 'row' }}>
               { status === "DONE" || status === "NOT_ACCEPTED" ?
-                <Moment element={ Text } style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY HH:mm">
-                  { deliveryData.delivery.time.toString() }
-                </Moment>
+                <Text style={{ fontSize: 15, color: "black" }}>
+                  { moment(deliveryData.delivery.time).format("DD.MM.YYYY HH:mm") }
+                </Text>
                 :
-                <React.Fragment>
-                  <Moment element={ Text } style={{ color: "black", fontSize: 15 }} format="DD.MM.YYYY">
-                    { deliveryData.delivery.time.toString() }
-                  </Moment>
+                <>
+                  <Text style={{ fontSize: 15, color: "black" }}>
+                    { moment(deliveryData.delivery.time).format("DD.MM.YYYY") }
+                  </Text>
                   <Text style={{ color: "black", fontSize: 15 }}>
                     {` - klo ${moment(deliveryData.delivery.time).format("HH.mm")}`}
                   </Text>
-                </React.Fragment>
+                </>
               }
             </View>
           </View>
@@ -477,7 +488,7 @@ class DeliveryScreen extends React.Component<Props, State> {
             </View>
           }
           { editable ?
-            <React.Fragment>
+            <>
               { deliveryNotes ?
                 deliveryNotes.map((deliveryNote: DeliveryNote, index) => {
                   return (
@@ -518,26 +529,26 @@ class DeliveryScreen extends React.Component<Props, State> {
               <View style={[ styles.center, { flex: 1, marginBottom: 20 } ]}>
                 <Text style={{ color: 'black', fontSize: 15 }}>{ this.state.description }</Text>
               </View>
-              <View style={[ styles.center, { flex: 1 } ]}>
+              <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
                 <AsyncButton
                   style={[ styles.begindeliveryButton, styles.center, { width: "70%", height: 60 } ]}
                   onPress={ this.handleBeginDelivery }>
                   <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Aloita toimitus</Text>
                 </AsyncButton>
               </View>
-              <View style={[ styles.center, { flex: 1, marginTop: 20 } ]}>
+              <View style={[ styles.center, { flex: 1, flexDirection: "row", marginTop: 20 } ]}>
                 <AsyncButton
                   style={[ styles.declineButton, styles.center, { width: "70%", height: 60 } ]}
                   onPress={ this.handleRemoveDelivery }>
                   <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>Hylkää toimitus</Text>
                 </AsyncButton>
               </View>
-            </React.Fragment>
+            </>
             :
-            <React.Fragment>
+            <>
               {
                 status === "DONE" &&
-                <React.Fragment>
+                <>
                   <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
                     <View style={{ flex: 0.8 }}>
                       <Text style={{ fontSize: 15 }}>Yksikköhinta ALV 0%</Text>
@@ -558,12 +569,12 @@ class DeliveryScreen extends React.Component<Props, State> {
                       </Text>
                     </View>
                   </View>
-                </React.Fragment>
+                </>
               }
               <View style={{ flex: 1, marginTop: 30 }}>
                 { this.renderDeliveryNotes() }
               </View>
-            </React.Fragment>
+            </>
           }
         </View>
         <CreateDeliveryNoteModal

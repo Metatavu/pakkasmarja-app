@@ -1,6 +1,6 @@
 import React from "react";
-import { Text, List, ListItem } from "native-base";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { Text } from "native-base";
+import { View, TouchableOpacity } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { ItemGroup, ItemGroupPrice } from "pakkasmarja-client";
 import ContractPriceModal from "./ContractPriceModal";
@@ -135,10 +135,10 @@ export default class ContractPrices extends React.Component<Props, State> {
               })
             }
           </Grid>
-          <ContractPriceModal 
+          <ContractPriceModal
             prices={this.props.prices}
-            styles={styles} 
-            closeModal={() => this.setState({showPastPrices: false})} 
+            styles={styles}
+            closeModal={() => this.setState({showPastPrices: false})}
             modalOpen={this.state.showPastPrices}
           />
           {this.renderItemDetails()}

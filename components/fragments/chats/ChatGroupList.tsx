@@ -8,7 +8,7 @@ import strings from "../../../localization/strings";
 import { List, ListItem, Left, Thumbnail, Body, Text, View, Spinner, Fab, Icon, Badge } from "native-base";
 import { AVATAR_PLACEHOLDER } from "../../../static/images";
 import { ScrollView } from "react-native";
-import * as _ from "lodash";
+import _ from "lodash";
 
 
 /**
@@ -38,8 +38,8 @@ class ChatGroupList extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
-   * @param props component properties 
+   *
+   * @param props component properties
    */
   constructor(props: Props) {
     super(props);
@@ -165,7 +165,7 @@ class ChatGroupList extends React.Component<Props, State> {
 
   /**
    * Counts unreads by group
-   * 
+   *
    * @param groupId group ID
    * @return unread messages count
    */
@@ -177,7 +177,7 @@ class ChatGroupList extends React.Component<Props, State> {
 
   /**
    * Check if group has unread messages
-   * 
+   *
    * @param groupId group ID
    * @returns true if group has unread messages, otherwise false
    */
@@ -190,7 +190,7 @@ class ChatGroupList extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -201,8 +201,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

@@ -1,17 +1,16 @@
 import React, { Dispatch } from "react";
-import TopBar from "../../layout/TopBar";
 import { Text } from "native-base";
-import { View, TouchableHighlight } from "react-native";
+import { View } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import { Contract, ItemGroup } from "pakkasmarja-client";
 import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import { connect } from "react-redux";
 import * as actions from "../../../actions";
 import { styles } from "./styles";
-import FeatherIcon from "react-native-vector-icons/Feather";
 import _ from "lodash";
 import { Icon } from "native-base";
 import AsyncButton from "../../generic/async-button";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 /**
  * Component props
@@ -25,109 +24,71 @@ interface Props {
 };
 
 /**
- * Component state
- */
-interface State {
-};
-
-/**
  * Contract amount table component class
  */
-class ContractAmountTable extends React.Component<Props, State> {
-
-  /**
-   * Constructor 
-   * 
-   * @param props 
-   */
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-    };
-  }
-
-  static navigationOptions = ({ navigation }: any) => {
-    return {
-      headerTitle: <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
-      headerTitleContainerStyle: {
-        left: 0,
-      },
-      headerLeft:
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
-          <FeatherIcon
-            name='chevron-left'
-            color='#fff'
-            size={40}
-            style={{ marginLeft: 30 }}
-          />
-        </TouchableHighlight>
-    }
-  };
+class ContractAmountTable extends React.Component<Props> {
 
   /**
    * Render rows
    */
   private renderRows = () => {
-    const contractsNotTerminated: ContractTableData[] = this.props.contractTableDatas.filter(contractTableData => contractTableData.contract.status !== "TERMINATED");
-    const sortedContracts = _.sortBy(contractsNotTerminated, (obj) => obj.contract.status);
-    return sortedContracts.map((contractTableData) => {
-      const contractStatus = contractTableData.contract.status;
-      return (
-        <AsyncButton key={contractTableData.contract.id} onPress={async () => await this.props.onContractClick(contractTableData.contract)}>
-          {
-            contractStatus !== "APPROVED" ?
-              this.renderNotApproved(contractStatus, contractTableData.itemGroup) :
-              this.renderApproved(contractTableData.contract, contractTableData.itemGroup)
-          }
-        </AsyncButton>
-      );
-    });
+    const { contractTableDatas, onContractClick } = this.props;
+    const contractsNotTerminated = contractTableDatas.filter(contractTableData => contractTableData.contract.status !== "TERMINATED");
+    const sortedContracts = _.sortBy(contractsNotTerminated, obj => obj.contract.status);
+
+    return sortedContracts.map(({ contract, itemGroup }) => (
+      <TouchableOpacity
+        key={ contract.id }
+        onPress={ () => onContractClick(contract) }>
+        {
+          contract.status !== "APPROVED" ?
+            this.renderNotApproved(contract.status, itemGroup) :
+            this.renderApproved(contract, itemGroup)
+        }
+      </TouchableOpacity>
+    ));
   }
 
   /**
    * Render not apporoved row
-   * 
+   *
    * @param contract contract
    * @param itemGroup itemGroup
    */
   private renderApproved = (contract: Contract, itemGroup?: ItemGroup) => {
-    if (!contract || !contract.contractQuantity) {
+    if (!contract?.contractQuantity) {
       return <Row></Row>;
     }
 
     return (
-      <Row style={[styles.row, { borderBottomColor: "black", borderBottomWidth: 0.5, height: 75 }]}>
-        {this.renderColumn(itemGroup && itemGroup.displayName ? itemGroup.displayName : "-")}
-        {this.renderColumn(contract.contractQuantity.toString(), { fontWeight: "bold", fontSize: 18 })}
-        {this.renderColumn(contract.deliveredQuantity ? contract.deliveredQuantity.toString() : "0", { fontWeight: "bold", fontSize: 18 })}
+      <Row style={[ styles.row, { borderBottomColor: "black", borderBottomWidth: 0.5, height: 75 } ]}>
+        { this.renderColumn(itemGroup && itemGroup.displayName ? itemGroup.displayName : "-") }
+        { this.renderColumn((contract.contractQuantity || 0).toString(), { fontWeight: "bold", fontSize: 18 }) }
+        { this.renderColumn(contract.deliveredQuantity ? contract.deliveredQuantity.toString() : "0", { fontWeight: "bold", fontSize: 18 }) }
       </Row>
     );
   }
 
   /**
-   * Render not apporoved row
-   * 
+   * Render not approved row
+   *
    * @param status status
    * @param itemGroup itemGroup
    */
   private renderNotApproved = (status: string, itemGroup?: ItemGroup) => {
-    const info: { text: string, icon: string } = this.getInfo(status);
+    const info = this.getInfo(status);
 
     return (
-      <Row style={[styles.row, { borderBottomColor: "black", borderBottomWidth: 0.5, height: 75 }]}>
-        {this.renderColumn(itemGroup && itemGroup.displayName ? itemGroup.displayName : "-", { fontSize: 15 })}
-        {this.renderColumn(info.text, { fontSize: 15 }, info.icon)}
+      <Row style={[ styles.row, { borderBottomColor: "black", borderBottomWidth: 0.5, height: 75 } ]}>
+        { this.renderColumn(itemGroup?.displayName || "-", { fontSize: 15 }) }
+        { this.renderColumn(info.text, { fontSize: 15 }, info.icon) }
       </Row>
     );
   }
 
   /**
    * Get info text by status
-   * 
+   *
    * @param status status
    * @return info text
    */
@@ -146,18 +107,22 @@ class ContractAmountTable extends React.Component<Props, State> {
 
   /**
    * Render column
-   * 
+   *
    * @param text
    * @style style
    */
   private renderColumn = (text: string, style?: any, icon?: string) => {
     return (
-      <Col style={[style, { flex: 1, justifyContent: "center", alignItems: "center", flexDirection: "row" }]}>
+      <Col style={[ style, { flex: 1, justifyContent: "center", alignItems: "center", flexDirection: "row" } ]}>
         {icon &&
-          <Icon style={{ color: '#E51D2A', fontSize: 20, marginRight: 10 }} type="FontAwesome" name={icon} />
+          <Icon
+            style={{ color: '#E51D2A', fontSize: 20, marginRight: 10 }}
+            type="FontAwesome"
+            name={ icon }
+          />
         }
-        <Text style={[{ fontSize: 15, textAlign: "center" }, style]}>
-          {text}
+        <Text style={[ { fontSize: 15, textAlign: "center" }, style ]}>
+          { text }
         </Text>
       </Col>
     );
@@ -167,24 +132,26 @@ class ContractAmountTable extends React.Component<Props, State> {
    * Render method
    */
   public render() {
+    const { onProposeNewContractClick, type } = this.props;
+
     return (
       <View>
-        <View style={styles.BlueContentView}>
+        <View style={ styles.BlueContentView }>
           <Grid>
-            <Row style={styles.headerRow}>
+            <Row style={ styles.headerRow }>
               <Col></Col>
-              <Col><Text style={{textAlign:"center"}}>Sovittu KG</Text></Col>
-              <Col><Text style={{textAlign:"center"}}>Toteutunut KG</Text></Col>
+              <Col><Text style={{ textAlign:"center" }}>Sovittu KG</Text></Col>
+              <Col><Text style={{ textAlign:"center" }}>Toteutunut KG</Text></Col>
             </Row>
-            {this.renderRows()}
+            { this.renderRows() }
           </Grid>
         </View>
-        <View style={styles.WhiteContentView}>
-          <AsyncButton style={styles.bigRedButton} onPress={async () => await this.props.onProposeNewContractClick(this.props.type)}>
-            <Text style={styles.buttonText}>
-              {
-                this.props.type === "FROZEN" ? "Ehdota uutta pakastesopimusta" : "Ehdota uutta tuoresopimusta"
-              }
+        <View style={ styles.WhiteContentView }>
+          <AsyncButton
+            style={ styles.bigRedButton }
+            onPress={ () => onProposeNewContractClick(type) }>
+            <Text style={[ styles.buttonText, { fontSize: 14 } ]}>
+              { type === "FROZEN" ? "Ehdota uutta pakastesopimusta" : "Ehdota uutta tuoresopimusta" }
             </Text>
           </AsyncButton>
         </View>
@@ -194,7 +161,7 @@ class ContractAmountTable extends React.Component<Props, State> {
 }
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -204,8 +171,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

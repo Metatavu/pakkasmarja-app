@@ -8,10 +8,10 @@ import { Text, Thumbnail } from "native-base";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
 import { RED_LOGO } from "../../../static/images";
-import Moment from "react-moment";
-import { NavigationEvents } from "react-navigation";
 import Icon from "react-native-vector-icons/Feather";
-import * as _ from "lodash";
+import _ from "lodash";
+import moment from "moment";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -37,9 +37,12 @@ interface State {
 class ProposalsScreen extends React.Component<Props, State> {
 
   private refreshInterval: any;
+
+  private navigationFocusEventSubscription: any;
+
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -50,9 +53,9 @@ class ProposalsScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -60,7 +63,7 @@ class ProposalsScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
             name='chevron-left'
@@ -76,13 +79,16 @@ class ProposalsScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.accessToken) {
       return;
     }
 
     this.setState({ loading: true });
 
-    this.refreshInterval = setInterval(this.refreshDeliveries, 1000 * 30);
+    this.refreshInterval = setInterval(this.loadData, 1000 * 30);
+
+    this.navigationFocusEventSubscription = this.props.navigation.addListener('focus', this.loadData);
   }
 
   /**
@@ -93,13 +99,8 @@ class ProposalsScreen extends React.Component<Props, State> {
       clearInterval(this.refreshInterval);
       this.refreshInterval = undefined;
     }
-  }
 
-  /**
-   * Refresh deliveries
-   */
-  private refreshDeliveries = () => {
-    this.loadData();
+    this.props.navigation.removeListener(this.navigationFocusEventSubscription);
   }
 
   /**
@@ -114,7 +115,7 @@ class ProposalsScreen extends React.Component<Props, State> {
 
   /**
    * Get deliveries
-   * 
+   *
    * @return deliveries
    */
   private getDeliveries = () => {
@@ -135,7 +136,6 @@ class ProposalsScreen extends React.Component<Props, State> {
   public render() {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onDidFocus={() => this.loadData()} />
         <View>
           <View style={[styles.center, styles.topViewWithButton]}>
             <View style={[styles.center, { flexDirection: "row", paddingVertical: 30 }]}>
@@ -162,7 +162,7 @@ class ProposalsScreen extends React.Component<Props, State> {
 
   /**
    * Renders list items
-   * 
+   *
    * @param deliveryData DeliveryProduct
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
@@ -178,7 +178,8 @@ class ProposalsScreen extends React.Component<Props, State> {
         <View style={{ flex: 2, alignItems: "center", justifyContent: "center" }}>
           <View style={{ flex: 1 }}>
             <View style={{ flex: 1, flexDirection: "row" }}>
-              <Text>Toimituspäivä </Text><Moment element={Text} format="DD.MM.YYYY">{date.toString()}</Moment>
+              <Text>Toimituspäivä </Text>
+              <Text>{ moment(date).format("DD.MM.YYYY") }</Text>
             </View>
             <Text style={{ color: 'black', fontWeight: "500" }}>{`${productName}`}</Text>
           </View>
@@ -202,7 +203,7 @@ class ProposalsScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -214,8 +215,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

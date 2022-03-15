@@ -10,9 +10,9 @@ export class PDFService {
 
   /**
    * Constructor
-   * 
-   * @param basePath basePath 
-   * @param token token 
+   *
+   * @param basePath basePath
+   * @param token token
    */
   constructor(basePath: string, token: string) {
     this.token = token;
@@ -21,7 +21,7 @@ export class PDFService {
 
   /**
    * Find pdf
-   * 
+   *
    * @summary Find pdf
    * @param id id
    * @param type type
@@ -40,8 +40,8 @@ export class PDFService {
         .then(async (res: any) => {
           return res.path();
         })
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.warn(error);
       Promise.reject();
     }
   }

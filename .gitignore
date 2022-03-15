@@ -29,9 +29,7 @@ build/
 .gradle
 local.properties
 *.iml
-android/app/src/main/assets/index.android.bundle
-.project
-.settings
+*.hprof
 
 # node.js
 #
@@ -43,6 +41,7 @@ yarn-error.log
 buck-out/
 \.buckd/
 *.keystore
+!debug.keystore
 
 # fastlane
 #
@@ -57,8 +56,6 @@ buck-out/
 
 # Bundle artifact
 *.jsbundle
-.env
-test-data
 
 #ios
 *.xcscheme
@@ -68,4 +65,9 @@ test-data
 # Google services.json
 google-services.json
 
-ios/Pods
+# CocoaPods
+/ios/Pods/
+
+# Environment variables
+.env
+test-data

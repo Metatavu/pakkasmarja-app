@@ -1,12 +1,11 @@
 import React, { Dispatch } from "react";
-import { AccessToken, StoreState, AppConfigOptions, AppConfigItemGroupOptions } from "../../../types";
-import { Text, Form } from "native-base";
+import { AccessToken, StoreState } from "../../../types";
+import { Text, Form, CheckBox, Body, ListItem } from "native-base";
 import { View, TouchableOpacity, TextInput, Platform } from "react-native";
 import { Contract, ItemGroup } from "pakkasmarja-client";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import ContractModal from "./ContractModal";
-import { CheckBox } from "react-native-elements";
 import { styles } from "./styles";
 
 /**
@@ -49,7 +48,7 @@ class ContractAmount extends React.Component<Props, State> {
 
   /**
    * On amount change
-   * 
+   *
    * @param value value
    */
   private onAmountChange = (value: string) => {
@@ -58,7 +57,7 @@ class ContractAmount extends React.Component<Props, State> {
 
   /**
    * On quantity comment change
-   * 
+   *
    * @param value value
    */
   private onQuantityCommentChange = (value: string) => {
@@ -121,15 +120,22 @@ class ContractAmount extends React.Component<Props, State> {
         </View>
         {
           this.props.allowDeliveryAll &&
-          <View>
-            <CheckBox
-              checked={this.props.deliverAllChecked}
-              onPress={() => {
-                !this.props.isActiveContract && this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked)
-              }}
-              title='Haluaisin toimittaa kaiken tilallani viljeltävän sadon tästä marjasta Pakkasmarjalle pakastettavaksi ja tuorekauppaan (lisätietoja sopimuksen kohdasta 100 % toimittajuus).'
-            />
-          </View>}
+          <View style={{ backgroundColor: "#fff", width: "100%", borderRadius: 4 }}>
+            <ListItem>
+              <CheckBox
+                color={ this.props.isActiveContract ? "#AAA" : "#E51D2A" }
+                checked={ this.props.deliverAllChecked }
+                disabled={ this.props.isActiveContract }
+                onPress={ () => !this.props.isActiveContract && this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked) }
+              />
+              <Body>
+                <Text>
+                  Haluaisin toimittaa kaiken tilallani viljeltävän sadon tästä marjasta Pakkasmarjalle pakastettavaksi ja tuorekauppaan (lisätietoja sopimuksen kohdasta 100 % toimittajuus).
+                </Text>
+              </Body>
+            </ListItem>
+          </View>
+        }
         <View>
           <Text style={[styles.textWithSpace, styles.textSize]}>Kommentti</Text>
           <TextInput
@@ -149,7 +155,7 @@ class ContractAmount extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -159,8 +165,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

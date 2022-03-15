@@ -14,12 +14,14 @@ import { REACT_APP_API_URL } from 'react-native-dotenv';
 import AutoHeightWebView from 'react-native-autoheight-webview'
 import PakkasmarjaApi from "../../../api";
 import WebView from "react-native-webview";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
  */
 interface Props {
   navigation: any,
+  route: any,
   accessToken?: AccessToken,
   unreads: Unread[],
   unreadRemoved?: (unread: Unread) => void;
@@ -46,7 +48,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -63,9 +65,9 @@ class NewsArticleScreen extends React.Component<Props, State> {
   /**
    * Navigation options
    */
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -73,8 +75,8 @@ class NewsArticleScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+      headerLeft: () =>
+        <TouchableHighlight onPress={() => { navigation.goBack() }} >
           <Icon
             name='chevron-left'
             color='#fff'
@@ -89,14 +91,16 @@ class NewsArticleScreen extends React.Component<Props, State> {
    * Component did mount
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.accessToken) {
       return;
     }
 
     this.setState({ loading: true });
 
-    if (this.props.navigation.getParam('newsArticle')) {
-      const newsArticle = this.props.navigation.getParam('newsArticle');
+    const newsArticle = this.props.route.params.newsArticle;
+
+    if (newsArticle) {
       this.setState({ newsArticle: newsArticle });
       this.markRead(newsArticle);
 
@@ -112,7 +116,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
 
   /**
    * Retuns related unread
-   * 
+   *
    * @return related unread
    */
   private markRead = (news: any) => {
@@ -159,7 +163,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
           style={{ width: Dimensions.get('window').width - 20, marginLeft: 10, marginRight: 10, marginTop: 20 }}
           scrollEnabled={false}
           customStyle={`
-            h1{ 
+            h1{
               font-size: 24px
             }
           `}
@@ -192,7 +196,7 @@ class NewsArticleScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -203,8 +207,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

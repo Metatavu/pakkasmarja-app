@@ -4,19 +4,20 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { Tabs, Tab, Thumbnail, Picker, Icon } from "native-base";
+import { Tabs, Tab, Thumbnail, Icon, DefaultTabBar } from "native-base";
 import { TouchableOpacity, Image, View, Text, TouchableHighlight, Dimensions } from "react-native";
 import { styles } from './styles.tsx'
 import PakkasmarjaApi from "../../../api";
 import { RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO, FRESH_ICON, FROZEN_ICON } from "../../../static/images";
 import Api, { Delivery, Product, ItemGroupCategory, OpeningHourPeriod, OpeningHourException, DeliveryPlace, OpeningHourWeekday, OpeningHourInterval, WeekdayType } from "pakkasmarja-client";
-import { NavigationEvents } from "react-navigation";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import BasicLayout from "../../layout/BasicLayout";
 import strings from "../../../localization/strings";
 import 'moment/locale/fi';
 import { extendMoment } from "moment-range";
 import _ from "lodash";
+import { Picker } from "native-base";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Moment extended with moment-range
@@ -82,9 +83,11 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
   private refreshInterval: any;
 
+  private navigationFocusEventSubscription: any;
+
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -103,9 +106,9 @@ class DeliveriesScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -114,7 +117,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
             name='chevron-left'
@@ -130,6 +133,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.itemGroupCategoryUpdate) {
       return;
     }
@@ -141,6 +145,8 @@ class DeliveriesScreen extends React.Component<Props, State> {
     await this.listDeliveryPlacesOpeningHours();
 
     this.refreshInterval = setInterval(this.refreshDeliveries, 1000 * 30);
+
+    this.navigationFocusEventSubscription = this.props.navigation.addListener('focus', this.loadAmounts);
   }
 
   /**
@@ -151,6 +157,8 @@ class DeliveriesScreen extends React.Component<Props, State> {
       clearInterval(this.refreshInterval);
       this.refreshInterval = undefined;
     }
+
+    this.props.navigation.removeListener(this.navigationFocusEventSubscription);
   }
 
   /**
@@ -319,7 +327,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Method for choosing delivery place opening hours
-   * 
+   *
    * @param event event object
    * @param data dropdown props
    */
@@ -336,7 +344,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Creates opening hours tale data
-   * 
+   *
    * @param deliveryPlacesOpeningHours delivery place opening hours
    */
   private createOpeningHoursTableData = (deliveryPlaceOpeningHours: DeliveryPlaceOpeningHours) => {
@@ -385,7 +393,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
       const period = confirmed ?
         sortedPeriodsList[periodIndex] :
         sortedPeriodsList[sortedPeriodsList.length -1];
-      
+
       const weekday = period.weekdays.find(weekday => weekday.dayType === this.getWeekdayType(date));
 
       return {
@@ -419,7 +427,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * On delivery item click
-   * 
+   *
    * @param screen screen
    * @param type type
    */
@@ -507,7 +515,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Get opening hour weekday type
-   * 
+   *
    * @param date moment date
    * @returns weekday type as WeekdayType
    */
@@ -521,13 +529,13 @@ class DeliveriesScreen extends React.Component<Props, State> {
       WeekdayType.SATURDAY,
       WeekdayType.SUNDAY
     ];
-  
+
     return weekdayTypeArray[date.weekday()];
   }
 
     /**
    * Renders single opening hour day
-   * 
+   *
    * @param date date of day
    * @param dayObject day object
    * @param key element key
@@ -568,7 +576,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Renders opening hour intervals
-   * 
+   *
    * @param hours opening hour intervals
    */
   private renderOpeningHourIntervals = (hours: OpeningHourInterval[]) => {
@@ -609,7 +617,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
     if (this.props.itemGroupCategory === undefined) {
       return (
         <BasicLayout navigation={ this.props.navigation } displayFooter={ true }>
-          <NavigationEvents onDidFocus={ () => this.loadAmounts() } />
           <View style={ styles.categorySelectionView }>
             <TouchableOpacity style={ styles.freshButton } key={ ItemGroupCategory.FRESH } onPress={ () => this.updateItemGroupCategory("FRESH") }>
               <View style={{ paddingLeft: 5, paddingRight: 5 }}>
@@ -631,14 +638,20 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
       return (
         <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-          <NavigationEvents onDidFocus={() => this.loadAmounts()} />
-          <Tabs initialPage={ initialTab } tabBarUnderlineStyle={{ backgroundColor: "#fff" }}>
-            <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={ strings.freshDeliveries }>
-              {
-                this.renderDeliveryList(deliveryList, "FRESH")
-              }
-              {
-                canManageDeliveries &&
+          <Tabs
+            initialPage={ initialTab }
+            tabBarUnderlineStyle={{ backgroundColor: "#fff" }}
+            renderTabBar={ (props: any) => <DefaultTabBar {...{...props, tabStyle: Object.create(props.tabStyle) }}/> }
+          >
+            <Tab
+              activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
+              activeTextStyle={ styles.activeText }
+              textStyle={{ color: "#fff" }}
+              tabStyle={ styles.tab }
+              heading={ strings.freshDeliveries }
+            >
+              { this.renderDeliveryList(deliveryList, "FRESH") }
+              { canManageDeliveries &&
                 <TouchableOpacity onPress={() => { this.onDeliveryItemClick("ManageDeliveries", "FRESH") }}>
                   <View style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 80 }}>
                     <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
@@ -649,15 +662,17 @@ class DeliveriesScreen extends React.Component<Props, State> {
                   </View>
                 </TouchableOpacity>
               }
-
             </Tab>
-            <Tab activeTabStyle={{ ...styles.activeTab, ...styles.tab }} activeTextStyle={styles.activeText} textStyle={{ color: "#fff" }} tabStyle={styles.tab} heading={ strings.frozenDeliveries }>
-              {
-                this.renderDeliveryList(deliveryList, "FROZEN")
-              }
-              {
-                canManageDeliveries &&
-                <TouchableOpacity onPress={() => { this.onDeliveryItemClick("ManageDeliveries", "FROZEN") }}>
+            <Tab
+              activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
+              activeTextStyle={ styles.activeText }
+              textStyle={{ color: "#fff" }}
+              tabStyle={ styles.tab }
+              heading={ strings.frozenDeliveries }
+            >
+              { this.renderDeliveryList(deliveryList, "FROZEN") }
+              { canManageDeliveries &&
+                <TouchableOpacity onPress={ () => this.onDeliveryItemClick("ManageDeliveries", "FROZEN") }>
                   <View style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 80 }}>
                     <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
                       <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
@@ -675,8 +690,8 @@ class DeliveriesScreen extends React.Component<Props, State> {
             </Text>
             <Picker
               selectedValue={ selectedDeliveryPlaceOpeningHours }
+              style={{ color: "black" }}
               mode="dropdown"
-              placeholder='Valitse toimituspaikka'
               onValueChange={ this.chooseDeliveryPlaceOpeningHours }
             >
               { this.mapOptions() }
@@ -717,7 +732,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -729,8 +744,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

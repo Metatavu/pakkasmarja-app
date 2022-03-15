@@ -20,12 +20,14 @@ import { styles } from "./styles";
 import Icon from "react-native-vector-icons/Feather";
 import AppConfig from "../../../utils/AppConfig";
 import strings from "../../../localization/strings";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Interface for component props
  */
 interface Props {
   navigation: any,
+  route: any,
   accessToken?: AccessToken
 };
 
@@ -86,25 +88,32 @@ class ContractScreen extends React.Component<Props, State> {
    * Component did mount
    */
   public componentDidMount = async () => {
-    const itemGroup = this.props.navigation.getParam('itemGroup');
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
+    const {
+      itemGroup,
+      contact,
+      prices,
+      deliveryPlaces,
+      contract
+    } = this.props.route.params;
+
     if (itemGroup) {
       this.setState({ itemGroup: itemGroup });
     }
 
-    if (this.props.navigation.getParam('contact')) {
-      this.setState({ contact: this.props.navigation.getParam('contact') });
+    if (contact) {
+      this.setState({ contact: contact });
     }
 
-    if (this.props.navigation.getParam('prices')) {
-      this.setState({ prices: this.props.navigation.getParam('prices') });
+    if (contact) {
+      this.setState({ prices: prices });
     }
 
-    if (this.props.navigation.getParam('deliveryPlaces')) {
-      this.setState({ deliveryPlaces: this.props.navigation.getParam('deliveryPlaces') });
+    if (deliveryPlaces) {
+      this.setState({ deliveryPlaces: deliveryPlaces });
     }
 
-    if (this.props.navigation.getParam('contract')) {
-      const contract: Contract = this.props.navigation.getParam('contract');
+    if (contract) {
       this.setState({ contract: contract });
 
       this.updateContractData("quantityComment", contract.quantityComment || "");
@@ -129,14 +138,14 @@ class ContractScreen extends React.Component<Props, State> {
 
   /**
    * On user input change
-   * 
+   *
    * @param key key
    * @param value value
    */
   private updateContractData = (key: ContractDataKey, value: boolean | string | AreaDetail[]) => {
     const { contractData } = this.state;
-    contractData[key] = value;
-    this.setState({ contractData: contractData });
+
+    this.setState({ contractData: { ...contractData, [key]: value } });
     this.checkIfCompanyApprovalNeeded();
     this.validateContractData(contractData);
   }
@@ -189,9 +198,9 @@ class ContractScreen extends React.Component<Props, State> {
     }
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -199,7 +208,7 @@ class ContractScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
             name='chevron-left'
@@ -421,7 +430,7 @@ class ContractScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -431,8 +440,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

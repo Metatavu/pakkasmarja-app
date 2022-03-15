@@ -12,14 +12,16 @@ import NumericInput from 'react-native-numeric-input';
 import moment from "moment";
 import PakkasmarjaApi from "../../../api";
 import FeatherIcon from "react-native-vector-icons/Feather";
-import * as _ from "lodash";
+import _ from "lodash";
 import AsyncButton from "../../generic/async-button";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
  */
 interface Props {
   navigation: any;
+  route: any;
   accessToken?: AccessToken;
 };
 
@@ -44,7 +46,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -69,9 +71,9 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -79,7 +81,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
             name='chevron-left'
@@ -95,18 +97,22 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    if (!this.props.accessToken) {
+    const { navigation, route, accessToken } = this.props;
+
+    navigation.setOptions(this.navigationOptions(navigation));
+
+    if (!accessToken) {
       return;
     }
 
     await this.setLastWeeksTotal();
-    const itemGroups: ItemGroup[] = this.props.navigation.getParam('itemGroups');
+    const itemGroups: ItemGroup[] = route.params.itemGroups;
     this.setState({ itemGroups: itemGroups, selectedItemGroup: itemGroups[0] });
   }
 
   /**
    * Renders one radio button
-   * 
+   *
    * @param selected selected
    * @param label label
    * @param index index
@@ -166,7 +172,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
 
   /**
    * Handle value change
-   * 
+   *
    * @param value value
    */
   private handleValueChange = (value: number) => {
@@ -208,7 +214,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
 
   /**
    * Get year
-   * 
+   *
    * @return current year
    */
   private getYear = () => {
@@ -217,7 +223,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
 
   /**
    * Changes value of radio buttons
-   * 
+   *
    * @param selected selected
    * @param index index
    */
@@ -233,7 +239,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
 
   /**
    * Changes item group
-   * 
+   *
    * @param action action
    */
   private changeItemGroup = async (action: string) => {
@@ -310,7 +316,6 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
                 valueType='real'
                 minValue={0}
                 textColor='black'
-                iconStyle={{ color: 'white' }}
                 rightButtonBackgroundColor='#e01e36'
                 leftButtonBackgroundColor='#e01e36'
                 borderColor='transparent'
@@ -348,7 +353,7 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -358,8 +363,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

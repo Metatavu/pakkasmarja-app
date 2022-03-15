@@ -32,7 +32,7 @@ class AuthRefresh extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -94,7 +94,7 @@ class AuthRefresh extends React.Component<Props, State> {
     if (!this.props.accessToken) {
       return;
     }
-    
+
     const unreadsService = await new PakkasmarjaApi().getUnreadsService(this.props.accessToken.access_token);
     this.props.unreadsUpdate(await unreadsService.listUnreads());
   }
@@ -102,7 +102,7 @@ class AuthRefresh extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -112,8 +112,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

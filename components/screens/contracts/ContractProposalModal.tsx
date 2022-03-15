@@ -1,11 +1,12 @@
 import React from "react";
 import { Text } from "native-base";
-import { View, TouchableOpacity, Picker, TextInput, Platform } from "react-native";
+import { View, TouchableOpacity, TextInput, Platform } from "react-native";
 import Modal from "react-native-modal";
 import { ItemGroup } from "pakkasmarja-client";
 import { styles } from "./styles";
 import ModalSelector from 'react-native-modal-selector';
 import AsyncButton from "../../generic/async-button";
+import { Picker } from "native-base";
 
 /**
  * Interface for component props
@@ -78,9 +79,10 @@ export default class ContractProposalModal extends React.Component<Props, State>
                   <Picker
                     selectedValue={this.props.selectedBerry}
                     style={{height:50,width:"100%", color:"black"}}
-                    onValueChange={(itemValue, itemIndex) =>
+                    onValueChange={ (itemValue: string) =>
                       this.props.onSelectedBerryChange(itemValue)
-                    }>
+                    }
+                  >
                     {
                       this.props.itemGroups.map((itemGroup) => {
                         return (

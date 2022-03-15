@@ -1,32 +1,35 @@
-# Uncomment the next line to define a global platform for your project
-platform :ios, '9.0'
+require_relative '../node_modules/react-native/scripts/react_native_pods'
+require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
-pod 'Firebase/Core', '~> 6.2.0'
-pod 'Firebase/Messaging', '~> 6.2.0'
+platform :ios, '11.0'
 
 target 'pakkasmarja' do
-  # Comment the next line if you don't want to use dynamic frameworks
-  # use_frameworks!
+  config = use_native_modules!
 
-  # Pods for pakkasmarja
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # to enable hermes on iOS, change `false` to `true` and then install pods
+    :hermes_enabled => false
+  )
 
-end
+  permissions_path = '../node_modules/react-native-permissions/ios'
 
-post_install do |installer|
-  ## Fix for XCode 12.5 beta
-  find_and_replace("../node_modules/react-native/React/CxxBridge/RCTCxxBridge.mm",
-  "_initializeModules:(NSArray<id<RCTBridgeModule>> *)modules", "_initializeModules:(NSArray<Class> *)modules")
-end
+  pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
+  pod 'Permission-MediaLibrary', :path => "#{permissions_path}/MediaLibrary"
 
-def find_and_replace(dir, findstr, replacestr)
-  Dir[dir].each do |name|
-      text = File.read(name)
-      replace = text.gsub(findstr,replacestr)
-      if text != replace
-          puts "Fix: " + name
-          File.open(name, "w") { |file| file.puts replace }
-          STDOUT.flush
-      end
+  target 'pakkasmarjaTests' do
+    inherit! :complete
+    # Pods for testing
   end
-  Dir[dir + '*/'].each(&method(:find_and_replace))
+
+  # Enables Flipper.
+  #
+  # Note that if you have use_frameworks! enabled, Flipper will not work and
+  # you should disable the next line.
+  use_flipper!()
+
+  post_install do |installer|
+    react_native_post_install(installer)
+    __apply_Xcode_12_5_M1_post_install_workaround(installer)
+  end
 end

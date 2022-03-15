@@ -7,7 +7,7 @@ export interface StoreState {
   unreads: Unread[]
 }
 
-export interface AppConfigDelieryOptions {
+export interface AppConfigDeliveryOptions {
   "fresh-delivery-place-id": string
 }
 
@@ -22,7 +22,7 @@ export interface AppConfigItemGroupOptions {
 }
 
 export interface AppConfigOptions {
-  "delivery": AppConfigDelieryOptions,
+  "delivery": AppConfigDeliveryOptions,
   "contracts-question-group": number,
   "contracts": AppConfigContractsOptions,
   "item-groups": { [key: string]: AppConfigItemGroupOptions }
@@ -54,7 +54,7 @@ export interface AccessToken {
   firstName: string,
   lastName: string,
   userId: string,
-  receiveFromPlaceCode?: string 
+  receiveFromPlaceCode?: string
 }
 
 /**

@@ -1,5 +1,5 @@
-import uuid from "uuid";
-import RNFetchBlob from 'rn-fetch-blob';
+import { v4 as uuid } from "uuid";
+import RNFetchBlob from "rn-fetch-blob";
 
 /**
  * Interface describing file upload response
@@ -25,9 +25,9 @@ export class FileService {
 
   /**
    * Constructor
-   * 
-   * @param basePath basePath 
-   * @param token token 
+   *
+   * @param basePath basePath
+   * @param token token
    */
   constructor(basePath: string, token: string) {
     this.token = token;
@@ -36,39 +36,41 @@ export class FileService {
 
   /**
    * Handles file upload
-   * 
+   *
    * @param fileUri uri to find the file to upload
    * @param contentType file content type
    */
-  public uploadFile(fileUri: string, contentType: string): Promise<FileResponse> {
-    const extension = this.getFileExtension(contentType);
+  public uploadFile = async (fileUri: string, contentType: string): Promise<FileResponse> => {
+    const data = new FormData();
 
-    const fileData = {
+    data.append("file", {
       uri: fileUri,
       type: contentType,
-      name: `${uuid()}${extension}`
-    };
+      name: `${uuid()}${this.getFileExtension(contentType)}`
+    });
 
-    const data = new FormData();
-    data.append("file", fileData);
+    try {
+      const result = await fetch(`${this.basePath}/upload`, {
+        headers: {
+          "Authorization": `Bearer ${this.token}`
+        },
+        method: "POST",
+        body: data
+      });
 
-    return fetch(`${this.basePath}/upload`, {
-      headers: {
-        "Authorization": `Bearer ${this.token}`
-      },
-      method: "POST",
-      body: data
-    })
-      .then((res) => { return res.json() })
-      .catch((err) => { console.log(err) });
+      return await result.json();
+    } catch (error) {
+      console.warn(error);
+      throw error;
+    }
   }
 
   /**
  * Resolves file extension
- * 
+ *
  * @param contentType content type
  */
-  private getFileExtension(contentType: string) {
+  private getFileExtension = (contentType: string) => {
     switch (contentType) {
       case "image/jpeg":
       case "image/jpg":
@@ -82,23 +84,26 @@ export class FileService {
 
   /**
    * Get image
-   * 
+   *
    * @param url file url
-   * 
+   *
    */
-  public async getFile(url: string): Promise<string> {
-    return RNFetchBlob.fetch('GET', url, {
-      Authorization: `Bearer ${this.token}`
-    })
-      .then((res: any) => {
-        const status = res.info().status;
-        if (status == 200) {
-          const base64Str = res.base64()
-          return base64Str;
-        }
-      })
-      .catch((e) => {
-        console.log(e);
+  public getFile = async (url: string): Promise<string> => {
+    try {
+      const result = await RNFetchBlob.fetch("GET", url, {
+        Authorization: `Bearer ${this.token}`
       });
+
+      const status = result.info().status;
+
+      if (status !== 200) {
+        throw Error(`File download failed with status ${status}`);
+      }
+
+      return await result.base64();
+    } catch (error) {
+      console.warn(error);
+      throw error;
+    }
   }
 }

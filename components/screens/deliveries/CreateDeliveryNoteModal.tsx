@@ -58,7 +58,7 @@ class CreateDeliveryNoteModal extends React.Component<Props, State> {
 
   /**
    * Component did update life-cycle event
-   * 
+   *
    * @param prevProps previous props
    */
   public async componentDidUpdate(prevProps: Props) {
@@ -78,7 +78,7 @@ class CreateDeliveryNoteModal extends React.Component<Props, State> {
 
   /**
    * On delivery note data change
-   * 
+   *
    * @param key key
    * @param value value
    */
@@ -139,7 +139,7 @@ class CreateDeliveryNoteModal extends React.Component<Props, State> {
 
   /**
    * Get image picker options
-   * 
+   *
    * @return Options object
    */
   private getImagePickerOptions = () => {
@@ -160,11 +160,11 @@ class CreateDeliveryNoteModal extends React.Component<Props, State> {
   private openImagePicker = async () => {
     ImagePicker.showImagePicker(this.getImagePickerOptions(), async (response) => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
+        console.warn('User cancelled image picker');
       } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
+        console.warn('ImagePicker Error: ', response.error);
       } else if (response.customButton) {
-        console.log('User tapped custom button: ', response.customButton);
+        console.warn('User tapped custom button: ', response.customButton);
       } else {
         if (!this.props.accessToken) {
           return;
@@ -235,7 +235,7 @@ class CreateDeliveryNoteModal extends React.Component<Props, State> {
                 <TextInput
                   multiline={true}
                   numberOfLines={Platform.OS === 'ios' ? undefined : 4}
-                  style={{... styles.textInput, height: Platform.OS === "ios" ? 80 : undefined}}
+                  style={{ ...styles.textInput, height: Platform.OS === "ios" ? 80 : undefined }}
                   value={this.state.deliveryNoteData.text}
                   onChangeText={(text: string) => this.onDeliveryDataChange("text", text)}
                 />
@@ -258,7 +258,7 @@ class CreateDeliveryNoteModal extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -268,8 +268,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

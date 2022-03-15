@@ -8,7 +8,7 @@ import * as actions from "../../actions";
 import strings from "../../localization/strings";
 import { StyleSheet, View, Alert } from "react-native";
 import BasicScrollLayout from "../layout/BasicScrollLayout";
-import firebase from 'react-native-firebase';
+import messaging from "@react-native-firebase/messaging";
 
 /**
  * Login details
@@ -16,7 +16,7 @@ import firebase from 'react-native-firebase';
 interface LoginDetails {
   username?: string,
   password?: string,
-  realm?: string 
+  realm?: string
 }
 
 /**
@@ -42,7 +42,7 @@ class LoginScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -51,13 +51,6 @@ class LoginScreen extends React.Component<Props, State> {
       loginDetails: {},
     };
   }
-
-  /**
-   * Navigation options
-   */
-  static navigationOptions = {
-    header: null,
-  };
 
   /**
    * Component did mount life-cycle event
@@ -88,7 +81,7 @@ class LoginScreen extends React.Component<Props, State> {
   /**
    * Tries to login
    */
-  sendLogin = async (event: any) => {
+  sendLogin = async () => {
     const loginData = this.state.loginDetails;
     try {
       const accessToken = await Auth.login({
@@ -105,25 +98,27 @@ class LoginScreen extends React.Component<Props, State> {
         this.showErrorMessage();
       }
     } catch(error) {
+      console.error(error);
       this.showErrorMessage();
     }
   }
 
   private onLogin = async (accessToken: AccessToken) => {
     this.props.onAccessTokenUpdate(accessToken);
-    let pushNotificationPermissions = await firebase.messaging().hasPermission();
-    if (!pushNotificationPermissions) {
+
+    let pushNotificationPermissions = await messaging().hasPermission();
+    if (pushNotificationPermissions !== 1) {
       try {
-        await firebase.messaging().requestPermission();
-        pushNotificationPermissions = true;
+        pushNotificationPermissions = await messaging().requestPermission();
       } catch (error) {
-        pushNotificationPermissions = false;
+        pushNotificationPermissions = 0;
       }
     }
 
-    if (pushNotificationPermissions) {
-      firebase.messaging().subscribeToTopic(`v3-${accessToken.userId}`);
+    if (pushNotificationPermissions === 1) {
+      messaging().subscribeToTopic(`v3-${accessToken.userId}`);
     }
+
     this.props.navigation.replace("News");
   }
 
@@ -175,7 +170,7 @@ class LoginScreen extends React.Component<Props, State> {
           <Button style={styles.button} onPress={this.sendLogin} block><Text style={styles.buttonText}>{strings.loginScreenLoginButton}</Text></Button>
         </View>
       </BasicScrollLayout>
-    );  
+    );
   }
 
   /**
@@ -188,7 +183,7 @@ class LoginScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -198,8 +193,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

@@ -7,11 +7,9 @@ import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Dimensions, Image, Alert } from "react-native";
 import { Delivery, Product, ItemGroupCategory, ProductPrice, DeliveryNote } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
-import { Text } from 'react-native-elements';
-import Moment from "react-moment";
 import PakkasmarjaApi from "../../../api";
 import NumericInput from 'react-native-numeric-input'
-import { Thumbnail } from "native-base";
+import { Thumbnail, Text } from "native-base";
 import { PREDICTIONS_ICON } from "../../../static/images";
 import Icon from "react-native-vector-icons/Feather";
 import EntypoIcon from "react-native-vector-icons/Entypo";
@@ -21,12 +19,14 @@ import { REACT_APP_API_URL } from 'react-native-dotenv';
 import moment from "moment";
 import { roundPrice } from "../../../utils/utility-functions";
 import AsyncButton from "../../generic/async-button";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
  */
 interface Props {
   navigation: any;
+  route: any;
   accessToken?: AccessToken;
   deliveries?: DeliveriesState;
   itemGroupCategory?: ItemGroupCategory;
@@ -55,7 +55,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -69,9 +69,9 @@ class ProposalCheckScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -79,7 +79,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
             name='chevron-left'
@@ -96,6 +96,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.accessToken) {
       return;
     }
@@ -192,7 +193,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
 
   /**
    * Get deliveries
-   * 
+   *
    * @return deliveries
    */
   private getDeliveries = () => {
@@ -211,11 +212,12 @@ class ProposalCheckScreen extends React.Component<Props, State> {
    * Load data
    */
   private loadData = async () => {
+    const { route } = this.props;
     if (!this.props.accessToken) {
       return;
     }
     this.setState({ loading: true });
-    const deliveryId: string = this.props.navigation.getParam('deliveryId');
+    const deliveryId: string = route.params.deliveryId;
     const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
     const selectedDelivery: DeliveryProduct | undefined = deliveriesAndProducts.find(deliveryData => deliveryData.delivery.id === deliveryId);
     if (selectedDelivery && selectedDelivery.product && selectedDelivery.product.id) {
@@ -287,7 +289,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
       );
     }
     if (!this.state.notes64) {
-      return <React.Fragment></React.Fragment>;
+      return <></>;
     }
     return (
       <View style={{ flex: 1 }}>
@@ -384,7 +386,6 @@ class ProposalCheckScreen extends React.Component<Props, State> {
               valueType='real'
               minValue={0}
               textColor='black'
-              iconStyle={{ color: 'white' }}
               rightButtonBackgroundColor='#e01e36'
               leftButtonBackgroundColor='#e01e36'
               borderColor='transparent'
@@ -399,10 +400,14 @@ class ProposalCheckScreen extends React.Component<Props, State> {
               <Text style={[styles.textPrediction, { marginVertical: 10 }]}>Toimituspäivä</Text>
               <View style={{ flexDirection: "row" }}>
                 <Thumbnail square source={PREDICTIONS_ICON} style={{ width: 20, height: 22, marginRight: 10 }} />
-                <Moment style={{ fontWeight: "bold", fontSize: 16, color: "black" }} element={Text} format="DD.MM.YYYY">
-                  {this.state.delivery.time && this.state.delivery.time.toString()}
-                </Moment>
-                <Text style={{ fontWeight: "bold", fontSize: 16, color: "black" }}>{moment(this.state.delivery.time).utc().hours() > 12 ? ` - Jälkeen klo 12` : ` - Ennen klo 12`}</Text>
+                { this.state.delivery.time &&
+                  <Text style={{ fontWeight: "bold", fontSize: 16, color: "black" }}>
+                    { moment(this.state.delivery.time).format("DD.MM.YYYY") }
+                  </Text>
+                }
+                <Text style={{ fontWeight: "bold", fontSize: 16, color: "black" }}>
+                  { moment.utc(this.state.delivery.time).format("HH.mm") }
+                </Text>
               </View>
             </View>
           </View>
@@ -438,7 +443,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -450,8 +455,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

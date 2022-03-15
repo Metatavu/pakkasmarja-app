@@ -6,13 +6,12 @@ import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../..
 import * as actions from "../../../actions";
 import { View, TouchableOpacity, ActivityIndicator, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
-import { Text } from 'react-native';
-import { Thumbnail } from "native-base";
+import { Thumbnail, Text } from "native-base";
 import { INCOMING_DELIVERIES_LOGO, INDELIVERY_LOGO, RED_LOGO } from "../../../static/images";
-import { NavigationEvents } from "react-navigation";
 import moment from "moment";
 import Icon from "react-native-vector-icons/Feather";
-import * as _ from "lodash";
+import _ from "lodash";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -37,9 +36,11 @@ interface State {
  */
 class IncomingDeliveriesScreen extends React.Component<Props, State> {
 
+  private navigationFocusEventSubscription: any;
+
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -50,9 +51,9 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -60,7 +61,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
             name='chevron-left'
@@ -76,10 +77,20 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.accessToken) {
       return;
     }
     this.setState({ loading: true });
+
+    this.navigationFocusEventSubscription = this.props.navigation.addListener('focus', this.loadData);
+  }
+
+  /**
+   * Component will unmount life-cycle event
+   */
+  componentWillUnmount = () => {
+    this.props.navigation.removeListener(this.navigationFocusEventSubscription);
   }
 
   /**
@@ -119,7 +130,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
       return (
         <View style={[styles.center, { flexDirection: "row" }]}>
           <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
-          <Text >Ehdotuksissa</Text>
+          <Text style={{ color: "black" }}>Ehdotuksissa</Text>
         </View>
       );
     } else if (status === "DELIVERY") {
@@ -151,7 +162,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Get deliveries
-   * 
+   *
    * @return deliveries
    */
   private getDeliveries = () => {
@@ -192,7 +203,6 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
   public render() {
     return (
       <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onDidFocus={this.loadData} />
         <View >
           <View style={[styles.center, styles.topViewWithButton]}>
             <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
@@ -235,7 +245,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -247,8 +257,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

@@ -6,9 +6,9 @@ import { AccessToken, StoreState, DeliveryListItem } from "../../../types";
 import * as actions from "../../../actions";
 import { View, TouchableHighlight, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import FeatherIcon from "react-native-vector-icons/Feather";
-import * as _ from "lodash";
+import _ from "lodash";
 import PakkasmarjaApi from "../../../api";
-import { Tabs, Tab, Picker } from "native-base";
+import { Tabs, Tab } from "native-base";
 import { styles } from "../deliveries/styles.tsx";
 import { ItemGroupCategory, Delivery, Contact, Product, DeliveryPlace, DeliveryStatus } from "pakkasmarja-client";
 import moment from "moment";
@@ -16,6 +16,8 @@ import DateTimePicker from "react-native-modal-datetime-picker";
 import { Text } from "native-base";
 import ModalSelector from 'react-native-modal-selector';
 import strings from "../../../localization/strings";
+import { Picker } from "native-base";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -50,7 +52,7 @@ class ManageDeliveries extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -66,9 +68,9 @@ class ManageDeliveries extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -76,7 +78,7 @@ class ManageDeliveries extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
             name='chevron-left'
@@ -92,6 +94,7 @@ class ManageDeliveries extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     const { accessToken, itemGroupCategory } = this.props;
 
     if (!accessToken) {
@@ -211,9 +214,7 @@ class ManageDeliveries extends React.Component<Props, State> {
         <TouchableOpacity style={[styles.pickerWrap, { width: "90%" }]} onPress={() => this.setState({ datepickerVisible: true })}>
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
             <Text style={{ paddingLeft: 10 }}>
-              {
-                this.printTime(this.state.date)
-              }
+              { this.printTime(this.state.date) }
             </Text>
           </View>
         </TouchableOpacity>
@@ -240,10 +241,11 @@ class ManageDeliveries extends React.Component<Props, State> {
             Platform.OS !== "ios" &&
             <Picker
               selectedValue={this.state.selectedDeliveryPlaceId}
-              style={{ height: 50, width: "900%" }}
-              onValueChange={(itemValue) =>
+              style={{ height: 50, width: "900%", color: "black" }}
+              onValueChange={(itemValue: string) =>
                 this.setState({ selectedDeliveryPlaceId: itemValue })
-              }>
+              }
+            >
               {
                 this.state.deliveryPlaces && this.state.deliveryPlaces.map((deliveryPlace) => {
                   return (
@@ -277,7 +279,7 @@ class ManageDeliveries extends React.Component<Props, State> {
 
   /**
    * Renders list of deliveries
-   * 
+   *
    * @param category category
    */
   private renderDeliveryList = (category: ItemGroupCategory) => {
@@ -357,7 +359,7 @@ class ManageDeliveries extends React.Component<Props, State> {
 
   /**
    * Handles changing selected status
-   * 
+   *
    * @param status status string
    */
   private handleSelectedStatusChange = (status: string) => {
@@ -366,10 +368,10 @@ class ManageDeliveries extends React.Component<Props, State> {
 
   /**
    * Render delivery list items
-   * 
+   *
    * @param deliveryListItems deliveryListItems list
    * @param category Item group category
-   * 
+   *
    * @return DeliveryListItems mapped to React components
    */
   private renderDeliveryListItems = (deliveryListItems: DeliveryListItem[], category: ItemGroupCategory) => {
@@ -400,8 +402,8 @@ class ManageDeliveries extends React.Component<Props, State> {
   /**
    * Render delivery contact
    * @param category ItemGroupCategory
-   * @param isNewDelivery isNewDelivery 
-   * @param deliveryListItem deliveryListItem 
+   * @param isNewDelivery isNewDelivery
+   * @param deliveryListItem deliveryListItem
    */
   private handleListItemPress(category: ItemGroupCategory, isNewDelivery: boolean, delivery: string, deliveryListItem?: DeliveryListItem) {
     const { date } = this.state;
@@ -416,9 +418,9 @@ class ManageDeliveries extends React.Component<Props, State> {
 
   /**
    * Prints time
-   * 
+   *
    * @param date
-   * 
+   *
    * @return formatted start time
    */
   private printTime(date: Date): string {
@@ -443,7 +445,7 @@ class ManageDeliveries extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -454,8 +456,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

@@ -51,7 +51,8 @@ export const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 4,
     marginTop: 8,
-    marginBottom: 15
+    marginBottom: 15,
+    color: "black"
   },
   textInput: {
     height: 40,
@@ -59,6 +60,7 @@ export const styles = StyleSheet.create({
     borderColor: "red",
     borderWidth: 1,
     borderRadius: 4,
+    color: "black"
   },
   textAreaInput: {
     backgroundColor: "white",
@@ -117,7 +119,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "white",
     height: 480,
     padding: 15,
-    marginBottom: 15 
+    marginBottom: 15
   },
   modalView: {
     backgroundColor: "white",

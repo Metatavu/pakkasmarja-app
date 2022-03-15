@@ -1,8 +1,6 @@
 import * as React from "react";
-import * as actions from "../actions";
 import { MqttConfig, MqttConnection, mqttConnection } from "../mqtt";
 import { StoreState, AccessToken } from "../types";
-import { Dispatch } from "redux";
 import { connect } from "react-redux";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 
@@ -10,14 +8,15 @@ import { REACT_APP_API_URL } from 'react-native-dotenv';
  * Component props
  */
 interface Props {
-  accessToken?: AccessToken
+  accessToken?: AccessToken;
+  children?: React.ReactNode;
 }
 
 /**
  * Component state
  */
 interface State {
-  options?: MqttConfig
+  options?: MqttConfig;
 }
 
 /**
@@ -26,10 +25,10 @@ interface State {
 class MqttConnector extends React.Component<Props, State> {
 
   private connection: MqttConnection;
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -40,16 +39,14 @@ class MqttConnector extends React.Component<Props, State> {
 
   /**
    * Component did update life-cycle event
-   * 
+   *
    * @param prevProps previous props
    * @param prevState previous state
    */
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     if (this.props.accessToken !== prevProps.accessToken) {
       const options = await this.getConnectionOptions();
-      this.setState({
-        options: options
-      });
+      this.setState({ options: options });
     }
 
     if (this.state.options !== prevState.options) {
@@ -64,7 +61,7 @@ class MqttConnector extends React.Component<Props, State> {
   /**
    * Component will unmount life-cycle event
    */
-  public componentWillUnmount() {
+  public componentWillUnmount() {
     this.connection.disconnect();
   }
 
@@ -79,7 +76,7 @@ class MqttConnector extends React.Component<Props, State> {
 
   /**
    * Component render method
-   * 
+   *
    * @return returns child components
    */
   public render() {
@@ -89,22 +86,22 @@ class MqttConnector extends React.Component<Props, State> {
   /**
    * Loads MQTT connection options from the server
    */
-  private async getConnectionOptions(): Promise<MqttConfig | undefined> {
+  private async getConnectionOptions(): Promise<MqttConfig | undefined> {
     if (!this.props.accessToken) {
       return undefined;
     }
 
-    return (await fetch(`${REACT_APP_API_URL}/mqtt/connection`, {
-      headers: {
-        "Authorization": `Bearer ${this.props.accessToken.access_token}`
-      }
-    })).json();
+    const response = await fetch(`${REACT_APP_API_URL}/mqtt/connection`, {
+      headers: { "Authorization": `Bearer ${this.props.accessToken.access_token}` }
+    });
+
+    return await response.json();
   }
 }
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -113,14 +110,4 @@ function mapStateToProps(state: StoreState) {
   }
 }
 
-/**
- * Redux mapper for mapping component dispatches 
- * 
- * @param dispatch dispatch method
- */
-function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
-  return {
-  };
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(MqttConnector);
+export default connect(mapStateToProps)(MqttConnector);

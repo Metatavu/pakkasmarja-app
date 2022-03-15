@@ -180,6 +180,7 @@ export const styles = StyleSheet.create({
     borderColor: "#e01e36",
     borderWidth: 2,
     borderRadius: 4,
+    color: "black"
   },
   listItemTitle: {
     fontWeight: "bold",

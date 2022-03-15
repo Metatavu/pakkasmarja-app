@@ -1,19 +1,19 @@
 import React, { Dispatch } from "react";
 import { connect } from "react-redux";
-import { View, Alert, TextInput, TouchableOpacity, ScrollView, TouchableHighlight, Picker, Platform } from "react-native";
+import { View, Alert, TextInput, TouchableOpacity, TouchableHighlight, Platform } from "react-native";
 import { StoreState, AccessToken, ManageContactKey, ManageContactInput } from "../../../types";
 import * as actions from "../../../actions";
 import PakkasmarjaApi from "../../../api";
 import { Address, Contact } from "pakkasmarja-client";
-import { Text } from "react-native-elements";
 import { styles } from "../deliveries/styles.tsx";
 import TopBar from "../../layout/TopBar";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import ModalSelector from 'react-native-modal-selector';
-import { Icon } from "native-base";
+import { Icon, Text } from "native-base";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
-import { StackActions, NavigationActions } from "react-navigation";
 import Auth from "../../../utils/Auth";
+import { Picker } from "native-base";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -94,9 +94,9 @@ class ManageContact extends React.Component<Props, State> {
   /**
    * Navigation options property
    */
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -104,8 +104,8 @@ class ManageContact extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+      headerLeft: () =>
+        <TouchableHighlight onPress={() => { navigation.goBack() }} >
           <FeatherIcon
             name='chevron-left'
             color='#fff'
@@ -120,6 +120,7 @@ class ManageContact extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public componentDidMount = async () => {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     const { accessToken } = this.props;
     if (!accessToken || !accessToken.access_token || !accessToken.userId) {
       return;
@@ -176,9 +177,6 @@ class ManageContact extends React.Component<Props, State> {
    * Component render method
    */
   public render() {
-
-
-
     const basicInfoInputs: ManageContactInput[] = [
       {
         label: "Etunimi",
@@ -328,29 +326,21 @@ class ManageContact extends React.Component<Props, State> {
                 <Picker
                   selectedValue={this.state.vatLiable}
                   style={{ height: 50, width: "100%", color: "black" }}
-                  onValueChange={(itemValue, itemIndex) =>
-                    this.handleInputChange("vatLiable", itemValue)
-                  }>
+                  onValueChange={(itemValue: string) => this.handleInputChange("vatLiable", itemValue)}
+                >
                   {
-                    vatLiableOptions.map((option) => {
-                      return (
-                        <Picker.Item key={option.key} label={option.text} value={option.value} />
-                      );
-                    })
+                    vatLiableOptions.map(option =>
+                      <Picker.Item key={option.key} label={option.text} value={option.value} />
+                    )
                   }
                 </Picker>
               }
               {
                 Platform.OS === "ios" &&
                 <ModalSelector
-                  data={vatLiableOptions.map((option) => {
-                    return {
-                      key: option.key,
-                      label: option.text
-                    };
-                  })}
+                  data={ vatLiableOptions.map(option => ({ key: option.key, label: option.text })) }
                   selectedKey={this.state.vatLiable}
-                  onChange={(option: any) => { this.handleInputChange("vatLiable", option.key) }} />
+                  onChange={ ({ key }) => { this.handleInputChange("vatLiable", key) }} />
               }
             </View>
           </View>
@@ -370,22 +360,22 @@ class ManageContact extends React.Component<Props, State> {
   private handleLogOut = async () => {
     await Auth.removeToken();
     this.props.onAccessTokenUpdate(undefined);
-    const resetAction = StackActions.reset({
+    const resetAction = this.props.navigation.reset({
       index: 0,
-      actions: [NavigationActions.navigate({ routeName: 'Login' })],
+      routes: [{ name: "Login" }]
     });
     this.props.navigation.dispatch(resetAction);
   }
 
   /**
-   * Handle inputchange
+   * Handle input change
    *
    * @param key key
    * @param value value
    */
   private handleInputChange = (key: ManageContactKey, value: string) => {
     const state: State = this.state;
-    state[key] = value;
+    state[key] = value as any;
     this.setState(state);
     this.detectChanges();
   }
@@ -403,7 +393,7 @@ class ManageContact extends React.Component<Props, State> {
         <Text style={{ fontWeight: "bold", fontSize: 16, color: "black", paddingBottom: 5 }}>{label}</Text>
         <TextInput
           editable={!isEditable}
-          style={{ borderRadius: 4, borderWidth: 1, borderColor: "red" }}
+          style={{ borderRadius: 4, borderWidth: 1, borderColor: "red", color: "black" }}
           onChangeText={(value) => this.handleInputChange(key, value)}
           value={this.state[key]}
         />

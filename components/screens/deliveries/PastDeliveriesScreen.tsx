@@ -10,9 +10,10 @@ import { Thumbnail, Text } from "native-base";
 import { COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
 import moment from "moment";
 import Icon from "react-native-vector-icons/Feather";
-import * as _ from "lodash";
+import _ from "lodash";
 import { DeliveryQuality } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -41,7 +42,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -53,9 +54,9 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -63,7 +64,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
             name='chevron-left'
@@ -79,6 +80,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.accessToken) {
       return;
     }
@@ -104,7 +106,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Get deliveries
-   * 
+   *
    * @return deliveries
    */
   private getDeliveries = () => {
@@ -199,7 +201,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Renders list items
-   * 
+   *
    * @param deliveryData DeliveryProduct
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
@@ -241,7 +243,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * On list item click
-   * 
+   *
    * @param screen screen
    * @param deliveryId deliveryId
    * @param productId productId
@@ -260,7 +262,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -272,8 +274,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

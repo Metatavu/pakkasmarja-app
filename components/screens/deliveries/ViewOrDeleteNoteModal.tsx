@@ -52,7 +52,7 @@ class ViewOrDeleteNoteModal extends React.Component<Props, State> {
 
   /**
    * Component did update life-cycle event
-   * 
+   *
    * @param prevProps previous props
    */
   public async componentDidUpdate(prevProps: Props) {
@@ -82,7 +82,7 @@ class ViewOrDeleteNoteModal extends React.Component<Props, State> {
   }
 
   /**
-   * Delete delivery note 
+   * Delete delivery note
    */
   private deleteDeliveryNote = async () => {
     if (!this.props.accessToken || !this.props.accessToken.access_token) {
@@ -148,7 +148,7 @@ class ViewOrDeleteNoteModal extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -158,8 +158,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

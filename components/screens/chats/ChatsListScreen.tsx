@@ -12,14 +12,16 @@ import { ChatThread, ChatGroup } from "pakkasmarja-client";
 import Chat from "../../fragments/chats/Chat";
 import { StyleSheet, TouchableHighlight } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 
 /**
  * Component properties
  */
 interface Props {
-  navigation: any,
-  accessToken?: AccessToken
+  navigation: any;
+  route: any;
+  accessToken?: AccessToken;
 };
 
 /**
@@ -52,8 +54,8 @@ class ChatsListScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
-   * @param props component properties 
+   *
+   * @param props component properties
    */
   constructor(props: Props) {
     super(props);
@@ -64,7 +66,10 @@ class ChatsListScreen extends React.Component<Props, State> {
    * Component did mount lifecycle method
    */
   componentDidMount() {
-    const selectedQuestionThreadId = this.props.navigation?.state?.params?.selectedQuestionThreadId;
+    const { navigation, route } = this.props;
+    const { selectedQuestionThreadId } = route.params;
+
+    navigation.setOptions(this.navigationOptions(navigation));
     selectedQuestionThreadId && this.setState({ selectedQuestionThreadId });
   }
 
@@ -72,18 +77,21 @@ class ChatsListScreen extends React.Component<Props, State> {
   /**
    * Navigation options property
    */
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
+      headerTitle: () => (
+        <TopBar
+          navigation={ navigation }
+          showMenu
+          showHeader={ false }
+          showUser
+        />
+      ),
       headerTitleContainerStyle: {
-        left: 0,
+        left: 0
       },
-      headerLeft:
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+      headerLeft: () => (
+        <TouchableHighlight onPress={ navigation.goBack }>
           <Icon
             name='chevron-left'
             color='#fff'
@@ -91,6 +99,7 @@ class ChatsListScreen extends React.Component<Props, State> {
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      )
     }
   };
 
@@ -98,15 +107,32 @@ class ChatsListScreen extends React.Component<Props, State> {
    * Render
    */
   public render() {
-    const initialTab = this.props.navigation?.state?.params?.selectedQuestionThreadId ? 1 : 0;
+    const { navigation, route } = this.props;
+    const { selectedQuestionThreadId } = route.params;
+    const initialTab = selectedQuestionThreadId ? 1 : 0;
 
     return (
-      <BasicLayout displayFooter={true} navigation={this.props.navigation}>
-        <Tabs initialPage={initialTab} tabBarUnderlineStyle={{backgroundColor: "#fff"}}>
-          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} textStyle={{color:"#fff"}} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={strings.chatsNavHeader}>
+      <BasicLayout displayFooter navigation={ navigation }>
+        <Tabs
+          initialPage={ initialTab }
+          tabBarUnderlineStyle={{ backgroundColor: "#fff" }}
+        >
+          <Tab
+            activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
+            textStyle={{ color:"#fff" }}
+            activeTextStyle={ styles.activeText }
+            tabStyle={ styles.tab }
+            heading={ strings.chatsNavHeader }
+          >
             { this.renderChatTab() }
           </Tab>
-          <Tab activeTabStyle={{...styles.activeTab, ...styles.tab}} textStyle={{color:"#fff"}} activeTextStyle={styles.activeText} tabStyle={styles.tab} heading={strings.questionsNavHeader}>
+          <Tab
+            activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
+            textStyle={{ color:"#fff" }}
+            activeTextStyle={ styles.activeText }
+            tabStyle={ styles.tab }
+            heading={ strings.questionsNavHeader }
+          >
             { this.renderQuestionTab() }
           </Tab>
         </Tabs>
@@ -119,10 +145,23 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   private renderChatTab = (): JSX.Element => {
     if (this.state.selectedChatThreadId) {
-      return (<Chat onBackClick={this.handleChatChatBackClick} threadId={this.state.selectedChatThreadId} conversationType="CHAT" onError={this.handleError} />);
+      return (
+        <Chat
+          onBackClick={ this.handleChatChatBackClick }
+          threadId={ this.state.selectedChatThreadId }
+          conversationType="CHAT"
+          onError={ this.handleError }
+        />
+      );
     }
 
-    return (<ChatThreadList onThreadSelected={this.handleChatThreadSelected} type="CHAT" onError={this.handleError} />);
+    return (
+      <ChatThreadList
+        onThreadSelected={ this.handleChatThreadSelected }
+        type="CHAT"
+        onError={ this.handleError }
+      />
+    );
   }
 
   /**
@@ -130,82 +169,90 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   private renderQuestionTab = (): JSX.Element => {
     if (this.state.selectedQuestionThreadId) {
-      return (<Chat onBackClick={this.handleQuestionChatBackClick} threadId={this.state.selectedQuestionThreadId} conversationType="QUESTION" onError={this.handleError} />);
+      return (
+        <Chat
+          onBackClick={ this.handleQuestionChatBackClick }
+          threadId={ this.state.selectedQuestionThreadId }
+          conversationType="QUESTION"
+          onError={ this.handleError }
+        />
+      );
     } else if (this.state.selectedQuestionGroupId) {
-      return (<ChatThreadList
-                onBackClick={this.handleQuestionThreadBackClick}
-                onThreadSelected={this.handleQuestionThreadSelected}
-                groupId={this.state.selectedQuestionGroupId}
-                type="QUESTION"
-                onError={this.handleError} />);
+      return (
+        <ChatThreadList
+          onBackClick={ this.handleQuestionThreadBackClick }
+          onThreadSelected={ this.handleQuestionThreadSelected }
+          groupId={ this.state.selectedQuestionGroupId }
+          type="QUESTION"
+          onError={ this.handleError }
+        />
+      );
     }
-    
-    return (<ChatGroupList onGroupSelected={this.handleQuestionGroupSelected} type="QUESTION" onError={this.handleError} />);
+
+    return (
+      <ChatGroupList
+        onGroupSelected={ this.handleQuestionGroupSelected }
+        type="QUESTION"
+        onError={ this.handleError }
+      />
+    );
   }
 
   /**
    * Handles error from components
-   * 
+   *
    * @param msg error message
    */
   private handleError = (msg: string) => {
-    this.setState({
-      errorMsg: msg
-    });
+    this.setState({ errorMsg: msg });
   }
 
   /**
    * Handles back button click from chat chat view
    */
   private handleChatChatBackClick = () => {
-    this.setState({
-      selectedChatThreadId: undefined
-    });
+    this.setState({ selectedChatThreadId: undefined });
   }
 
   /**
    * Handles back button click from question chat view
    */
   private handleQuestionChatBackClick = () => {
-    this.setState({
-      selectedQuestionThreadId: undefined
-    });
+    this.setState({ selectedQuestionThreadId: undefined });
   }
 
   /**
    * Handles back button click from question thread list
    */
   private handleQuestionThreadBackClick = () => {
-    this.setState({
-      selectedQuestionGroupId: undefined
-    });
+    this.setState({ selectedQuestionGroupId: undefined });
   }
 
   /**
    * Handles chat thread selection
    */
   private handleChatThreadSelected = (chatThread: ChatThread) => {
-    this.setState({selectedChatThreadId: chatThread.id});
+    this.setState({ selectedChatThreadId: chatThread.id });
   }
 
   /**
    * Handles question thread selection
    */
   private handleQuestionThreadSelected = (chatThread: ChatThread) => {
-    this.setState({selectedQuestionThreadId: chatThread.id});
+    this.setState({ selectedQuestionThreadId: chatThread.id });
   }
 
   /**
    * Handles question group selection
    */
   private handleQuestionGroupSelected = (chatGroup: ChatGroup) => {
-    this.setState({selectedQuestionGroupId: chatGroup.id});
+    this.setState({ selectedQuestionGroupId: chatGroup.id });
   }
 }
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -215,8 +262,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

@@ -1,5 +1,3 @@
-import LocalizedStrings, { LocalizedStringsMethods } from 'localized-strings';
-
 /**
  * Helper class for using localized values
  */
@@ -7,8 +5,8 @@ export default class LocalizedUtils {
 
   /**
    * Returns localized value
-   * 
-   * @param entry localized entry 
+   *
+   * @param entry localized entry
    * @param locale Locale
    * @returns value
    */
@@ -32,9 +30,8 @@ export default class LocalizedUtils {
     if (locale != "fi") {
       return this.getLocalizedValue(entry, "fi");
     }
-    
+
     return "";
   }
 
 }
-

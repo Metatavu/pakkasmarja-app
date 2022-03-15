@@ -1,27 +1,29 @@
 import React, { Dispatch } from "react";
 import PakkasmarjaApi from "../../../api";
 import { AccessToken, StoreState, ModalButton } from "../../../types";
-import { Text, Spinner } from "native-base";
-import { View, TouchableOpacity, Picker, TextInput, StyleSheet, WebView, Alert, TouchableHighlight, Platform } from "react-native";
-import { CheckBox } from "react-native-elements";
+import { Text, Spinner, CheckBox, ListItem, Body } from "native-base";
+import { View, TextInput, Alert, TouchableHighlight, Platform } from "react-native";
 import { SignAuthenticationService, Contract } from "pakkasmarja-client";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
 import Modal from "react-native-modal";
 import { styles } from "./styles";
 import Icon from "react-native-vector-icons/Feather";
 import ModalSelector from 'react-native-modal-selector';
 import AsyncButton from "../../generic/async-button";
+import { Picker } from "native-base";
+import WebView from "react-native-webview";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Interface for component props
  */
 interface Props {
-  navigation?: any
-  accessToken?: AccessToken
+  navigation?: any;
+  route: any;
+  accessToken?: AccessToken;
 };
 
 /**
@@ -68,12 +70,15 @@ class ContractTerms extends React.Component<Props, State> {
    * Component did mount
    */
   public componentDidMount = async () => {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
+    const { contract } = this.props.route.params;
+
     if (!this.props.accessToken) {
       return;
     }
 
-    if (this.props.navigation.getParam('contract')) {
-      this.setState({ contract: this.props.navigation.getParam('contract') });
+    if (contract) {
+      this.setState({ contract: contract });
     }
 
     const api = new PakkasmarjaApi();
@@ -158,9 +163,9 @@ class ContractTerms extends React.Component<Props, State> {
     this.props.navigation.goBack(null);
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -168,7 +173,7 @@ class ContractTerms extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
             name='chevron-left'
@@ -204,16 +209,26 @@ class ContractTerms extends React.Component<Props, State> {
             </Text>
           </View>
           <View>
-            <CheckBox
-              checked={this.state.acceptedTerms}
-              onPress={() => this.setState({ acceptedTerms: !this.state.acceptedTerms })}
-              title='Olen lukenut ja hyväksyn sopimusehdot'
-            />
-            <CheckBox
-              checked={this.state.viableToSign}
-              onPress={() => this.setState({ viableToSign: !this.state.viableToSign })}
-              title='Olen viljelijän puolesta edustuskelpoinen'
-            />
+            <ListItem>
+              <CheckBox
+                color="#E51D2A"
+                checked={ this.state.acceptedTerms }
+                onPress={() => this.setState({ acceptedTerms: !this.state.acceptedTerms })}
+              />
+              <Body>
+                <Text>Olen lukenut ja hyväksyn sopimusehdot</Text>
+              </Body>
+            </ListItem>
+            <ListItem>
+              <CheckBox
+                color="#E51D2A"
+                checked={ this.state.viableToSign }
+                onPress={() => this.setState({ viableToSign: !this.state.viableToSign })}
+              />
+              <Body>
+                <Text>Olen viljelijän puolesta edustuskelpoinen</Text>
+              </Body>
+            </ListItem>
           </View>
           <View>
             <Text style={[styles.Text, styles.TextBold]}>Tunnistautumispalvelu:</Text>
@@ -222,7 +237,7 @@ class ContractTerms extends React.Component<Props, State> {
                 <Picker
                   selectedValue={this.state.selectedSignServiceId}
                   style={{ height: 50, width: "100%", color: "black" }}
-                  onValueChange={(itemValue, itemIndex) =>
+                  onValueChange={(itemValue: string) =>
                     this.setState({ selectedSignServiceId: itemValue })
                   }>
                   {
@@ -237,12 +252,12 @@ class ContractTerms extends React.Component<Props, State> {
               {
                 Platform.OS === "ios" &&
                 <ModalSelector
-                  data={this.state.authServices && this.state.authServices.map((authService) => {
-                    return {
+                  data={
+                    this.state.authServices?.map(authService => ({
                       key: authService.identifier,
                       label: authService.name
-                    };
-                  })}
+                    })) || []
+                  }
                   selectedKey={this.state.selectedSignServiceId}
                   initValue="Valitse tunnistautumispalvelu"
                   onChange={(option: any) => { this.setState({ selectedSignServiceId: option.key }) }} />
@@ -290,7 +305,7 @@ class ContractTerms extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -300,8 +315,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

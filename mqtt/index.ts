@@ -1,5 +1,5 @@
-import * as _ from "lodash";
-import * as mqtt from "mqtt";
+import _ from "lodash";
+import mqtt from 'mqtt/dist/mqtt';
 import { IClientOptions } from "mqtt";
 
 /**
@@ -11,30 +11,30 @@ export type OnMessageCallback = (message: any) => void;
  * MQTT server connection configuration
  */
 export interface MqttConfig {
-  username: string,
-  password: string,
-  host: string,
-  port: number,
-  secure: boolean,
-  topic: string,
-  topicPrefix: string,
-  topicPostfix: string
-  path?: string
+  username: string;
+  password: string;
+  host: string;
+  port: number;
+  secure: boolean;
+  topic: string;
+  topicPrefix: string;
+  topicPostfix: string;
+  path?: string;
 }
 
 /**
  * Interface describing a pending MQTT message
  */
 interface PendingMessage {
-  subtopic: string,
-  message: string | Buffer
+  subtopic: string;
+  message: string | Buffer;
 }
 
 /**
  * Class that handles MQTT connection
  */
 export class MqttConnection {
-  
+
   private pending: Array<PendingMessage>;
   private config?: MqttConfig;
   private client?: mqtt.MqttClient;
@@ -50,37 +50,54 @@ export class MqttConnection {
 
   /**
    * Connects to MQTT server
-   * 
+   *
    * @param config connection config
    */
-  public connect(config: MqttConfig) {
+  public connect = (config: MqttConfig) => {
+    const {
+      secure,
+      host,
+      port,
+      path,
+      username,
+      password,
+      topicPrefix,
+      topic,
+      topicPostfix
+    } = config;
+
     this.config = config;
-    const url = (config.secure ? "wss://" : "ws://") + config.host + ":" + config.port + (config.path || "");
-    const options: IClientOptions = { 
-      username: config.username,
-      password: config.password,
-      host: config.host,
-      port: config.port,
-      keepalive: 30 
+
+    const protocol = secure ? "wss://" : "ws://";
+    const url = `${protocol}${host}:${port}${path || ""}`;
+    const options: IClientOptions = {
+      username: username,
+      password: password,
+      host: host,
+      port: port,
+      keepalive: 30
     };
 
     this.client = mqtt.connect(url, options);
-    this.client.subscribe(`${config.topicPrefix}${config.topic}${config.topicPostfix}`);
-    this.client.on("connect", this.onClientConnect.bind(this));
-    this.client.on("close", this.onClientClose.bind(this));
-    this.client.on("offline", this.onClientOffline.bind(this));
-    this.client.on("error", this.onClientError.bind(this));
-    this.client.on("message", this.onClientMessage.bind(this));
+    this.client.subscribe(`${topicPrefix}${topic}${topicPostfix}`);
+
+    console.warn("MQTT connection established");
+
+    this.client.on("connect", this.onClientConnect);
+    this.client.on("close", this.onClientClose);
+    this.client.on("offline", this.onClientOffline);
+    this.client.on("error", this.onClientError);
+    this.client.on("message", this.onClientMessage);
   }
 
   /**
    * Publishes a message
-   * 
+   *
    * @param subtopic subtopic
    * @param message message
    * @returns promise for sent package
    */
-  public publish(subtopic: string, message: any): Promise<mqtt.Packet> {
+  public publish = (subtopic: string, message: any): Promise<mqtt.Packet | undefined> => {
     return new Promise((resolve, reject) => {
       if (!this.client) {
         this.pending.push({
@@ -92,24 +109,23 @@ export class MqttConnection {
       }
 
       const topic = `${this.config!.topicPrefix}${this.config!.topic}/${subtopic}/`;
-      this.client.publish(topic, JSON.stringify(message), (error?: Error, packet?: mqtt.Packet) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(packet);
-        }
-      });
+
+      this.client.publish(
+        topic,
+        JSON.stringify(message),
+        (error, packet) => error ? reject(error) : resolve(packet)
+      );
     });
   }
-  
+
   /**
    * Subscribes to given subtopic
-   * 
+   *
    * @param subtopic subtopic
    * @param onMessage message handler
    */
-  public subscribe(subtopic: string, onMessage: OnMessageCallback) {
-    const topicSubscribers = this.subscribers.get(subtopic) || [];
+  public subscribe = (subtopic: string, onMessage: OnMessageCallback) => {
+    const topicSubscribers = this.subscribers.get(subtopic) || [];
     topicSubscribers.push(onMessage);
     this.subscribers.set(subtopic, topicSubscribers);
   }
@@ -117,55 +133,54 @@ export class MqttConnection {
   /**
    * Disconnects from the server
    */
-  public disconnect() {
-    if (this.client) {
-      this.client.end();
-    }
+  public disconnect = () => {
+    this.client?.end();
   }
 
   /**
    * Handles client connect event
    */
-  private onClientConnect() {
+  private onClientConnect = () => {
     while (this.pending.length) {
-      const pendingMessage: PendingMessage = this.pending.shift()!;
-      this.publish(pendingMessage.subtopic, pendingMessage.message);
+      const { message, subtopic } = this.pending.shift()!;
+      this.publish(subtopic, message);
     }
   }
 
   /**
    * Handles client close event
    */
-  private onClientClose() {
+  private onClientClose = () => {
     console.warn("MQTT connection closed");
   }
 
   /**
    * Handles client offline event
    */
-  private onClientOffline() {
+  private onClientOffline = () => {
     console.warn("MQTT connection offline");
   }
 
   /**
    * Handles client error event
    */
-  private onClientError(error: Error) {
+  private onClientError = (error: Error) => {
     console.error("MQTT connection error", error);
   }
 
   /**
    * Handles client message event
+   *
+   * @param topic topic
+   * @param payload payload
    */
-  private onClientMessage(topic: string, payload: Buffer, packet: mqtt.Packet) {
+  private onClientMessage = (topic: string, payload: Buffer) => {
     const topicStripped = _.trim(topic, "/");
     const subtopicIndex = topicStripped.lastIndexOf("/") + 1;
-    const subtopic = topicStripped.substr(subtopicIndex);
+    const subtopic = topicStripped.substring(subtopicIndex);
     const message = JSON.parse(payload.toString());
-    const topicSubscribers = this.subscribers.get(subtopic) || [];
-    topicSubscribers.forEach((topicSubscriber: OnMessageCallback) => {
-      topicSubscriber(message);
-    });
+    const topicSubscribers = this.subscribers.get(subtopic) || [];
+    topicSubscribers.forEach(topicSubscriber => topicSubscriber(message));
   }
 
 }

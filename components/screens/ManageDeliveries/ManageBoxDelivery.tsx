@@ -15,12 +15,14 @@ import { styles } from "../deliveries/styles.tsx";
 import Autocomplete from 'native-base-autocomplete';
 import AsyncButton from "../../generic/async-button";
 import strings from "../../../localization/strings";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
  */
 interface Props {
   navigation: any;
+  route: any;
   accessToken?: AccessToken;
 };
 
@@ -56,9 +58,11 @@ interface State {
  */
 class ManageBoxDelivery extends React.Component<Props, State> {
 
+  private queryDebounce?: NodeJS.Timeout;
+
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -83,18 +87,20 @@ class ManageBoxDelivery extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
+      headerTitle: () => (
+        <TopBar navigation={navigation}
+          showMenu={true}
+          showHeader={false}
+          showUser={true}
+        />
+      ),
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+      headerLeft: () =>(
+        <TouchableHighlight onPress={ () => { navigation.goBack(null) }}>
           <FeatherIcon
             name='chevron-left'
             color='#fff'
@@ -102,6 +108,7 @@ class ManageBoxDelivery extends React.Component<Props, State> {
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      )
     }
   };
 
@@ -109,47 +116,54 @@ class ManageBoxDelivery extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    const selectedDate: Date = this.props.navigation.state.params.date;
-    const deliveryData: DeliveryListItem = this.props.navigation.state.params.deliveryListItem;
-    const category: ItemGroupCategory = this.props.navigation.state.params.category;
+    const { navigation, route, accessToken } = this.props;
+    const { date, category } = route.params;
 
-    if (!this.props.accessToken) {
+    navigation.setOptions(this.navigationOptions(navigation));
+
+    if (!accessToken?.access_token) {
       return;
     }
 
-    this.setState({ loading: true, category, selectedDate });
-    const Api = new PakkasmarjaApi();
-    const deliveryPlaces = await Api.getDeliveryPlacesService(this.props.accessToken.access_token).listDeliveryPlaces();
     this.setState({
-      deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.name !== "Muu")
+      loading: true,
+      category: category,
+      selectedDate: date
     });
 
+    const deliveryPlaces = await new PakkasmarjaApi()
+      .getDeliveryPlacesService(accessToken.access_token)
+      .listDeliveryPlaces();
+
     this.setState({
+      deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.name !== "Muu"),
       deliveryPlaceId: deliveryPlaces[0].id,
       amount: 0,
       loading: false
     });
-}
-
-  /**
-   * Component did update life-cycle event
-   */
-  public componentDidUpdate = (prevProps: Props, prevState: State) => {
-
   }
 
   /**
    * Handles accept delivery
    */
   private handleDeliveryLoanAccept = async () => {
-    const { deliveryPlaceId, selectedDate, selectedContact, deliveryLoanComment, redBoxesLoaned, redBoxesReturned, grayBoxesLoaned, grayBoxesReturned } = this.state;
     const { accessToken, navigation } = this.props;
-    if (!accessToken|| !deliveryPlaceId|| !selectedDate || !selectedContact || !selectedContact.id) {
+    const {
+      deliveryPlaceId,
+      selectedDate,
+      selectedContact,
+      deliveryLoanComment,
+      redBoxesLoaned,
+      redBoxesReturned,
+      grayBoxesLoaned,
+      grayBoxesReturned
+    } = this.state;
+
+    if (!accessToken|| !deliveryPlaceId|| !selectedDate || !selectedContact || !selectedContact.id) {
       return;
     }
 
-    const Api = new PakkasmarjaApi();
-    const deliveryLoansService = await Api.getDeliveryLoansService(accessToken.access_token);
+    const deliveryLoansService = new PakkasmarjaApi().getDeliveryLoansService(accessToken.access_token);
 
     const deliveryLoan: Body1 = {
       contactId: selectedContact.id,
@@ -161,18 +175,18 @@ class ManageBoxDelivery extends React.Component<Props, State> {
     }
 
     try {
-      await deliveryLoansService.createDeliveryLoan(deliveryLoan)
-      navigation.navigate("Deliveries");
+      await deliveryLoansService.createDeliveryLoan(deliveryLoan);
+      navigation.navigate("ManageDeliveries");
     } catch(error) {
-      console.log(error);
+      console.warn(error);
     }
   }
 
   /**
     * Prints time
-    * 
+    *
     * @param date
-    * 
+    *
     * @return formatted start time
     */
   private printTime(date: Date): string {
@@ -182,40 +196,54 @@ class ManageBoxDelivery extends React.Component<Props, State> {
   /**
    * Find contact
    */
-  private findContacts = async (query: any) => {
-    if (query === '' || !this.props.accessToken) {
-      return [];
+  private findContacts = (query: any) => {
+    const { accessToken } = this.props;
+
+    if (this.queryDebounce) {
+      clearTimeout(this.queryDebounce);
+      this.queryDebounce = undefined;
     }
 
-    this.setState({ query });
-    const Api = new PakkasmarjaApi();
-    const contacts = await Api.getContactsService(this.props.accessToken.access_token).listContacts(query);
-    this.setState({ contacts });
+    this.setState({ query: query });
 
+    if (!accessToken || !query) {
+      this.setState({ contacts: [] });
+      return;
+    }
+
+    this.queryDebounce = setTimeout(async () => {
+      this.setState({
+        contacts: await new PakkasmarjaApi()
+          .getContactsService(accessToken.access_token)
+          .listContacts(query)
+      });
+    }, 500);
   }
 
   /**
    * Returns whether form is valid or not
-   * 
+   *
    * @return whether form is valid or not
    */
   private isValid = () => {
-    return !!(this.state.selectedContact && this.state.selectedDate && this.state.deliveryPlaceId);
+    const { selectedContact, selectedDate, deliveryPlaceId } = this.state;
+    return !!(selectedContact && selectedDate && deliveryPlaceId);
   }
 
   /**
    * Render input field
-   * 
-   * @param index index
+   *
    * @param key key
    * @param keyboardType keyboardType
-   * @param value value
+   * @param label label
    */
   private renderInputField = (key: boxKey, keyboardType: KeyboardType, label: string) => {
     return (
-      <View key={key}>
+      <View key={ key }>
         <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-          <Text style={styles.textWithSpace}>{label}</Text>
+          <Text style={ styles.textWithSpace }>
+            { label }
+          </Text>
         </View>
         <Input
           style={{
@@ -226,28 +254,39 @@ class ManageBoxDelivery extends React.Component<Props, State> {
             borderRadius: 8,
             textAlign: "center"
           }}
-          keyboardType={keyboardType}
-          value={this.state[key].toString()}
-          onChangeText={(text: string) => this.setState({ ...this.state, [key]: Number(text) })}
+          keyboardType={ keyboardType }
+          value={ this.state[key].toString() }
+          onChangeText={ (text: string) => this.setState({ ...this.state, [key]: Number(text) }) }
         />
       </View>
     );
   }
-  
+
   /**
    * Render method
    */
   public render() {
-    if (this.state.loading) {
+    const { navigation } = this.props;
+    const {
+      loading,
+      query,
+      selectedContact,
+      contacts,
+      selectedDate,
+      datepickerVisible,
+      category,
+      deliveryLoanComment
+    } = this.state;
+
+    if (loading) {
       return (
-        <View style={styles.loaderContainer}>
+        <View style={ styles.loaderContainer }>
           <ActivityIndicator size="large" color="#E51D2A" />
         </View>
       );
     }
 
-    const { query, selectedContact } = this.state;
-    const comp = (a: any, b: any) => a.toLowerCase().trim() === b.toLowerCase().trim();
+    const compareValues = (a: any, b: any) => a.toLowerCase().trim() === b.toLowerCase().trim();
 
     const boxInputs: { key: boxKey, label: string }[] = [{
       key: "redBoxesLoaned",
@@ -264,47 +303,48 @@ class ManageBoxDelivery extends React.Component<Props, State> {
     {
       key: "grayBoxesReturned",
       label: "Palautettu (Harmaat laatikot)"
-    }]
+    }];
 
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View style={styles.deliveryContainer}>
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter
+      >
+        <View style={ styles.deliveryContainer }>
             <View>
               <Autocomplete
                 autoCapitalize="none"
-                autoCorrect={false}
-                data={this.state.contacts && this.state.contacts.length === 1 && comp(query, this.state.contacts[0].displayName)
-                  ? [] : this.state.contacts}
-                defaultValue={query}
-                onChangeText={(text: any) => this.findContacts(text)}
+                autoCorrect={ false }
+                data={ contacts?.length === 1 && compareValues(query, contacts[0].displayName) ? [] : contacts }
+                defaultValue={ query }
+                onChangeText={ (text: any) => this.findContacts(text) }
                 placeholder="Kirjoita kontaktin nimi"
-                hideResults={selectedContact && selectedContact.displayName === query}
-                renderItem={(contact: any) =>
+                hideResults={ (selectedContact?.displayName || "") === query }
+                renderItem={ (contact: any) => (
                   <ListItem
                     style={{ backgroundColor: "#fff" }}
-                    onPress={() => (
-                      this.setState({ selectedContact: contact, query: contact.displayName })
-                    )}
+                    onPress={ () => this.setState({ selectedContact: contact, query: contact.displayName }) }
                   >
-                    <Text>{contact.displayName}</Text>
-                  </ListItem>}
+                    <Text>{ contact.displayName }</Text>
+                  </ListItem>
+                  )
+                }
               />
             </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 5 }}>
             <View style={{ flex: 1 }}>
               <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <Text style={styles.textWithSpace}>Toimituspäivä</Text>
+                <Text style={ styles.textWithSpace }>Toimituspäivä</Text>
               </View>
-              <TouchableOpacity style={styles.pickerWrap} onPress={() => this.setState({ datepickerVisible: true })}>
+              <TouchableOpacity style={ styles.pickerWrap } onPress={ () => this.setState({ datepickerVisible: true }) }>
                 <View style={{ flex: 1, flexDirection: "row" }}>
                   <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
                     <Text style={{ paddingLeft: 10 }}>
-                      {
-                        this.state.selectedDate ? this.printTime(this.state.selectedDate) : "Valitse päivä"
-                      }
+                      { selectedDate ? this.printTime(selectedDate) : "Valitse päivä" }
                     </Text>
                   </View>
-                  <View style={[styles.center, { flex: 0.6 }]}>
+                  <View style={[ styles.center, { flex: 0.6 } ]}>
                     <Icon
                       style={{ color: "#e01e36" }}
                       type="AntDesign"
@@ -315,23 +355,22 @@ class ManageBoxDelivery extends React.Component<Props, State> {
               </TouchableOpacity>
             </View>
             <DateTimePicker
-              date={ this.state.selectedDate }
+              date={ selectedDate }
               mode="datetime"
-              is24Hour={true}
-              isVisible={this.state.datepickerVisible}
+              is24Hour
+              isVisible={ datepickerVisible }
               onConfirm={(date) => this.setState({ selectedDate: date, datepickerVisible: false })}
               onCancel={() => { this.setState({ datepickerVisible: false }); }}
             />
           </View>
-          {
-            this.state.category === "FROZEN" &&
-            boxInputs.map(box => {
-              return this.renderInputField(box.key, "numeric", box.label)
-            })
+          { category === "FROZEN" &&
+            boxInputs.map(({ key, label }) => this.renderInputField(key, "numeric", label))
           }
           <View>
             <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-              <Text style={styles.textWithSpace}>{ strings.comment }</Text>
+              <Text style={ styles.textWithSpace }>
+                { strings.comment }
+              </Text>
             </View>
             <Input
               style={{
@@ -343,23 +382,23 @@ class ManageBoxDelivery extends React.Component<Props, State> {
                 textAlign: "center"
               }}
               keyboardType="default"
-              value={this.state.deliveryLoanComment || ""}
+              value={ deliveryLoanComment || "" }
               onChangeText={(text: string) => this.setState({ deliveryLoanComment: text })}
             />
           </View>
           {
             !this.isValid() &&
-            <View style={styles.center}>
+            <View style={ styles.center }>
               <Text style={{ color: "red" }}>Puuttuu tarvittavia tietoja</Text>
             </View>
           }
-          <View style={[styles.center, { flex: 1 }]}>
+          <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
             <AsyncButton
               disabled={ !this.isValid() }
               style={[ styles.deliveriesButton, styles.center, { width: "70%", height: 60, marginTop: 15 } ]}
               onPress={ this.handleDeliveryLoanAccept }
             >
-              <Text style={styles.buttonText}>Hyväksy toimitus</Text>
+              <Text style={ styles.buttonText }>Hyväksy toimitus</Text>
             </AsyncButton>
           </View>
         </View>
@@ -371,7 +410,7 @@ class ManageBoxDelivery extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -383,8 +422,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
