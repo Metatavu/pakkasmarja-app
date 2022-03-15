@@ -79,8 +79,8 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
           <Fab
             active
             direction="up"
-            containerStyle={{ bottom: "11%" }}
-            style={{ backgroundColor: '#e01e36' }}
+            containerStyle={{ bottom: 110, right: 5 }}
+            style={{ backgroundColor: '#e01e36', height: 40, width: 40 }}
             position="bottomRight"
             onPress={ () => this.onHelpClick() }
           >

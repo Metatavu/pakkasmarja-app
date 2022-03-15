@@ -67,7 +67,7 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   componentDidMount() {
     const { navigation, route } = this.props;
-    const { selectedQuestionThreadId } = route.params;
+    const { selectedQuestionThreadId } = route.params || {};
 
     navigation.setOptions(this.navigationOptions(navigation));
     selectedQuestionThreadId && this.setState({ selectedQuestionThreadId });
@@ -108,7 +108,7 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   public render() {
     const { navigation, route } = this.props;
-    const { selectedQuestionThreadId } = route.params;
+    const { selectedQuestionThreadId } = route.params || {};
     const initialTab = selectedQuestionThreadId ? 1 : 0;
 
     return (
