@@ -33,7 +33,7 @@ export default class ContractPrices extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      showPastPrices: false,
+      showPastPrices: false
     };
   }
 
@@ -41,12 +41,14 @@ export default class ContractPrices extends React.Component<Props, State> {
    * Format prices text
    */
   private renderPricesText = () => {
-    if (!this.props.itemGroup) {
+    const { itemGroup } = this.props;
+
+    if (!itemGroup) {
       return <Text></Text>;
     }
     return (
-      <Text style={styles.textSize}>
-        {`Ostettavien marjojen (${this.props.itemGroup.displayName}) takuuhinnat satokaudella ${new Date().getFullYear()}`}
+      <Text style={ styles.textSize }>
+        { `Ostettavien marjojen (${itemGroup.displayName}) takuuhinnat satokaudella ${new Date().getFullYear()}` }
       </Text>
     );
   }
@@ -55,11 +57,13 @@ export default class ContractPrices extends React.Component<Props, State> {
    * Get item details
    */
   private renderItemDetails = () => {
-    if (!this.props.itemGroup) {
+    const { itemGroup } = this.props;
+
+    if (!itemGroup) {
       return <View></View>;
     }
 
-    switch (this.props.itemGroup.name) {
+    switch (itemGroup.name) {
       case "304100/Mansikka":
       case "309100/Luomu mansikk":
         return (
@@ -95,53 +99,52 @@ export default class ContractPrices extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    if (this.props.itemGroup && this.props.itemGroup.category === "FROZEN") {
+    const { itemGroup, prices } = this.props;
+    const { showPastPrices } = this.state;
+
+    if (itemGroup?.category === "FROZEN") {
       return (
-        <View style={styles.WhiteContentView}>
-          <Text style={styles.ContentHeader}>
+        <View style={ styles.WhiteContentView }>
+          <Text style={ styles.ContentHeader }>
             TAKUUHINNAT
           </Text>
-          <View style={{flex:1}}>
-            {this.renderPricesText()}
+          <View style={{ flex: 1 }}>
+            { this.renderPricesText() }
           </View>
           <Grid>
             {
-              this.props.prices && this.props.prices.filter(price => price.year === new Date().getFullYear()).map((activePrice) => {
-                return (
-                  <Row key={activePrice.id}>
-                    <Col><Text>{activePrice.group}</Text></Col>
-                    <Col><Text>{`${activePrice.price} ${activePrice.unit}`}</Text></Col>
-                  </Row>
-                );
-              })
+              prices?.filter(price => price.year === new Date().getFullYear()).map(activePrice => (
+                <Row key={ activePrice.id }>
+                  <Col><Text>{ activePrice.group }</Text></Col>
+                  <Col><Text>{ `${activePrice.price} ${activePrice.unit}` }</Text></Col>
+                </Row>
+              ))
             }
             <Row>
               <Col>
-                <TouchableOpacity onPress={() => this.setState({showPastPrices: !this.state.showPastPrices})}>
-                  <Text style={styles.linkStyle}>
+                <TouchableOpacity onPress={ () => this.setState({ showPastPrices: !showPastPrices }) }>
+                  <Text style={ styles.linkStyle }>
                     Edellisvuosien takuuhinnat
                   </Text>
                 </TouchableOpacity>
               </Col>
             </Row>
             {
-              this.props.prices && this.state.showPastPrices && this.props.prices.filter(price => price.year !== new Date().getFullYear()).map((activePrice) => {
-                return (
-                  <Row key={activePrice.id}>
-                    <Col><Text>{activePrice.group}</Text></Col>
-                    <Col><Text>{`${activePrice.price} ${activePrice.unit}`}</Text></Col>
-                  </Row>
-                );
-              })
+              showPastPrices && prices?.filter(price => price.year !== new Date().getFullYear()).map(activePrice => (
+                <Row key={ activePrice.id }>
+                  <Col><Text>{ activePrice.group }</Text></Col>
+                  <Col><Text>{ `${activePrice.price} ${activePrice.unit}` }</Text></Col>
+                </Row>
+              ))
             }
           </Grid>
           <ContractPriceModal
-            prices={this.props.prices}
-            styles={styles}
-            closeModal={() => this.setState({showPastPrices: false})}
-            modalOpen={this.state.showPastPrices}
+            prices={ prices }
+            styles={ styles }
+            closeModal={ () => this.setState({ showPastPrices: false }) }
+            modalOpen={ showPastPrices }
           />
-          {this.renderItemDetails()}
+          { this.renderItemDetails() }
         </View>
       );
     }

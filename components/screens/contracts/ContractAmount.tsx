@@ -68,24 +68,31 @@ class ContractAmount extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    let quantityValue = 0;
+    const {
+      contract,
+      itemGroup,
+      contractAmount,
+      proposedAmount,
+      deliverAllChecked,
+      isActiveContract,
+      onUserInputChange,
+      allowDeliveryAll,
+      quantityComment
+    } = this.props;
+    const { showPastContracts } = this.state;
 
-    if (this.props.contractAmount && !this.props.proposedAmount) {
-      quantityValue = this.props.contractAmount;
-    } else {
-      quantityValue = this.props.proposedAmount;
-    }
+    const quantityValue = contractAmount && !proposedAmount ? contractAmount : proposedAmount;
 
     return (
-      <View style={styles.BlueContentView}>
+      <View style={ styles.BlueContentView }>
         <View>
-          <Text style={styles.ContentHeader}>
+          <Text style={ styles.ContentHeader }>
             MÄÄRÄ
           </Text>
         </View>
         <View>
           {
-            this.props.itemGroup.category === "FRESH" &&
+            itemGroup.category === "FRESH" &&
             <Text style={{ fontSize: 18, paddingBottom: 10 }}>
               Tuoremarjasopimuksessa sopimusmäärä on aiesopimus, johon molemmat osapuolet sitoutuvat, ellei kyseessä poikkeustilanne.
             </Text>
@@ -93,40 +100,40 @@ class ContractAmount extends React.Component<Props, State> {
         </View>
         <View>
           <Form>
-            <Text style={styles.textSize}>Määrä</Text>
+            <Text style={ styles.textSize }>Määrä</Text>
             <TextInput
-              style={styles.InputStyle}
-              editable={!this.props.isActiveContract}
+              style={ styles.InputStyle }
+              editable={ !isActiveContract }
               keyboardType="numeric"
-              value={quantityValue.toString()}
-              onChangeText={(text: string) => this.onAmountChange(text)}
+              value={ quantityValue.toString() }
+              onChangeText={ (text: string) => this.onAmountChange(text) }
             />
           </Form>
         </View>
         <View>
-          <Text style={[styles.textWithSpace, styles.textSize]}>
-            {`Pakkasmarjan ehdotus: ${this.props.contract.contractQuantity} kg`}
+          <Text style={[ styles.textWithSpace, styles.textSize ]}>
+            {`Pakkasmarjan ehdotus: ${contract.contractQuantity} kg`}
           </Text>
-          <TouchableOpacity onPress={() => this.setState({ showPastContracts: !this.state.showPastContracts })}>
-            <Text style={styles.linkStyle}>
+          <TouchableOpacity onPress={ () => this.setState({ showPastContracts: !showPastContracts }) }>
+            <Text style={ styles.linkStyle }>
               Edellisten vuosien sopimusmäärät ja toimitusmäärät
             </Text>
           </TouchableOpacity>
           <ContractModal
             closeModal={() => this.setState({ showPastContracts: false })}
-            modalOpen={this.state.showPastContracts}
-            itemGroupId={this.props.itemGroup.id || ""}
+            modalOpen={ showPastContracts }
+            itemGroupId={ itemGroup.id || "" }
           />
         </View>
         {
-          this.props.allowDeliveryAll &&
+          allowDeliveryAll &&
           <View style={{ backgroundColor: "#fff", width: "100%", borderRadius: 4 }}>
             <ListItem>
               <CheckBox
-                color={ this.props.isActiveContract ? "#AAA" : "#E51D2A" }
-                checked={ this.props.deliverAllChecked }
-                disabled={ this.props.isActiveContract }
-                onPress={ () => !this.props.isActiveContract && this.props.onUserInputChange("deliverAllChecked", !this.props.deliverAllChecked) }
+                color={ isActiveContract ? "#AAA" : "#E51D2A" }
+                checked={ deliverAllChecked }
+                disabled={ isActiveContract }
+                onPress={ () => !isActiveContract && onUserInputChange("deliverAllChecked", !deliverAllChecked) }
               />
               <Body>
                 <Text>
@@ -137,14 +144,14 @@ class ContractAmount extends React.Component<Props, State> {
           </View>
         }
         <View>
-          <Text style={[styles.textWithSpace, styles.textSize]}>Kommentti</Text>
+          <Text style={[ styles.textWithSpace, styles.textSize ]}>Kommentti</Text>
           <TextInput
-            multiline={true}
-            numberOfLines={Platform.OS === 'ios' ? undefined : 4}
+            multiline
+            numberOfLines={ Platform.OS === 'ios' ? undefined : 4 }
             style={{ ...styles.textInput, height: Platform.OS === "ios" ? 80 : undefined }}
-            editable={!this.props.isActiveContract}
-            value={this.props.quantityComment}
-            onChangeText={(text: string) => this.onQuantityCommentChange(text)}
+            editable={ !isActiveContract }
+            value={ quantityComment }
+            onChangeText={ (text: string) => this.onQuantityCommentChange(text) }
           />
         </View>
       </View>

@@ -92,7 +92,9 @@ class ManageContact extends React.Component<Props, State> {
   }
 
   /**
-   * Navigation options property
+   * Returns navigation options
+   *
+   * @param navigation navigation object
    */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {

@@ -46,6 +46,11 @@ class ViewWeekDeliveryPredictionScreen extends React.Component<Props, State> {
     };
   }
 
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
       headerTitle: () => <TopBar navigation={navigation}

@@ -58,6 +58,11 @@ class DatabankScreen extends React.Component<Props, State> {
  * @param navigation navigation
  * @returns navigation options object
  */
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
       headerTitle: () => <TopBar navigation={navigation}

@@ -87,6 +87,11 @@ class ManageBoxDelivery extends React.Component<Props, State> {
     };
   }
 
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
       headerTitle: () => (
@@ -159,7 +164,7 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       grayBoxesReturned
     } = this.state;
 
-    if (!accessToken|| !deliveryPlaceId|| !selectedDate || !selectedContact || !selectedContact.id) {
+    if (!accessToken|| !deliveryPlaceId|| !selectedDate || !selectedContact?.id) {
       return;
     }
 
@@ -194,9 +199,11 @@ class ManageBoxDelivery extends React.Component<Props, State> {
   }
 
   /**
-   * Find contact
+   * Find contacts
+   *
+   * @param query query string
    */
-  private findContacts = (query: any) => {
+  private findContacts = (query?: string) => {
     const { accessToken } = this.props;
 
     if (this.queryDebounce) {

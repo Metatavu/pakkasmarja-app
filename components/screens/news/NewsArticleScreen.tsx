@@ -65,25 +65,33 @@ class NewsArticleScreen extends React.Component<Props, State> {
   /**
    * Navigation options
    */
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: () => <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
+      headerTitle: () => (
+        <TopBar navigation={ navigation }
+          showMenu
+          showHeader={ false }
+          showUser
+        />
+      ),
       headerTitleContainerStyle: {
-        left: 0,
+        left: 0
       },
-      headerLeft: () =>
-        <TouchableHighlight onPress={() => { navigation.goBack() }} >
+      headerLeft: () => (
+        <TouchableHighlight onPress={ navigation.goBack }>
           <Icon
-            name='chevron-left'
-            color='#fff'
-            size={40}
+            name="chevron-left"
+            color="#fff"
+            size={ 40 }
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      )
     }
   };
 
@@ -91,23 +99,26 @@ class NewsArticleScreen extends React.Component<Props, State> {
    * Component did mount
    */
   public async componentDidMount() {
-    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
-    if (!this.props.accessToken) {
+    const { navigation, accessToken, route } = this.props;
+
+    navigation.setOptions(this.navigationOptions(navigation));
+
+    if (!accessToken) {
       return;
     }
 
     this.setState({ loading: true });
 
-    const newsArticle = this.props.route.params.newsArticle;
+    const newsArticle: NewsArticle = route.params.newsArticle;
 
     if (newsArticle) {
       this.setState({ newsArticle: newsArticle });
       this.markRead(newsArticle);
 
       if (newsArticle.imageUrl) {
-        const fileService = new FileService(REACT_APP_API_URL, this.props.accessToken.access_token);
-        const imageData = await fileService.getFile(newsArticle.imageUrl);
-        this.setState({ imageData: imageData });
+        this.setState({
+          imageData: await new FileService(REACT_APP_API_URL, accessToken.access_token).getFile(newsArticle.imageUrl)
+        });
       }
     }
 
@@ -120,44 +131,50 @@ class NewsArticleScreen extends React.Component<Props, State> {
    * @return related unread
    */
   private markRead = (news: any) => {
-    if (!this.props.accessToken) {
+    const { accessToken, unreads, unreadRemoved } = this.props;
+
+    if (!accessToken) {
       return;
     }
 
-    const unread = this.props.unreads.find((unread: Unread) => {
-      return (unread.path || "") == `news-${news.id}`;
-    });
+    const unread = unreads.find(unread => (unread.path || "") == `news-${news.id}`);
 
     if (!unread) {
       return;
     }
 
-    this.props.unreadRemoved && this.props.unreadRemoved(unread);
-    new PakkasmarjaApi().getUnreadsService(this.props.accessToken.access_token).deleteUnread(unread.id!);
+    unreadRemoved?.(unread);
+    new PakkasmarjaApi().getUnreadsService(accessToken.access_token).deleteUnread(unread.id!);
   }
 
   /**
    * Component render method
    */
-  public render() {
-    if (this.state.loading) {
+  public render = () => {
+    const { accessToken, navigation } = this.props;
+    const { loading, newsArticle, imageData } = this.state;
+
+    if (loading) {
       return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Spinner color="red" />
+          <Spinner color="red"/>
         </View>
       );
     }
-    const { accessToken } = this.props;
+
     if (!accessToken) {
       return null;
     }
 
-    const title = this.state.newsArticle.title;
-    const date = moment(this.state.newsArticle.createdAt).format("DD.MM.YYYY HH:mm");
-    const imageData = this.state.imageData;
+    const title = newsArticle.title;
+    const date = moment(newsArticle.createdAt).format("DD.MM.YYYY HH:mm");
 
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter
+      >
         <AutoHeightWebView
           ref={ this.webView }
           style={{ width: Dimensions.get('window').width - 20, marginLeft: 10, marginRight: 10, marginTop: 20 }}
@@ -177,11 +194,11 @@ class NewsArticleScreen extends React.Component<Props, State> {
               <h1>${title}</h1>
               <p>${date}</p>
               ${imageData ? '<img src="data:image/jpeg;base64,' + imageData + '" style="width:100%;"/>' : ''}
-              ${this.state.newsArticle.contents}
+              ${newsArticle.contents}
             </div>
           ` }}
-          scalesPageToFit={false}
-          viewportContent={'width=device-width, user-scalable=no'}
+          scalesPageToFit={ false }
+          viewportContent={ 'width=device-width, user-scalable=no' }
           onNavigationStateChange={ event => {
             if (event.url !== "about:blank") {
               Linking.openURL(event.url);

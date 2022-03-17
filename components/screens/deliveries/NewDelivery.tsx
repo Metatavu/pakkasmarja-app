@@ -185,6 +185,11 @@ class NewDelivery extends React.Component<Props, State> {
   /**
    * Navigation options of current route
    */
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
       headerTitle: () => <TopBar navigation={ navigation } showMenu showUser/>,
@@ -549,15 +554,6 @@ class NewDelivery extends React.Component<Props, State> {
   }
 
   /**
-   * Checks if time of day matches
-   */
-  private matchTime = (a: Date | undefined, b: Date | undefined) => {
-    return a && b ?
-      moment(a).format("HH.mm") === moment(b).format("HH.mm") :
-      false;
-  }
-
-  /**
    * On remove note
    */
   private onRemoveNote = () => {
@@ -582,9 +578,7 @@ class NewDelivery extends React.Component<Props, State> {
     Alert.alert(
       'Tuotteelle ei löytynyt hintaa',
       `Tuotteelle ${product?.name} ei löytynyt hintaa, ota yhteyttä pakkasmarjaan`,
-      [
-        { text: 'OK', onPress: () => { } },
-      ]
+      [{ text: 'OK', onPress: () => { } }]
     );
   }
 
@@ -628,10 +622,14 @@ class NewDelivery extends React.Component<Props, State> {
     }
 
     return (
-      <BasicScrollLayout navigation={ navigation } backgroundColor="#fff" displayFooter={ true }>
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter={ true }
+      >
         <View style={ styles.deliveryContainer }>
           <Text style={ styles.textWithSpace }>Valitse tuote</Text>
-          { products.length < 1 ?
+          { !products.length ?
             <Text>Ei voimassa olevaa sopimusta. Jos näin ei pitäisi olla, ole yhteydessä Pakkasmarjaan.</Text>
             :
             <>
@@ -703,7 +701,7 @@ class NewDelivery extends React.Component<Props, State> {
                 style={[ styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 } ]}
                 onPress={ this.handleDeliverySubmit }
               >
-                <Text style={styles.buttonText}>Tallenna</Text>
+                <Text style={ styles.buttonText }>Tallenna</Text>
               </AsyncButton>
             </View>
           </View>
@@ -711,11 +709,11 @@ class NewDelivery extends React.Component<Props, State> {
         <DeliveryNoteModal
           onRemoveNote={ this.onRemoveNote }
           editable={ noteEditable }
-          imageUri={ deliveryNoteData ? deliveryNoteData.imageUri : undefined }
+          imageUri={ deliveryNoteData?.imageUri }
           onCreateNoteClick={ this.onCreateNoteClick }
           deliveryNoteData={ deliveryNoteData }
           onDeliveryNoteChange={ this.onDeliveryNoteChange }
-          onDeliveryNoteImageChange={ ((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType)) }
+          onDeliveryNoteImageChange={ this.onDeliveryNoteImageChange }
           modalClose={ () => this.setState({ modalOpen: false }) }
           modalOpen={ modalOpen }
         />
