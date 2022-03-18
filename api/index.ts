@@ -17,7 +17,7 @@ export default class PakkasmarjaApi {
    * @param basePath base path
    */
   constructor(basePath?: string) {
-    this.basePath = basePath ? basePath : `${REACT_APP_API_URL}/rest/v1`;
+    this.basePath = basePath || `${REACT_APP_API_URL}/rest/v1`;
   }
 
   private getApi() {
@@ -133,7 +133,7 @@ export default class PakkasmarjaApi {
     return this.getApi().getProductPricesService(token);
   }
 
-   /**
+  /**
    * Returns sign authentication services service
    *
    * @param token token
@@ -193,7 +193,7 @@ export default class PakkasmarjaApi {
    * @param basePath basePath
    */
   public getFileService(token: string) {
-    return new FileService(REACT_APP_API_URL, token);
+    return new FileService(this.basePath, token);
   }
 
   /**
@@ -202,6 +202,14 @@ export default class PakkasmarjaApi {
    */
   public getSharedFilesService(token: string) {
     return this.getApi().getSharedFilesService(token);
+  }
+
+  /**
+   * Get opening hours service
+   * @param token token
+   */
+  public getOpeningHoursService(token: string) {
+    return this.getApi().getOpeningHoursService(token);
   }
 
 }

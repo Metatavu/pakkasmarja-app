@@ -78,9 +78,7 @@ class ChatThreadList extends React.Component<Props, State> {
           true
       );
 
-      const conversationListItems = await Promise.all(
-        validChatThreads.map(this.createConversationListItem)
-      );
+      const conversationListItems = await Promise.all(validChatThreads.map(this.createConversationListItem));
 
       const itemsWithUnreads = conversationListItems.filter(({ groupId, id }) => this.hasUnreadMessages(groupId, id!));
       const itemsWithoutUnreads = conversationListItems.filter(({ groupId, id }) => !this.hasUnreadMessages(groupId, id!));
@@ -95,7 +93,7 @@ class ChatThreadList extends React.Component<Props, State> {
         loading: false
       });
     } catch (e) {
-      onError && onError(strings.errorCommunicatingWithServer);
+      onError?.(strings.errorCommunicatingWithServer);
       this.setState({ loading: false });
     }
   }
@@ -138,12 +136,14 @@ class ChatThreadList extends React.Component<Props, State> {
    */
   private renderListItems = (): JSX.Element[] => {
     const { accessToken, onError, onThreadSelected } = this.props;
+    const { conversationListItems } = this.state;
+
     if (!accessToken) {
-      onError && onError(strings.accessTokenExpired);
+      onError?.(strings.accessTokenExpired);
       return [];
     }
 
-    return this.state.conversationListItems.map(item => {
+    return conversationListItems.map(item => {
       const unreadCount = this.countUnreads(item.groupId, item.id!);
       const imageUrl = item.imageUrl ?
         {

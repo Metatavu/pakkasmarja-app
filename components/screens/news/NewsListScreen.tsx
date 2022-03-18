@@ -3,13 +3,13 @@ import TopBar from "../../layout/TopBar";
 import PakkasmarjaApi from "../../../api";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
-import { Text, List, View, Spinner, ListItem, Body } from 'native-base';
+import { Text, List, View, Spinner, ListItem, Body } from "native-base";
 import { AccessToken, StoreState } from "../../../types";
 import { NewsArticle, Unread } from "pakkasmarja-client";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import _ from "lodash"
 import moment from "moment";
-import { StackNavigationOptions } from '@react-navigation/stack';
+import { StackNavigationOptions } from "@react-navigation/stack";
 
 /**
  * Component props
@@ -50,6 +50,11 @@ class NewsListScreen extends React.Component<Props, State> {
   /**
    * Navigation options
    */
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
       headerTitle: () => (
@@ -72,33 +77,44 @@ class NewsListScreen extends React.Component<Props, State> {
    * Component did mount
    */
   public async componentDidMount() {
-    (this.props.navigation).setOptions(this.navigationOptions(this.props.navigation));
-    if (!this.props.accessToken) {
+    const { navigation, accessToken } = this.props;
+    navigation.setOptions(this.navigationOptions(navigation));
+
+    if (!accessToken) {
       return;
     }
-    this.props.navigation.addListener('willFocus', () => {
-      this.loadData();
-    });
-    this.loadData();
 
+    navigation.addListener("willFocus", this.loadData);
+
+    this.loadData();
   }
 
   /**
    * Load data
    */
   private loadData = async () => {
-    if (!this.props.accessToken) {
+    const { accessToken } = this.props;
+
+    if (!accessToken) {
       return;
     }
+
     this.setState({ loading: true });
-    const Api = new PakkasmarjaApi();
-    const newsArticleService = Api.getNewsArticlesService(this.props.accessToken.access_token);
-    const newsArticles = await newsArticleService.listNewsArticles();
-    const sortedNewsArticles = newsArticles.sort((a, b) => {
-      return this.getTime(b.createdAt) - this.getTime(a.createdAt)
-    });
+
+    const newsArticles = await new PakkasmarjaApi()
+      .getNewsArticlesService(accessToken.access_token)
+      .listNewsArticles();
+
+    const sortedNewsArticles = newsArticles.sort((a, b) =>
+      this.getTime(b.createdAt) - this.getTime(a.createdAt)
+    );
+
     await this.checkUnreads();
-    this.setState({ newsArticles: sortedNewsArticles, loading: false });
+
+    this.setState({
+      newsArticles: sortedNewsArticles,
+      loading: false
+    });
   }
 
   /**
@@ -114,28 +130,33 @@ class NewsListScreen extends React.Component<Props, State> {
    * Handles list item click
    */
   private handleListItemClick = (newsArticle: NewsArticle) => {
-    this.props.navigation.navigate('NewsArticle', {
-      newsArticle: newsArticle
-    });
+    this.props.navigation.navigate('NewsArticle', { newsArticle: newsArticle });
   }
 
   /**
    * Component render method
    */
-  public render() {
-    if (this.state.loading) {
+  public render = () => {
+    const { navigation } = this.props;
+    const { loading, newsArticles } = this.state;
+
+    if (loading) {
       return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Spinner color="red" />
+          <Spinner color="red"/>
         </View>
       );
     }
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View >
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter
+      >
+        <View>
           <List>
             {
-              this.state.newsArticles.map(newsArticle =>
+              newsArticles.map(newsArticle => (
                 <ListItem
                   key={ newsArticle.id }
                   button
@@ -155,7 +176,9 @@ class NewsListScreen extends React.Component<Props, State> {
                     <Text note>
                       { newsArticle.id && this.isUnread(newsArticle.id.toString()) ?
                         <View style={{ flex: 1, flexDirection: "row", marginLeft: 10 }}>
-                          <Text style={{ color: "red" }}>(Uusi)</Text>
+                          <Text style={{ color: "red" }}>
+                            (Uusi)
+                          </Text>
                           <Text style={{ marginLeft: 10, color: "gray" }}>
                             { newsArticle.createdAt && moment(newsArticle.createdAt).format("DD.MM.YYYY HH:mm") }
                           </Text>
@@ -168,7 +191,7 @@ class NewsListScreen extends React.Component<Props, State> {
                     </Text>
                   </Body>
                 </ListItem>
-              )
+              ))
             }
           </List>
         </View>
@@ -201,11 +224,7 @@ class NewsListScreen extends React.Component<Props, State> {
   private isUnread = (newsId: string) => {
     const { unreads } = this.props;
 
-    if (!unreads) {
-      return;
-    }
-
-    return !!unreads.find(unread => unread.path?.startsWith(`news-${newsId}`));
+    return !!unreads?.find(unread => unread.path?.startsWith(`news-${newsId}`));
   }
 
 }

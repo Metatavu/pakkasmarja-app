@@ -9,7 +9,7 @@ import { TouchableOpacity, Image, View, Text, TouchableHighlight, Dimensions } f
 import { styles } from './styles.tsx'
 import PakkasmarjaApi from "../../../api";
 import { RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO, FRESH_ICON, FROZEN_ICON } from "../../../static/images";
-import Api, { Delivery, Product, ItemGroupCategory, OpeningHourPeriod, OpeningHourException, DeliveryPlace, OpeningHourWeekday, OpeningHourInterval, WeekdayType } from "pakkasmarja-client";
+import { Delivery, ItemGroupCategory, OpeningHourPeriod, OpeningHourException, DeliveryPlace, OpeningHourWeekday, OpeningHourInterval, WeekdayType, DeliveryStatus } from "pakkasmarja-client";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import BasicLayout from "../../layout/BasicLayout";
 import strings from "../../../localization/strings";
@@ -22,7 +22,7 @@ import { StackNavigationOptions } from '@react-navigation/stack';
 /**
  * Moment extended with moment-range
  */
-const Moment = require("moment");
+import * as Moment from "moment";
 const extendedMoment = extendMoment(Moment);
 extendedMoment.locale("fi");
 
@@ -106,47 +106,59 @@ class DeliveriesScreen extends React.Component<Props, State> {
     };
   }
 
-  private navigationOptions = (navigation: any): StackNavigationOptions => {
-    return {
-      headerTitle: () => <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
-      headerTitleStyle: { width: Dimensions.get('window').width },
-      headerTitleContainerStyle: {
-        left: 0,
-      },
-      headerLeft: () =>
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
-          <FeatherIcon
-            name='chevron-left'
-            color='#fff'
-            size={40}
-            style={{ marginLeft: 30 }}
-          />
-        </TouchableHighlight>
-    }
-  };
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => ({
+    headerTitle: () => (
+      <TopBar
+        navigation={ navigation }
+        showMenu
+        showHeader={ false }
+        showUser
+      />
+    ),
+    headerTitleStyle: { width: Dimensions.get("window").width },
+    headerTitleContainerStyle: {
+      left: 0
+    },
+    headerLeft: () => (
+      <TouchableHighlight onPress={ navigation.goBack }>
+        <FeatherIcon
+          name="chevron-left"
+          color="#fff"
+          size={ 40 }
+          style={{ marginLeft: 30 }}
+        />
+      </TouchableHighlight>
+    )
+  });
 
   /**
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
-    if (!this.props.itemGroupCategoryUpdate) {
+    const { navigation, itemGroupCategoryUpdate } = this.props;
+
+    navigation.setOptions(this.navigationOptions(navigation));
+
+    if (!itemGroupCategoryUpdate) {
       return;
     }
+
     await Promise.all([
       this.loadDeliveriesData(),
       this.fetchDeliveryPlacesFromContract()
     ]);
+
     this.loadAmounts();
     await this.listDeliveryPlacesOpeningHours();
 
     this.refreshInterval = setInterval(this.refreshDeliveries, 1000 * 30);
 
-    this.navigationFocusEventSubscription = this.props.navigation.addListener('focus', this.loadAmounts);
+    this.navigationFocusEventSubscription = navigation.addListener("focus", this.loadAmounts);
   }
 
   /**
@@ -173,38 +185,34 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * Load deliveries
    */
   private loadDeliveriesData = async () => {
-    if (!this.props.accessToken) {
+    const { accessToken, deliveriesLoaded } = this.props;
+
+    if (!accessToken) {
       return;
     }
 
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = Api.getDeliveriesService(this.props.accessToken.access_token);
-    const productsService = Api.getProductsService(this.props.accessToken.access_token);
+    const api = new PakkasmarjaApi();
+    const deliveriesService = api.getDeliveriesService(accessToken.access_token);
+    const productsService = api.getProductsService(accessToken.access_token);
 
-    const freshDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FRESH", undefined, undefined, undefined, undefined, undefined, 0, 10000);
-    const frozenDeliveries: Delivery[] = await deliveriesService.listDeliveries(this.props.accessToken.userId, undefined, "FROZEN", undefined, undefined, undefined, undefined, undefined, 0, 10000);
-    const products: Product[] = await productsService.listProducts(undefined, undefined, undefined, 0, 10000);
+    const freshDeliveries = await deliveriesService.listDeliveries(accessToken.userId, undefined, "FRESH", undefined, undefined, undefined, undefined, undefined, 0, 10000);
+    const frozenDeliveries = await deliveriesService.listDeliveries(accessToken.userId, undefined, "FROZEN", undefined, undefined, undefined, undefined, undefined, 0, 10000);
+    const products = await productsService.listProducts(undefined, undefined, undefined, 0, 10000);
 
-    const freshDeliveriesAndProducts: DeliveryProduct[] = freshDeliveries.map((delivery) => {
-      return {
-        delivery: delivery,
-        product: products.find(product => product.id === delivery.productId)
-      };
-    });
+    const freshDeliveriesAndProducts = freshDeliveries.map(delivery => ({
+      delivery: delivery,
+      product: products.find(product => product.id === delivery.productId)
+    }));
 
-    const frozenDeliveriesAndProducts: DeliveryProduct[] = frozenDeliveries.map((delivery) => {
-      return {
-        delivery: delivery,
-        product: products.find(product => product.id === delivery.productId)
-      };
-    });
+    const frozenDeliveriesAndProducts = frozenDeliveries.map((delivery) => ({
+      delivery: delivery,
+      product: products.find(product => product.id === delivery.productId)
+    }));
 
-    const deliveriesState: DeliveriesState = {
+    deliveriesLoaded && deliveriesLoaded({
       freshDeliveryData: freshDeliveriesAndProducts,
       frozenDeliveryData: frozenDeliveriesAndProducts
-    };
-
-    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState);
+    });
   }
 
   /**
@@ -217,55 +225,49 @@ class DeliveriesScreen extends React.Component<Props, State> {
       return;
     }
 
-    const { access_token } = accessToken;
-
-    if (!access_token) {
-      return;
-    }
-
-    const contractsService = Api.getContractsService(access_token);
+    const api = new PakkasmarjaApi();
+    const contractsService = api.getContractsService(accessToken.access_token);
+    const deliveryPlacesService = api.getDeliveryPlacesService(accessToken.access_token);
     const userContracts = await contractsService.listContracts("application/json", undefined, undefined, undefined, new Date().getFullYear());
-
     const uniqueDeliveryPlaceIds = _.uniq(userContracts.map(contract => contract.deliveryPlaceId));
-    const deliveryPlacesService = Api.getDeliveryPlacesService(access_token);
-    const deliveryPlaces = await Promise.all(uniqueDeliveryPlaceIds.map(id => deliveryPlacesService.findDeliveryPlace(id)));
+    const deliveryPlaces = await Promise.all(uniqueDeliveryPlaceIds.map(deliveryPlacesService.findDeliveryPlace));
 
     this.setState({ deliveryPlaces: deliveryPlaces });
   }
 
   /**
-   * load amounts
+   *    * load amounts
    */
   private loadAmounts = () => {
-    if (!this.props.deliveries || !this.props.itemGroupCategory) {
+    const { deliveries } = this.props;
+
+    if (!deliveries) {
       return;
     }
 
-    const deliveries: DeliveriesState = this.props.deliveries;
-    let freshProposalAmount = 0;
-    let freshPlannedAmount = 0;
-    let frozenProposalAmount = 0;
-    let frozenPlannedAmount = 0;
+    const { freshDeliveryData, frozenDeliveryData } = deliveries;
 
-    deliveries.freshDeliveryData.forEach((deliveryProduct: DeliveryProduct) => {
-      if (deliveryProduct.delivery.status == "PROPOSAL") {
-        freshProposalAmount++;
-      } else if (deliveryProduct.delivery.status == "PLANNED") {
-        freshPlannedAmount++;
-      }
+    const freshProposals = this.filterDeliveryDataByStatus(freshDeliveryData, "PROPOSAL");
+    const freshPlanned = this.filterDeliveryDataByStatus(freshDeliveryData, "PLANNED");
+    const frozenProposals = this.filterDeliveryDataByStatus(frozenDeliveryData, "PROPOSAL");
+    const frozenPlanned = this.filterDeliveryDataByStatus(frozenDeliveryData, "PLANNED");
 
-      this.setState({ freshProposalAmount, freshPlannedAmount });
+    this.setState({
+      freshProposalAmount: freshProposals.length,
+      freshPlannedAmount: freshPlanned.length,
+      frozenProposalAmount: frozenProposals.length,
+      frozenPlannedAmount: frozenPlanned.length
     });
+  }
 
-    deliveries.frozenDeliveryData.forEach((deliveryProduct: DeliveryProduct) => {
-      if (deliveryProduct.delivery.status == "PROPOSAL") {
-        frozenProposalAmount++;
-      } else if (deliveryProduct.delivery.status == "PLANNED") {
-        frozenPlannedAmount++;
-      }
-
-      this.setState({ frozenProposalAmount, frozenPlannedAmount });
-    });
+  /**
+   * Filters given delivery data by status
+   *
+   * @param data delivery data
+   * @param status status
+   */
+  private filterDeliveryDataByStatus = (data: DeliveryProduct[], status: DeliveryStatus) => {
+    return data.filter(({ delivery }) => delivery.status === status);
   }
 
   /**
@@ -274,24 +276,24 @@ class DeliveriesScreen extends React.Component<Props, State> {
   private listDeliveryPlacesOpeningHours = async () => {
     const { accessToken } = this.props;
     const { deliveryPlaces } = this.state;
+
     if (!accessToken || deliveryPlaces.length === 0) {
       return;
     }
-    const { access_token } = accessToken;
-    if (!access_token) {
-      return;
-    }
 
-    const openingHoursService = Api.getOpeningHoursService(access_token);
+    const openingHoursService = new PakkasmarjaApi().getOpeningHoursService(accessToken.access_token);
     const today = extendedMoment();
     const fourWeeksFromToday = extendedMoment(today).add(28, "day");
-    const deliveryPlacesOpeningHoursPromises = deliveryPlaces.map(async (deliveryPlace) => {
+
+    const deliveryPlacesOpeningHoursPromises = deliveryPlaces.map(async deliveryPlace => {
       const name = deliveryPlace.name;
       const deliveryPlaceId = `${ deliveryPlace.id }`;
+
       const [openingHourExceptions, openingHourPeriods] = await Promise.all([
         openingHoursService.listOpeningHourExceptions(deliveryPlaceId),
         openingHoursService.listOpeningHourPeriods(deliveryPlaceId, today.toDate(), fourWeeksFromToday.toDate())
       ]);
+
       return {
         id: deliveryPlaceId,
         name: name || "",
@@ -299,13 +301,16 @@ class DeliveriesScreen extends React.Component<Props, State> {
         openingHourExceptions: openingHourExceptions
       };
     });
+
     const deliveryPlacesOpeningHours = await Promise.all(deliveryPlacesOpeningHoursPromises);
+
     this.setState({
       today,
       fourWeeksFromToday,
       deliveryPlacesOpeningHours,
       selectedDeliveryPlaceOpeningHours: deliveryPlacesOpeningHours[0]
     });
+
     this.createOpeningHoursTableData(deliveryPlacesOpeningHours[0]);
   }
 
@@ -313,28 +318,26 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * Maps options for dropdown
    */
   private mapOptions = () => {
-    const { deliveryPlacesOpeningHours } = this.state;
-    return deliveryPlacesOpeningHours.map(openingHoursItem => {
-      return (
-        <Picker.Item
-          key={ openingHoursItem.id }
-          label={ openingHoursItem.name }
-          value={ openingHoursItem }
-        />
-      );
-    });
+    return this.state.deliveryPlacesOpeningHours.map(openingHoursItem => (
+      <Picker.Item
+        key={ openingHoursItem.id }
+        label={ openingHoursItem.name }
+        value={ openingHoursItem }
+      />
+    ));
   }
 
   /**
    * Method for choosing delivery place opening hours
    *
-   * @param event event object
-   * @param data dropdown props
+   * @param itemValue item value
    */
-  private chooseDeliveryPlaceOpeningHours = (itemValue: any, itemPosition: number) => {
+  private chooseDeliveryPlaceOpeningHours = (itemValue: any) => {
+    const { deliveryPlacesOpeningHours } = this.state;
+
     if (itemValue.id) {
-      const { deliveryPlacesOpeningHours } = this.state;
       const place = deliveryPlacesOpeningHours.find(item => item.id === itemValue.id);
+
       if (place) {
         this.createOpeningHoursTableData(place);
         this.setState({ selectedDeliveryPlaceOpeningHours: place });
@@ -349,11 +352,12 @@ class DeliveriesScreen extends React.Component<Props, State> {
    */
   private createOpeningHoursTableData = (deliveryPlaceOpeningHours: DeliveryPlaceOpeningHours) => {
     const { today, fourWeeksFromToday } = this.state;
+
     if (!today || !fourWeeksFromToday) {
       return;
     }
 
-    let openingHoursNotConfirmed: boolean = false;
+    let openingHoursNotConfirmed = false;
     const { openingHourPeriods, openingHourExceptions } = deliveryPlaceOpeningHours;
     const sortedPeriodsList = [ ...openingHourPeriods ].sort((a, b) => {
       return extendedMoment(a.beginDate).diff(b.beginDate);
@@ -401,7 +405,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
         dayData: weekday!,
         key: index,
         confirmed: confirmed
-      } as OpeningHoursTableItem;
+      };
     });
 
     this.setState({
@@ -414,15 +418,18 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * Update item group category
    */
   private updateItemGroupCategory = (itemGroupCategory: ItemGroupCategory) => {
-    if (!this.props.accessToken) {
+    const { accessToken, itemGroupCategoryUpdate } = this.props;
+    const { initialCategory } = this.state;
+
+    if (!accessToken) {
       return;
     }
 
-    if (!this.state.initialCategory) {
+    if (!initialCategory) {
       this.setState({ initialCategory: itemGroupCategory });
     }
 
-    this.props.itemGroupCategoryUpdate && this.props.itemGroupCategoryUpdate(itemGroupCategory);
+    itemGroupCategoryUpdate?.(itemGroupCategory);
   }
 
   /**
@@ -450,31 +457,42 @@ class DeliveriesScreen extends React.Component<Props, State> {
       <View style={{ flex: 1, flexDirection: "column", marginTop: 40 }}>
         <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingLeft: 60, marginBottom: 30 }}>
           <Thumbnail source={ titleIcon } style={{ height: 50, width: 50 }}/>
-          <Text style={{ fontWeight: "400", fontSize: 35, color: "#000", marginLeft: 20 }}>{ titleText }</Text>
+          <Text style={{ fontWeight: "400", fontSize: 35, color: "#000", marginLeft: 20 }}>
+            { titleText }
+          </Text>
         </View>
         {
           deliveryList.map((listItem: any) => {
             const plannedAmount: number = itemGroupCategory == "FRESH" ? listItem.freshPlannedAmount : listItem.frozenPlannedAmount;
             const proposalAmount: number = itemGroupCategory == "FRESH" ? listItem.freshProposalAmount : listItem.frozenProposalAmount;
+
             return (
-              <TouchableOpacity key={listItem.screen} onPress={() => { this.onDeliveryItemClick(listItem.screen, itemGroupCategory) }}>
-                <View key={listItem.screen} style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 35 }}>
+              <TouchableOpacity
+                key={ listItem.screen }
+                onPress={ () => this.onDeliveryItemClick(listItem.screen, itemGroupCategory) }
+              >
+                <View
+                  key={ listItem.screen }
+                  style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 35 }}
+                >
                   <View style={{ width: 40, alignContent: "center", alignItems: "center", paddingLeft: 5, paddingRight: 5 }}>
                     <Image
                       style={{ flex: 1, width: 40, resizeMode: 'contain' }}
-                      source={listItem.icon}
+                      source={ listItem.icon }
                     />
                   </View>
                   <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
                     <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
-                      {listItem.name}
+                      { listItem.name }
                     </Text>
                   </View>
                   {
                     listItem.screen == "Proposals" && proposalAmount > 0 ?
                       <View style={{ justifyContent: "center" }}>
-                        <View style={styles.roundColoredView} >
-                          <Text style={styles.roundViewText}>{proposalAmount}</Text>
+                        <View style={ styles.roundColoredView }>
+                          <Text style={ styles.roundViewText }>
+                            { proposalAmount }
+                          </Text>
                         </View>
                       </View>
                       :
@@ -483,8 +501,10 @@ class DeliveriesScreen extends React.Component<Props, State> {
                   {
                     listItem.screen == "IncomingDeliveries" && plannedAmount > 0 ?
                       <View style={{ justifyContent: "center" }}>
-                        <View style={styles.roundColoredView} >
-                          <Text style={styles.roundViewText}>{plannedAmount}</Text>
+                        <View style={ styles.roundColoredView }>
+                          <Text style={ styles.roundViewText }>
+                            { plannedAmount }
+                          </Text>
                         </View>
                       </View>
                       :
@@ -504,6 +524,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
    */
   private renderOpeningHourTableData = (): JSX.Element[] | undefined => {
     const { openingHoursTableData } = this.state;
+
     if (openingHoursTableData.length < 1) {
       return;
     }
@@ -519,19 +540,15 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * @param date moment date
    * @returns weekday type as WeekdayType
    */
-  private getWeekdayType = (date: moment.Moment): WeekdayType | undefined => {
-    const weekdayTypeArray = [
-      WeekdayType.MONDAY,
-      WeekdayType.TUESDAY,
-      WeekdayType.WEDNESDAY,
-      WeekdayType.THURSDAY,
-      WeekdayType.FRIDAY,
-      WeekdayType.SATURDAY,
-      WeekdayType.SUNDAY
-    ];
-
-    return weekdayTypeArray[date.weekday()];
-  }
+  private getWeekdayType = (date: moment.Moment): WeekdayType | undefined => [
+    WeekdayType.MONDAY,
+    WeekdayType.TUESDAY,
+    WeekdayType.WEDNESDAY,
+    WeekdayType.THURSDAY,
+    WeekdayType.FRIDAY,
+    WeekdayType.SATURDAY,
+    WeekdayType.SUNDAY
+  ][date.weekday()];
 
     /**
    * Renders single opening hour day
@@ -541,38 +558,41 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * @param key element key
    * @returns day as JSX element
    */
-  private renderOpeningHourDay = (date: moment.Moment, dayObject: OpeningHourException | OpeningHourWeekday, key: number, confirmed: boolean): JSX.Element => {
-    return (
-      <View key={ key } style={{ flex: 1, alignSelf: 'stretch', flexDirection: 'row' }}>
-        <View style={{
-          flex: 1,
-          flexDirection: "row",
-          alignItems: "center",
-          alignSelf: 'stretch',
-          borderBottomWidth: 1,
-          borderRightWidth: 1,
-          padding: 5
-        }}>
-          <Text style={{ marginRight: 5 }}>
-            { date.format("dd DD.MM.YYYY") }
-          </Text>
-          { !confirmed &&
-            <Icon
-              name="asterisk"
-              type="FontAwesome5"
-              style={{ color: "red", fontSize: 10 }}
-            />
-          }
-        </View>
-        <View style={{ flex: 1, alignSelf: 'stretch', borderBottomWidth: 1, padding: 5 }}>
-          { dayObject.hours.length > 0 &&
-            this.renderOpeningHourIntervals(dayObject.hours) ||
-            <Text key={ dayObject.id }>{ "Suljettu" }</Text>
-          }
-        </View>
+  private renderOpeningHourDay = (
+    date: moment.Moment,
+    dayObject: OpeningHourException | OpeningHourWeekday,
+    key: number,
+    confirmed: boolean
+  ): JSX.Element => (
+    <View key={ key } style={{ flex: 1, alignSelf: 'stretch', flexDirection: 'row' }}>
+      <View style={{
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        alignSelf: 'stretch',
+        borderBottomWidth: 1,
+        borderRightWidth: 1,
+        padding: 5
+      }}>
+        <Text style={{ marginRight: 5 }}>
+          { date.format("dd DD.MM.YYYY") }
+        </Text>
+        { !confirmed &&
+          <Icon
+            name="asterisk"
+            type="FontAwesome5"
+            style={{ color: "red", fontSize: 10 }}
+          />
+        }
       </View>
-    );
-  }
+      <View style={{ flex: 1, alignSelf: 'stretch', borderBottomWidth: 1, padding: 5 }}>
+        { dayObject.hours.length > 0 &&
+          this.renderOpeningHourIntervals(dayObject.hours) ||
+          <Text key={ dayObject.id }>{ "Suljettu" }</Text>
+        }
+      </View>
+    </View>
+  );
 
   /**
    * Renders opening hour intervals
@@ -580,27 +600,36 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * @param hours opening hour intervals
    */
   private renderOpeningHourIntervals = (hours: OpeningHourInterval[]) => {
-    return hours.map(hour => {
-      return <Text key={ hour.id }>{ `${extendedMoment(hour.opens).format('HH:mm')} - ${extendedMoment(hour.closes).format('HH:mm')}` }</Text>;
-    });
+    return hours.map(hour =>
+      <Text key={ hour.id }>
+        { `${extendedMoment(hour.opens).format('HH:mm')} - ${extendedMoment(hour.closes).format('HH:mm')}` }
+      </Text>
+    );
   }
 
   /**
    * Render method
    */
   public render() {
-    const { accessToken } = this.props;
-    const { selectedDeliveryPlaceOpeningHours, openingHoursNotConfirmed } = this.state;
+    const { accessToken, navigation, itemGroupCategory } = this.props;
+    const {
+      selectedDeliveryPlaceOpeningHours,
+      openingHoursNotConfirmed,
+      freshProposalAmount,
+      freshPlannedAmount,
+      frozenProposalAmount,
+      frozenPlannedAmount
+    } = this.state;
 
     const deliveryList = [{
-      freshProposalAmount: this.state.freshProposalAmount,
-      frozenProposalAmount: this.state.frozenProposalAmount,
+      freshProposalAmount: freshProposalAmount,
+      frozenProposalAmount: frozenProposalAmount,
       name: "Ehdotukset",
       screen: "Proposals",
       icon: RED_LOGO
     }, {
-      frozenPlannedAmount: this.state.frozenPlannedAmount,
-      freshPlannedAmount: this.state.freshPlannedAmount,
+      frozenPlannedAmount: frozenPlannedAmount,
+      freshPlannedAmount: freshPlannedAmount,
       name: "Tulevat toimitukset",
       screen: "IncomingDeliveries",
       icon: INCOMING_DELIVERIES_LOGO
@@ -614,21 +643,33 @@ class DeliveriesScreen extends React.Component<Props, State> {
       accessToken.realmRoles.indexOf("update-other-deliveries") > -1 :
       false;
 
-    if (this.props.itemGroupCategory === undefined) {
+    if (itemGroupCategory === undefined) {
       return (
-        <BasicLayout navigation={ this.props.navigation } displayFooter={ true }>
+        <BasicLayout navigation={ navigation } displayFooter>
           <View style={ styles.categorySelectionView }>
-            <TouchableOpacity style={ styles.freshButton } key={ ItemGroupCategory.FRESH } onPress={ () => this.updateItemGroupCategory("FRESH") }>
+            <TouchableOpacity
+              style={ styles.freshButton }
+              key={ ItemGroupCategory.FRESH }
+              onPress={ () => this.updateItemGroupCategory("FRESH") }
+            >
               <View style={{ paddingLeft: 5, paddingRight: 5 }}>
                 <Thumbnail source={ FRESH_ICON } small />
               </View>
-              <Text style={ styles.categoryButtonText }>{ strings.freshDeliveries }</Text>
+              <Text style={ styles.categoryButtonText }>
+                { strings.freshDeliveries }
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={ styles.frozenButton } key={ ItemGroupCategory.FROZEN } onPress={ () => this.updateItemGroupCategory("FROZEN") }>
+            <TouchableOpacity
+              style={ styles.frozenButton }
+              key={ ItemGroupCategory.FROZEN }
+              onPress={ () => this.updateItemGroupCategory("FROZEN") }
+            >
               <View style={{ paddingLeft: 5, paddingRight: 5 }}>
-                <Thumbnail source={ FROZEN_ICON } small />
+                <Thumbnail source={ FROZEN_ICON } small/>
               </View>
-              <Text style={ styles.categoryButtonText }>{ strings.frozenDeliveries }</Text>
+              <Text style={ styles.categoryButtonText }>
+                { strings.frozenDeliveries }
+              </Text>
             </TouchableOpacity>
           </View>
         </BasicLayout>
@@ -637,11 +678,15 @@ class DeliveriesScreen extends React.Component<Props, State> {
       const initialTab = this.state.initialCategory === "FRESH" ? 0 : 1;
 
       return (
-        <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+        <BasicScrollLayout
+          navigation={ navigation }
+          backgroundColor="#fff"
+          displayFooter
+        >
           <Tabs
             initialPage={ initialTab }
             tabBarUnderlineStyle={{ backgroundColor: "#fff" }}
-            renderTabBar={ (props: any) => <DefaultTabBar {...{...props, tabStyle: Object.create(props.tabStyle) }}/> }
+            renderTabBar={ (props: any) => <DefaultTabBar {...{ ...props, tabStyle: Object.create(props.tabStyle) }}/> }
           >
             <Tab
               activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
@@ -652,9 +697,9 @@ class DeliveriesScreen extends React.Component<Props, State> {
             >
               { this.renderDeliveryList(deliveryList, "FRESH") }
               { canManageDeliveries &&
-                <TouchableOpacity onPress={() => { this.onDeliveryItemClick("ManageDeliveries", "FRESH") }}>
+                <TouchableOpacity onPress={ () => this.onDeliveryItemClick("ManageDeliveries", "FRESH") }>
                   <View style={{ width: "100%", flex: 1, flexDirection: "row", marginTop: 20, marginBottom: 20, paddingLeft: 80 }}>
-                    <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: 'center' }}>
+                    <View style={{ width: 300, paddingLeft: 20, flex: 1, justifyContent: "center" }}>
                       <Text style={{ fontWeight: "bold", color: "#000000", fontSize: 20 }}>
                         { strings.deliveryReception }
                     </Text>

@@ -27,8 +27,7 @@ export default class ContractHeader extends React.Component<Props, State> {
    */
   constructor(props: Props) {
     super(props);
-    this.state = {
-    };
+    this.state = {};
   }
 
   /**
@@ -42,7 +41,7 @@ export default class ContractHeader extends React.Component<Props, State> {
         </Text>
         <View style={styles.BlueContentView}>
           <Text style={styles.contentText}>
-            {this.props.itemGroup.category === "FROZEN" ? 
+            {this.props.itemGroup.category === "FROZEN" ?
               `Pakkasmarja Oy:n ja viljelijän sopimus pakastukseen toimitettavista marjoista ja niiden hinnoista satokaudella ${new Date().getFullYear()}`
               :
               "Pakkasmarja Oy:n ja viljelijän sopimus tuoremarjakauppaan toimitettavista marjoista."

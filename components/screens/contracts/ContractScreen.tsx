@@ -88,14 +88,17 @@ class ContractScreen extends React.Component<Props, State> {
    * Component did mount
    */
   public componentDidMount = async () => {
-    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
+    const { navigation, route } = this.props;
+    const { contractData } = this.state;
     const {
       itemGroup,
       contact,
       prices,
       deliveryPlaces,
       contract
-    } = this.props.route.params;
+    } = route.params || {};
+
+    navigation.setOptions(this.navigationOptions(navigation));
 
     if (itemGroup) {
       this.setState({ itemGroup: itemGroup });
@@ -117,7 +120,7 @@ class ContractScreen extends React.Component<Props, State> {
       this.setState({ contract: contract });
 
       this.updateContractData("quantityComment", contract.quantityComment || "");
-      this.updateContractData("proposedQuantity", contract.proposedQuantity ? contract.proposedQuantity.toString() : contract.contractQuantity ? contract.contractQuantity.toString() : "");
+      this.updateContractData("proposedQuantity", contract.proposedQuantity?.toString() || contract.contractQuantity?.toString() || "");
       this.updateContractData("areaDetailValues", contract.areaDetails || []);
       this.updateContractData("proposedDeliveryPlaceId", contract.deliveryPlaceId.toString());
       this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment || "");
@@ -125,14 +128,13 @@ class ContractScreen extends React.Component<Props, State> {
     }
     const appConfig: AppConfigOptions = await AppConfig.getAppConfig();
 
-    if (appConfig && itemGroup && itemGroup.id) {
+    if (appConfig && itemGroup?.id) {
       const configItemGroups = appConfig["item-groups"];
-      const itemGroupId = itemGroup.id;
-      const configItemGroup: AppConfigItemGroupOptions = configItemGroups[itemGroupId];
+      const configItemGroup: AppConfigItemGroupOptions = configItemGroups[itemGroup.id];
       const requireAreaDetails = configItemGroup && configItemGroup["require-area-details"] ? true : false;
       const allowDeliveryAll = configItemGroup && configItemGroup["allow-delivery-all"] ? true : false;
       this.setState({ requireAreaDetails, allowDeliveryAll });
-      this.validateContractData(this.state.contractData);
+      this.validateContractData(contractData);
     }
   }
 
@@ -155,20 +157,28 @@ class ContractScreen extends React.Component<Props, State> {
    * @param contractData contract data
    */
   private validateContractData = (contractData: ContractData) => {
+    const { requireAreaDetails } = this.state;
     const { itemGroup } = this.state;
-    const minimumProfitEstimation = itemGroup ? itemGroup.minimumProfitEstimation : undefined;
-    if (this.state.requireAreaDetails) {
-      const { areaDetailValues } = this.state.contractData;
+
+    if (requireAreaDetails) {
+      const { areaDetailValues } = contractData;
+
       if (areaDetailValues.length < 1) {
         this.setState({ validationErrorText: strings.fillAreaDetails });
         return;
-      } else if (!this.allFieldsFilled(areaDetailValues)) {
+      }
+
+      if (!this.allFieldsFilled(areaDetailValues)) {
         this.setState({ validationErrorText: strings.fillAllAreaDetailFields });
         return;
       }
     }
 
-    const totalAmount = this.calculateTotalAmount(contractData.areaDetailValues, minimumProfitEstimation);
+    const totalAmount = this.calculateTotalAmount(
+      contractData.areaDetailValues,
+      itemGroup?.minimumProfitEstimation
+    );
+
     if (!this.isValidContractMinimumAmount(totalAmount)) {
       this.setState({ validationErrorText: strings.insufficientContractAmount });
       return;
@@ -181,42 +191,49 @@ class ContractScreen extends React.Component<Props, State> {
    * Checks if company needs to approve changes made by user
    */
   private checkIfCompanyApprovalNeeded = () => {
-    if (!this.state.contract) {
+    const { contract, contractData } = this.state;
+
+    if (!contract) {
       return;
     }
 
-    const contractQuantity = this.state.contract.contractQuantity;
-    const currentQuantity = this.state.contractData.proposedQuantity;
-    const contractPlaceId = this.state.contract.deliveryPlaceId;
-    const currentContractPlaceId = this.state.contractData.proposedDeliveryPlaceId;
-    const contractDeliverAll = this.state.contract.deliverAll;
-    const contractProposedDeliverAll = this.state.contractData.deliverAllChecked;
-    if (contractQuantity != currentQuantity || contractPlaceId != currentContractPlaceId || contractDeliverAll != contractProposedDeliverAll) {
-      this.setState({ companyApprovalRequired: true });
-    } else {
-      this.setState({ companyApprovalRequired: false });
-    }
+    const companyApprovalNeeded = (
+      contract.contractQuantity !== contractData.proposedQuantity ||
+      contract.deliveryPlaceId !== contractData.proposedDeliveryPlaceId ||
+      contract.deliverAll !== contractData.deliverAllChecked
+    );
+
+    this.setState({ companyApprovalRequired: companyApprovalNeeded });
   }
 
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: () => <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
+      headerTitle: () => (
+        <TopBar
+          navigation={ navigation }
+          showMenu
+          showHeader={ false }
+          showUser
+        />
+      ),
       headerTitleContainerStyle: {
-        left: 0,
+        left: 0
       },
-      headerLeft: () =>
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+      headerLeft: () => (
+        <TouchableHighlight onPress={ navigation.goBack }>
           <Icon
-            name='chevron-left'
-            color='#fff'
-            size={40}
+            name="chevron-left"
+            color="#fff"
+            size={ 40 }
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      )
     }
   };
 
@@ -231,51 +248,51 @@ class ContractScreen extends React.Component<Props, State> {
    * Accept button clicked
    */
   private acceptContractClicked = async () => {
-    if (!this.props.accessToken || !this.state.contract) {
+    const { accessToken, navigation } = this.props;
+    const { contractData, contract, companyApprovalRequired } = this.state;
+
+    if (!accessToken || !contract) {
       return;
     }
 
-    const contractData = this.state.contractData;
-    const contract = this.state.contract;
+    const contractToCreate: Contract = {
+      ...contract,
+      proposedDeliverAll: contractData.deliverAllChecked,
+      proposedDeliveryPlaceId: contractData.proposedDeliveryPlaceId,
+      deliveryPlaceComment: contractData.deliveryPlaceComment,
+      proposedQuantity: contractData.proposedQuantity,
+      quantityComment: contractData.quantityComment
+    };
 
-    contract.proposedDeliverAll = contractData.deliverAllChecked;
-    contract.proposedDeliveryPlaceId = contractData.proposedDeliveryPlaceId;
-    contract.deliveryPlaceComment = contractData.deliveryPlaceComment;
-    contract.proposedQuantity = contractData.proposedQuantity;
-    contract.quantityComment = contractData.quantityComment;
-
-    if (contractData.areaDetailValues && contractData.areaDetailValues.length > 0) {
-      const areaDetails: AreaDetail[] = [];
-      contractData.areaDetailValues.forEach((areaDetailObject: any) => {
-        areaDetails.push({
-          size: areaDetailObject.size,
-          species: areaDetailObject.species,
-          name: areaDetailObject.name,
-          profitEstimation: areaDetailObject.profitEstimation
-        });
-      });
-
-      contract.areaDetails = areaDetails;
+    if (contractData.areaDetailValues.length) {
+      contractToCreate.areaDetails = contractData.areaDetailValues.map(areaDetailObject => ({
+        size: areaDetailObject.size,
+        species: areaDetailObject.species,
+        name: areaDetailObject.name,
+        profitEstimation: areaDetailObject.profitEstimation
+      }));
     }
 
     const api = new PakkasmarjaApi();
-    const contractsService = api.getContractsService(this.props.accessToken.access_token);
+    const contractsService = api.getContractsService(accessToken.access_token);
 
-    if (this.state.companyApprovalRequired) {
-      contract.status = "ON_HOLD";
-      await contractsService.updateContract(contract, contract.id || "");
-      this.props.navigation.navigate('Contracts', {});
-    } else {
-      await contractsService.updateContract(contract, contract.id || "");
-
-      const signAuthenticationServicesService = api.getSignAuthenticationServicesService(this.props.accessToken.access_token);
-      const signAuthenticationServices = await signAuthenticationServicesService.listSignAuthenticationServices();
-
-      this.props.navigation.navigate('ContractTerms', {
-        contract: this.state.contract,
-        authServices: signAuthenticationServices
-      });
+    if (companyApprovalRequired) {
+      contractToCreate.status = "ON_HOLD";
+      await contractsService.updateContract(contractToCreate, contract.id || "");
+      navigation.navigate('Contracts', {});
+      return;
     }
+
+    await contractsService.updateContract(contractToCreate, contract.id || "");
+
+    const signAuthenticationServices = await api
+      .getSignAuthenticationServicesService(accessToken.access_token)
+      .listSignAuthenticationServices();
+
+    navigation.navigate('ContractTerms', {
+      contract: contract,
+      authServices: signAuthenticationServices
+    });
   }
 
   /**
@@ -289,31 +306,38 @@ class ContractScreen extends React.Component<Props, State> {
    * Download contract as pdf
    */
   private downloadContractPdfClicked = async () => {
-    if (!this.props.accessToken || !this.state.contract || !this.state.contract.id) {
+    const { accessToken, navigation } = this.props;
+    const { contract } = this.state;
+
+    if (!accessToken || !contract?.id) {
       return;
     }
 
-    const api = new PakkasmarjaApi(`${REACT_APP_API_URL}`);
-    const pdfService = api.getPdfService(this.props.accessToken.access_token);
-    const pdfPath = await pdfService.findPdf(this.state.contract.id, new Date().getFullYear().toString(), `${new Date().toLocaleDateString()}.pdf`);
+    const pdfPath = await new PakkasmarjaApi(REACT_APP_API_URL)
+      .getPdfService(accessToken.access_token)
+      .findPdf(
+        contract.id,
+        new Date().getFullYear().toString(),
+        `${new Date().toLocaleDateString()}.pdf`
+      );
 
     Alert.alert(
       'Lataus onnistui!',
       `PDF tiedosto on tallennettu polkuun ${pdfPath}. Palaa sopimuksiin painamalla OK.`,
-      [
-        { text: 'OK', onPress: () => this.props.navigation.navigate('Contracts', {}) },
-      ]
+      [{ text: 'OK', onPress: () => navigation.navigate('Contracts', {}) }]
     );
   }
 
   /**
    * Returns true if all fields of area detail values are filled
+   *
    * @param areaDetailValues area detail values
    * @returns true if all fields are filled, otherwise false
    */
   private allFieldsFilled = (areaDetailValues: AreaDetail[]): boolean => {
     for (const areaDetail of areaDetailValues) {
       const { name, size, species } = areaDetail;
+
       if (!name || !size || !species) {
         return false;
       }
@@ -328,8 +352,7 @@ class ContractScreen extends React.Component<Props, State> {
    * @returns true if proposed quantity is at least the total amount, otherwise false
    */
   private isValidContractMinimumAmount = (totalAmount: number): boolean => {
-    const { proposedQuantity } = this.state.contractData;
-    return proposedQuantity >= totalAmount;
+    return this.state.contractData.proposedQuantity >= totalAmount;
   }
 
   /**
@@ -339,88 +362,111 @@ class ContractScreen extends React.Component<Props, State> {
    * @returns total amount as number
    */
   private calculateTotalAmount = (areaDetailValues: AreaDetail[], minimumProfit?: number): number => {
-    const hasItems = areaDetailValues.length > 0;
-    return hasItems ? areaDetailValues.reduce((total, areaDetailValue) => {
-      const estimation = minimumProfit || areaDetailValue.profitEstimation || 0;
-      const hectares = areaDetailValue.size ? areaDetailValue.size : 0;
+    return areaDetailValues.reduce((total, areaDetailValue) => {
+      const estimation = minimumProfit ?? areaDetailValue.profitEstimation ?? 0;
+      const hectares = areaDetailValue.size ?? 0;
       return total += estimation * hectares;
-    }, 0) : 0;
+    }, 0);
   }
 
   /**
    * Render method
    */
   public render() {
-    if (!this.state.itemGroup || !this.state.contact || !this.state.contract) {
+    const { navigation } = this.props;
+    const {
+      itemGroup,
+      contact,
+      contract,
+      companyName,
+      companyBusinessId,
+      prices,
+      contractData,
+      allowDeliveryAll,
+      requireAreaDetails,
+      deliveryPlaces,
+      companyApprovalRequired,
+      validationErrorText,
+      rejectModalOpen
+    } = this.state;
+
+    if (!itemGroup || !contact || !contract) {
       return (
-        <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        </BasicScrollLayout>
+        <BasicScrollLayout
+          navigation={ navigation }
+          backgroundColor="#fff"
+          displayFooter
+        />
       );
     }
 
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter
+      >
         <View style={{ backgroundColor: "#fff", paddingTop: 10 }}>
           <ContractHeader
-            styles={styles}
-            itemGroup={this.state.itemGroup}
+            styles={ styles }
+            itemGroup={ itemGroup }
           />
           <ContractParties
-            contact={this.state.contact}
-            companyName={this.state.companyName}
-            companyBusinessId={this.state.companyBusinessId}
+            contact={ contact }
+            companyName={ companyName }
+            companyBusinessId={ companyBusinessId }
           />
           <ContractPrices
             styles={styles}
-            itemGroup={this.state.itemGroup}
-            prices={this.state.prices}
+            itemGroup={ itemGroup }
+            prices={ prices }
           />
           <ContractAmount
-            styles={styles}
-            itemGroup={this.state.itemGroup}
-            contract={this.state.contract}
-            isActiveContract={this.state.contract.status === "APPROVED"}
-            category={this.state.itemGroup.category || ""}
-            onUserInputChange={this.updateContractData}
-            contractAmount={this.state.contract.contractQuantity}
-            proposedAmount={this.state.contractData.proposedQuantity}
-            quantityComment={this.state.contractData.quantityComment}
-            deliverAllChecked={this.state.contractData.deliverAllChecked}
-            allowDeliveryAll={this.state.allowDeliveryAll}
+            styles={ styles }
+            itemGroup={ itemGroup }
+            contract={ contract }
+            isActiveContract={ contract.status === "APPROVED" }
+            category={ itemGroup.category || "" }
+            onUserInputChange={ this.updateContractData }
+            contractAmount={ contract.contractQuantity }
+            proposedAmount={ contractData.proposedQuantity }
+            quantityComment={ contractData.quantityComment }
+            deliverAllChecked={ contractData.deliverAllChecked }
+            allowDeliveryAll={ allowDeliveryAll }
           />
           {
-            this.state.requireAreaDetails &&
+            requireAreaDetails &&
             <ContractAreaDetails
-              itemGroup={this.state.itemGroup}
-              areaDetails={this.state.contract.areaDetails}
-              areaDetailValues={this.state.contractData.areaDetailValues}
-              isActiveContract={this.state.contract.status === "APPROVED"}
-              onUserInputChange={this.updateContractData}
+              itemGroup={ itemGroup }
+              areaDetails={ contract.areaDetails }
+              areaDetailValues={ contractData.areaDetailValues }
+              isActiveContract={ contract.status === "APPROVED" }
+              onUserInputChange={ this.updateContractData }
             />
           }
           <ContractDeliveryPlace
-            onUserInputChange={this.updateContractData}
-            deliveryPlaces={this.state.deliveryPlaces}
-            selectedPlaceId={this.state.contractData.proposedDeliveryPlaceId ? this.state.contractData.proposedDeliveryPlaceId : this.state.contractData.deliveryPlaceId}
-            deliveryPlaceComment={this.state.contractData.deliveryPlaceComment}
-            isActiveContract={this.state.contract.status === "APPROVED"}
+            onUserInputChange={ this.updateContractData }
+            deliveryPlaces={ deliveryPlaces }
+            selectedPlaceId={ contractData.proposedDeliveryPlaceId || contractData.deliveryPlaceId }
+            deliveryPlaceComment={ contractData.deliveryPlaceComment }
+            isActiveContract={ contract.status === "APPROVED" }
           />
           <ContractFooter
-            isActiveContract={this.state.contract.status === "APPROVED"}
-            goBack={this.goBackClicked}
-            acceptContract={this.acceptContractClicked}
-            declineContract={this.declineContractClicked}
-            downloadContractPdf={this.downloadContractPdfClicked}
-            approveButtonText={this.state.companyApprovalRequired ? "EHDOTA MUUTOSTA" : "HYVÄKSYN"}
-            validationErrorText={this.state.validationErrorText}
+            isActiveContract={ contract.status === "APPROVED" }
+            goBack={ this.goBackClicked }
+            acceptContract={ this.acceptContractClicked }
+            declineContract={ this.declineContractClicked }
+            downloadContractPdf={ this.downloadContractPdfClicked }
+            approveButtonText={ companyApprovalRequired ? "EHDOTA MUUTOSTA" : "HYVÄKSYN" }
+            validationErrorText={ validationErrorText }
           />
           <ContractRejectModal
-            onUserInputChange={this.updateContractData}
-            rejectComment={this.state.contractData.rejectComment}
-            modalOpen={this.state.rejectModalOpen}
-            closeModal={() => this.setState({ rejectModalOpen: false })}
-            contract={this.state.contract}
-            contractRejected={() => this.props.navigation.navigate('Contracts', {})}
+            onUserInputChange={ this.updateContractData }
+            rejectComment={ contractData.rejectComment }
+            modalOpen={ rejectModalOpen }
+            closeModal={ () => this.setState({ rejectModalOpen: false }) }
+            contract={ contract }
+            contractRejected={ () => navigation.navigate('Contracts', {}) }
           />
         </View>
       </BasicScrollLayout>

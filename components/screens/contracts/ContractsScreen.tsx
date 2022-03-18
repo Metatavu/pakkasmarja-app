@@ -69,6 +69,11 @@ class ContractsScreen extends React.Component<Props, State> {
     };
   }
 
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
       headerTitle: () => (
@@ -98,11 +103,11 @@ class ContractsScreen extends React.Component<Props, State> {
   /**
    * Component did mount life-cycle event
    */
-  public async componentDidMount() {
+  public componentDidMount = async () => {
     const { navigation } = this.props;
 
     navigation.setOptions(this.navigationOptions(navigation));
-    navigation.addListener('willFocus', this.loadData);
+    navigation.addListener("willFocus", this.loadData);
     await this.loadData();
   }
 
