@@ -5,7 +5,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert, StyleProp, TextStyle, ViewStyle } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert, StyleProp, TextStyle, ViewStyle } from "react-native";
 import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval, DeliveryQuality } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon, H1 } from "native-base";
@@ -22,6 +22,8 @@ import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
 import { roundPrice } from "../../../utils/utility-functions";
 import AsyncButton from "../../generic/async-button";
+import { Picker } from "native-base";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 const Moment = require("moment");
 const extendedMoment = extendMoment(Moment);
@@ -32,6 +34,7 @@ extendedMoment.locale("fi");
  */
 interface Props {
   navigation: any;
+  route: any;
   accessToken?: AccessToken;
   deliveries?: DeliveriesState;
   products?: Product[],
@@ -76,7 +79,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -104,9 +107,14 @@ class EditDelivery extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -114,7 +122,7 @@ class EditDelivery extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
             name='chevron-left'
@@ -130,8 +138,10 @@ class EditDelivery extends React.Component<Props, State> {
    * Component did mount life cycle event
    */
   public componentDidMount = async () => {
-    const { accessToken, itemGroupCategory, navigation } = this.props;
-    const deliveryData: DeliveryProduct = navigation.state.params.deliveryData;
+    const { accessToken, itemGroupCategory, navigation, route } = this.props;
+
+    navigation.setOptions(this.navigationOptions(navigation));
+    const deliveryData: DeliveryProduct = route.params.deliveryData;
     if (!accessToken || !deliveryData.product || !deliveryData.product.id) {
       return;
     }
@@ -142,7 +152,7 @@ class EditDelivery extends React.Component<Props, State> {
     const productPricesService = Api.getProductPricesService(accessToken.access_token);
     const deliveryPlacesService = Api.getDeliveryPlacesService(accessToken.access_token);
     const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
-    
+
     const [ unfilteredProducts, deliveryPlaces ] = await Promise.all([
       productsService.listProducts(undefined, itemGroupCategory, accessToken.userId, undefined, 999),
       deliveryPlacesService.listDeliveryPlaces()
@@ -154,7 +164,7 @@ class EditDelivery extends React.Component<Props, State> {
       products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [],
       deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, products[0].id || "")
     ]);
-    
+
     if (deliveryData.product && deliveryData.delivery && deliveryData.delivery.deliveryPlaceId && deliveryData.delivery.amount) {
       const deliveryPlace = await deliveryPlacesService.findDeliveryPlace(deliveryData.delivery.deliveryPlaceId);
       if (!deliveryPlace.id) {
@@ -185,7 +195,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Component did update life cycle method
-   * 
+   *
    * @param prevProps previous props
    * @param prevState previous state
    */
@@ -199,7 +209,7 @@ class EditDelivery extends React.Component<Props, State> {
     ) {
       const deliveryPlaceOpeningHours = await this.getDeliveryPlaceOpeningHours(selectedDate, deliveryPlaceId);
       this.setState({ deliveryPlaceOpeningHours });
-      
+
       if (!this.getOpeningHours().find(time => this.matchTime(time, selectedTime))) {
         this.setState({ selectedTime: undefined });
       }
@@ -208,7 +218,7 @@ class EditDelivery extends React.Component<Props, State> {
 
     /**
    * Gets delivery place opening hours on a given date
-   * 
+   *
    * @param date date object
    * @param deliveryPlaceId delivery place id
    */
@@ -254,7 +264,7 @@ class EditDelivery extends React.Component<Props, State> {
         }
       };
     } catch (error) {
-      console.log(error);
+      console.warn(error);
       return;
     }
   }
@@ -345,7 +355,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Get deliveries
-   * 
+   *
    * @return deliveries
    */
   private getDeliveries = () => {
@@ -375,7 +385,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
   * Prints date from Date
-  * 
+  *
   * @param date date
   * @returns date string formatted to finnish locale
   */
@@ -385,7 +395,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Prints time from Date
-   * 
+   *
    * @param date date
    * @returns time string formatted to finnish locale
    */
@@ -450,7 +460,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Returns whether form is valid or not
-   * 
+   *
    * @return whether form is valid or not
    */
   private isValid = () => {
@@ -463,7 +473,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Gets opening hours if selected delivery place has ones set for selected date
-   * 
+   *
    * @returns date array if opening hours are found, otherwise undefined
    */
   private getOpeningHours = (): Date[] => {
@@ -475,7 +485,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Converts opening hours to date array
-   * 
+   *
    * @param openingHours array of opening hours
    * @return array of dates
    */
@@ -485,7 +495,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Maps single opening hour interval to date array
-   * 
+   *
    * @param interval opening hour interval
    * @returns array of dates
    */
@@ -524,7 +534,7 @@ class EditDelivery extends React.Component<Props, State> {
       editModal,
       deliveryPlaceOpeningHours
     } = this.state;
-    
+
     if (loading) {
       return (
         <View style={ styles.loaderContainer }>
@@ -565,7 +575,6 @@ class EditDelivery extends React.Component<Props, State> {
               valueType='real'
               minValue={ 0 }
               textColor='black'
-              iconStyle={{ color: 'white' }}
               rightButtonBackgroundColor='#e01e36'
               leftButtonBackgroundColor='#e01e36'
               borderColor='transparent'
@@ -615,7 +624,7 @@ class EditDelivery extends React.Component<Props, State> {
                 <Text style={{ color: "red" }}>Tarvittavia tietoja puuttuu</Text>
               </View>
             }
-            <View style={[ styles.center, { flex: 1 } ]}>
+            <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
               <AsyncButton
                 disabled={ !this.isValid() }
                 style={[ styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 } ]}
@@ -652,8 +661,8 @@ class EditDelivery extends React.Component<Props, State> {
       return (
         <Picker
           selectedValue={ productId }
-          style={{ height: 50, width: "100%" }}
-          onValueChange={(itemValue, itemIndex) =>
+          style={{ height: 50, width: "100%", color: "black" }}
+          onValueChange={(itemValue: string) =>
             this.handleProductChange(itemValue)
           }>
           {
@@ -820,7 +829,7 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Renders time picker element
-   * 
+   *
    * @param hours included hours list
    */
   private renderTimePicker = (hours: Date[]) => {
@@ -828,21 +837,20 @@ class EditDelivery extends React.Component<Props, State> {
     if (Platform.OS !== "ios") {
       return (
         <Picker
-          selectedValue={ hours.find(time => this.matchTime(time, selectedTime)) }
-          style={{ height: 50, width: "100%" }}
-          onValueChange={ itemValue => this.setState({ selectedTime: itemValue as Date }) }
+          selectedValue={ selectedTime?.valueOf() }
+          style={{ height: 50, width: "100%", color: "black" }}
+          onValueChange={ (itemValue: string) =>
+            this.setState({ selectedTime: new Date(itemValue) })
+          }
         >
           {
-            hours.map(time => {
-              const timeString = this.printTime(time);
-              return (
-                <Picker.Item
-                  key={ timeString }
-                  label={ timeString }
-                  value={ time }
-                />
-              );
-            })
+            (hours || []).map(time =>
+              <Picker.Item
+                key={ time.valueOf() }
+                label={ this.printTime(time) }
+                value={ time.valueOf() }
+              />
+            )
           }
         </Picker>
       );
@@ -851,17 +859,14 @@ class EditDelivery extends React.Component<Props, State> {
     return (
       <ModalSelector
         data={
-          hours.map(time => {
-            const timeString = this.printTime(time);
-            return {
-              key: time,
-              label: timeString
-            };
-          })
+          hours.map(time => ({
+            key: time.valueOf(),
+            label: this.printTime(time)
+          }))
         }
-        selectedKey={ selectedTime }
+        selectedKey={ selectedTime?.valueOf() }
         initValue="Valitse toimitusaika"
-        onChange={ (option: any) => this.setState({ selectedTime: option.key }) }
+        onChange={ ({ key }) => this.setState({ selectedTime: new Date(key) }) }
       />
     );
   }
@@ -875,8 +880,10 @@ class EditDelivery extends React.Component<Props, State> {
       return (
         <Picker
           selectedValue={ deliveryPlaceId }
-          style={{ height: 50, width: "100%" }}
-          onValueChange={ itemValue => this.setState({ deliveryPlaceId: itemValue }) }
+          style={{ height: 50, width: "100%", color: "black" }}
+          onValueChange={ (itemValue: string) =>
+            this.setState({ deliveryPlaceId: itemValue })
+          }
         >
           {
             (deliveryPlaces || []).map(deliveryPlace => {
@@ -1044,7 +1051,7 @@ class EditDelivery extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -1056,8 +1063,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

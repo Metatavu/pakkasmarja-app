@@ -1,9 +1,10 @@
 import React from "react";
-import { Text, Button } from "native-base";
-import { View, Picker, TextInput, Platform } from "react-native";
+import { Text } from "native-base";
+import { View, TextInput, Platform } from "react-native";
 import { Contract, DeliveryPlace } from "pakkasmarja-client";
 import { styles } from "./styles";
 import ModalSelector from 'react-native-modal-selector';
+import { Picker } from "native-base";
 
 /**
  * Interface for component props
@@ -55,7 +56,7 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
 
   /**
    * On delivery place comment change
-   * 
+   *
    * @param value value
    */
   private onDeliveryPlaceChange = (value: string) => {
@@ -85,7 +86,7 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
                 selectedValue={this.props.selectedPlaceId}
                 enabled={!this.props.isActiveContract}
                 style={{height:50,width:"100%", color:"black"}}
-                onValueChange={(itemValue, itemIndex) =>
+                onValueChange={(itemValue: string) =>
                   this.props.onUserInputChange("proposedDeliveryPlaceId", itemValue)
                 }>
                 {
@@ -100,12 +101,12 @@ export default class ContractDeliveryPlace extends React.Component<Props, State>
             {
               Platform.OS === "ios" &&
                 <ModalSelector
-                  data={this.props.deliveryPlaces && this.props.deliveryPlaces.map((deliveryPlace) => {
-                    return {
+                  data={
+                    this.props.deliveryPlaces?.map(deliveryPlace => ({
                       key: deliveryPlace.id,
                       label: deliveryPlace.name
-                    };
-                  })}
+                    })) || []
+                  }
                   selectedKey={this.props.selectedPlaceId}
                   initValue="Valitse toimituspaikka"
                   onChange={(option: any)=>{ this.props.onUserInputChange("deliveryPlaceId", option.key) }} />

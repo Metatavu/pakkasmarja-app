@@ -10,9 +10,10 @@ import { Thumbnail, Text } from "native-base";
 import { COMPLETED_DELIVERIES_LOGO } from "../../../static/images";
 import moment from "moment";
 import Icon from "react-native-vector-icons/Feather";
-import * as _ from "lodash";
+import _ from "lodash";
 import { DeliveryQuality } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -41,7 +42,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -53,25 +54,34 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
+      headerTitle: () => (
+        <TopBar
+          navigation={ navigation }
+          showMenu
+          showHeader={ false }
+          showUser
+        />
+      ),
       headerTitleContainerStyle: {
-        left: 0,
+        left: 0
       },
-      headerLeft:
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+      headerLeft: () => (
+        <TouchableHighlight onPress={ navigation.goBack }>
           <Icon
             name='chevron-left'
             color='#fff'
-            size={40}
+            size={ 40 }
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      )
     }
   };
 
@@ -79,60 +89,82 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    if (!this.props.accessToken) {
+    const { navigation, accessToken } = this.props;
+
+    navigation.setOptions(this.navigationOptions(navigation));
+
+    if (!accessToken) {
       return;
     }
+
     this.setState({ loading: true });
-    const Api = new PakkasmarjaApi();
-    const deliveryQualitiesService = await Api.getDeliveryQualitiesService(this.props.accessToken.access_token);
-    const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(this.props.itemGroupCategory);
-    this.setState({ deliveryQualities });
 
-    const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
-    const pastDeliveries: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status === "DONE" || deliveryData.delivery.status === "NOT_ACCEPTED");
-    const sortedPastDeliveries = _.sortBy(pastDeliveries, [(deliveryProduct: DeliveryProduct) => { return deliveryProduct.delivery.time; }]).reverse();
-    const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
+    const deliveryQualities = await new PakkasmarjaApi()
+      .getDeliveryQualitiesService(accessToken.access_token)
+      .listDeliveryQualities(this.props.itemGroupCategory);
 
-    sortedPastDeliveries.forEach((delivery) => {
+    const pastDeliveries = this.getDeliveries().filter(({ delivery: { status } }) => [ "DONE", "NOT_ACCEPTED" ].includes(status));
+    const sortedPastDeliveries = _.sortBy(pastDeliveries, [
+      deliveryProduct => deliveryProduct.delivery.time
+    ]).reverse();
+
+    const deliveryData = new Map<string, DeliveryProduct[]>();
+
+    sortedPastDeliveries.forEach(delivery => {
       const deliveryDate = moment(delivery.delivery.time).format("DD.MM.YYYY");
-      const existingDeliveries: DeliveryProduct[] = deliveryData.get(deliveryDate) || [];
-      existingDeliveries.push(delivery);
-      deliveryData.set(deliveryDate, existingDeliveries);
+      deliveryData.set(deliveryDate, [ ...(deliveryData.get(deliveryDate) || []), delivery ]);
     });
-    this.setState({ deliveryData: deliveryData, loading: false });
+
+    this.setState({
+      deliveryData: deliveryData,
+      deliveryQualities: deliveryQualities,
+      loading: false
+    });
   }
 
   /**
    * Get deliveries
-   * 
+   *
    * @return deliveries
    */
   private getDeliveries = () => {
-    if (!this.props.deliveries) {
+    const { deliveries, itemGroupCategory } = this.props;
+
+    if (!deliveries) {
       return [];
     }
 
-    if (this.props.itemGroupCategory === "FROZEN") {
-      return this.props.deliveries.frozenDeliveryData;
+    if (itemGroupCategory === "FROZEN") {
+      return deliveries.frozenDeliveryData;
     }
 
-    return this.props.deliveries.freshDeliveryData;
+    return deliveries.freshDeliveryData;
   }
 
   /**
    * render quality status
+   *
+   * @param deliveryQualityId delivery quality ID
    */
   private renderQualityStatus = (deliveryQualityId: string) => {
-    const deliveryQuality = this.state.deliveryQualities.find((deliveryQuality) => deliveryQuality.id == deliveryQualityId);
+    const { deliveryQualities } = this.state;
+
+    const deliveryQuality = deliveryQualities.find(deliveryQuality => deliveryQuality.id == deliveryQualityId);
+
     if (deliveryQuality) {
       const letter = deliveryQuality.displayName.slice(0, 1).toUpperCase();
+
       return (
         <View style={{ flex: 1, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingLeft: 8 }}>
-          <View style={[styles.deliveryQualityRoundView, { backgroundColor: deliveryQuality.color || "gray" }]} >
-            <Text style={styles.deliveryQualityRoundViewText}>{letter}</Text>
+          <View style={[ styles.deliveryQualityRoundView, { backgroundColor: deliveryQuality.color || "gray" }] }>
+            <Text style={ styles.deliveryQualityRoundViewText }>
+              { letter }
+            </Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text>{deliveryQuality && deliveryQuality.displayName}</Text>
+            <Text>
+              { deliveryQuality?.displayName }
+            </Text>
           </View>
         </View>
       );
@@ -142,54 +174,63 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
   /**
    * render not accepted delivery
    */
-  private renderNotAccepted = () => {
-    return (
-      <View style={{ flex: 1, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingLeft: 8 }}>
-        <View style={[styles.deliveryQualityRoundView, { backgroundColor: "red" }]} >
-          <Text style={styles.deliveryQualityRoundViewText}>H</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text>Hylätty</Text>
-        </View>
+  private renderNotAccepted = () => (
+    <View style={{ flex: 1, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingLeft: 8 }}>
+      <View style={[ styles.deliveryQualityRoundView, { backgroundColor: "red" } ]}>
+        <Text style={ styles.deliveryQualityRoundViewText }>
+          H
+        </Text>
       </View>
-    );
-  }
+      <View style={{ flex: 1 }}>
+        <Text>
+          Hylätty
+        </Text>
+      </View>
+    </View>
+  );
 
   /**
    * Render method
    */
   public render() {
+    const { navigation } = this.props;
+    const { loading, deliveryData } = this.state;
+
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View >
-          <View style={[styles.center, styles.topViewWithButton]}>
-            <View style={[styles.center, { flexDirection: "row", paddingVertical: 30 }]}>
-              <Thumbnail square small source={COMPLETED_DELIVERIES_LOGO} style={{ marginRight: 10 }} />
-              <Text style={styles.viewHeaderText}>Tehdyt toimitukset</Text>
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter
+      >
+        <View>
+          <View style={[ styles.center, styles.topViewWithButton ]}>
+            <View style={[ styles.center, { flexDirection: "row", paddingVertical: 30 } ]}>
+              <Thumbnail
+                square
+                small
+                source={ COMPLETED_DELIVERIES_LOGO }
+                style={{ marginRight: 10 }}
+              />
+              <Text style={ styles.viewHeaderText }>
+                Tehdyt toimitukset
+              </Text>
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: "column", backgroundColor: "white" }}>
             {
-              this.state.loading ?
-                <View style={styles.loaderContainer}>
+              loading ?
+                <View style={ styles.loaderContainer }>
                   <ActivityIndicator size="large" color="#E51D2A" />
                 </View>
                 :
-                Array.from(this.state.deliveryData.keys()).map((date, index : number) => {
-                  const deliveries = this.state.deliveryData.get(date);
-                  return (
-                    <View key={date + index}>
-                      <Text style={styles.dateContainerText}>
-                        {date}
-                      </Text>
-                      {
-                        deliveries && deliveries.map((data: any) => {
-                          return this.renderListItem(data);
-                        })
-                      }
-                    </View>
-                  );
-                })
+                Array.from(deliveryData.keys()).map((date, index) => (
+                  <View key={ date + index }>
+                    <Text style={ styles.dateContainerText }>
+                      { date }
+                    </Text>
+                    { deliveryData.get(date)?.map(this.renderListItem) }
+                  </View>
+                ))
             }
           </View>
         </View>
@@ -199,39 +240,54 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Renders list items
-   * 
+   *
    * @param deliveryData DeliveryProduct
    */
   private renderListItem = (deliveryData: DeliveryProduct) => {
-    if (!deliveryData || !deliveryData.product ) {
+    const { navigation } = this.props;
+    const { delivery, product } = deliveryData;
+
+    if (!product) {
       return <Text></Text>;
     }
-    const time = moment(deliveryData.delivery.time).format("DD.MM.YYYY HH:mm");
-    const productName = deliveryData.product.name;
-    const productAmount = `, ${deliveryData.delivery.amount} x ${deliveryData.product.units} ${deliveryData.product.unitName}`;
+
+    const time = moment(delivery.time).format("DD.MM.YYYY HH:mm");
+    const productName = product.name;
+    const productAmount = `, ${deliveryData.delivery.amount} x ${product.units} ${product.unitName}`;
     const editable = false;
 
     return (
-      <TouchableOpacity key={deliveryData.delivery.id} style={styles.center} onPress={
-        () => this.onListItemClick("Delivery",
-          deliveryData.delivery.id,
-          deliveryData.product && deliveryData.product.id,
-          deliveryData.delivery.qualityId,
-          editable,
-        )
-      }>
-        <View style={[styles.renderCustomListItem, deliveryData.delivery.status === "NOT_ACCEPTED" && { backgroundColor: "whitesmoke", opacity: 0.6 }]}>
+      <TouchableOpacity
+        key={ deliveryData.delivery.id }
+        style={ styles.center }
+        onPress={ () =>
+          navigation.navigate("Delivery", {
+            deliveryId: delivery.id,
+            productId: product.id,
+            qualityId: delivery.qualityId,
+            editable: editable
+          })
+        }
+      >
+        <View
+          style={[
+            styles.renderCustomListItem,
+            delivery.status === "NOT_ACCEPTED" && { backgroundColor: "whitesmoke", opacity: 0.6 }
+          ]}
+        >
           <View style={{ flex: 2 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: 'black' }}>{time}</Text>
-              <Text style={{ color: 'black', fontWeight: 'bold' }}>{`${productName} ${productAmount}`}</Text>
+              <Text style={{ color: 'black' }}>
+                { time }
+              </Text>
+              <Text style={{ color: 'black', fontWeight: 'bold' }}>
+                { `${productName} ${productAmount}` }
+              </Text>
             </View>
           </View>
           {
-            deliveryData.delivery.status === "DONE"
-              ?
-              deliveryData.delivery.qualityId && this.renderQualityStatus(deliveryData.delivery.qualityId)
-              :
+            deliveryData.delivery.status === "DONE" ?
+              deliveryData.delivery.qualityId && this.renderQualityStatus(deliveryData.delivery.qualityId) :
               this.renderNotAccepted()
           }
         </View>
@@ -241,7 +297,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * On list item click
-   * 
+   *
    * @param screen screen
    * @param deliveryId deliveryId
    * @param productId productId
@@ -260,7 +316,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -272,8 +328,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

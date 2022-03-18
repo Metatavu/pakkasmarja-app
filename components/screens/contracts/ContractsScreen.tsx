@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, ContractTableData } from "../../../types";
 import * as actions from "../../../actions";
 import { Text } from "native-base";
-import { View, ActivityIndicator, Alert, TouchableHighlight, AlertIOS } from "react-native";
+import { View, ActivityIndicator, Alert, TouchableHighlight } from "react-native";
 import { Contract, Contact, ItemGroupPrice, ItemGroup, DeliveryPlace } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
 import ContractAmountTable from "./ContractAmountTable";
@@ -15,6 +15,7 @@ import AppConfig from "../../../utils/AppConfig";
 import BasicLayout from "../../layout/BasicLayout";
 import Chat from "../../fragments/chats/Chat";
 import Icon from "react-native-vector-icons/Feather";
+import { StackNavigationOptions } from "@react-navigation/stack";
 
 /**
  * Component props
@@ -37,7 +38,7 @@ interface State {
   deliveryPlaces?: DeliveryPlace[],
   proposeContractModalOpen: boolean,
   proposeContractModalType: string,
-  selectedBerry: string,
+  selectedBerry?: string,
   proposedContractQuantity: string,
   proposedContractQuantityComment: string,
   contractProposalChatThreadId?: number
@@ -51,7 +52,7 @@ class ContractsScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -62,7 +63,6 @@ class ContractsScreen extends React.Component<Props, State> {
       proposeContractModalOpen: false,
       proposeContractModalType: "FROZEN",
       itemGroups: [],
-      selectedBerry: "",
       proposedContractQuantity: "",
       proposedContractQuantityComment: "",
       loading: false
@@ -70,12 +70,44 @@ class ContractsScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
+    return {
+      headerTitle: () => (
+        <TopBar
+          navigation={ navigation }
+          showHeader={ false }
+          showMenu
+          showUser
+        />
+      ),
+      headerTitleContainerStyle: {
+        left: 0
+      },
+      headerLeft: () => (
+        <TouchableHighlight onPress={ navigation.goBack }>
+          <Icon
+            name='chevron-left'
+            color='#fff'
+            size={40}
+            style={{ marginLeft: 30 }}
+          />
+        </TouchableHighlight>
+      )
+    }
+  };
+
+  /**
    * Component did mount life-cycle event
    */
-  public async componentDidMount() {
-    this.props.navigation.addListener('willFocus', () => {
-      this.loadData();
-    });
+  public componentDidMount = async () => {
+    const { navigation } = this.props;
+
+    navigation.setOptions(this.navigationOptions(navigation));
+    navigation.addListener("willFocus", this.loadData);
     await this.loadData();
   }
 
@@ -83,126 +115,113 @@ class ContractsScreen extends React.Component<Props, State> {
    * Load data
    */
   private loadData = async () => {
-    if (!this.props.accessToken) {
+    const { accessToken } = this.props;
+
+    if (!accessToken) {
       return;
     }
 
-    this.setState({ loading: true, freshContracts: [], frozenContracts: [] });
+    this.setState({ loading: true });
 
-    const api = new PakkasmarjaApi();
-    const contractsService = api.getContractsService(this.props.accessToken.access_token);
+    const contractsService = new PakkasmarjaApi().getContractsService(accessToken.access_token);
+    const itemGroupsService = new PakkasmarjaApi().getItemGroupsService(accessToken.access_token);
     const frozenContracts = await contractsService.listContracts("application/json", false, "FROZEN", undefined, undefined, undefined, undefined, 100);
     const freshContracts = await contractsService.listContracts("application/json", false, "FRESH", undefined, undefined, undefined, undefined, 100);
+    const itemGroups = await itemGroupsService.listItemGroups();
 
-    await this.loadItemGroups();
-    frozenContracts.forEach((frozenContract) => {
-      const frozenContractsState: ContractTableData[] = this.state.frozenContracts;
-      const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === frozenContract.itemGroupId);
-      frozenContractsState.push({
-        contract: frozenContract,
-        itemGroup: itemGroup
-      });
+    const frozenContractTableData = frozenContracts.map(frozenContract => ({
+      contract: frozenContract,
+      itemGroup: itemGroups.find(itemGroup => itemGroup.id === frozenContract.itemGroupId)
+    }));
 
-      this.setState({ frozenContracts: frozenContractsState });
+    const freshContractTableData = freshContracts.map(freshContract => ({
+      contract: freshContract,
+      itemGroup: itemGroups.find(itemGroup => itemGroup.id === freshContract.itemGroupId)
+    }));
+
+    this.setState({
+      loading: false,
+      freshContracts: freshContractTableData,
+      frozenContracts: frozenContractTableData,
+      itemGroups: itemGroups,
+      selectedBerry: itemGroups[0]?.id
     });
-
-    freshContracts.forEach((freshContract) => {
-      const freshContractsState: ContractTableData[] = this.state.freshContracts;
-      const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === freshContract.itemGroupId);
-      freshContractsState.push({
-        contract: freshContract,
-        itemGroup: itemGroup
-      });
-
-      this.setState({ freshContracts: freshContractsState });
-    });
-
-    this.setState({ loading: false });
   }
 
   /**
    * Find contract contact
-   * 
+   *
    * @param contract contract
    */
   private loadContractContact = async (contract: Contract) => {
-    if (!this.props.accessToken || !contract.contactId) {
+    const { accessToken } = this.props;
+
+    if (!accessToken || !contract.contactId) {
       return;
     }
 
-    const api = new PakkasmarjaApi();
-    const contactsService = api.getContactsService(this.props.accessToken.access_token);
-    const contact = await contactsService.findContact(contract.contactId);
+    const contact = await new PakkasmarjaApi()
+      .getContactsService(accessToken.access_token)
+      .findContact(contract.contactId);
     this.setState({ contact: contact });
   }
 
   /**
    * load prices
-   * 
+   *
    * @param contract contract
    */
   private loadPrices = async (contract: Contract) => {
-    if (!this.props.accessToken || !contract.itemGroupId) {
+    const { accessToken } = this.props;
+
+    if (!accessToken || !contract.itemGroupId) {
       return;
     }
 
-    const api = new PakkasmarjaApi();
-    const contactsService = api.getItemGroupsService(this.props.accessToken.access_token);
-    const prices = await contactsService.listItemGroupPrices(contract.itemGroupId);
+    const prices = await new PakkasmarjaApi()
+      .getItemGroupsService(accessToken.access_token)
+      .listItemGroupPrices(contract.itemGroupId);
+
     this.setState({ prices: prices });
   }
 
   /**
-   * Get item group 
-   * 
+   * Get item group
+   *
    * @param itemGroupId itemGroupId
    */
   private findItemGroupById = async (itemGroupId: string) => {
-    if (!this.props.accessToken) {
+    const { accessToken } = this.props;
+
+    if (!accessToken) {
       return;
     }
 
-    const api = new PakkasmarjaApi();
-    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
-    return await itemGroupService.findItemGroup(itemGroupId);
-  }
-
-  /**
-   * Load item groups 
-   * 
-   * @param itemGroupId itemGroupId
-   */
-  private loadItemGroups = async () => {
-    if (!this.props.accessToken) {
-      return;
-    }
-
-    const api = new PakkasmarjaApi();
-    const itemGroupService = api.getItemGroupsService(this.props.accessToken.access_token);
-    const itemGroups = await itemGroupService.listItemGroups();
-    if (itemGroups && itemGroups[0].id) {
-      this.setState({ itemGroups: itemGroups, selectedBerry: itemGroups[0].id });
-
-    }
+    return await new PakkasmarjaApi()
+      .getItemGroupsService(accessToken.access_token)
+      .findItemGroup(itemGroupId);
   }
 
   /**
    * Get delivery places
    */
   private loadDeliveryPlaces = async () => {
-    if (!this.props.accessToken) {
+    const { accessToken } = this.props;
+
+    if (!accessToken) {
       return;
     }
 
-    const api = new PakkasmarjaApi();
-    const deliveryPlacesService = api.getDeliveryPlacesService(this.props.accessToken.access_token);
-    const deliveryPlaces = await deliveryPlacesService.listDeliveryPlaces();
+    const deliveryPlaces = await new PakkasmarjaApi()
+      .getDeliveryPlacesService(accessToken.access_token)
+      .listDeliveryPlaces();
+
     this.setState({ deliveryPlaces: deliveryPlaces });
   }
 
   /**
    * Show alert when cant open contract
-   * 
+   *
    * @param status status
    */
   private displayOpenContractAlert = (status: string) => {
@@ -217,22 +236,24 @@ class ContractsScreen extends React.Component<Props, State> {
     Alert.alert(
       'Sopimusta ei voida avata',
       infoText,
-      [
-        { text: 'OK', onPress: () => { } },
-      ]
+      [{ text: 'OK', onPress: () => { } }]
     );
   }
 
   /**
    * Handle contract click
-   * 
+   *
    * @param contract contract
    */
   private handleContractClick = async (contract: Contract) => {
+    const { navigation } = this.props;
+    const { contact, prices, deliveryPlaces } = this.state;
+
     if (contract.status === "REJECTED" || contract.status === "ON_HOLD" || !contract.itemGroupId) {
       this.displayOpenContractAlert(contract.status);
       return;
     }
+
     this.setState({ loading: true });
 
     await this.loadContractContact(contract);
@@ -242,70 +263,58 @@ class ContractsScreen extends React.Component<Props, State> {
 
     this.setState({ loading: false });
 
-    this.props.navigation.navigate('Contract', {
-      contact: this.state.contact,
+    navigation.navigate('Contract', {
+      contact: contact,
       itemGroup: itemGroup,
-      prices: this.state.prices,
+      prices: prices,
       contract: contract,
-      deliveryPlaces: this.state.deliveryPlaces
+      deliveryPlaces: deliveryPlaces
     });
   }
 
-  static navigationOptions = ({ navigation }: any) => {
-    return {
-      headerTitle: <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
-      headerTitleContainerStyle: {
-        left: 0,
-      },
-      headerLeft:
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
-          <Icon
-            name='chevron-left'
-            color='#fff'
-            size={40}
-            style={{ marginLeft: 30 }}
-          />
-        </TouchableHighlight>
-    }
-  };
-
   /**
    * On propose new contract clicked
-   * 
+   *
    * @param type type
    */
   private onProposeNewContractClick = async (type: string) => {
-    this.setState({ proposeContractModalOpen: true, proposeContractModalType: type });
+    this.setState({
+      proposeContractModalOpen: true,
+      proposeContractModalType: type
+    });
   }
 
   /**
    * On contract proposal clicked
    */
   private onContractProposalClick = async () => {
+    const { accessToken } = this.props;
+
     const appConfig = await AppConfig.getAppConfig();
     const questionGroupId = appConfig['contracts-question-group'];
-    const { accessToken } = this.props;
+
     if (!questionGroupId || !accessToken) {
       return
     }
 
-    this.setState({
-      loading: true
-    });
+    this.setState({ loading: true });
 
     const api = new PakkasmarjaApi();
-    const questionGroupThreads = await api.getChatThreadsService(accessToken.access_token).listChatThreads(questionGroupId, "QUESTION", accessToken.userId);
+    const questionGroupThreads = await api
+      .getChatThreadsService(accessToken.access_token)
+      .listChatThreads(questionGroupId, "QUESTION", accessToken.userId);
+
     if (questionGroupThreads.length != 1) {
-      return; //Application is misconfigured, bail out.
+      console.warn("No question group threads found"); //Application is misconfigured, bail out.
+      return;
     }
+
     const contents = this.getProposalMessageContents();
+
     if (!contents) {
       return;
     }
+
     await api.getChatMessagesService(accessToken.access_token).createChatMessage({
       contents: contents,
       threadId: questionGroupThreads[0].id!,
@@ -322,7 +331,15 @@ class ContractsScreen extends React.Component<Props, State> {
    * Gets message to use for suggesting new contract
    */
   private getProposalMessageContents = (): string | null => {
-    const itemGroup = this.state.itemGroups.find(itemGroup => itemGroup.id === this.state.selectedBerry);
+    const {
+      itemGroups,
+      selectedBerry,
+      proposedContractQuantity,
+      proposedContractQuantityComment
+    } = this.state;
+
+    const itemGroup = itemGroups.find(itemGroup => itemGroup.id === selectedBerry);
+
     if (!itemGroup) {
       Alert.alert(
         'Marjaa ei löytynyt',
@@ -333,14 +350,17 @@ class ContractsScreen extends React.Component<Props, State> {
       );
       return null;
     }
+
     let message = `Hei, haluaisin ehdottaa uutta sopimusta marjasta: ${itemGroup.displayName}`;
-    if (this.state.proposedContractQuantity) {
+
+    if (proposedContractQuantity) {
       message += `
-      Määräarvio on ${this.state.proposedContractQuantity} kg.`;
+      Määräarvio on ${proposedContractQuantity} kg.`;
     }
-    if (this.state.proposedContractQuantityComment) {
+
+    if (proposedContractQuantityComment) {
       message += `
-      Lisätietoa: ${this.state.proposedContractQuantityComment}`;
+      Lisätietoa: ${proposedContractQuantityComment}`;
     }
 
     return message;
@@ -350,66 +370,87 @@ class ContractsScreen extends React.Component<Props, State> {
    * Render method
    */
   public render() {
-    if (this.state.loading) {
+    const { navigation } = this.props;
+    const {
+      loading,
+      contractProposalChatThreadId,
+      frozenContracts,
+      freshContracts,
+      proposeContractModalOpen,
+      itemGroups,
+      proposedContractQuantityComment,
+      selectedBerry,
+      proposedContractQuantity
+    } = this.state;
+
+    if (loading) {
       return (
-        <View style={styles.loaderContainer}>
+        <View style={ styles.loaderContainer }>
           <ActivityIndicator size="large" color="#E51D2A" />
         </View>
       );
     }
 
-    if (this.state.contractProposalChatThreadId) {
+    if (contractProposalChatThreadId) {
       return (
-        <BasicLayout navigation={this.props.navigation}>
-          <Chat onBackClick={() => this.setState({ contractProposalChatThreadId: undefined })} threadId={this.state.contractProposalChatThreadId} />
+        <BasicLayout navigation={ navigation }>
+          <Chat
+            conversationType="QUESTION"
+            onBackClick={ () => this.setState({ contractProposalChatThreadId: undefined }) }
+            threadId={ contractProposalChatThreadId }
+          />
         </BasicLayout>
       );
     }
 
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View style={styles.headerView}>
-          <Text style={styles.headerText}>
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter
+      >
+        <View style={ styles.headerView }>
+          <Text style={ styles.headerText }>
             Viljely- ja ostosopimukset
           </Text>
         </View>
         <View>
-          <View style={styles.titleView}>
-            <Text style={styles.titleText}>
+          <View style={ styles.titleView }>
+            <Text style={ styles.titleText }>
               Pakastemarjat
             </Text>
           </View>
           <ContractAmountTable
-            onContractClick={this.handleContractClick}
-            contractTableDatas={this.state.frozenContracts}
+            onContractClick={ this.handleContractClick }
+            contractTableDatas={ frozenContracts }
             type="FROZEN"
-            onProposeNewContractClick={this.onProposeNewContractClick}
+            onProposeNewContractClick={ this.onProposeNewContractClick }
           />
         </View>
         <View>
-          <View style={styles.titleView}>
-            <Text style={styles.titleText}>
+          <View style={ styles.titleView }>
+            <Text style={ styles.titleText }>
               Tuoremarjat
             </Text>
           </View>
           <ContractAmountTable
-            onContractClick={this.handleContractClick}
-            contractTableDatas={this.state.freshContracts}
+            onContractClick={ this.handleContractClick }
+            contractTableDatas={ freshContracts }
             type="FRESH"
-            onProposeNewContractClick={this.onProposeNewContractClick}
+            onProposeNewContractClick={ this.onProposeNewContractClick }
           />
         </View>
         <ContractProposalModal
-          modalOpen={this.state.proposeContractModalOpen}
-          itemGroups={this.state.itemGroups}
+          modalOpen={ proposeContractModalOpen }
+          itemGroups={ itemGroups }
           closeModal={() => this.setState({ proposeContractModalOpen: false })}
-          onSelectedBerryChange={(value: string) => this.setState({ selectedBerry: value })}
-          onQuantityChange={(value: string) => this.setState({ proposedContractQuantity: value })}
-          onQuantityCommentChange={(value: string) => this.setState({ proposedContractQuantityComment: value })}
-          quantityComment={this.state.proposedContractQuantityComment}
-          selectedBerry={this.state.selectedBerry}
-          quantity={this.state.proposedContractQuantity}
-          sendContractProposalClicked={() => this.onContractProposalClick()}
+          onSelectedBerryChange={ value => this.setState({ selectedBerry: value }) }
+          onQuantityChange={ value => this.setState({ proposedContractQuantity: value }) }
+          onQuantityCommentChange={ value => this.setState({ proposedContractQuantityComment: value }) }
+          quantityComment={ proposedContractQuantityComment }
+          selectedBerry={ selectedBerry || "" }
+          quantity={ proposedContractQuantity }
+          sendContractProposalClicked={ this.onContractProposalClick }
         />
       </BasicScrollLayout>
     );
@@ -418,7 +459,7 @@ class ContractsScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -428,8 +469,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

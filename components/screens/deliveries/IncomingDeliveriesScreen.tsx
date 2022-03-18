@@ -6,13 +6,12 @@ import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../..
 import * as actions from "../../../actions";
 import { View, TouchableOpacity, ActivityIndicator, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
-import { Text } from 'react-native';
-import { Thumbnail } from "native-base";
+import { Thumbnail, Text } from "native-base";
 import { INCOMING_DELIVERIES_LOGO, INDELIVERY_LOGO, RED_LOGO } from "../../../static/images";
-import { NavigationEvents } from "react-navigation";
 import moment from "moment";
 import Icon from "react-native-vector-icons/Feather";
-import * as _ from "lodash";
+import _ from "lodash";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -37,9 +36,11 @@ interface State {
  */
 class IncomingDeliveriesScreen extends React.Component<Props, State> {
 
+  private navigationFocusEventSubscription: any;
+
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -50,18 +51,26 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
+      headerTitle: () => (
+        <TopBar
+          navigation={ navigation }
+          showMenu
+          showHeader={ false }
+          showUser
+        />
+      ),
       headerTitleContainerStyle: {
-        left: 0,
+        left: 0
       },
-      headerLeft:
-        <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
+      headerLeft: () => (
+        <TouchableHighlight onPress={ navigation.goBack }>
           <Icon
             name='chevron-left'
             color='#fff'
@@ -69,6 +78,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      )
     }
   };
 
@@ -76,35 +86,57 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    if (!this.props.accessToken) {
+    const { accessToken, navigation } = this.props;
+
+    navigation.setOptions(this.navigationOptions(navigation));
+
+    if (!accessToken) {
       return;
     }
+
     this.setState({ loading: true });
+
+    this.navigationFocusEventSubscription = navigation.addListener('focus', this.loadData);
+  }
+
+  /**
+   * Component will unmount life-cycle event
+   */
+  componentWillUnmount = () => {
+    this.props.navigation.removeListener(this.navigationFocusEventSubscription);
   }
 
   /**
    * Renders list items
+   *
+   * @param deliveryData delivery data
    */
-  private renderListItems = (delivery: DeliveryProduct) => {
-    if (!delivery.product) {
+  private renderListItems = (deliveryData: DeliveryProduct) => {
+    const { product, delivery } = deliveryData;
+
+    if (!product) {
       return;
     }
 
-    const productText = `${delivery.product.name} ${delivery.delivery.amount} x ${delivery.product.units} ${delivery.product.unitName}`;
+    const productText = `${product.name} ${delivery.amount} x ${product.units} ${product.unitName}`;
 
     return (
-      <View key={delivery.delivery.id} style={styles.renderCustomListItem}>
+      <View
+        key={ delivery.id }
+        style={ styles.renderCustomListItem }
+      >
         <View style={{ flex: 1.8 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: "black", fontSize: 15 }}>{`klo ${moment(delivery.delivery.time).format("HH.mm")}`}</Text>
-
+            <Text style={{ color: "black", fontSize: 15 }}>
+              {`klo ${moment(delivery.time).format("HH.mm")}`}
+            </Text>
             <Text style={{ color: 'black', fontWeight: 'bold' }}>
-              {productText}
+              { productText }
             </Text>
           </View>
         </View>
         <View style={{ flex: 1 }}>
-          {this.renderStatus(delivery)}
+          { this.renderStatus(deliveryData) }
         </View>
       </View>
     );
@@ -114,55 +146,80 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
    * Renders elements depending on delivery status
    */
   private renderStatus = (deliveryData: DeliveryProduct) => {
-    const status = deliveryData.delivery.status;
+    const { navigation } = this.props;
+    const { status } = deliveryData.delivery;
+
     if (status === "PROPOSAL") {
       return (
-        <View style={[styles.center, { flexDirection: "row" }]}>
-          <Thumbnail square small source={RED_LOGO} style={{ marginRight: 10 }} />
-          <Text >Ehdotuksissa</Text>
+        <View style={[ styles.center, { flexDirection: "row" } ]}>
+          <Thumbnail
+            square
+            small
+            source={ RED_LOGO }
+            style={{ marginRight: 10 }}
+          />
+          <Text style={{ color: "black" }}>
+            Ehdotuksissa
+          </Text>
         </View>
       );
-    } else if (status === "DELIVERY") {
+    }
+
+    if (status === "DELIVERY") {
       return (
-        <View style={[styles.center, { flexDirection: "row" }]}>
-          <Thumbnail square source={INDELIVERY_LOGO} style={{ width: 36, height: 21, marginRight: 10 }} />
-          <Text style={styles.green}>Toimituksessa</Text>
+        <View style={[ styles.center, { flexDirection: "row" } ]}>
+          <Thumbnail
+            square
+            source={ INDELIVERY_LOGO }
+            style={{ width: 36, height: 21, marginRight: 10 }}
+          />
+          <Text style={ styles.green }>
+            Toimituksessa
+          </Text>
         </View>
       );
-    } else if (status === "PLANNED") {
+    }
+
+    if (status === "PLANNED") {
       return (
-        <View style={styles.center}>
+        <View style={ styles.center }>
           <TouchableOpacity
-            style={[styles.begindeliveryButton, styles.center, { width: "100%", height: 40 }]}
-            onPress={() => {
-              this.props.navigation.navigate("Delivery", {
+            style={[ styles.begindeliveryButton, styles.center, { width: "100%", height: 40 } ]}
+            onPress={() =>
+              navigation.navigate("Delivery", {
                 deliveryId: deliveryData.delivery.id,
-                productId: deliveryData.product ? deliveryData.product.id : "",
+                productId: deliveryData.product?.id || "",
                 editable: true
               })
-            }}
+            }
           >
-            <Text style={styles.buttonText}>Tarkasta toimitus</Text>
+            <Text style={ styles.buttonText }>
+              Tarkasta toimitus
+            </Text>
           </TouchableOpacity>
         </View>
       );
     }
+
+    return null;
   }
 
   /**
    * Get deliveries
-   * 
+   *
    * @return deliveries
    */
   private getDeliveries = () => {
-    if (!this.props.deliveries) {
+    const { deliveries, itemGroupCategory } = this.props;
+
+    if (!deliveries) {
       return [];
     }
 
-    if (this.props.itemGroupCategory === "FROZEN") {
-      return this.props.deliveries.frozenDeliveryData;
+    if (itemGroupCategory === "FROZEN") {
+      return deliveries.frozenDeliveryData;
     } else {
-      return this.props.deliveries.freshDeliveryData;
+      return deliveries.freshDeliveryData;
     }
   }
 
@@ -170,61 +227,75 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
    * Loads data
    */
   private loadData = () => {
-    const deliveriesAndProducts: DeliveryProduct[] = this.getDeliveries();
-    const incomingDeliveriesData: DeliveryProduct[] = deliveriesAndProducts.filter(deliveryData => deliveryData.delivery.status !== "DONE" && deliveryData.delivery.status !== "REJECTED" && deliveryData.delivery.status !== "NOT_ACCEPTED");
-    const sortedByTimeIncomingDeliveriesData = _.sortBy(incomingDeliveriesData, [(deliveryProduct) => { return deliveryProduct.delivery.time; }]);
-    const deliveryData: Map<string, DeliveryProduct[]> = new Map<string, DeliveryProduct[]>();
+    const incomingDeliveriesData = this.getDeliveries().filter(({ delivery: { status } }) =>
+      ![ "DONE", "REJECTED", "NOT_ACCEPTED" ].includes(status)
+    );
 
-    sortedByTimeIncomingDeliveriesData.forEach((delivery) => {
-      const deliveryDate: string = moment(delivery.delivery.time).format("DD.MM.YYYY");
-      const existingDeliveries: DeliveryProduct[] = deliveryData.get(deliveryDate) || [];
-      existingDeliveries.push(delivery);
-      deliveryData.set(deliveryDate, existingDeliveries);
+    const sortedByTimeIncomingDeliveriesData = _.sortBy(incomingDeliveriesData, [ deliveryProduct => deliveryProduct.delivery.time ]);
+
+    const deliveryData = new Map<string, DeliveryProduct[]>();
+
+    sortedByTimeIncomingDeliveriesData.forEach(delivery => {
+      const deliveryDate = moment(delivery.delivery.time).format("DD.MM.YYYY");
+      deliveryData.set(deliveryDate, [ ...(deliveryData.get(deliveryDate) || []), delivery ]);
     });
-    const sortedDates = new Map(Array.from(deliveryData).reverse())
 
-    this.setState({ deliveryData: sortedDates, loading: false });
+    const sortedDates = new Map(Array.from(deliveryData).reverse());
+
+    this.setState({
+      deliveryData: sortedDates,
+      loading: false
+    });
   }
 
   /**
    * Render method
    */
-  public render() {
+  public render = () => {
+    const { navigation } = this.props;
+    const { loading, deliveryData } = this.state;
+
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <NavigationEvents onDidFocus={this.loadData} />
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter
+      >
         <View >
-          <View style={[styles.center, styles.topViewWithButton]}>
-            <View style={[styles.center, { flexDirection: "row", marginTop: 30 }]}>
-              <Thumbnail square source={INCOMING_DELIVERIES_LOGO} style={{ width: 60, height: 35, marginRight: 10 }} />
-              <Text style={styles.viewHeaderText}>Tulevat toimitukset</Text>
+          <View style={[ styles.center, styles.topViewWithButton ]}>
+            <View style={[ styles.center, { flexDirection: "row", marginTop: 30 } ]}>
+              <Thumbnail
+                square source={ INCOMING_DELIVERIES_LOGO }
+                style={{ width: 60, height: 35, marginRight: 10 }}
+              />
+              <Text style={ styles.viewHeaderText }>
+                Tulevat toimitukset
+              </Text>
             </View>
-            <TouchableOpacity style={[styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 }]} onPress={() => { this.props.navigation.navigate("NewDelivery") }}>
-              <Text style={styles.buttonText}>Uusi toimitus</Text>
+            <TouchableOpacity
+              style={[ styles.deliveriesButton, { width: "60%", height: 50, marginVertical: 30 } ]}
+              onPress={ () => navigation.navigate("NewDelivery") }
+            >
+              <Text style={ styles.buttonText }>
+                Uusi toimitus
+              </Text>
             </TouchableOpacity>
           </View>
           <View style={{ flex: 1, flexDirection: "column" }}>
             {
-              this.state.loading ?
-                <View style={styles.loaderContainer}>
+              loading ?
+                <View style={ styles.loaderContainer }>
                   <ActivityIndicator size="large" color="#E51D2A" />
                 </View>
                 :
-                Array.from(this.state.deliveryData.keys()).map((date: string) => {
-                  const deliveries = this.state.deliveryData.get(date);
-                  return (
-                    <View key={date} >
-                      <Text style={styles.dateContainerText}>
-                        {date}
-                      </Text>
-                      {
-                        deliveries && deliveries.map((data: DeliveryProduct) => {
-                          return this.renderListItems(data)
-                        })
-                      }
-                    </View>
-                  );
-                })
+                Array.from(deliveryData.keys()).map(date => (
+                  <View key={ date }>
+                    <Text style={ styles.dateContainerText }>
+                      { date }
+                    </Text>
+                    { deliveryData.get(date)?.map(this.renderListItems) }
+                  </View>
+                ))
             }
           </View>
         </View>
@@ -235,7 +306,7 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -247,8 +318,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

@@ -1,7 +1,7 @@
 import React, { Dispatch } from "react";
 import { AccessToken, StoreState } from "../../../types";
 import { Text } from "native-base";
-import { View, TouchableOpacity, StyleSheet, TextInput, Platform } from "react-native";
+import { View, TouchableOpacity, TextInput, Platform } from "react-native";
 import Modal from "react-native-modal";
 import { Contract } from "pakkasmarja-client";
 import PakkasmarjaApi from "../../../api";
@@ -84,7 +84,7 @@ class ContractRejectModal extends React.Component<Props, State> {
             </View>
 
             <View>
-              <TextInput 
+              <TextInput
                 multiline = {true}
                 numberOfLines={Platform.OS === 'ios' ? undefined : 4}
                 style={{... styles.textInput, height: Platform.OS === "ios" ? 80 : undefined}}
@@ -109,7 +109,7 @@ class ContractRejectModal extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -119,8 +119,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

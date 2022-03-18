@@ -8,7 +8,7 @@ import strings from "../../../localization/strings";
 import { List, ListItem, Left, Thumbnail, Body, Text, View, Spinner, Fab, Icon, Badge } from "native-base";
 import { AVATAR_PLACEHOLDER } from "../../../static/images";
 import { ScrollView } from "react-native";
-import * as _ from "lodash";
+import _ from "lodash";
 import moment from "moment";
 
 /**
@@ -46,8 +46,8 @@ class ChatThreadList extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
-   * @param props component properties 
+   *
+   * @param props component properties
    */
   constructor(props: Props) {
     super(props);
@@ -78,9 +78,7 @@ class ChatThreadList extends React.Component<Props, State> {
           true
       );
 
-      const conversationListItems = await Promise.all(
-        validChatThreads.map(this.createConversationListItem)
-      );
+      const conversationListItems = await Promise.all(validChatThreads.map(this.createConversationListItem));
 
       const itemsWithUnreads = conversationListItems.filter(({ groupId, id }) => this.hasUnreadMessages(groupId, id!));
       const itemsWithoutUnreads = conversationListItems.filter(({ groupId, id }) => !this.hasUnreadMessages(groupId, id!));
@@ -95,7 +93,7 @@ class ChatThreadList extends React.Component<Props, State> {
         loading: false
       });
     } catch (e) {
-      onError && onError(strings.errorCommunicatingWithServer);
+      onError?.(strings.errorCommunicatingWithServer);
       this.setState({ loading: false });
     }
   }
@@ -138,12 +136,14 @@ class ChatThreadList extends React.Component<Props, State> {
    */
   private renderListItems = (): JSX.Element[] => {
     const { accessToken, onError, onThreadSelected } = this.props;
+    const { conversationListItems } = this.state;
+
     if (!accessToken) {
-      onError && onError(strings.accessTokenExpired);
+      onError?.(strings.accessTokenExpired);
       return [];
     }
 
-    return this.state.conversationListItems.map(item => {
+    return conversationListItems.map(item => {
       const unreadCount = this.countUnreads(item.groupId, item.id!);
       const imageUrl = item.imageUrl ?
         {
@@ -213,7 +213,7 @@ class ChatThreadList extends React.Component<Props, State> {
 
   /**
    * Counts unreads by group
-   * 
+   *
    * @param group group ID
    * @param threadId thread ID
    * @returns unread messages count
@@ -226,7 +226,7 @@ class ChatThreadList extends React.Component<Props, State> {
 
   /**
    * Check if thread has unread messages
-   * 
+   *
    * @param groupId group ID
    * @param threadId thread ID
    * @returns true if thread has unread messages, otherwise false
@@ -278,7 +278,7 @@ class ChatThreadList extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -289,8 +289,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

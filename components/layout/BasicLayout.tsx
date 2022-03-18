@@ -1,8 +1,7 @@
-import React, { Dispatch } from "react";
-import * as actions from "../../actions"
+import React from "react";
 import { connect } from "react-redux";
-import { Toast, Spinner, Thumbnail, Badge, Icon, Fab } from "native-base";
-import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity } from "react-native";
+import { Toast, Spinner, Thumbnail, Badge, Icon, Fab, Text } from "native-base";
+import { StyleSheet, View, SafeAreaView, TouchableOpacity } from "react-native";
 import strings from "../../localization/strings";
 import { CONTRACTS_ICON, DELIVERIES_ICON, MESSAGES_ICON, NEWS_ICON, DEFAULT_FILE } from "../../static/images";
 import { AccessToken, StoreState } from "../../types";
@@ -14,12 +13,13 @@ import PakkasmarjaApi from "../../api";
  * Component properties
  */
 export interface BasicLayoutProps {
-  loading?: boolean,
-  displayFooter?: boolean
-  errorMsg?: string,
-  navigation: any,
-  unreads?: Unread[],
-  accessToken?: AccessToken
+  loading?: boolean;
+  displayFooter?: boolean;
+  errorMsg?: string;
+  navigation: any;
+  unreads?: Unread[];
+  accessToken?: AccessToken;
+  children?: React.ReactNode;
 }
 
 /**
@@ -52,19 +52,23 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
   }
 
   public componentDidUpdate = (prevProps: BasicLayoutProps) => {
-    if (this.props.errorMsg && this.props.errorMsg != prevProps.errorMsg) {
+    const { errorMsg } = this.props;
+
+    if (!!errorMsg && errorMsg !== prevProps.errorMsg) {
       Toast.show({
-        text: this.props.errorMsg,
+        text: errorMsg,
         type: "danger"
       });
     }
   }
 
-  public render() {
+  public render = () => {
+    const { loading, children, accessToken, displayFooter } = this.props;
+
     const unreadNews = this.countUnreads("news-");
     const unreadChats = this.countUnreads("chat");
 
-    if (this.props.loading) {
+    if (loading) {
       return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Spinner color="red" />
@@ -74,51 +78,93 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
 
     return (
       <SafeAreaView style={{ flex: 1 }}>
-        {this.props.children}
-        { this.props.accessToken &&
+        { children }
+        { accessToken && !accessToken.realmRoles.includes("manage-threads") &&
           <Fab
             active
             direction="up"
             containerStyle={{ bottom: "11%" }}
             style={{ backgroundColor: '#e01e36' }}
             position="bottomRight"
-            onPress={ () => this.onHelpClick() }
+            onPress={ this.onHelpClick }
           >
-            <Icon name="help" />
+            <Icon name="help"/>
           </Fab>
         }
-        {this.props.displayFooter &&
-          <View style={styles.footer}>
-            <TouchableOpacity  onPress={() => this.goToScreen("News")}>
+        { displayFooter &&
+          <View style={ styles.footer }>
+            <TouchableOpacity onPress={ () => this.goToScreen("News") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                { unreadNews > 0 && <Badge style={{position: "absolute", height:20}}><Text style={{color:"white"}}>{unreadNews}</Text></Badge> }
-                <Thumbnail source={NEWS_ICON} square style={{ width: 22, height: 26 }} />
-                <Text style={{ fontSize: 12 }}>{strings.newsFooterLink}</Text>
+                { unreadNews > 0 &&
+                  <Badge style={{ position: "absolute", height:20 }}>
+                    <Text style={{ color:"white" }}>
+                      { unreadNews }
+                    </Text>
+                  </Badge>
+                }
+                <Thumbnail
+                  source={ NEWS_ICON }
+                  square
+                  style={{ width: 22, height: 26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  { strings.newsFooterLink }
+                </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.goToScreen("ChatsList")}>
+            <TouchableOpacity onPress={ () => this.goToScreen("ChatsList") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                { unreadChats > 0 && <Badge style={{position: "absolute", height:20, zIndex:99}}><Text style={{color:"white"}}>{unreadChats}</Text></Badge> }
-                <Thumbnail source={MESSAGES_ICON} square style={{ width: 48, height:26 }} />
-                <Text style={{ fontSize: 12 }}>{strings.messagingFooterLink}</Text>
+                { unreadChats > 0 &&
+                  <Badge style={{ position: "absolute", height:20, zIndex:99 }}>
+                    <Text style={{ color:"white" }}>
+                      { unreadChats }
+                    </Text>
+                  </Badge>
+                }
+                <Thumbnail
+                  source={ MESSAGES_ICON }
+                  square
+                  style={{ width: 48, height:26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  { strings.messagingFooterLink }
+                </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.goToScreen("Deliveries")}>
+            <TouchableOpacity onPress={ () => this.goToScreen("Deliveries") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                <Thumbnail source={DELIVERIES_ICON} square style={{ width: 40, height: 26 }} />
-                <Text style={{ fontSize: 12 }}>{strings.deliveriesFooterLink}</Text>
+                <Thumbnail
+                  source={ DELIVERIES_ICON }
+                  square
+                  style={{ width: 40, height: 26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  { strings.deliveriesFooterLink }
+                </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.goToScreen("Contracts")}>
+            <TouchableOpacity onPress={ () => this.goToScreen("Contracts") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                <Thumbnail source={CONTRACTS_ICON} square style={{ width: 20, height: 26 }} />
-                <Text style={{ fontSize: 12 }}>{strings.contractsFooterLink}</Text>
+                <Thumbnail
+                  source={ CONTRACTS_ICON }
+                  square
+                  style={{ width: 20, height: 26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  { strings.contractsFooterLink }
+                </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.goToScreen("Databank")}>
+            <TouchableOpacity onPress={ () => this.goToScreen("Databank") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                <Thumbnail source={DEFAULT_FILE} square style={{ width: 22, height: 26 }} />
-                <Text style={{ fontSize: 12 }}>Tietopankki</Text>
+                <Thumbnail
+                  source={ DEFAULT_FILE }
+                  square
+                  style={{ width: 22, height: 26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  Tietopankki
+                </Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -131,28 +177,34 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
    * Handles help button click
    */
   private onHelpClick = async () => {
+    const { accessToken, navigation } = this.props;
+
     const appConfig = await AppConfig.getAppConfig();
-    const questionGroupId = appConfig['help-question-group'];
-    const { accessToken } = this.props;
+    const questionGroupId = appConfig["help-question-group"];
+
     if (!questionGroupId || !accessToken) {
-      return
+      return;
     }
 
-    const questionGroupThreads = await new PakkasmarjaApi()
-      .getChatThreadsService(accessToken.access_token)
-      .listChatThreads(questionGroupId, "QUESTION", accessToken.userId);
-    if (questionGroupThreads.length !== 1) {
-      return; //Application is misconfigured, bail out.
-    }
+    try {
+      const questionGroupThreads = await new PakkasmarjaApi()
+        .getChatThreadsService(accessToken.access_token)
+        .listChatThreads(questionGroupId, "QUESTION", accessToken.userId);
 
-    this.props.navigation.push("ChatsList", {
-      selectedQuestionThreadId: questionGroupThreads[0].id
-    });
+      if (questionGroupThreads.length !== 1) {
+        console.warn("Could not find question group thread");
+        return; //Application is misconfigured, bail out.
+      }
+
+      navigation.push("ChatsList", { selectedQuestionThreadId: questionGroupThreads[0].id });
+    } catch (error: any) {
+      console.warn(error.stack);
+    }
   }
 
     /**
    * Counts unreads by prefix
-   * 
+   *
    * @param prefix prefix
    * @return unreads
    */
@@ -172,7 +224,7 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -182,14 +234,4 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-/**
- * Redux mapper for mapping component dispatches 
- * 
- * @param dispatch dispatch method
- */
-function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
-  return {
-  };
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(BasicLayout);
+export default connect(mapStateToProps)(BasicLayout);

@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryListItem, KeyboardType, boxKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
 import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality, Contact, ContractQuantities } from "pakkasmarja-client";
 import { Text, Icon, Input, ListItem } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -24,12 +24,14 @@ import { FileService } from "../../../api/file.service";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import AsyncButton from "../../generic/async-button";
 import strings from "../../../localization/strings";
+import { Picker } from "native-base";
 
 /**
  * Component props
  */
 interface Props {
   navigation: any;
+  route: any;
   accessToken?: AccessToken;
 };
 
@@ -117,8 +119,8 @@ class ManageDelivery extends React.Component<Props, State> {
    *
    * @param navigation navigation instance
    */
-  static navigationOptions = ({ navigation }: any) => ({
-    headerTitle: (
+  private navigationOptions = (navigation: any) => ({
+    headerTitle: () => (
       <TopBar
         navigation={ navigation }
         showMenu
@@ -127,7 +129,7 @@ class ManageDelivery extends React.Component<Props, State> {
       />
     ),
     headerTitleContainerStyle: { left: 0 },
-    headerLeft: (
+    headerLeft: () => (
       <TouchableHighlight onPress={() => navigation.goBack(null) }>
         <FeatherIcon
           name="chevron-left"
@@ -143,23 +145,20 @@ class ManageDelivery extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    const { accessToken, navigation } = this.props;
+    const { accessToken, navigation, route } = this.props;
+    const { date, deliveryListItem, category, isNewDelivery } = route.params;
+
+    navigation.setOptions(this.navigationOptions(navigation));
 
     if (!accessToken) {
       return;
     }
 
-    const params = navigation.state.params;
-    const selectedDate: Date = params.date;
-    const deliveryData: DeliveryListItem = params.deliveryListItem;
-    const category: ItemGroupCategory = params.category;
-    const isNewDelivery = params.isNewDelivery;
-
     this.setState({
       loading: true,
-      isNewDelivery,
-      category,
-      selectedDate
+      isNewDelivery: isNewDelivery,
+      category: category,
+      selectedDate: date
     });
 
     const deliveryPlaces = await new PakkasmarjaApi().getDeliveryPlacesService(accessToken.access_token).listDeliveryPlaces();
@@ -169,18 +168,18 @@ class ManageDelivery extends React.Component<Props, State> {
 
     await this.listProducts();
 
-    if (!isNewDelivery && deliveryData) {
+    if (!isNewDelivery && deliveryListItem) {
       const deliveryPlace = deliveryPlaces.find(deliveryPlace =>
-        deliveryPlace.id === deliveryData.delivery.deliveryPlaceId
+        deliveryPlace.id === deliveryListItem.delivery.deliveryPlaceId
       );
 
-    await this.fetchContractQuantities(deliveryData.product);
+      await this.fetchContractQuantities(deliveryListItem.product);
 
       this.setState({
-        deliveryData,
+        deliveryData: deliveryListItem,
         deliveryPlaceId: deliveryPlace?.id,
-        amount: deliveryData.delivery.amount,
-        selectedDate: new Date(deliveryData.delivery.time),
+        amount: deliveryListItem.delivery.amount,
+        selectedDate: new Date(deliveryListItem.delivery.time),
         loading: false
       }, () => this.loadDeliveryNotes());
     } else {
@@ -212,17 +211,13 @@ class ManageDelivery extends React.Component<Props, State> {
    * List products
    */
   private listProducts = async () => {
-    const { accessToken, navigation } = this.props;
+    const { accessToken, route } = this.props;
     const { selectedContact } = this.state;
+    const { deliveryListItem, category, isNewDelivery } = route.params;
 
     if (!accessToken) {
       return;
     }
-
-    const params = navigation.state.params;
-    const deliveryData: DeliveryListItem = params.deliveryListItem;
-    const isNewDelivery: boolean = params.isNewDelivery;
-    const category: ItemGroupCategory = params.category;
 
     this.setState({ products: [], productPrice: undefined });
 
@@ -230,14 +225,14 @@ class ManageDelivery extends React.Component<Props, State> {
     const productsService = Api.getProductsService(accessToken.access_token);
     const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
 
-    if (!isNewDelivery && deliveryData?.product && deliveryData.contact) {
-      const deliveryProductId = deliveryData.product.id;
-      const products = await productsService.listProducts(undefined, category, deliveryData.contact.id, undefined, 999);
+    if (!isNewDelivery && deliveryListItem?.product && deliveryListItem.contact) {
+      const deliveryProductId = deliveryListItem.product.id;
+      const products = await productsService.listProducts(undefined, category, deliveryListItem.contact.id, undefined, 999);
       const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, deliveryProductId);
 
       this.setState({
         productId: deliveryProductId,
-        product: deliveryData.product,
+        product: deliveryListItem.product,
         products: products,
         deliveryQualities: deliveryQualities
       }, () => this.getProductPrice());
@@ -275,7 +270,11 @@ class ManageDelivery extends React.Component<Props, State> {
       deliveryData,
       selectedContact,
       deliveryQualityId,
-      deliveryNoteDatas
+      deliveryNoteDatas,
+      redBoxesLoaned,
+      redBoxesReturned,
+      grayBoxesLoaned,
+      grayBoxesReturned
     } = this.state;
 
     if (!accessToken || !product?.id || !deliveryPlaceId || !selectedDate) {
@@ -294,8 +293,8 @@ class ManageDelivery extends React.Component<Props, State> {
       deliveryPlaceId: deliveryPlaceId,
       qualityId: deliveryQualityId,
       loans: [
-        { item: "RED_BOX", loaned: this.state.redBoxesLoaned, returned: this.state.redBoxesReturned },
-        { item: "GRAY_BOX", loaned: this.state.grayBoxesLoaned, returned: this.state.grayBoxesReturned }
+        { item: "RED_BOX", loaned: redBoxesLoaned, returned: redBoxesReturned },
+        { item: "GRAY_BOX", loaned: grayBoxesLoaned, returned: grayBoxesReturned }
       ]
     }
 
@@ -317,7 +316,7 @@ class ManageDelivery extends React.Component<Props, State> {
       deliveryData && await deliveryService.updateDelivery(delivery, deliveryData.delivery.id!);
     }
 
-    navigation.navigate("Deliveries");
+    navigation.navigate("ManageDeliveries");
   }
 
   /**
@@ -362,7 +361,7 @@ class ManageDelivery extends React.Component<Props, State> {
       deliveryData.delivery.id
     );
 
-    navigation.navigate("Deliveries");
+    navigation.navigate("ManageDeliveries");
   }
 
   /**
@@ -388,14 +387,14 @@ class ManageDelivery extends React.Component<Props, State> {
    * @param productId product ID
    */
   private handleProductChange = async (productId: string) => {
-    const { accessToken, navigation } = this.props;
+    const { accessToken, route } = this.props;
     const { products } = this.state;
 
     if (!accessToken) {
       return;
     }
 
-    const category: ItemGroupCategory = navigation.state.params.category;
+    const category: ItemGroupCategory = route.params.category;
     const deliveryQualitiesService = new PakkasmarjaApi().getDeliveryQualitiesService(accessToken.access_token);
     const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, productId);
     const product = products.find((product) => product.id === productId);
@@ -458,17 +457,20 @@ class ManageDelivery extends React.Component<Props, State> {
       this.contactDebounce = undefined;
     }
 
+    this.setState({ query });
+
     if (!accessToken || !query) {
+      this.setState({ contacts: [] });
       return;
     }
 
-    this.setState({ query });
-
-    this.contactDebounce = setTimeout(async () => this.setState({
-      contacts: await new PakkasmarjaApi()
-        .getContactsService(accessToken.access_token)
-        .listContacts(query)
-    }), 500);
+    this.contactDebounce = setTimeout(async () => {
+      this.setState({
+        contacts: await new PakkasmarjaApi()
+          .getContactsService(accessToken.access_token)
+          .listContacts(query)
+      });
+    }, 500);
   }
 
   /**
@@ -657,7 +659,7 @@ class ManageDelivery extends React.Component<Props, State> {
                 { Platform.OS !== "ios" &&
                   <Picker
                     selectedValue={ productId }
-                    style={{ height: 50, width: "100%" }}
+                    style={{ height: 50, width: "100%", color: "black" }}
                     onValueChange={ this.handleProductChange }
                   >
                     {
@@ -718,7 +720,6 @@ class ManageDelivery extends React.Component<Props, State> {
               valueType="real"
               minValue={ 0 }
               textColor="black"
-              iconStyle={{ color: "white" }}
               rightButtonBackgroundColor="#e01e36"
               leftButtonBackgroundColor="#e01e36"
               borderColor="transparent"
@@ -773,8 +774,8 @@ class ManageDelivery extends React.Component<Props, State> {
             { Platform.OS !== "ios" &&
               <Picker
                 selectedValue={ deliveryPlaceId }
-                style={{ height: 50, width: "100%" }}
-                onValueChange={ itemValue => this.setState({ deliveryPlaceId: itemValue }) }
+                style={{ height: 50, width: "100%", color: "black" }}
+                onValueChange={ (itemValue: string) => this.setState({ deliveryPlaceId: itemValue }) }
               >
                 {
                   deliveryPlaces?.map(deliveryPlace =>
@@ -789,10 +790,12 @@ class ManageDelivery extends React.Component<Props, State> {
             }
             { Platform.OS === "ios" &&
               <ModalSelector
-                data={ deliveryPlaces?.map(({ id, name }) => ({ key: id, label: name })) }
+                data={ deliveryPlaces?.map(({ id, name }) => ({ key: id, label: name })) || [] }
                 selectedKey={ deliveryPlaceId }
                 initValue="Valitse toimituspaikka"
-                onChange={ (option: any) => this.setState({ deliveryPlaceId: option.key }) }
+                onChange={ (option: any) =>
+                  this.setState({ deliveryPlaceId: option.key })
+                }
               />
             }
           </View>
@@ -808,8 +811,10 @@ class ManageDelivery extends React.Component<Props, State> {
             { Platform.OS !== "ios" &&
               <Picker
                 selectedValue={ deliveryQualityId }
-                style={{ height: 50, width: "100%" }}
-                onValueChange={ itemValue => this.setState({ deliveryQualityId: itemValue }) }
+                style={{ height: 50, width: "100%", color: "black" }}
+                onValueChange={ (itemValue: string) =>
+                  this.setState({ deliveryQualityId: itemValue })
+                }
               >
                 <Picker.Item
                   label="Valitse laatu"
@@ -828,7 +833,7 @@ class ManageDelivery extends React.Component<Props, State> {
             }
             { Platform.OS === "ios" &&
               <ModalSelector
-                data={ deliveryQualities?.map(({ id, name }) => ({ key: id, label: name })) }
+                data={ deliveryQualities?.map(({ id, name }) => ({ key: id, label: name })) || [] }
                 selectedKey={ deliveryQualityId }
                 initValue="Valitse laatu"
                 onChange={ (option: any) => this.setState({ deliveryQualityId: option.key }) }
@@ -958,7 +963,7 @@ class ManageDelivery extends React.Component<Props, State> {
             </View>
           }
           { deliveryData?.delivery.status !== "DONE" &&
-            <View style={[ styles.center, { flex: 1 } ]}>
+            <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
               <AsyncButton
                 disabled={ !this.isValid() }
                 style={[ styles.deliveriesButton, styles.center, { width: "70%", height: 60, marginTop: 15 } ]}
@@ -971,7 +976,7 @@ class ManageDelivery extends React.Component<Props, State> {
             </View>
           }
           { deliveryData?.delivery.status !== "DONE" && !isNewDelivery &&
-            <View style={[ styles.center, { flex: 1 } ]}>
+            <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
               <AsyncButton
                 disabled={ !this.isValid() }
                 style={[ styles.declineButton, styles.center, { width: "70%", height: 60, marginTop: 15 } ]}
@@ -1070,11 +1075,10 @@ class ManageDelivery extends React.Component<Props, State> {
    * @param product product witch contracts will be fetched
    */
     private fetchContractQuantities = async (product?: Product) => {
-      const { accessToken, navigation } = this.props;
+      const { accessToken, route } = this.props;
       const { selectedContact, isNewDelivery } = this.state;
 
-      const params = navigation.state.params;
-      const deliveryData: DeliveryListItem = params.deliveryListItem;
+      const deliveryData: DeliveryListItem = route.params.deliveryListItem;
 
       const yearNow = parseInt(moment(new Date()).format("YYYY"));
 

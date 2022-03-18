@@ -1,5 +1,5 @@
 import React, { Dispatch } from "react";
-import { GiftedChat, IChatMessage, IMessage, Actions, MessageImageProps, LoadEarlierProps, LoadEarlier, User } from 'react-native-gifted-chat';
+import { GiftedChat, IChatMessage, IMessage, Actions, MessageImageProps, LoadEarlierProps, LoadEarlier, User, GiftedChatProps } from 'react-native-gifted-chat';
 import { connect } from "react-redux";
 import { AccessToken, StoreState, ConversationType } from "../../../types";
 import * as actions from "../../../actions";
@@ -71,8 +71,8 @@ class Chat extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
-   * @param props component properties 
+   *
+   * @param props component properties
    */
   constructor(props: Props) {
     super(props);
@@ -164,18 +164,20 @@ class Chat extends React.Component<Props, State> {
         isPredefinedOptionSelected = true;
       }
 
-      return (<ListItem key={predefinedText} onPress={() => this.setState({ pollAnswer: predefinedText })}>
-        <Left>
-          <Text>{predefinedText}</Text>
-        </Left>
-        <Right>
-          <Radio onPress={() => this.setState({ pollAnswer: predefinedText })} selected={predefinedText === this.state.pollAnswer} />
-        </Right>
-      </ListItem>);
+      return (
+        <ListItem key={predefinedText} onPress={() => this.setState({ pollAnswer: predefinedText })}>
+          <Left>
+            <Text>{predefinedText}</Text>
+          </Left>
+          <Right>
+            <Radio onPress={() => this.setState({ pollAnswer: predefinedText })} selected={predefinedText === this.state.pollAnswer} />
+          </Right>
+        </ListItem>
+      );
     });
 
     pollReplyItems.unshift(<ListItem key="poll-title"><Left><Text>{thread.title}</Text></Left></ListItem>);
-    
+
     if (thread.pollAllowOther) {
       pollReplyItems.push(
         <ListItem key="other-answer-input">
@@ -188,26 +190,31 @@ class Chat extends React.Component<Props, State> {
       );
     }
 
+    const giftedChatProps: GiftedChatProps<IMessage> & { textInputStyle: {}, renderUsernameOnMessage: boolean } = {
+      messages: this.state.messages,
+      onSend: this.onSend,
+      showUserAvatar: true,
+      loadEarlier: true,
+      isLoadingEarlier: this.state.loadingEarlier,
+      onLoadEarlier: this.loadEarlierMessages,
+      renderUsernameOnMessage: true,
+      onLongPress: this.openMessageOptions,
+      renderActions: this.renderCustomActions,
+      renderMessageImage: this.renderMessageImage,
+      renderLoadEarlier: this.renderLoadEarlier,
+      renderChatFooter: this.renderMessagesReadSegment,
+      placeholder: "Kirjoita viesti...",
+      locale: "fi",
+      user: chatUser,
+      textInputStyle: {
+        color: "#000"
+      }
+    };
+
     return (
       <Container>
         {thread.answerType == "TEXT" ? (
-          <GiftedChat
-            messages={ this.state.messages }
-            onSend={ this.onSend }
-            showUserAvatar={ true }
-            loadEarlier={ true }
-            isLoadingEarlier={ this.state.loadingEarlier }
-            onLoadEarlier={ this.loadEarlierMessages }
-            renderUsernameOnMessage={ true }
-            onLongPress={ this.openMessageOptions }
-            renderActions={ this.renderCustomActions }
-            renderMessageImage={ this.renderMessageImage }
-            renderLoadEarlier={ this.renderLoadEarlier }
-            renderChatFooter={ this.renderMessagesReadSegment }
-            placeholder="Kirjoita viesti..."
-            locale="fi"
-            user={ chatUser }
-          />
+          <GiftedChat { ...giftedChatProps }/>
         ) : (
           <ScrollView>
             <List>
@@ -353,7 +360,7 @@ class Chat extends React.Component<Props, State> {
         messages: updatedMessages
       });
     } catch (error) {
-      console.log(error);
+      console.warn(error);
     }
   }
 
@@ -369,7 +376,7 @@ class Chat extends React.Component<Props, State> {
           if (!mqttMessage.threadId || mqttMessage.threadId !== threadId) {
             return;
           }
-          
+
           const mqttMessageId = mqttMessage.messageId;
           if (!accessToken || !threadId || !mqttMessageId) {
             return;
@@ -481,7 +488,7 @@ class Chat extends React.Component<Props, State> {
    */
   private renderMessageImage = (messageProps: MessageImageProps<IMessage>) => {
     const { accessToken } = this.props;
-    const { 
+    const {
       containerStyle,
       lightboxProps,
       imageProps,
@@ -550,7 +557,7 @@ class Chat extends React.Component<Props, State> {
       const contentType = response.type || "image/jpeg";
       const uri = (Platform.OS==='android') ? response.uri : response.uri.replace('file://', '');
       const fileUploadResponse = await new PakkasmarjaApi().getFileService(accessToken.access_token).uploadFile(uri, contentType);
-      
+
       const fileMessage = await new PakkasmarjaApi().getChatMessagesService(accessToken.access_token).createChatMessage({
         image: fileUploadResponse.url,
         threadId: threadId,
@@ -590,7 +597,7 @@ class Chat extends React.Component<Props, State> {
 
   /**
    * Translates list of api messages to list of gifted chat messages
-   * 
+   *
    * @param chatMessages messages to translate
    */
   private translateMessages = async(chatMessages: ChatMessage[]): Promise<IMessage[]> => {
@@ -600,13 +607,13 @@ class Chat extends React.Component<Props, State> {
 
   /**
    * Translates api message to gifted chat message
-   * 
+   *
    * @param chatMessage message to translate
    */
   private translateMessage = async (chatMessage: ChatMessage): Promise<IMessage> => {
     const contact = await this.getMessageContact(chatMessage);
     return {
-      _id: chatMessage.id || "",
+      _id: chatMessage.id || "",
       createdAt: new Date(chatMessage.createdAt || 0),
       text: chatMessage.contents || "",
       image: chatMessage.image,
@@ -620,25 +627,25 @@ class Chat extends React.Component<Props, State> {
 
     /**
    * Counts unreads by group
-   * 
+   *
    * @param group id
    * @return unreads
    */
   private removeUnreads = async (thread: ChatThread) => {
     const { accessToken } = this.props;
-    
+
     if (!accessToken || !thread || !thread.id || !thread.groupId) {
       return;
     }
 
     const unreadsService = new PakkasmarjaApi().getUnreadsService(accessToken.access_token);
 
-    const unreads = (this.props.unreads || [])
+    const unreads = (this.props.unreads || [])
       .filter((unread: Unread) => {
-        const path = (unread.path || "");
+        const path = (unread.path || "");
         return path.startsWith(`chat-${thread.groupId}-${thread.id}-`);
       });
-    
+
     if (unreads.length > 0) {
       mqttConnection.publish("chatmessages", {
         "operation": "READ",
@@ -675,7 +682,7 @@ class Chat extends React.Component<Props, State> {
 
   /**
    * Uploads message to the server
-   * 
+   *
    * @param message message to upload
    */
   private uploadMessage = (message: IMessage) : Promise<ChatMessage> => {
@@ -762,7 +769,7 @@ class Chat extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -773,8 +780,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

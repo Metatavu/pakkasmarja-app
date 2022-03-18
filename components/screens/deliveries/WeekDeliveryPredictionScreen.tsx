@@ -11,7 +11,8 @@ import { WeekDeliveryPrediction, ItemGroup, ItemGroupCategory } from "pakkasmarj
 import PakkasmarjaApi from "../../../api";
 import { PREDICTIONS_ICON } from "../../../static/images";
 import Icon from "react-native-vector-icons/Feather";
-import * as _ from "lodash";
+import _ from "lodash";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -40,7 +41,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -53,9 +54,14 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -63,7 +69,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
             name='chevron-left'
@@ -79,6 +85,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.accessToken) {
       return;
     }
@@ -90,7 +97,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
 
   /**
    * On list item click
-   * 
+   *
    * @param screen screen
    * @param predictionTableData predictionTableData
    */
@@ -101,7 +108,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
   }
 
   /**
-   * Load item groups 
+   * Load item groups
    */
   private loadItemGroups = async () => {
     if (!this.props.accessToken) {
@@ -175,7 +182,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
 
   /**
    * Renders list items
-   * 
+   *
    * @param predictionTableData predictionTableData
    */
   private renderListItem = (predictionTableData: WeekDeliveryPredictionTableData) => {
@@ -208,7 +215,7 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -219,8 +226,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

@@ -10,16 +10,16 @@ export * from './pdf.service';
 export default class PakkasmarjaApi {
 
   private basePath: string;
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param basePath base path
    */
   constructor(basePath?: string) {
-    this.basePath = basePath ? basePath : `${REACT_APP_API_URL}/rest/v1`;
+    this.basePath = basePath || `${REACT_APP_API_URL}/rest/v1`;
   }
-  
+
   private getApi() {
     Api.configure(this.basePath);
     return Api;
@@ -27,7 +27,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Returns contracts service
-   * 
+   *
    * @param token token
    */
   public getContractsService(token: string) {
@@ -36,7 +36,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Returns contacts service
-   * 
+   *
    * @param token token
    */
   public getContactsService(token: string) {
@@ -45,7 +45,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Returns contacts service
-   * 
+   *
    * @param token token
    */
   public getItemGroupsService(token: string) {
@@ -54,18 +54,18 @@ export default class PakkasmarjaApi {
 
   /**
    * Returns delivery places service
-   * 
+   *
    * @param token token
    */
   public getDeliveryPlacesService(token: string) {
     return this.getApi().getDeliveryPlacesService(token);
   }
-  
+
   /**
    * Returns news article service
-   * 
+   *
    * @param token token
-   * 
+   *
    * @return News article service
    */
   public getNewsArticlesService(token: string) {
@@ -74,9 +74,9 @@ export default class PakkasmarjaApi {
 
   /**
    * Returns week prediction service
-   * 
+   *
    * @param token token
-   * 
+   *
    * @return News article service
    */
   public getWeekDeliveryPredictionsService(token: string) {
@@ -85,7 +85,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Get deliveries service
-   * 
+   *
    * @param token token
    * @return Deliveries service
    */
@@ -95,7 +95,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Get delivery loans service
-   * 
+   *
    * @param token token
    * @return Delivery loans service
    */
@@ -105,7 +105,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Get deliveries service
-   * 
+   *
    * @param token token
    * @return Deliveriy qualities service
    */
@@ -115,7 +115,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Get products service
-   * 
+   *
    * @param token token
    * @return Products service
    */
@@ -125,7 +125,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Get product prices service
-   * 
+   *
    * @param token token
    * @return Product prices service
    */
@@ -133,9 +133,9 @@ export default class PakkasmarjaApi {
     return this.getApi().getProductPricesService(token);
   }
 
-   /**
+  /**
    * Returns sign authentication services service
-   * 
+   *
    * @param token token
    */
   public getSignAuthenticationServicesService(token: string) {
@@ -144,7 +144,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Returns chat groups service
-   * 
+   *
    * @param token token
    */
   public getChatGroupsService(token: string) {
@@ -153,7 +153,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Returns chat threads service
-   * 
+   *
    * @param token token
    */
   public getChatThreadsService(token: string) {
@@ -162,7 +162,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Returns chat messages service
-   * 
+   *
    * @param token token
    */
   public getChatMessagesService(token: string) {
@@ -171,7 +171,7 @@ export default class PakkasmarjaApi {
 
   /**
    * Returns unreads service
-   * 
+   *
    * @param token token
    */
   public getUnreadsService(token: string) {
@@ -193,7 +193,7 @@ export default class PakkasmarjaApi {
    * @param basePath basePath
    */
   public getFileService(token: string) {
-    return new FileService(REACT_APP_API_URL, token);
+    return new FileService(this.basePath, token);
   }
 
   /**
@@ -203,5 +203,13 @@ export default class PakkasmarjaApi {
   public getSharedFilesService(token: string) {
     return this.getApi().getSharedFilesService(token);
   }
-  
+
+  /**
+   * Get opening hours service
+   * @param token token
+   */
+  public getOpeningHoursService(token: string) {
+    return this.getApi().getOpeningHoursService(token);
+  }
+
 }

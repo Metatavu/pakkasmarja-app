@@ -4,15 +4,16 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
+import { View, ActivityIndicator, TouchableHighlight } from "react-native";
 import { styles } from "./styles.tsx";
 import { Text, Icon } from "native-base";
 import PakkasmarjaApi from "../../../api";
 import { Delivery, Product, ItemGroup } from "pakkasmarja-client";
 import moment from "moment";
 import FeatherIcon from "react-native-vector-icons/Feather";
-import * as _ from "lodash";
+import _ from "lodash";
 import AsyncButton from "../../generic/async-button";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -47,7 +48,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -66,9 +67,14 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
     };
   }
 
-  static navigationOptions = ({ navigation }: any) => {
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -76,7 +82,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
             name='chevron-left'
@@ -92,6 +98,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     if (!this.props.accessToken) {
       return;
     }
@@ -124,7 +131,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
   }
 
   /**
-   * Load item groups 
+   * Load item groups
    */
   private loadItemGroups = async () => {
     if (!this.props.accessToken || !this.props.deliveries) {
@@ -157,7 +164,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Changes item group
-   * 
+   *
    * @param action action
    */
   private changeItemGroup = async (action: string) => {
@@ -187,7 +194,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
 
   /**
    * Changes week
-   * 
+   *
    * @param action action
    */
   private changeWeekNumber = async (action: string) => {
@@ -329,7 +336,7 @@ class ViewAllDeliveriesScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -340,8 +347,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

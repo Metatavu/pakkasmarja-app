@@ -1,16 +1,15 @@
 import React, { Dispatch } from "react";
 import TopBar from "../../layout/TopBar";
 import PakkasmarjaApi from "../../../api";
-import Moment from 'react-moment';
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
-import { Text, List, View, Spinner } from 'native-base';
+import { Text, List, View, Spinner, ListItem, Body } from "native-base";
 import { AccessToken, StoreState } from "../../../types";
 import { NewsArticle, Unread } from "pakkasmarja-client";
-import { ListItem } from "react-native-elements";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
-import * as _ from "lodash"
-import { TouchableOpacity } from "react-native";
+import _ from "lodash"
+import moment from "moment";
+import { StackNavigationOptions } from "@react-navigation/stack";
 
 /**
  * Component props
@@ -37,7 +36,7 @@ class NewsListScreen extends React.Component<Props, State> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -51,18 +50,26 @@ class NewsListScreen extends React.Component<Props, State> {
   /**
    * Navigation options
    */
-  static navigationOptions = ({ navigation }: any) => {
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-        frontPage={true}
-      />,
+      headerTitle: () => (
+        <TopBar
+          navigation={ navigation }
+          showMenu={ true }
+          showHeader={ false }
+          showUser={ true }
+          frontPage={ true }
+        />
+      ),
       headerTitleContainerStyle: {
-        left: 0,
+        left: 0
       },
-      headerLeft: null
+      headerLeft: () => null
     }
   };
 
@@ -70,37 +77,49 @@ class NewsListScreen extends React.Component<Props, State> {
    * Component did mount
    */
   public async componentDidMount() {
-    if (!this.props.accessToken) {
+    const { navigation, accessToken } = this.props;
+    navigation.setOptions(this.navigationOptions(navigation));
+
+    if (!accessToken) {
       return;
     }
-    this.props.navigation.addListener('willFocus', () => {
-      this.loadData();
-    });
-    this.loadData();
 
+    navigation.addListener("willFocus", this.loadData);
+
+    this.loadData();
   }
 
   /**
    * Load data
    */
   private loadData = async () => {
-    if (!this.props.accessToken) {
+    const { accessToken } = this.props;
+
+    if (!accessToken) {
       return;
     }
+
     this.setState({ loading: true });
-    const Api = new PakkasmarjaApi();
-    const newsArticleService = await Api.getNewsArticlesService(this.props.accessToken.access_token);
-    const newsArticles = await newsArticleService.listNewsArticles();
-    const sortedNewsArticles = newsArticles.sort((a, b) => {
-      return this.getTime(b.createdAt) - this.getTime(a.createdAt)
-    });
+
+    const newsArticles = await new PakkasmarjaApi()
+      .getNewsArticlesService(accessToken.access_token)
+      .listNewsArticles();
+
+    const sortedNewsArticles = newsArticles.sort((a, b) =>
+      this.getTime(b.createdAt) - this.getTime(a.createdAt)
+    );
+
     await this.checkUnreads();
-    this.setState({ newsArticles: sortedNewsArticles, loading: false });
+
+    this.setState({
+      newsArticles: sortedNewsArticles,
+      loading: false
+    });
   }
 
   /**
    * Get time
-   * 
+   *
    * @param date date
    */
   private getTime(date?: Date) {
@@ -111,56 +130,68 @@ class NewsListScreen extends React.Component<Props, State> {
    * Handles list item click
    */
   private handleListItemClick = (newsArticle: NewsArticle) => {
-    this.props.navigation.navigate('NewsArticle', {
-      newsArticle: newsArticle
-    });
+    this.props.navigation.navigate('NewsArticle', { newsArticle: newsArticle });
   }
 
   /**
    * Component render method
    */
-  public render() {
-    if (this.state.loading) {
+  public render = () => {
+    const { navigation } = this.props;
+    const { loading, newsArticles } = this.state;
+
+    if (loading) {
       return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Spinner color="red" />
+          <Spinner color="red"/>
         </View>
       );
     }
     return (
-      <BasicScrollLayout navigation={this.props.navigation} backgroundColor="#fff" displayFooter={true}>
-        <View >
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter
+      >
+        <View>
           <List>
             {
-              this.state.newsArticles.map((newsArticle) => {
-                return (
-                  <TouchableOpacity key={newsArticle.id} onPress={() => { this.handleListItemClick(newsArticle) }}>
-                    <ListItem
-                      key={newsArticle.id}
-                      title={newsArticle.id && this.isUnread(newsArticle.id.toString()) ? newsArticle.title : newsArticle.title}
-                      titleStyle={
-                        newsArticle.id && this.isUnread(newsArticle.id.toString()) ?
-                          { fontSize: 22, color: "black", paddingBottom: 5, fontWeight: "bold" }
-                          :
-                          { fontSize: 22, color: "black", paddingBottom: 5 }
+              newsArticles.map(newsArticle => (
+                <ListItem
+                  key={ newsArticle.id }
+                  button
+                  onPress={ () => this.handleListItemClick(newsArticle) }
+                >
+                  <Body>
+                    <Text
+                      style={{
+                        fontSize: 22,
+                        color: "black",
+                        paddingBottom: 5,
+                        fontWeight: newsArticle.id && this.isUnread(newsArticle.id.toString()) ? "bold" : "normal"
+                      }}
+                    >
+                      { newsArticle.title }
+                    </Text>
+                    <Text note>
+                      { newsArticle.id && this.isUnread(newsArticle.id.toString()) ?
+                        <View style={{ flex: 1, flexDirection: "row", marginLeft: 10 }}>
+                          <Text style={{ color: "red" }}>
+                            (Uusi)
+                          </Text>
+                          <Text style={{ marginLeft: 10, color: "gray" }}>
+                            { newsArticle.createdAt && moment(newsArticle.createdAt).format("DD.MM.YYYY HH:mm") }
+                          </Text>
+                        </View>
+                        :
+                        <Text style={{ marginLeft: 10, color: "gray" }}>
+                          { newsArticle.createdAt && moment(newsArticle.createdAt).format("DD.MM.YYYY HH:mm") }
+                        </Text>
                       }
-                      subtitle={
-                        newsArticle.id && this.isUnread(newsArticle.id.toString()) ?
-                          <View style={{ flex: 1, flexDirection: "row", marginLeft: 10 }}>
-                            <Text style={{ color: "red" }}>(Uusi)</Text>
-                            <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
-                              {newsArticle.createdAt ? newsArticle.createdAt.toString() : undefined}
-                            </Moment>
-                          </View>
-                          :
-                          <Moment style={{ marginLeft: 10, color: "gray" }} element={Text} format="DD.MM.YYYY HH:mm">
-                            {newsArticle.createdAt ? newsArticle.createdAt.toString() : undefined}
-                          </Moment>
-                      }
-                    />
-                  </TouchableOpacity>
-                )
-              })
+                    </Text>
+                  </Body>
+                </ListItem>
+              ))
             }
           </List>
         </View>
@@ -172,33 +203,35 @@ class NewsListScreen extends React.Component<Props, State> {
    * Checks for unreads
    */
   private checkUnreads = async () => {
-    if (!this.props.accessToken) {
+    const { accessToken, unreadsUpdate } = this.props;
+
+    if (!accessToken) {
       return;
     }
-    
-    const unreadsService = await new PakkasmarjaApi().getUnreadsService(this.props.accessToken.access_token);
-    this.props.unreadsUpdate(await unreadsService.listUnreads());
+
+    const unreads = await new PakkasmarjaApi()
+      .getUnreadsService(accessToken.access_token)
+      .listUnreads();
+
+    unreadsUpdate(unreads);
   }
 
   /**
    * Retuns whether news item is unread
-   * 
+   *
    * @return whether news item is unread
    */
   private isUnread = (newsId: string) => {
-    if (!this.props.unreads) {
-      return;
-    }
-    return !!this.props.unreads.find((unread: Unread) => {
-      return (unread.path || "").startsWith(`news-${newsId}`);
-    });
+    const { unreads } = this.props;
+
+    return !!unreads?.find(unread => unread.path?.startsWith(`news-${newsId}`));
   }
 
 }
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -209,8 +242,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

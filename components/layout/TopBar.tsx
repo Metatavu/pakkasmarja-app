@@ -25,19 +25,13 @@ interface Props {
 }
 
 /**
- * Component state
- */
-interface State {
-}
-
-/**
  * Top bar component
  */
-class TopBar extends React.Component<Props, State> {
+class TopBar extends React.Component<Props> {
 
   /**
    * Constructor
-   * 
+   *
    * @param props props
    */
   constructor(props: Props) {
@@ -45,37 +39,31 @@ class TopBar extends React.Component<Props, State> {
     this.state = {};
   }
 
-  private renderFrontPageTopBar = () => {
-    return (
-      <React.Fragment>
-        <View style={styles.center}>
-        </View>
-        <View style={styles.center}>
-          <Thumbnail style={{ width:80, height:80 }} source={TOP_LOGO} />
-        </View>
-        <View style={styles.center}>
-          <TouchableHighlight onPress={() => this.navigateTo("ManageContact")}>
-            <Icon
-              name='user'
-              color='#fff'
-              size={30}
-            />
-          </TouchableHighlight>
-        </View>
-      </React.Fragment>
-    );
-  }
-
   /**
    * Component render method
    */
   public render() {
-    if (this.props.frontPage) {
-      return this.renderFrontPageTopBar()
-    }
-
     const width = Dimensions.get("screen").width;
     const align = Platform.OS === "ios" ? "flex-end" : "center";
+
+    if (this.props.frontPage) {
+      return (
+        <View style={{ width: (width / 3) * 2, marginLeft: width / 3, flex: 0, flexDirection: "row", alignContent: "space-around" }}>
+          <View style={{ ...styles.center, alignContent: align, justifyContent: align, alignItems: align }}>
+            <Thumbnail style={{ width:80, height:80 }} source={TOP_LOGO} />
+          </View>
+          <View style={styles.center}>
+            <TouchableHighlight onPress={() => this.navigateTo("ManageContact")}>
+              <Icon
+                name='user'
+                color='#fff'
+                size={30}
+              />
+            </TouchableHighlight>
+          </View>
+        </View>
+      );
+    }
 
     return (
       <View style={{ width: (width / 3) * 2, marginLeft: width / 3, flex: 0, flexDirection: "row", alignContent: "space-around" }}>
@@ -102,7 +90,7 @@ class TopBar extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -112,8 +100,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

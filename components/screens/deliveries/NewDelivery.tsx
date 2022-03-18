@@ -4,10 +4,10 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
-import { View, ActivityIndicator, Picker, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert, StyleProp, TextStyle, ViewStyle } from "react-native";
+import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert, StyleProp, TextStyle, ViewStyle } from "react-native";
 import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval, DeliveryQuality } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
-import { Text, Icon, H2, H1 } from "native-base";
+import { Text, Icon, H1 } from "native-base";
 import NumericInput from 'react-native-numeric-input'
 import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment";
@@ -22,6 +22,8 @@ import { extendMoment } from "moment-range";
 import _ from "lodash";
 import { roundPrice } from "../../../utils/utility-functions";
 import AsyncButton from "../../generic/async-button";
+import { Picker } from "native-base";
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 const Moment = require("moment");
 const extendedMoment = extendMoment(Moment);
@@ -110,14 +112,17 @@ class NewDelivery extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    const { accessToken } = this.props;
+    const { accessToken, navigation } = this.props;
     const { selectedDate } = this.state;
 
-    if (!accessToken) {
+    navigation.setOptions(this.navigationOptions(navigation));
+
+    if (!accessToken?.access_token) {
       return;
     }
 
     this.setState({ loading: true });
+
     const Api = new PakkasmarjaApi();
     const productsService = Api.getProductsService(accessToken.access_token);
     const productPricesService = Api.getProductPricesService(accessToken.access_token);
@@ -141,12 +146,12 @@ class NewDelivery extends React.Component<Props, State> {
       deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.id !== "OTHER"),
       deliveries,
       products,
-      productId: products[0] ? products[0].id : undefined,
-      product: products[0] ? products[0] : undefined,
-      deliveryPlaceId: deliveryPlaces[0].id,
+      productId: products[0]?.id,
+      product: products[0],
+      deliveryPlaceId: deliveryPlaces[0]?.id,
       productPrice: productPrice[0],
       deliveryQualities,
-      loading: false,
+      loading: false
     });
 
     if (products[0] && !productPrice[0]) {
@@ -154,7 +159,7 @@ class NewDelivery extends React.Component<Props, State> {
     }
 
 
-    if (selectedDate && deliveryPlaces[0].id) {
+    if (selectedDate && deliveryPlaces[0]?.id) {
       this.getDeliveryPlaceOpeningHours(selectedDate, deliveryPlaces[0].id);
     }
   }
@@ -180,13 +185,18 @@ class NewDelivery extends React.Component<Props, State> {
   /**
    * Navigation options of current route
    */
-  static navigationOptions = ({ navigation }: any) => {
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={ navigation } showMenu showUser/>,
+      headerTitle: () => <TopBar navigation={ navigation } showMenu showUser/>,
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
             name='chevron-left'
@@ -204,15 +214,15 @@ class NewDelivery extends React.Component<Props, State> {
    * @return deliveries
    */
   private getDeliveries = () => {
-    if (!this.props.deliveries) {
+    const { deliveries, itemGroupCategory } = this.props;
+
+    if (!deliveries) {
       return [];
     }
 
-    if (this.props.itemGroupCategory === "FROZEN") {
-      return this.props.deliveries.frozenDeliveryData;
-    }
-
-    return this.props.deliveries.freshDeliveryData;
+    return itemGroupCategory === "FROZEN" ?
+      deliveries.frozenDeliveryData :
+      deliveries.freshDeliveryData;
   }
 
     /**
@@ -224,21 +234,33 @@ class NewDelivery extends React.Component<Props, State> {
   private getDeliveryPlaceOpeningHours = async (date: Date, deliveryPlaceId: string) => {
     const { accessToken } = this.props;
     const { defaultOpeningHours } = this.state;
-    if (!accessToken || !accessToken.access_token) {
+
+    if (!accessToken?.access_token) {
       return;
     }
 
     try {
-      const openingHoursService = Api.getOpeningHoursService(accessToken.access_token);
+      const chosenDate = moment(date);
       const rangeStart = moment(date).startOf("day").toDate();
       const rangeEnd = moment(date).endOf("day").toDate();
+
+      const openingHoursService = Api.getOpeningHoursService(accessToken.access_token);
       const openingHourPeriods = await openingHoursService.listOpeningHourPeriods(deliveryPlaceId, rangeStart, rangeEnd);
       const openingHourExceptions = await openingHoursService.listOpeningHourExceptions(deliveryPlaceId);
-      const chosenDate = moment(date);
-      const exception = openingHourExceptions.find(item => {
-        const exceptionDate = moment(item.exceptionDate);
-        return exceptionDate.format("YYYY-MM-DD") === chosenDate.format("YYYY-MM-DD");
-      });
+
+      const exception = openingHourExceptions.find(item =>
+        moment(item.exceptionDate).format("YYYY-MM-DD") === chosenDate.format("YYYY-MM-DD")
+      );
+
+      if (exception) {
+        this.setState({
+          deliveryPlaceOpeningHours: exception.hours,
+          selectedTime: exception.hours[0].opens
+        });
+
+        return;
+      }
+
       const period = openingHourPeriods.find(period => {
         const periodBegin = moment(period.beginDate);
         const periodEnd = moment(period.endDate);
@@ -246,35 +268,26 @@ class NewDelivery extends React.Component<Props, State> {
         const sameAsEnd = chosenDate.format("YYYY-MM-DD") === periodEnd.format("YYYY-MM-DD");
         return chosenDate.isBetween(periodBegin, periodEnd) || sameAsBegin || sameAsEnd;
       });
-      if (exception) {
-        this.setState({
-          deliveryPlaceOpeningHours: exception.hours,
-          selectedTime: exception.hours[0].opens
-        });
-      } else if (period) {
-        const periodDay = period.weekdays.find((item, index) => {
-          const day = moment(period.beginDate).add(index, "days");
-          return day.format("YYYY-MM-DD") === chosenDate.format("YYYY-MM-DD");
-        });
-        if (periodDay) {
-          this.setState({
-            deliveryPlaceOpeningHours: periodDay.hours,
-            selectedTime: periodDay.hours[0].opens
-          });
-        } else {
-          this.setState({
-            deliveryPlaceOpeningHours: undefined,
-            selectedTime: defaultOpeningHours[0].opens
-          });
-        }
-      } else {
+
+      const periodDay = period?.weekdays.find((_, index) =>
+        moment(period.beginDate).add(index, "days").format("YYYY-MM-DD") === chosenDate.format("YYYY-MM-DD")
+      );
+
+      if (!periodDay) {
         this.setState({
           deliveryPlaceOpeningHours: undefined,
           selectedTime: defaultOpeningHours[0].opens
         });
+
+        return;
       }
+
+      this.setState({
+        deliveryPlaceOpeningHours: periodDay.hours,
+        selectedTime: periodDay.hours[0].opens
+      });
     } catch (error) {
-      console.log(error);
+      console.warn(error);
     }
   }
 
@@ -291,12 +304,11 @@ class NewDelivery extends React.Component<Props, State> {
    * On create note click
    */
   private onCreateNoteClick = () => {
-    const noteData = this.state.deliveryNoteData;
-    const notes = this.state.deliveryNotes;
-    notes.push(noteData);
-
     this.setState({
-      deliveryNotes: notes,
+      deliveryNotes: [
+        ...this.state.deliveryNotes,
+        { ...this.state.deliveryNoteData }
+      ],
       deliveryNoteData: {
         imageUri: "",
         imageType: "",
@@ -311,7 +323,7 @@ class NewDelivery extends React.Component<Props, State> {
    * @param key key
    * @param value value
    */
-  private onUserInputChange = async (key: DeliveryDataKey, value: string | number) => {
+  private onUserInputChange = async (key: DeliveryDataKey, value: string | number | Date) => {
     this.setState({ ...this.state, [key]: value });
   }
 
@@ -320,17 +332,19 @@ class NewDelivery extends React.Component<Props, State> {
    */
   private handleProductChange = async (productId: string) => {
     const { accessToken } = this.props;
+    const { products } = this.state;
 
     if (!accessToken) {
       return;
     }
 
     this.setState({ productId });
-    const products = this.state.products;
-    const product = products.find((product) => product.id === productId)
+    const product = products.find(({ id }) => id === productId);
+
     const Api = new PakkasmarjaApi();
     const productPricesService = Api.getProductPricesService(accessToken.access_token);
     const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
+
     const [ productPrice, deliveryQualities ] = await Promise.all([
       productPricesService.listProductPrices(productId, "CREATED_AT_DESC", undefined, undefined, 1),
       deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, productId)
@@ -383,11 +397,13 @@ class NewDelivery extends React.Component<Props, State> {
     }
 
     const createdDelivery: Delivery = await deliveryService.createDelivery(delivery);
+
     if (deliveryNotes.length > 0) {
       await Promise.all(deliveryNotes.map((deliveryNote): Promise<DeliveryNote | null> => {
         return this.createDeliveryNote(createdDelivery.id || "", deliveryNote);
       }));
     }
+
     this.updateDeliveries(createdDelivery);
     navigation.navigate("IncomingDeliveries");
   }
@@ -396,7 +412,7 @@ class NewDelivery extends React.Component<Props, State> {
    * Create delivery notes
    *
    * @param deliveryId deliveryId
-   * @param deliveryNote deliveryNote
+   * @param deliveryNoteData deliveryNoteData
    */
   private async createDeliveryNote(deliveryId: string, deliveryNoteData: DeliveryNoteData): Promise<DeliveryNote | null> {
     if (this.props.accessToken) {
@@ -443,7 +459,7 @@ class NewDelivery extends React.Component<Props, State> {
       deliveriesState.freshDeliveryData = deliveries;
     }
 
-    this.props.deliveriesLoaded && this.props.deliveriesLoaded(deliveriesState)
+    this.props.deliveriesLoaded?.(deliveriesState);
   }
 
   /**
@@ -527,45 +543,42 @@ class NewDelivery extends React.Component<Props, State> {
    */
   private mapToDateArray = (interval: OpeningHourInterval): Date[] => {
     const { opens, closes } = interval;
+
     const dateRange = extendedMoment.range(
       moment(opens),
       moment(closes)
     );
+
     const momentDateArray = Array.from(dateRange.by("minutes", { step: 15, excludeEnd: true }));
     return momentDateArray.map(date => date.toDate());
-  }
-
-  /**
-   * Checks if time of day matches
-   */
-  private matchTime = (a: Date | undefined, b: Date | undefined) => {
-    return a && b ?
-      moment(a).format("HH.mm") === moment(b).format("HH.mm") :
-      false;
   }
 
   /**
    * On remove note
    */
   private onRemoveNote = () => {
-    const deliveryNotes = this.state.deliveryNotes;
-    const deliveryNote = this.state.deliveryNoteData;
-    const newDeliveryNotes = deliveryNotes.filter((note) => {
-      return note !== deliveryNote;
+    const { deliveryNotes, deliveryNoteData } = this.state;
+
+    this.setState({
+      deliveryNotes: deliveryNotes.filter(note => !(
+        note.imageType === deliveryNoteData.imageType &&
+        note.imageUri === deliveryNoteData.imageUri &&
+        note.text === deliveryNoteData.text
+      )),
+      modalOpen: false
     });
-    this.setState({ deliveryNotes: newDeliveryNotes, modalOpen: false });
   }
 
   /**
    * Show alert when no product price found
    */
   private renderAlert = () => {
+    const { product } = this.state;
+
     Alert.alert(
       'Tuotteelle ei löytynyt hintaa',
-      `Tuotteelle ${this.state.product && this.state.product.name} ei löytynyt hintaa, ota yhteyttä pakkasmarjaan`,
-      [
-        { text: 'OK', onPress: () => { } },
-      ]
+      `Tuotteelle ${product?.name} ei löytynyt hintaa, ota yhteyttä pakkasmarjaan`,
+      [{ text: 'OK', onPress: () => { } }]
     );
   }
 
@@ -575,10 +588,13 @@ class NewDelivery extends React.Component<Props, State> {
    * @return whether form is valid or not
    */
   private isValid = () => {
-    return !!(this.state.product
-      && this.state.selectedDate
-      && this.state.deliveryPlaceId
-      && this.state.selectedTime
+    const { product, selectedDate, deliveryPlaceId, selectedTime } = this.state;
+
+    return !!(
+      product &&
+      selectedDate &&
+      deliveryPlaceId &&
+      selectedTime
     );
   }
 
@@ -606,10 +622,14 @@ class NewDelivery extends React.Component<Props, State> {
     }
 
     return (
-      <BasicScrollLayout navigation={ navigation } backgroundColor="#fff" displayFooter={ true }>
+      <BasicScrollLayout
+        navigation={ navigation }
+        backgroundColor="#fff"
+        displayFooter={ true }
+      >
         <View style={ styles.deliveryContainer }>
           <Text style={ styles.textWithSpace }>Valitse tuote</Text>
-          { products.length < 1 ?
+          { !products.length ?
             <Text>Ei voimassa olevaa sopimusta. Jos näin ei pitäisi olla, ole yhteydessä Pakkasmarjaan.</Text>
             :
             <>
@@ -637,7 +657,6 @@ class NewDelivery extends React.Component<Props, State> {
               valueType='real'
               minValue={ 0 }
               textColor='black'
-              iconStyle={{ color: 'white' }}
               rightButtonBackgroundColor='#e01e36'
               leftButtonBackgroundColor='#e01e36'
               borderColor='transparent'
@@ -651,14 +670,10 @@ class NewDelivery extends React.Component<Props, State> {
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
             <View style={{ flex: 1 }}>
-              {
-                this.renderDeliveryDateSelection()
-              }
+              { this.renderDeliveryDateSelection() }
             </View>
             <View style={{ flex: 1, marginLeft: "4%" }}>
-              {
-                this.renderDeliveryTimeSelection()
-              }
+              { this.renderDeliveryTimeSelection() }
             </View>
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 15, justifyContent: "center" }}>
@@ -670,19 +685,12 @@ class NewDelivery extends React.Component<Props, State> {
             <Text style={ styles.textWithSpace }>Toimituspaikka</Text>
           </View>
           <View style={[ styles.pickerWrap, { width: "100%" } ]}>
-            {
-              this.renderDeliveryPlaceSelection()
-            }
+            { this.renderDeliveryPlaceSelection() }
           </View>
           <View style={{ flex: 1 }}>
-            {
-              this.renderDeliveryNotes()
-            }
-            {
-              this.renderAddDeliveryNote()
-            }
-            {
-              !this.isValid() &&
+            { this.renderDeliveryNotes() }
+            { this.renderAddDeliveryNote() }
+            { !this.isValid() &&
               <View style={[ styles.center, { flex: 1, marginTop: 5 } ]}>
                 <Text style={{ color: "red" }}>Tarvittavia tietoja puuttuu</Text>
               </View>
@@ -693,7 +701,7 @@ class NewDelivery extends React.Component<Props, State> {
                 style={[ styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 } ]}
                 onPress={ this.handleDeliverySubmit }
               >
-                <Text style={styles.buttonText}>Tallenna</Text>
+                <Text style={ styles.buttonText }>Tallenna</Text>
               </AsyncButton>
             </View>
           </View>
@@ -701,11 +709,11 @@ class NewDelivery extends React.Component<Props, State> {
         <DeliveryNoteModal
           onRemoveNote={ this.onRemoveNote }
           editable={ noteEditable }
-          imageUri={ deliveryNoteData ? deliveryNoteData.imageUri : undefined }
+          imageUri={ deliveryNoteData?.imageUri }
           onCreateNoteClick={ this.onCreateNoteClick }
           deliveryNoteData={ deliveryNoteData }
           onDeliveryNoteChange={ this.onDeliveryNoteChange }
-          onDeliveryNoteImageChange={ ((fileUri, fileType) => this.onDeliveryNoteImageChange(fileUri, fileType)) }
+          onDeliveryNoteImageChange={ this.onDeliveryNoteImageChange }
           modalClose={ () => this.setState({ modalOpen: false }) }
           modalOpen={ modalOpen }
         />
@@ -722,29 +730,26 @@ class NewDelivery extends React.Component<Props, State> {
       return (
         <Picker
           selectedValue={ productId }
-          style={{ height: 50, width: "100%" }}
-          onValueChange={(itemValue, itemIndex) =>
+          style={{ height: 50, width: "100%", color: "black" }}
+          onValueChange={ (itemValue: string) =>
             this.handleProductChange(itemValue)
-          }>
-          {
-            products.map((product) => {
-              return (
-                <Picker.Item key={ product.id } label={ product.name || "" } value={ product.id } />
-              );
-            })
+          }
+        >
+          { products.map(product =>
+              <Picker.Item
+                key={ product.id }
+                label={ product.name || "" }
+                value={ product.id }
+              />
+            )
           }
         </Picker>
       );
     } else {
       return (
         <ModalSelector
-          data={products && products.map((product) => {
-            return {
-              key: product.id,
-              label: product.name
-            };
-          })}
-          selectedKey={ product ? product.id : undefined }
+          data={ products?.map(({ id, name }) => ({ key: id, label: name })) }
+          selectedKey={ product?.id }
           initValue="Valitse tuote"
           onChange={ (option: any) => { this.handleProductChange(option.key) }}
         />
@@ -820,7 +825,8 @@ class NewDelivery extends React.Component<Props, State> {
    * Renders delivery date selection
    */
   private renderDeliveryDateSelection = () => {
-    const { datepickerVisible } = this.state;
+    const { datepickerVisible, selectedDate } = this.state;
+
     return (
       <>
         <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
@@ -833,14 +839,11 @@ class NewDelivery extends React.Component<Props, State> {
           <View style={{ flex: 1, flexDirection: "row" }}>
             <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
               <Text style={{ paddingLeft: 10 }}>
-                { this.state.selectedDate ?
-                  this.printDate(this.state.selectedDate) :
-                  "Valitse päivä"
-                }
+                { selectedDate ? this.printDate(selectedDate) : "Valitse päivä" }
               </Text>
             </View>
             <View style={[ styles.center, { flex: 0.6 } ]}>
-              { this.state.selectedDate ?
+              { selectedDate ?
                 <Icon
                   style={{ color: "#e01e36" }}
                   onPress={ this.removeDate }
@@ -857,7 +860,7 @@ class NewDelivery extends React.Component<Props, State> {
           </View>
         </TouchableOpacity>
         <DateTimePicker
-          date={ this.state.selectedDate }
+          date={ selectedDate }
           mode="date"
           isVisible={ datepickerVisible }
           onConfirm={ date => this.setState({ selectedDate: date, datepickerVisible: false }) }
@@ -895,24 +898,24 @@ class NewDelivery extends React.Component<Props, State> {
    */
   private renderTimePicker = (hours: Date[]) => {
     const { selectedTime } = this.state;
+
     if (Platform.OS !== "ios") {
       return (
         <Picker
-          selectedValue={ hours.find(time => this.matchTime(time, selectedTime)) }
-          style={{ height: 50, width: "100%" }}
-          onValueChange={ itemValue => this.onUserInputChange("selectedTime", itemValue) }
+          selectedValue={ selectedTime?.valueOf() }
+          style={{ height: 50, width: "100%", color: "black" }}
+          onValueChange={ (itemValue: string) =>
+            this.onUserInputChange("selectedTime", new Date(itemValue))
+          }
         >
           {
-            (hours || []).map(time => {
-              const timeString = this.printTime(time);
-              return (
-                <Picker.Item
-                  key={ timeString }
-                  label={ timeString }
-                  value={ time }
-                />
-              );
-            })
+            hours.map(time =>
+              <Picker.Item
+                key={ time.valueOf() }
+                label={ this.printTime(time) }
+                value={ time.valueOf() }
+              />
+            )
           }
         </Picker>
       );
@@ -921,17 +924,14 @@ class NewDelivery extends React.Component<Props, State> {
     return (
       <ModalSelector
         data={
-          (hours || []).map(time => {
-            const timeString = this.printTime(time);
-            return {
-              key: time,
-              label: timeString
-            };
-          })
+          hours.map(time => ({
+            key: time.valueOf(),
+            label: this.printTime(time)
+          }))
         }
-        selectedKey={ hours.find(time => this.matchTime(time, selectedTime)) }
+        selectedKey={ selectedTime?.valueOf() }
         initValue="Valitse toimitusaika"
-        onChange={ (option: any) => this.onUserInputChange("selectedTime", option.key) }
+        onChange={ ({ key }) => this.onUserInputChange("selectedTime", new Date(key)) }
       />
     );
   }
@@ -941,37 +941,31 @@ class NewDelivery extends React.Component<Props, State> {
    */
   private renderDeliveryPlaceSelection = () => {
     const { deliveryPlaces, deliveryPlaceId } = this.state;
+
     if (Platform.OS !== "ios") {
       return (
         <Picker
           selectedValue={ deliveryPlaceId }
-          style={{ height: 50, width: "100%" }}
-          onValueChange={ itemValue => this.onUserInputChange("deliveryPlaceId", itemValue) }
+          style={{ height: 50, width: "100%", color: "black" }}
+          onValueChange={ (itemValue: string) =>
+            this.onUserInputChange("deliveryPlaceId", itemValue)
+          }
         >
           {
-            (deliveryPlaces || []).map(deliveryPlace => {
-              return (
-                <Picker.Item
-                  key={ deliveryPlace.id }
-                  label={ deliveryPlace.name || "" }
-                  value={ deliveryPlace.id }
-                />
-              );
-            })
+            (deliveryPlaces || []).map(deliveryPlace =>
+              <Picker.Item
+                key={ deliveryPlace.id }
+                label={ deliveryPlace.name || "" }
+                value={ deliveryPlace.id }
+              />
+            )
           }
         </Picker>
       );
     } else {
       return (
         <ModalSelector
-          data={
-            (deliveryPlaces || []).map(deliveryPlace => {
-              return {
-                key: deliveryPlace.id,
-                label: deliveryPlace.name
-              };
-            })
-          }
+          data={ (deliveryPlaces || []).map(({ id, name }) => ({ key: id, label: name })) }
           selectedKey={ deliveryPlaceId }
           initValue="Valitse toimituspaikka"
           onChange={ (option: any) => this.onUserInputChange("deliveryPlaceId", option.key) }
@@ -985,7 +979,8 @@ class NewDelivery extends React.Component<Props, State> {
    */
   private renderDeliveryNotes = () => {
     const { deliveryNotes } = this.state;
-    if (deliveryNotes.length < 1) {
+
+    if (!deliveryNotes.length) {
       return null;
     }
 

@@ -9,7 +9,7 @@ import PakkasmarjaApi from "../../../api";
 import * as actions from "../../../actions";
 import { connect } from "react-redux";
 import { styles } from "./styles";
-import * as _ from "lodash";
+import _ from "lodash";
 
 /**
  * Interface for component props
@@ -108,7 +108,7 @@ class ContractModal extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -118,8 +118,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {

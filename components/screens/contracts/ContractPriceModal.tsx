@@ -1,6 +1,6 @@
-import React, { Dispatch } from "react";
+import React from "react";
 import { Text } from "native-base";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { Col, Row, Grid } from "react-native-easy-grid";
 import Modal from "react-native-modal";
 import { ItemGroupPrice } from "pakkasmarja-client";

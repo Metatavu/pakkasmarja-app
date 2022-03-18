@@ -2,7 +2,7 @@ import * as querystring from "query-string";
 import moment from "moment";
 import { AuthConfig, AccessToken } from "../types";
 import jwt_decode from "jwt-decode";
-import { AsyncStorage } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ACCESS_TOKEN_STORAGE_KEY = "pakkasmarja-access";
 
@@ -10,12 +10,12 @@ export default class Auth {
 
   /**
    * Logs user in with provided configuration
-   * 
+   *
    * @param config login configuration
    */
   static async login(config: AuthConfig) {
     const created = new Date();
-    const response = await fetch(config.url, { 
+    const response = await fetch(config.url, {
       method: 'POST',
       body: querystring.stringify({
         grant_type: 'password',
@@ -25,7 +25,7 @@ export default class Auth {
       }),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
-      } 
+      }
     });
 
     const tokenData = await response.json();
@@ -64,7 +64,7 @@ export default class Auth {
 
   /**
    * Refreshes access token if it can be done
-   * 
+   *
    * @param accessToken Access token
    */
   static async refreshToken(accessToken: AccessToken) {
@@ -73,7 +73,7 @@ export default class Auth {
     }
 
     const created = new Date();
-    const response = await fetch(accessToken.url, { 
+    const response = await fetch(accessToken.url, {
       method: 'POST',
       body: querystring.stringify({
         grant_type: 'refresh_token',
@@ -82,7 +82,7 @@ export default class Auth {
       }),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
-      } 
+      }
     });
 
     const tokenData = await response.json();
@@ -91,8 +91,8 @@ export default class Auth {
 
   /**
    * Returns true if token is valid, false otherwise
-   * 
-   * @param token Access token 
+   *
+   * @param token Access token
    * @param slackSeconds seconds to use as slack
    */
   static isTokenValid(token: AccessToken, slackSeconds?: number) {
@@ -106,7 +106,7 @@ export default class Auth {
 
   /**
    * Returns true if token can be refreshed using refresh token, false otherwise
-   * 
+   *
    * @param token Access token
    * @param slackSeconds seconds to use as slack
    */
@@ -121,11 +121,11 @@ export default class Auth {
 
   /**
    * Builds access token object from login data
-   * 
+   *
    * @param tokenData token data
    * @param created creation time
    * @param url url
-   * @param clientId client id 
+   * @param clientId client id
    * @param realmId realm id
    */
   private static async buildToken(tokenData: any, created: Date, url: string, clientId: string, realmId: string) {

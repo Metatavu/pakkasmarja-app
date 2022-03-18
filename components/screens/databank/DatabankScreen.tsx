@@ -3,16 +3,16 @@ import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import { StoreState, AccessToken } from "../../../types";
-import { View, TouchableHighlight, Image, Alert, Platform } from "react-native";
+import { View, TouchableHighlight, Image, Platform } from "react-native";
 import { ItemGroup, SharedFile, FileType } from "pakkasmarja-client";
 import * as actions from "../../../actions";
 import TopBar from "../../layout/TopBar";
-import { Text, Fab, Container, Toast } from "native-base";
+import { Text, Fab, Container, Toast, Icon } from "native-base";
 import { DEFAULT_FILE, PDF_FILE, IMAGE_FILE } from '../../../static/images/';
 import RNFetchBlob from 'rn-fetch-blob';
-import { Icon } from 'react-native-elements';
 import PakkasmarjaApi from "../../../api";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
+import { StackNavigationOptions } from '@react-navigation/stack';
 
 /**
  * Component props
@@ -58,9 +58,14 @@ class DatabankScreen extends React.Component<Props, State> {
  * @param navigation navigation
  * @returns navigation options object
  */
-  static navigationOptions = ({ navigation }: any) => {
+  /**
+   * Returns navigation options
+   *
+   * @param navigation navigation object
+   */
+  private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
-      headerTitle: <TopBar navigation={navigation}
+      headerTitle: () => <TopBar navigation={navigation}
         showMenu={true}
         showHeader={false}
         showUser={true}
@@ -68,7 +73,7 @@ class DatabankScreen extends React.Component<Props, State> {
       headerTitleContainerStyle: {
         left: 0,
       },
-      headerLeft:
+      headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
             name='chevron-left'
@@ -84,6 +89,7 @@ class DatabankScreen extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   componentDidMount() {
+    this.props.navigation.setOptions(this.navigationOptions(this.props.navigation));
     this.updateSharedFiles();
   }
 
@@ -112,7 +118,7 @@ class DatabankScreen extends React.Component<Props, State> {
             style={{ backgroundColor: '#E51D2A' }}
             position="topRight"
             onPress={ this.moveBackToFolder }>
-            <Icon name="arrow-back" iconStyle={{ color: "#fff" }} />
+            <Icon name="arrow-back" style={{ color: "#fff" }} />
           </Fab>
         }
       </Container>
@@ -175,7 +181,7 @@ class DatabankScreen extends React.Component<Props, State> {
         <TouchableHighlight key={ index } onPress={ (item.fileType === "FOLDER") ? () => { this.moveToFolder(item.name) } : () => { this.downloadFile(item) } }>
           <View key={ index } style={{ display: "flex", flexDirection: "row", height: 70, padding: 10, borderBottomWidth: 1, borderBottomColor: "#000", backgroundColor: "#fff" }}>
             { item.fileType !== "FOLDER" && <Image source={ this.getImage(item.fileType) } style={{ flex: 1, height: undefined, width: undefined, marginRight: 10 }} resizeMode="contain" /> }
-            { item.fileType === "FOLDER" && <Icon name='folder' color={ "#e01e37" } iconStyle={{ fontSize: 32, marginRight: 10 }} /> }
+            { item.fileType === "FOLDER" && <Icon name='folder' color={ "#e01e37" } style={{ fontSize: 32, marginRight: 10 }} /> }
             <Text style={{ flex: 9, fontSize: 25, textAlignVertical: "center", textTransform: "capitalize" }}>{ item.name }</Text>
           </View>
         </TouchableHighlight>
@@ -185,7 +191,7 @@ class DatabankScreen extends React.Component<Props, State> {
 
   /**
    * Sets path to the given folder
-   * 
+   *
    * @param name name of the folder
    */
   private moveToFolder = (name: string) => {
@@ -266,7 +272,7 @@ class DatabankScreen extends React.Component<Props, State> {
       return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     } else if(filename.endsWith(".zip")) {
       return "application/zip";
-    } 
+    }
 
     return "application/octet-stream";
   }
@@ -295,7 +301,7 @@ class DatabankScreen extends React.Component<Props, State> {
 
   /**
    * Downloads a file
-   * 
+   *
    * @param file shared file
    */
   private downloadFile = async (file: SharedFile) => {
@@ -334,12 +340,12 @@ class DatabankScreen extends React.Component<Props, State> {
         type: "danger",
         text: "Tiedoston lataus epäonnistui"
       });
-    } 
+    }
   }
 
   /**
    * Returns the correct image for item type
-   * 
+   *
    * @param type type of the item
    */
   private getImage = (type: string) => {
@@ -360,7 +366,7 @@ class DatabankScreen extends React.Component<Props, State> {
 
 /**
  * Redux mapper for mapping store state to component props
- * 
+ *
  * @param state store state
  */
 function mapStateToProps(state: StoreState) {
@@ -370,8 +376,8 @@ function mapStateToProps(state: StoreState) {
 }
 
 /**
- * Redux mapper for mapping component dispatches 
- * 
+ * Redux mapper for mapping component dispatches
+ *
  * @param dispatch dispatch method
  */
 function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
