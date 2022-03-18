@@ -7,7 +7,7 @@ import strings from "../../../localization/strings";
 import ChatGroupList from "../../fragments/chats/ChatGroupList";
 import ChatThreadList from "../../fragments/chats/ChatThreadList";
 import BasicLayout from "../../layout/BasicLayout";
-import { Tabs, Tab } from "native-base";
+import { Tabs, Tab, DefaultTabBar } from "native-base";
 import { ChatThread, ChatGroup } from "pakkasmarja-client";
 import Chat from "../../fragments/chats/Chat";
 import { StyleSheet, TouchableHighlight } from "react-native";
@@ -28,10 +28,10 @@ interface Props {
  * Component state
  */
 interface State {
-  selectedChatThreadId?: number,
-  selectedQuestionThreadId?: number,
-  selectedQuestionGroupId?: number
-  errorMsg?: string
+  selectedChatThreadId?: number;
+  selectedQuestionThreadId?: number;
+  selectedQuestionGroupId?: number;
+  errorMsg?: string;
 };
 
 const styles = StyleSheet.create({
@@ -67,7 +67,7 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   componentDidMount() {
     const { navigation, route } = this.props;
-    const { selectedQuestionThreadId } = route.params;
+    const { selectedQuestionThreadId } = route.params || {};
 
     navigation.setOptions(this.navigationOptions(navigation));
     selectedQuestionThreadId && this.setState({ selectedQuestionThreadId });
@@ -110,7 +110,7 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   public render() {
     const { navigation, route } = this.props;
-    const { selectedQuestionThreadId } = route.params;
+    const { selectedQuestionThreadId } = route.params || {};
     const initialTab = selectedQuestionThreadId ? 1 : 0;
 
     return (
@@ -118,6 +118,7 @@ class ChatsListScreen extends React.Component<Props, State> {
         <Tabs
           initialPage={ initialTab }
           tabBarUnderlineStyle={{ backgroundColor: "#fff" }}
+          renderTabBar={ (props: any) => <DefaultTabBar {...{ ...props, tabStyle: Object.create(props.tabStyle) }}/> }
         >
           <Tab
             activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
@@ -146,11 +147,13 @@ class ChatsListScreen extends React.Component<Props, State> {
    * Renders chat tab
    */
   private renderChatTab = (): JSX.Element => {
-    if (this.state.selectedChatThreadId) {
+    const { selectedChatThreadId } = this.state;
+
+    if (selectedChatThreadId) {
       return (
         <Chat
           onBackClick={ this.handleChatChatBackClick }
-          threadId={ this.state.selectedChatThreadId }
+          threadId={ selectedChatThreadId }
           conversationType="CHAT"
           onError={ this.handleError }
         />
@@ -170,21 +173,23 @@ class ChatsListScreen extends React.Component<Props, State> {
    * Renders question tab
    */
   private renderQuestionTab = (): JSX.Element => {
-    if (this.state.selectedQuestionThreadId) {
+    const { selectedQuestionThreadId, selectedQuestionGroupId } = this.state;
+
+    if (selectedQuestionThreadId) {
       return (
         <Chat
           onBackClick={ this.handleQuestionChatBackClick }
-          threadId={ this.state.selectedQuestionThreadId }
+          threadId={ selectedQuestionThreadId }
           conversationType="QUESTION"
           onError={ this.handleError }
         />
       );
-    } else if (this.state.selectedQuestionGroupId) {
+    } else if (selectedQuestionGroupId) {
       return (
         <ChatThreadList
           onBackClick={ this.handleQuestionThreadBackClick }
           onThreadSelected={ this.handleQuestionThreadSelected }
-          groupId={ this.state.selectedQuestionGroupId }
+          groupId={ selectedQuestionGroupId }
           type="QUESTION"
           onError={ this.handleError }
         />

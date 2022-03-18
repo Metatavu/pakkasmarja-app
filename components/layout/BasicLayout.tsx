@@ -52,19 +52,23 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
   }
 
   public componentDidUpdate = (prevProps: BasicLayoutProps) => {
-    if (this.props.errorMsg && this.props.errorMsg != prevProps.errorMsg) {
+    const { errorMsg } = this.props;
+
+    if (!!errorMsg && errorMsg !== prevProps.errorMsg) {
       Toast.show({
-        text: this.props.errorMsg,
+        text: errorMsg,
         type: "danger"
       });
     }
   }
 
-  public render() {
+  public render = () => {
+    const { loading, children, accessToken, displayFooter } = this.props;
+
     const unreadNews = this.countUnreads("news-");
     const unreadChats = this.countUnreads("chat");
 
-    if (this.props.loading) {
+    if (loading) {
       return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Spinner color="red" />
@@ -74,51 +78,93 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
 
     return (
       <SafeAreaView style={{ flex: 1 }}>
-        {this.props.children}
-        { this.props.accessToken && !this.props.accessToken.realmRoles.includes("manage-threads") &&
+        { children }
+        { accessToken && !accessToken.realmRoles.includes("manage-threads") &&
           <Fab
             active
             direction="up"
             containerStyle={{ bottom: "11%" }}
             style={{ backgroundColor: '#e01e36' }}
             position="bottomRight"
-            onPress={ () => this.onHelpClick() }
+            onPress={ this.onHelpClick }
           >
-            <Icon name="help" />
+            <Icon name="help"/>
           </Fab>
         }
-        {this.props.displayFooter &&
-          <View style={styles.footer}>
-            <TouchableOpacity  onPress={() => this.goToScreen("News")}>
+        { displayFooter &&
+          <View style={ styles.footer }>
+            <TouchableOpacity onPress={ () => this.goToScreen("News") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                { unreadNews > 0 && <Badge style={{position: "absolute", height:20}}><Text style={{color:"white"}}>{unreadNews}</Text></Badge> }
-                <Thumbnail source={NEWS_ICON} square style={{ width: 22, height: 26 }} />
-                <Text style={{ fontSize: 12, color: "#333" }}>{strings.newsFooterLink}</Text>
+                { unreadNews > 0 &&
+                  <Badge style={{ position: "absolute", height:20 }}>
+                    <Text style={{ color:"white" }}>
+                      { unreadNews }
+                    </Text>
+                  </Badge>
+                }
+                <Thumbnail
+                  source={ NEWS_ICON }
+                  square
+                  style={{ width: 22, height: 26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  { strings.newsFooterLink }
+                </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.goToScreen("ChatsList")}>
+            <TouchableOpacity onPress={ () => this.goToScreen("ChatsList") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                { unreadChats > 0 && <Badge style={{position: "absolute", height:20, zIndex:99}}><Text style={{color:"white"}}>{unreadChats}</Text></Badge> }
-                <Thumbnail source={MESSAGES_ICON} square style={{ width: 48, height:26 }} />
-                <Text style={{ fontSize: 12, color: "#333" }}>{strings.messagingFooterLink}</Text>
+                { unreadChats > 0 &&
+                  <Badge style={{ position: "absolute", height:20, zIndex:99 }}>
+                    <Text style={{ color:"white" }}>
+                      { unreadChats }
+                    </Text>
+                  </Badge>
+                }
+                <Thumbnail
+                  source={ MESSAGES_ICON }
+                  square
+                  style={{ width: 48, height:26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  { strings.messagingFooterLink }
+                </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.goToScreen("Deliveries")}>
+            <TouchableOpacity onPress={ () => this.goToScreen("Deliveries") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                <Thumbnail source={DELIVERIES_ICON} square style={{ width: 40, height: 26 }} />
-                <Text style={{ fontSize: 12, color: "#333" }}>{strings.deliveriesFooterLink}</Text>
+                <Thumbnail
+                  source={ DELIVERIES_ICON }
+                  square
+                  style={{ width: 40, height: 26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  { strings.deliveriesFooterLink }
+                </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.goToScreen("Contracts")}>
+            <TouchableOpacity onPress={ () => this.goToScreen("Contracts") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                <Thumbnail source={CONTRACTS_ICON} square style={{ width: 20, height: 26 }} />
-                <Text style={{ fontSize: 12, color: "#333" }}>{strings.contractsFooterLink}</Text>
+                <Thumbnail
+                  source={ CONTRACTS_ICON }
+                  square
+                  style={{ width: 20, height: 26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  { strings.contractsFooterLink }
+                </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => this.goToScreen("Databank")}>
+            <TouchableOpacity onPress={ () => this.goToScreen("Databank") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                <Thumbnail source={DEFAULT_FILE} square style={{ width: 22, height: 26 }} />
-                <Text style={{ fontSize: 12, color: "#333" }}>Tietopankki</Text>
+                <Thumbnail
+                  source={ DEFAULT_FILE }
+                  square
+                  style={{ width: 22, height: 26 }}
+                />
+                <Text style={{ fontSize: 12, color: "#333" }}>
+                  Tietopankki
+                </Text>
               </View>
             </TouchableOpacity>
           </View>

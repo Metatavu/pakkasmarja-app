@@ -9,7 +9,7 @@ import { TouchableOpacity, Image, View, Text, TouchableHighlight, Dimensions } f
 import { styles } from './styles.tsx'
 import PakkasmarjaApi from "../../../api";
 import { RED_LOGO, INCOMING_DELIVERIES_LOGO, COMPLETED_DELIVERIES_LOGO, FRESH_ICON, FROZEN_ICON } from "../../../static/images";
-import Api, { Delivery, Product, ItemGroupCategory, OpeningHourPeriod, OpeningHourException, DeliveryPlace, OpeningHourWeekday, OpeningHourInterval, WeekdayType, DeliveryStatus } from "pakkasmarja-client";
+import { Delivery, ItemGroupCategory, OpeningHourPeriod, OpeningHourException, DeliveryPlace, OpeningHourWeekday, OpeningHourInterval, WeekdayType, DeliveryStatus } from "pakkasmarja-client";
 import FeatherIcon from "react-native-vector-icons/Feather";
 import BasicLayout from "../../layout/BasicLayout";
 import strings from "../../../localization/strings";
@@ -22,7 +22,7 @@ import { StackNavigationOptions } from '@react-navigation/stack';
 /**
  * Moment extended with moment-range
  */
-const Moment = require("moment");
+import * as Moment from "moment";
 const extendedMoment = extendMoment(Moment);
 extendedMoment.locale("fi");
 
@@ -120,16 +120,16 @@ class DeliveriesScreen extends React.Component<Props, State> {
         showUser
       />
     ),
-    headerTitleStyle: { width: Dimensions.get('window').width },
+    headerTitleStyle: { width: Dimensions.get("window").width },
     headerTitleContainerStyle: {
       left: 0
     },
     headerLeft: () => (
       <TouchableHighlight onPress={ navigation.goBack }>
         <FeatherIcon
-          name='chevron-left'
-          color='#fff'
-          size={40}
+          name="chevron-left"
+          color="#fff"
+          size={ 40 }
           style={{ marginLeft: 30 }}
         />
       </TouchableHighlight>
@@ -191,9 +191,9 @@ class DeliveriesScreen extends React.Component<Props, State> {
       return;
     }
 
-    const Api = new PakkasmarjaApi();
-    const deliveriesService = Api.getDeliveriesService(accessToken.access_token);
-    const productsService = Api.getProductsService(accessToken.access_token);
+    const api = new PakkasmarjaApi();
+    const deliveriesService = api.getDeliveriesService(accessToken.access_token);
+    const productsService = api.getProductsService(accessToken.access_token);
 
     const freshDeliveries = await deliveriesService.listDeliveries(accessToken.userId, undefined, "FRESH", undefined, undefined, undefined, undefined, undefined, 0, 10000);
     const frozenDeliveries = await deliveriesService.listDeliveries(accessToken.userId, undefined, "FROZEN", undefined, undefined, undefined, undefined, undefined, 0, 10000);
@@ -225,18 +225,18 @@ class DeliveriesScreen extends React.Component<Props, State> {
       return;
     }
 
-    const contractsService = Api.getContractsService(accessToken.access_token);
+    const api = new PakkasmarjaApi();
+    const contractsService = api.getContractsService(accessToken.access_token);
+    const deliveryPlacesService = api.getDeliveryPlacesService(accessToken.access_token);
     const userContracts = await contractsService.listContracts("application/json", undefined, undefined, undefined, new Date().getFullYear());
-
     const uniqueDeliveryPlaceIds = _.uniq(userContracts.map(contract => contract.deliveryPlaceId));
-    const deliveryPlacesService = Api.getDeliveryPlacesService(accessToken.access_token);
     const deliveryPlaces = await Promise.all(uniqueDeliveryPlaceIds.map(deliveryPlacesService.findDeliveryPlace));
 
     this.setState({ deliveryPlaces: deliveryPlaces });
   }
 
   /**
-   * load amounts
+   *    * load amounts
    */
   private loadAmounts = () => {
     const { deliveries } = this.props;
@@ -281,7 +281,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
       return;
     }
 
-    const openingHoursService = Api.getOpeningHoursService(accessToken.access_token);
+    const openingHoursService = new PakkasmarjaApi().getOpeningHoursService(accessToken.access_token);
     const today = extendedMoment();
     const fourWeeksFromToday = extendedMoment(today).add(28, "day");
 
@@ -337,6 +337,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
 
     if (itemValue.id) {
       const place = deliveryPlacesOpeningHours.find(item => item.id === itemValue.id);
+
       if (place) {
         this.createOpeningHoursTableData(place);
         this.setState({ selectedDeliveryPlaceOpeningHours: place });
@@ -404,7 +405,7 @@ class DeliveriesScreen extends React.Component<Props, State> {
         dayData: weekday!,
         key: index,
         confirmed: confirmed
-      } as OpeningHoursTableItem;
+      };
     });
 
     this.setState({
