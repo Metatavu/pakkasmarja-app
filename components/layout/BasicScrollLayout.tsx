@@ -35,12 +35,10 @@ export default class BasicScrollLayout extends React.Component<Props, State> {
         loading={ loading }
         navigation={ navigation }>
         <ScrollView
-          style={
-            {
-              backgroundColor: backgroundColor,
-              flex: 1
-            }
-          }
+          style={{
+            backgroundColor: backgroundColor,
+            flex: 1
+          }}
         >
           { children }
         </ScrollView>
