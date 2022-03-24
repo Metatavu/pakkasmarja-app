@@ -213,6 +213,10 @@ class ContractScreen extends React.Component<Props, State> {
    */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
+      headerStyle: {
+        height: 100,
+        backgroundColor: "#E51D2A"
+      },
       headerTitle: () => (
         <TopBar
           navigation={ navigation }

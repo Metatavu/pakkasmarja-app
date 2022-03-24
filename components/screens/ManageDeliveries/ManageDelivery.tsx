@@ -120,6 +120,10 @@ class ManageDelivery extends React.Component<Props, State> {
    * @param navigation navigation instance
    */
   private navigationOptions = (navigation: any) => ({
+    headerStyle: {
+      height: 100,
+      backgroundColor: "#E51D2A"
+    },
     headerTitle: () => (
       <TopBar
         navigation={ navigation }

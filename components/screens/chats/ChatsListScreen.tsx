@@ -36,14 +36,14 @@ interface State {
 
 const styles = StyleSheet.create({
   tab: {
-    backgroundColor: "#E51D2A"
+    backgroundColor: "#fff"
   },
   activeTab: {
-    color: "#fff",
+    color: "#E51D2A",
     fontWeight: "bold"
   },
   activeText: {
-    color: "#fff"
+    color: "#E51D2A"
   }
 });
 
@@ -81,6 +81,10 @@ class ChatsListScreen extends React.Component<Props, State> {
    */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
+      headerStyle: {
+        height: 100,
+        backgroundColor: "#E51D2A"
+      },
       headerTitle: () => (
         <TopBar
           navigation={ navigation }
@@ -117,12 +121,12 @@ class ChatsListScreen extends React.Component<Props, State> {
       <BasicLayout displayFooter navigation={ navigation }>
         <Tabs
           initialPage={ initialTab }
-          tabBarUnderlineStyle={{ backgroundColor: "#fff" }}
-          renderTabBar={ (props: any) => <DefaultTabBar {...{ ...props, tabStyle: Object.create(props.tabStyle) }}/> }
+          tabBarUnderlineStyle={{ backgroundColor: "#E51D2A" }}
+          renderTabBar={ (props: any) => <DefaultTabBar {...{ ...props }}/> }
         >
           <Tab
             activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
-            textStyle={{ color:"#fff" }}
+            textStyle={{ color:"#E51D2A" }}
             activeTextStyle={ styles.activeText }
             tabStyle={ styles.tab }
             heading={ strings.chatsNavHeader }
@@ -131,7 +135,7 @@ class ChatsListScreen extends React.Component<Props, State> {
           </Tab>
           <Tab
             activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
-            textStyle={{ color:"#fff" }}
+            textStyle={{ color:"#E51D2A" }}
             activeTextStyle={ styles.activeText }
             tabStyle={ styles.tab }
             heading={ strings.questionsNavHeader }
