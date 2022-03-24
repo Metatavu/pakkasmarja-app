@@ -28,6 +28,7 @@ export default class BasicScrollLayout extends React.Component<Props, State> {
       backgroundColor,
       children
     } = this.props;
+
     return (
       <BasicLayout 
         displayFooter={ displayFooter }
