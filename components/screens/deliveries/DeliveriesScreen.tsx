@@ -112,6 +112,10 @@ class DeliveriesScreen extends React.Component<Props, State> {
    * @param navigation navigation object
    */
   private navigationOptions = (navigation: any): StackNavigationOptions => ({
+    headerStyle: {
+      height: 100,
+      backgroundColor: "#E51D2A"
+    },
     headerTitle: () => (
       <TopBar
         navigation={ navigation }
@@ -735,7 +739,6 @@ class DeliveriesScreen extends React.Component<Props, State> {
             </Text>
             <Picker
               selectedValue={ selectedDeliveryPlaceOpeningHours }
-              style={{ color: "black" }}
               mode="dropdown"
               onValueChange={ this.chooseDeliveryPlaceOpeningHours }
             >
