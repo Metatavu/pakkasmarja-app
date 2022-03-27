@@ -4,7 +4,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
-import { View, TouchableOpacity, ActivityIndicator, TouchableHighlight } from "react-native";
+import { View, TouchableOpacity, ActivityIndicator, TouchableHighlight, Platform } from "react-native";
 import { styles } from "./styles.tsx";
 import { Thumbnail, Text } from "native-base";
 import { INCOMING_DELIVERIES_LOGO, INDELIVERY_LOGO, RED_LOGO } from "../../../static/images";
@@ -58,6 +58,10 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
    */
   private navigationOptions = (navigation: any): StackNavigationOptions => {
     return {
+      headerStyle: {
+        height: 100,
+        backgroundColor: "#E51D2A"
+      },
       headerTitle: () => (
         <TopBar
           navigation={ navigation }
@@ -152,12 +156,14 @@ class IncomingDeliveriesScreen extends React.Component<Props, State> {
     if (status === "PROPOSAL") {
       return (
         <View style={[ styles.center, { flexDirection: "row" } ]}>
-          <Thumbnail
-            square
-            small
-            source={ RED_LOGO }
-            style={{ marginRight: 10 }}
-          />
+          { Platform.OS === "android" &&
+            <Thumbnail
+              square
+              small
+              source={ RED_LOGO }
+              style={{ marginRight: 10 }}
+            /> 
+          }
           <Text style={{ color: "black" }}>
             Ehdotuksissa
           </Text>

@@ -16,6 +16,7 @@ target 'pakkasmarja' do
 
   pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
   pod 'Permission-MediaLibrary', :path => "#{permissions_path}/MediaLibrary"
+  pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
 
   target 'pakkasmarjaTests' do
     inherit! :complete
