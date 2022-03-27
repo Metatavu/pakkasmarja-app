@@ -5,9 +5,9 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct, DeliveryDataKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert, StyleProp, TextStyle, ViewStyle } from "react-native";
-import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval, DeliveryQuality, ItemGroup } from "pakkasmarja-client";
+import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval, DeliveryQuality } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
-import { Text, Icon, H1, CheckBox, Body } from "native-base";
+import { Text, Icon, H1 } from "native-base";
 import NumericInput from 'react-native-numeric-input'
 import DateTimePicker from 'react-native-modal-datetime-picker';
 import moment from "moment";
@@ -24,7 +24,6 @@ import { roundPrice } from "../../../utils/utility-functions";
 import AsyncButton from "../../generic/async-button";
 import { Picker } from "native-base";
 import { StackNavigationOptions } from '@react-navigation/stack';
-import AppConfig from "../../../utils/AppConfig";
 
 const Moment = require("moment");
 const extendedMoment = extendMoment(Moment);
@@ -60,8 +59,6 @@ interface State {
   deliveryNotes: DeliveryNoteData[];
   products: Product[];
   product?: Product;
-  productNeedsConfirmation: boolean;
-  confirmed: boolean;
   deliveryNoteFile?: {
     fileUri: string,
     fileType: string
@@ -88,8 +85,6 @@ class NewDelivery extends React.Component<Props, State> {
     super(props);
     this.state = {
       products: [],
-      productNeedsConfirmation: false,
-      confirmed: false,
       loading: false,
       datepickerVisible: false,
       modalOpen: false,
@@ -153,7 +148,6 @@ class NewDelivery extends React.Component<Props, State> {
       products,
       productId: products[0]?.id,
       product: products[0],
-      productNeedsConfirmation: await this.productNeedsConfirmation(products[0]),
       deliveryPlaceId: deliveryPlaces[0]?.id,
       productPrice: productPrice[0],
       deliveryQualities,
@@ -348,10 +342,7 @@ class NewDelivery extends React.Component<Props, State> {
       return;
     }
 
-    this.setState({
-      productId: productId,
-      confirmed: false
-    });
+    this.setState({ productId: productId });
 
     const product = products.find(({ id }) => id === productId);
 
@@ -371,8 +362,7 @@ class NewDelivery extends React.Component<Props, State> {
     this.setState({
       product,
       productPrice: productPrice[0],
-      deliveryQualities,
-      productNeedsConfirmation: await this.productNeedsConfirmation(product)
+      deliveryQualities
     });
   }
 
@@ -600,34 +590,18 @@ class NewDelivery extends React.Component<Props, State> {
   }
 
   /**
-   * Returns whether product needs confirmation or not
-   *
-   * @param product product
-   */
-  private productNeedsConfirmation = async (product: Product | undefined) => {
-    if (!product) {
-      return false;
-    }
-
-    const appConfig = await AppConfig.getAppConfig();
-    const requireConfirmation: boolean | undefined = _.get(appConfig, [ "item-groups", product.itemGroupId, "require-confirmation" ]);
-    return !!requireConfirmation;
-  }
-
-  /**
    * Returns whether form is valid or not
    *
    * @return whether form is valid or not
    */
   private isValid = () => {
-    const { product, selectedDate, deliveryPlaceId, selectedTime, productNeedsConfirmation, confirmed } = this.state;
+    const { product, selectedDate, deliveryPlaceId, selectedTime } = this.state;
 
     return !!(
       product &&
       selectedDate &&
       deliveryPlaceId &&
-      selectedTime &&
-      (!productNeedsConfirmation || confirmed)
+      selectedTime
     );
   }
 
@@ -644,8 +618,6 @@ class NewDelivery extends React.Component<Props, State> {
       noteEditable,
       deliveryNoteData,
       deliveryPlaceOpeningHours,
-      productNeedsConfirmation,
-      confirmed,
       modalOpen
     } = this.state;
 
@@ -728,18 +700,6 @@ class NewDelivery extends React.Component<Props, State> {
           <View style={{ flex: 1 }}>
             { this.renderDeliveryNotes() }
             { this.renderAddDeliveryNote() }
-            { productNeedsConfirmation &&
-              <View style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}>
-                <CheckBox
-                  color={ confirmed ? "#E51D2A" : "#AAA" }
-                  checked={ confirmed }
-                  onPress={ () => this.setState({ confirmed: !confirmed }) }
-                />
-                <Body>
-                  <Text>Vakuutan, että toimittamani marjat ovat luomulaatua</Text>
-                </Body>
-              </View>
-            }
             { !deliveryValid &&
               <View style={[ styles.center, { flex: 1, marginTop: 5 } ]}>
                 <Text style={{ color: "red" }}>Tarvittavia tietoja puuttuu</Text>

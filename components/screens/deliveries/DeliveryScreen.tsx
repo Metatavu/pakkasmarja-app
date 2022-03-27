@@ -5,7 +5,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveryProduct, DeliveriesState } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Image, Dimensions, Alert } from "react-native";
-import { Delivery, DeliveryNote, DeliveryQuality, DeliveryPlace } from "pakkasmarja-client";
+import { Delivery, DeliveryNote, DeliveryQuality, DeliveryPlace, Product } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import moment from "moment";
 import PakkasmarjaApi from "../../../api";
@@ -18,7 +18,9 @@ import { REACT_APP_API_URL } from 'react-native-dotenv';
 import Lightbox from 'react-native-lightbox';
 import AsyncButton from "../../generic/async-button";
 import { StackNavigationOptions } from '@react-navigation/stack';
-import { Text } from "native-base";
+import { Body, CheckBox, Text } from "native-base";
+import AppConfig from "../../../utils/AppConfig";
+import _ from "lodash";
 
 /**
  * Component props
@@ -48,8 +50,11 @@ interface State {
   notesLoading: boolean;
   lightBoxOpen: boolean;
   deliveryPlace?: DeliveryPlace;
-  description: string;
+  confirmationText?: string;
   alvAmount: number;
+  confirmed: boolean;
+  isOrganicProduct: boolean;
+  organicConfirmed: boolean;
 };
 
 /**
@@ -73,8 +78,10 @@ class DeliveryScreen extends React.Component<Props, State> {
       editModal: false,
       notesLoading: false,
       lightBoxOpen: false,
-      description: "",
-      alvAmount: 1.14
+      alvAmount: 1.14,
+      confirmed: false,
+      isOrganicProduct: false,
+      organicConfirmed: false
     };
   }
 
@@ -140,6 +147,19 @@ class DeliveryScreen extends React.Component<Props, State> {
   }
 
   /**
+   * Returns whether delivery can be started
+   */
+  private canStartDelivery = () => {
+    const { editable, confirmed, isOrganicProduct, organicConfirmed } = this.state;
+
+    return (
+      editable &&
+      confirmed &&
+      (!isOrganicProduct || organicConfirmed)
+    );
+  }
+
+  /**
    * Handles begin delivery
    */
   private handleBeginDelivery = async () => {
@@ -169,31 +189,18 @@ class DeliveryScreen extends React.Component<Props, State> {
   }
 
   /**
-   * Check if products item group is natural
+   * Returns whether product is organic or not
    *
-   * @param itemGroupId itemGroupId
-   * @returns if item group is natural or not
+   * @param product product
    */
-  private checkIfNatural = async (itemGroupId: string) => {
-    const { accessToken } = this.props;
+  private isOrganicProduct = async (product: Product | undefined) => {
+    if (!product) return false;
 
-    if (!accessToken) {
-      return false;
-    }
+    const appConfig = await AppConfig.getAppConfig() || {};
+    const organicProductCodes: number[] | undefined = _.get(appConfig, [ "organic-product-codes" ]);
+    const itemCode: number = Number(product.sapItemCode);
 
-    const itemGroup = await new PakkasmarjaApi()
-      .getItemGroupsService(accessToken.access_token)
-      .findItemGroup(itemGroupId);
-
-    const { displayName } = itemGroup;
-
-    const description = 'Vakuutan, että toimituksessa mainittujen marjojen alkuperämaa on Suomi, ja että liitetty kuva on otettu tämän toimituksen marjoista';
-    const luomuDescription = "Vakuutan, että toimituksessa mainittujen luomumarjojen alkuperämaa on Suomi, ja että liitetty kuva on otettu tämän toimituksen marjoista. Luomumarjat ovat myös neuvoston asetuksen (EY 834/2007) ja komission asetuksen (EY 889/2008) mukaisesti tuotettu tuote."
-
-    if (displayName) {
-      const isNatural = displayName.toLowerCase().includes("luomu");
-      this.setState({ description: isNatural ? luomuDescription : description });
-    }
+    return !!organicProductCodes?.includes(itemCode);
   }
 
   /**
@@ -278,18 +285,24 @@ class DeliveryScreen extends React.Component<Props, State> {
     }
 
     const Api = new PakkasmarjaApi();
-    const deliveryQualities = await Api.getDeliveryQualitiesService(access_token).listDeliveryQualities(itemGroupCategory);
-    const delivery = await Api.getDeliveriesService(access_token).findDelivery(deliveryId);
-    const product = await Api.getProductsService(access_token).findProduct(productId);
-    const deliveryPlace = await Api.getDeliveryPlacesService(access_token).findDeliveryPlace(delivery.deliveryPlaceId);
 
-    this.checkIfNatural(product.itemGroupId);
+    const [ deliveryQualities, delivery, product ] = await Promise.all([
+      Api.getDeliveryQualitiesService(access_token).listDeliveryQualities(itemGroupCategory),
+      Api.getDeliveriesService(access_token).findDelivery(deliveryId),
+      Api.getProductsService(access_token).findProduct(productId)
+    ]);
+
+    const [ deliveryPlace, isOrganicProduct ] = await Promise.all([
+      Api.getDeliveryPlacesService(access_token).findDeliveryPlace(delivery.deliveryPlaceId),
+      this.isOrganicProduct(product)
+    ]);
 
     this.setState({
       editable: editable,
       deliveryData: { delivery, product },
       deliveryPlace: deliveryPlace,
-      deliveryQuality: deliveryQualities.find(({ id }) => id == qualityId)
+      deliveryQuality: deliveryQualities.find(({ id }) => id == qualityId),
+      isOrganicProduct: isOrganicProduct
     });
 
     this.loadDeliveryNotes();
@@ -420,7 +433,10 @@ class DeliveryScreen extends React.Component<Props, State> {
       alvAmount,
       createModal,
       editModal,
-      deliveryNoteId
+      deliveryNoteId,
+      confirmed,
+      isOrganicProduct,
+      organicConfirmed
     } = this.state;
 
     const { delivery, product } = deliveryData || {};
@@ -579,14 +595,59 @@ class DeliveryScreen extends React.Component<Props, State> {
                   </View>
                 </TouchableOpacity>
               </View>
-              <View style={[ styles.center, { flex: 1, marginBottom: 20 } ]}>
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: 10,
+                  marginBottom: 10
+                }}
+              >
+                <CheckBox
+                  color={ confirmed || !editable ? "#E51D2A" : "#AAA" }
+                  checked={ confirmed || !editable }
+                  onPress={ () => this.setState({ confirmed: !confirmed }) }
+                  style={{ marginRight: 20, paddingBottom: 0, paddingLeft: 0 }}
+                />
                 <Text style={{ color: 'black', fontSize: 15 }}>
-                  { this.state.description }
+                  Vakuutan, että toimituksessa mainittujen marjojen alkuperämaa on Suomi ja
+                  että liitetty kuva on otettu tämän toimituksen marjoista.
                 </Text>
               </View>
+              { isOrganicProduct &&
+                <View
+                  style={{
+                    flex: 1,
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: 10,
+                    marginBottom: 10
+                  }}
+                >
+                  <CheckBox
+                    color={ organicConfirmed || !editable ? "#E51D2A" : "#AAA" }
+                    checked={ organicConfirmed || !editable }
+                    onPress={ () => this.setState({ organicConfirmed: !organicConfirmed }) }
+                    style={{ marginRight: 20, paddingBottom: 0, paddingLeft: 0 }}
+                  />
+                  <Text style={{ color: 'black', fontSize: 15 }}>
+                    Vakuutan tämän marjaerän olevan asetuksen (EU) 2018/848 ja
+                    komission asetuksen (EY) 889/2008 mukaisesti tuotettu tuote.
+                  </Text>
+                </View>
+              }
               <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
                 <AsyncButton
-                  style={[ styles.begindeliveryButton, styles.center, { width: "70%", height: 60 } ]}
+                  disabled={ !this.canStartDelivery() }
+                  style={[
+                    styles.begindeliveryButton,
+                    styles.center,
+                    { width: "70%", height: 60 },
+                    !this.canStartDelivery() && { backgroundColor: "#aaa" }
+                  ]}
                   onPress={ this.handleBeginDelivery }>
                   <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>
                     Aloita toimitus

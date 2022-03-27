@@ -122,7 +122,10 @@ class ChatsListScreen extends React.Component<Props, State> {
         <Tabs
           initialPage={ initialTab }
           tabBarUnderlineStyle={{ backgroundColor: "#E51D2A" }}
-          renderTabBar={ (props: any) => <DefaultTabBar {...{ ...props }}/> }
+          renderTabBar={ (props: any) => {
+            props.tabStyle = Object.create(props.tabStyle);
+            return <DefaultTabBar { ...props }/>;
+          }}
         >
           <Tab
             activeTabStyle={{ ...styles.activeTab, ...styles.tab }}
