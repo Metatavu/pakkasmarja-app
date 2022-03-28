@@ -690,7 +690,10 @@ class DeliveriesScreen extends React.Component<Props, State> {
           <Tabs
             initialPage={ initialTab }
             tabBarUnderlineStyle={{ backgroundColor: "#fff" }}
-            renderTabBar={ (props: any) => <DefaultTabBar {...{ ...props, tabStyle: Object.create(props.tabStyle) }}/> }
+            renderTabBar={ (props: any) => {
+              props.tabStyle = Object.create(props.tabStyle);
+              return <DefaultTabBar { ...props }/>;
+            }}
           >
             <Tab
               activeTabStyle={{ ...styles.activeTab, ...styles.tab }}

@@ -258,7 +258,6 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
     const time = moment(delivery.time).format("DD.MM.YYYY HH:mm");
     const productName = product.name;
     const productAmount = `, ${deliveryData.delivery.amount} x ${product.units} ${product.unitName}`;
-    const editable = false;
 
     return (
       <TouchableOpacity
@@ -269,7 +268,7 @@ class PastDeliveriesScreen extends React.Component<Props, State> {
             deliveryId: delivery.id,
             productId: product.id,
             qualityId: delivery.qualityId,
-            editable: editable
+            editable: false
           })
         }
       >

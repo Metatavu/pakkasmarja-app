@@ -342,7 +342,8 @@ class NewDelivery extends React.Component<Props, State> {
       return;
     }
 
-    this.setState({ productId });
+    this.setState({ productId: productId });
+
     const product = products.find(({ id }) => id === productId);
 
     const Api = new PakkasmarjaApi();
@@ -360,7 +361,8 @@ class NewDelivery extends React.Component<Props, State> {
 
     this.setState({
       product,
-      productPrice: productPrice[0], deliveryQualities
+      productPrice: productPrice[0],
+      deliveryQualities
     });
   }
 
@@ -444,6 +446,7 @@ class NewDelivery extends React.Component<Props, State> {
    * Update deliveries
    */
   private updateDeliveries = (delivery: Delivery) => {
+    const {} = this.props
     if (!this.props.deliveries) {
       return;
     }
@@ -615,7 +618,8 @@ class NewDelivery extends React.Component<Props, State> {
       noteEditable,
       deliveryNoteData,
       deliveryPlaceOpeningHours,
-      modalOpen } = this.state;
+      modalOpen
+    } = this.state;
 
     if (loading) {
       return (
@@ -624,6 +628,8 @@ class NewDelivery extends React.Component<Props, State> {
         </View>
       );
     }
+
+    const deliveryValid = this.isValid();
 
     return (
       <BasicScrollLayout
@@ -694,15 +700,20 @@ class NewDelivery extends React.Component<Props, State> {
           <View style={{ flex: 1 }}>
             { this.renderDeliveryNotes() }
             { this.renderAddDeliveryNote() }
-            { !this.isValid() &&
+            { !deliveryValid &&
               <View style={[ styles.center, { flex: 1, marginTop: 5 } ]}>
                 <Text style={{ color: "red" }}>Tarvittavia tietoja puuttuu</Text>
               </View>
             }
-            <View style={[ styles.center, { flex: 1 } ]}>
+            <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
               <AsyncButton
-                disabled={ !this.isValid() }
-                style={[ styles.deliveriesButton, styles.center, { width: "50%", height: 60, marginTop: 15 } ]}
+                disabled={ !deliveryValid }
+                style={[
+                  styles.deliveriesButton,
+                  styles.center,
+                  { width: "50%", height: 60, marginTop: 15 },
+                  !deliveryValid && { backgroundColor: "#aaa" }
+                ]}
                 onPress={ this.handleDeliverySubmit }
               >
                 <Text style={ styles.buttonText }>Tallenna</Text>
@@ -989,7 +1000,10 @@ class NewDelivery extends React.Component<Props, State> {
     }
 
     return deliveryNotes.map((deliveryNoteData, index) =>
-      <View key={ index } style={[ styles.center, { flex: 1, paddingVertical: 15 } ]}>
+      <View
+        key={ index }
+        style={[ styles.center, { flex: 1, paddingVertical: 15 } ]}
+      >
         <TouchableOpacity onPress={ () => this.setState({ deliveryNoteData, noteEditable: true, modalOpen: true }) }>
           <View style={[ styles.center, { flex: 1, flexDirection: "row" } ]}>
             <Icon type="EvilIcons" style={{ color: "#e01e36" }} name="pencil" />
@@ -1106,7 +1120,10 @@ class NewDelivery extends React.Component<Props, State> {
       }
 
       return (
-        <View style={{ flex: 1, flexDirection: "row" }}>
+        <View
+          key={ deliveryQuality.id }
+          style={{ flex: 1, flexDirection: "row" }}
+        >
           <Text style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
             { name }
           </Text>
