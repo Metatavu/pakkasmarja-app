@@ -50,7 +50,9 @@ class TopBar extends React.Component<Props> {
       return (
         <View style={{ width: (width / 3) * 2, marginLeft: width / 3, flexDirection: "row", alignContent: "space-around" }}>
           { Platform.OS === "ios" ?
-            <View style={{ ...styles.center, alignContent: align, justifyContent: align, alignItems: align }} />
+            <View style={{ ...styles.center, alignContent: align, justifyContent: align, alignItems: align }}>
+              <Thumbnail style={{ width: 80, height: 80, alignSelf: "center", marginBottom: "10%" }} source={TOP_LOGO} />
+            </View>
             :
             <View style={{ ...styles.center, alignContent: align, justifyContent: align, alignItems: align }}>
               <Thumbnail style={{ width: 80, height: 80 }} source={TOP_LOGO} />
@@ -72,7 +74,9 @@ class TopBar extends React.Component<Props> {
     return (
       <View style={{ width: (width / 3) * 2, marginLeft: width / 3, flexDirection: "row", alignContent: "space-around" }}>
         { Platform.OS === "ios" ?
-          <View style={{ ...styles.center, alignContent: align, justifyContent: align, alignItems: align }} />
+          <View style={{ ...styles.center, alignContent: align, justifyContent: align, alignItems: align }}>
+            <Thumbnail style={{ width: 80, height: 80, alignSelf: "center", marginBottom: "10%" }} source={TOP_LOGO} />
+          </View>
           :
           <View style={{ ...styles.center, alignContent: align, justifyContent: align, alignItems: align }}>
             <Thumbnail style={{ width: 80, height: 80 }} source={TOP_LOGO} />

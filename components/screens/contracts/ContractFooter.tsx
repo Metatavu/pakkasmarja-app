@@ -45,7 +45,7 @@ export default class ContractFooter extends React.Component<Props, State> {
             <AsyncButton style={{ marginBottom: 25 }} onPress={this.props.downloadContractPdf}>
               <Text style={styles.linkStyle}>
                 Lataa sopimus PDF - muodossa.
-                </Text>
+              </Text>
             </AsyncButton>
             <TouchableOpacity style={styles.bigRedButton} onPress={this.props.goBack}>
               <Text style={styles.buttonText}>

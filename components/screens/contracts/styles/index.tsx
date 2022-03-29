@@ -86,7 +86,8 @@ export const styles = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 4,
     marginBottom: 5,
-    fontSize: 20
+    fontSize: 20,
+    width: "100%"
   },
   flexView: {
     flex: 1,

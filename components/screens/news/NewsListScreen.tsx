@@ -10,6 +10,7 @@ import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import _ from "lodash"
 import moment from "moment";
 import { StackNavigationOptions } from "@react-navigation/stack";
+import { Platform } from "react-native";
 
 /**
  * Component props
@@ -169,7 +170,7 @@ class NewsListScreen extends React.Component<Props, State> {
                   <Body>
                     <Text
                       style={{
-                        fontSize: 22,
+                        fontSize: Platform.OS === "ios" ? 20 : 22,
                         color: "black",
                         paddingBottom: 5,
                         fontWeight: newsArticle.id && this.isUnread(newsArticle.id.toString()) ? "bold" : "normal"
