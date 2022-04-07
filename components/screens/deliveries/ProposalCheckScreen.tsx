@@ -408,7 +408,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
           <View style={{ flex: 1 }}>
             { product &&
               <Text style={[ styles.contentHeader, { color: "black" } ]}>
-                product.name
+                { product.name }
               </Text>
             }
           </View>
@@ -430,7 +430,7 @@ class ProposalCheckScreen extends React.Component<Props, State> {
           </View>
           <View >
             <Text style={[ styles.textWithSpace, { marginLeft: 5, color: "black" } ]}>
-              Ehdotettu määrä ({product.unitName})
+              Ehdotettu määrä ({ product.unitName })
               </Text>
           </View>
           <View style={[ styles.center, styles.numericInputContainer ]}>
@@ -451,71 +451,68 @@ class ProposalCheckScreen extends React.Component<Props, State> {
               rounded
             />
           </View>
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <View style={ styles.center }>
             <Text style={ styles.textPrediction }>
               {`= ${kilograms} KG`}
             </Text>
           </View>
-          <View style={{ flex: 1, flexDirection: "row" }}>
-            <View style={ styles.center }>
-              <Text style={[ styles.textPrediction, { marginVertical: 10 } ]}>
-                Toimituspäivä
-              </Text>
-              <View style={{ flexDirection: "row" }}>
-                <Thumbnail
-                  square
-                  source={ PREDICTIONS_ICON }
-                  style={{ width: 20, height: 22, marginRight: 10 }}
-                />
-                { delivery.time &&
-                  <Text style={{ fontWeight: "bold", fontSize: 16, color: "black" }}>
-                    { moment(delivery.time).format("DD.MM.YYYY") }
-                  </Text>
-                }
+          <View style={ styles.center }>
+            <Text style={[ styles.textPrediction, { marginVertical: 10 } ]}>
+              Toimituspäivä
+            </Text>
+            <View style={{ flexDirection: "row" }}>
+              <Thumbnail
+                square
+                source={ PREDICTIONS_ICON }
+                style={{ width: 20, height: 22, marginRight: 10 }}
+              />
+              { delivery.time &&
                 <Text style={{ fontWeight: "bold", fontSize: 16, color: "black" }}>
-                  { moment.utc(delivery.time).format("HH.mm") }
+                  { moment(delivery.time).format("DD.MM.YYYY") }
                 </Text>
-              </View>
+              }
+              <Text style={{ fontWeight: "bold", fontSize: 16, color: "black" }}>
+                { moment.utc(delivery.time).format("HH.mm") }
+              </Text>
             </View>
           </View>
           <View style={{ flex: 1, marginTop: 30 }}>
             { this.renderDeliveryNotes() }
           </View>
-          <View style={[ styles.center, { flex: 1 } ]}>
-            <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
-              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <TouchableOpacity
-                  style={[ styles.declineButton, { width: "95%", height: 60 } ]}
-                  onPress={ navigation.goBack }
-                >
-                  <Text style={ styles.buttonText }>
-                    Peruuta
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View style={{ flex: 1, justifyContent: "flex-end", alignItems: "flex-end" }}>
-                <AsyncButton
-                  style={[ styles.declineButton, { width: "95%", height: 60 } ]}
-                  onPress={ this.handleProposalDecline }
-                >
-                  <Text style={ styles.buttonText }>
-                    Hylkää
-                  </Text>
-                </AsyncButton>
-              </View>
+          <View style={{ flex: 1, width: "100%", marginTop: 30 }}>
+            <View
+              style={{
+                flex: 1,
+                width: "100%",
+                flexDirection: "row",
+                justifyContent: "space-between"
+              }}
+            >
+              <TouchableOpacity
+                style={[ styles.declineButton, { width: "49%", height: 60 } ]}
+                onPress={ navigation.goBack }
+              >
+                <Text style={ styles.buttonText }>
+                  Peruuta
+                </Text>
+              </TouchableOpacity>
+              <AsyncButton
+                style={[ styles.declineButton, { width: "49%", height: 60 } ]}
+                onPress={ this.handleProposalDecline }
+              >
+                <Text style={ styles.buttonText }>
+                  Hylkää
+                </Text>
+              </AsyncButton>
             </View>
-            <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
-              <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
-                <AsyncButton
-                  style={[ styles.deliveriesButton, { width: "95%", height: 60, alignSelf: "center" } ]}
-                  onPress={ this.handleProposalAccept }
-                >
-                  <Text style={ styles.buttonText }>
-                    Hyväksy
-                  </Text>
-                </AsyncButton>
-              </View>
-            </View>
+            <AsyncButton
+              style={[ styles.deliveriesButton, { width: "100%", height: 60, marginTop: 10 } ]}
+              onPress={ this.handleProposalAccept }
+            >
+              <Text style={ styles.buttonText }>
+                Hyväksy
+              </Text>
+            </AsyncButton>
           </View>
         </View>
       </BasicScrollLayout>

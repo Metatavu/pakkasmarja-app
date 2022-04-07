@@ -134,7 +134,7 @@ class ManageDelivery extends React.Component<Props, State> {
     ),
     headerTitleContainerStyle: { left: 0 },
     headerLeft: () => (
-      <TouchableHighlight onPress={() => navigation.goBack(null) }>
+      <TouchableHighlight onPress={ navigation.goBack }>
         <FeatherIcon
           name="chevron-left"
           color="#fff"
@@ -146,17 +146,15 @@ class ManageDelivery extends React.Component<Props, State> {
   });
 
   /**
-   * Component did mount life-cycle event
+   * Component did mount life cycle event
    */
-  public async componentDidMount() {
+  public componentDidMount = async () => {
     const { accessToken, navigation, route } = this.props;
     const { date, deliveryListItem, category, isNewDelivery } = route.params;
 
     navigation.setOptions(this.navigationOptions(navigation));
 
-    if (!accessToken) {
-      return;
-    }
+    if (!accessToken) return;
 
     this.setState({
       loading: true,
@@ -165,34 +163,37 @@ class ManageDelivery extends React.Component<Props, State> {
       selectedDate: date
     });
 
-    const deliveryPlaces = await new PakkasmarjaApi().getDeliveryPlacesService(accessToken.access_token).listDeliveryPlaces();
-    this.setState({
-      deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.name !== "Muu")
-    });
+    const deliveryPlaces = await new PakkasmarjaApi()
+      .getDeliveryPlacesService(accessToken.access_token)
+      .listDeliveryPlaces();
+
+    this.setState({ deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.name !== "Muu") });
 
     await this.listProducts();
 
-    if (!isNewDelivery && deliveryListItem) {
-      const deliveryPlace = deliveryPlaces.find(deliveryPlace =>
-        deliveryPlace.id === deliveryListItem.delivery.deliveryPlaceId
-      );
-
-      await this.fetchContractQuantities(deliveryListItem.product);
-
-      this.setState({
-        deliveryData: deliveryListItem,
-        deliveryPlaceId: deliveryPlace?.id,
-        amount: deliveryListItem.delivery.amount,
-        selectedDate: new Date(deliveryListItem.delivery.time),
-        loading: false
-      }, () => this.loadDeliveryNotes());
-    } else {
+    if (isNewDelivery || !deliveryListItem) {
       this.setState({
         deliveryPlaceId: deliveryPlaces[0].id,
         amount: 0,
         loading: false
       });
+
+      return;
     }
+
+    const deliveryPlace = deliveryPlaces.find(deliveryPlace =>
+      deliveryPlace.id === deliveryListItem.delivery.deliveryPlaceId
+    );
+
+    await this.fetchContractQuantities(deliveryListItem.product);
+
+    this.setState({
+      deliveryData: deliveryListItem,
+      deliveryPlaceId: deliveryPlace?.id,
+      amount: deliveryListItem.delivery.amount,
+      selectedDate: new Date(deliveryListItem.delivery.time),
+      loading: false
+    }, this.loadDeliveryNotes);
   }
 
   /**
@@ -219,11 +220,12 @@ class ManageDelivery extends React.Component<Props, State> {
     const { selectedContact } = this.state;
     const { deliveryListItem, category, isNewDelivery } = route.params;
 
-    if (!accessToken) {
-      return;
-    }
+    if (!accessToken) return;
 
-    this.setState({ products: [], productPrice: undefined });
+    this.setState({
+      products: [],
+      productPrice: undefined
+    });
 
     const Api = new PakkasmarjaApi();
     const productsService = Api.getProductsService(accessToken.access_token);
@@ -231,33 +233,38 @@ class ManageDelivery extends React.Component<Props, State> {
 
     if (!isNewDelivery && deliveryListItem?.product && deliveryListItem.contact) {
       const deliveryProductId = deliveryListItem.product.id;
-      const products = await productsService.listProducts(undefined, category, deliveryListItem.contact.id, undefined, 999);
-      const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, deliveryProductId);
+
+      const [ products, deliveryQualities ] = await Promise.all([
+        productsService.listProducts(undefined, category, deliveryListItem.contact.id, undefined, 999),
+        deliveryQualitiesService.listDeliveryQualities(category, deliveryProductId)
+      ]);
 
       this.setState({
         productId: deliveryProductId,
         product: deliveryListItem.product,
         products: products,
         deliveryQualities: deliveryQualities
-      }, () => this.getProductPrice());
-    } else {
-      if (!selectedContact) {
-        return;
-      }
+      }, this.getProductPrice);
 
-      const products = await productsService.listProducts(undefined, category, selectedContact.id, undefined, 999);
-      const productId = products.length ? products[0].id : "";
-      const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, productId);
-
-      await this.fetchContractQuantities(products.length ? products[0] : undefined);
-
-      this.setState({
-        productId: productId,
-        product: products.length ? products[0] : undefined,
-        products: products,
-        deliveryQualities
-      }, () => this.getProductPrice());
+      return;
     }
+
+    if (!selectedContact) return;
+
+    const products = await productsService.listProducts(undefined, category, selectedContact.id, undefined, 999);
+    const selectedProduct = products.length ? products[0] : undefined;
+
+    const [ deliveryQualities ] = await Promise.all([
+      deliveryQualitiesService.listDeliveryQualities(category, selectedProduct?.id),
+      this.fetchContractQuantities(selectedProduct)
+    ]);
+
+    this.setState({
+      productId: selectedProduct?.id,
+      product: selectedProduct,
+      products: products,
+      deliveryQualities
+    }, this.getProductPrice);
   }
 
   /**
@@ -334,7 +341,8 @@ class ManageDelivery extends React.Component<Props, State> {
       deliveryData,
       deliveryQualities,
       amount,
-      deliveryQualityId
+      deliveryQualityId,
+      selectedDate
     } = this.state;
 
     if (
@@ -348,22 +356,21 @@ class ManageDelivery extends React.Component<Props, State> {
       return;
     }
 
-    const deliveryService = new PakkasmarjaApi().getDeliveriesService(accessToken.access_token);
-    const date = moment(this.state.selectedDate).utc().toDate();
-
-    await deliveryService.updateDelivery(
-      {
-        id: deliveryData.delivery.id,
-        productId: product.id,
-        userId: accessToken.userId,
-        time: date,
-        status: "NOT_ACCEPTED",
-        amount: amount,
-        deliveryPlaceId: deliveryPlaceId,
-        qualityId: deliveryQualityId
-      },
-      deliveryData.delivery.id
-    );
+    await new PakkasmarjaApi()
+      .getDeliveriesService(accessToken.access_token)
+      .updateDelivery(
+        {
+          id: deliveryData.delivery.id,
+          productId: product.id,
+          userId: accessToken.userId,
+          time: moment(selectedDate).utc().toDate(),
+          status: "NOT_ACCEPTED",
+          amount: amount,
+          deliveryPlaceId: deliveryPlaceId,
+          qualityId: deliveryQualityId
+        },
+        deliveryData.delivery.id
+      );
 
     navigation.navigate("ManageDeliveries");
   }
@@ -394,14 +401,12 @@ class ManageDelivery extends React.Component<Props, State> {
     const { accessToken, route } = this.props;
     const { products } = this.state;
 
-    if (!accessToken) {
-      return;
-    }
+    if (!accessToken) return;
 
     const category: ItemGroupCategory = route.params.category;
     const deliveryQualitiesService = new PakkasmarjaApi().getDeliveryQualitiesService(accessToken.access_token);
     const deliveryQualities = await deliveryQualitiesService.listDeliveryQualities(category, productId);
-    const product = products.find((product) => product.id === productId);
+    const product = products.find(product => product.id === productId);
 
     await this.fetchContractQuantities(product);
 
@@ -519,31 +524,26 @@ class ManageDelivery extends React.Component<Props, State> {
     );
   }
 
+  /**
+   * Renders contract info
+   */
   private renderContractInfo = () => {
     const { contractQuantities, amount, product } = this.state;
 
-    if (!product || !contractQuantities || !contractQuantities?.length) {
-      return null;
-    }
+    if (!product || !contractQuantities?.length) return;
 
-    var contractQuantity = 0;
-    var delivered = 0
-    var remainer = 0;
-
-    contractQuantities?.forEach(contract => {
-      delivered = delivered + (contract.deliveredQuantity || 0);
-      contractQuantity = contractQuantity + (contract.contractQuantity || 0);
-    })
-
-    remainer = contractQuantity - delivered - (amount * product.units * product.unitSize);
+    const amountInKgs = amount * product.units * product.unitSize;
+    const totalAmount = contractQuantities.reduce((total, { contractQuantity }) => total + (contractQuantity || 0), 0);
+    const deliveredAmount = contractQuantities.reduce((total, { deliveredQuantity }) => total + (deliveredQuantity || 0), 0);
+    const remaining = totalAmount - deliveredAmount - amountInKgs;
 
     return (
       <View>
         <Text>
-          { strings.contractQuantity }: { contractQuantity }Kg
+          { strings.contractQuantity }: { totalAmount }Kg
         </Text>
         <Text>
-          { strings.deliveredQuantity }: { delivered }Kg
+          { strings.deliveredQuantity }: { deliveredAmount }Kg
         </Text>
         <View
           style={{
@@ -552,9 +552,9 @@ class ManageDelivery extends React.Component<Props, State> {
             width: 190
           }}
         />
-        { remainer >= 0 ?
-            <Text>{ strings.contractRemainer }: { remainer }Kg</Text> :
-            <Text style={{ color: "red" }}>{ strings.contractExceeded }: { Math.abs(remainer) }Kg</Text>
+        { remaining >= 0 ?
+            <Text>{ strings.contractRemainer }: { remaining }Kg</Text> :
+            <Text style={{ color: "red" }}>{ strings.contractExceeded }: { Math.abs(remaining) }Kg</Text>
         }
       </View>
     )
@@ -654,9 +654,9 @@ class ManageDelivery extends React.Component<Props, State> {
           <Text style={ styles.textWithSpace }>
             Tuote
           </Text>
-          { products.length < 1 ? (
+          { !products.length ? (
               <Text>
-                Kontaktilla ei ole voimassa olevaa sopimusta
+                viljelijällä ei ole voimassa olevaa sopimusta
               </Text>
             ) : (
               <View style={[ styles.pickerWrap, { width: "100%" } ]}>
@@ -1024,11 +1024,9 @@ class ManageDelivery extends React.Component<Props, State> {
    * On create note click
    */
   private onCreateNoteClick = () => {
+    const { deliveryNoteDatas, deliveryNoteData } = this.state;
     this.setState({
-      deliveryNoteDatas: [
-        ...this.state.deliveryNoteDatas,
-        this.state.deliveryNoteData
-      ],
+      deliveryNoteDatas: [ ...deliveryNoteDatas, deliveryNoteData ],
       deliveryNoteData: {
         imageUri: "",
         imageType: "",
@@ -1041,8 +1039,10 @@ class ManageDelivery extends React.Component<Props, State> {
    * On remove note
    */
   private onRemoveNote = () => {
+    const { deliveryNoteDatas, deliveryNoteData } = this.state;
+
     this.setState({
-      deliveryNoteDatas: this.state.deliveryNoteDatas.filter(note => note !== this.state.deliveryNoteData),
+      deliveryNoteDatas: deliveryNoteDatas.filter(note => note !== deliveryNoteData),
       modalOpen: false
     });
   }
@@ -1054,66 +1054,57 @@ class ManageDelivery extends React.Component<Props, State> {
    * @param deliveryNoteData delivery note data
    * @returns promise of created delivery note
    */
-  private async createDeliveryNote(deliveryId: string, deliveryNoteData: DeliveryNoteData): Promise<DeliveryNote | null> {
+  private async createDeliveryNote(deliveryId: string, deliveryNoteData: DeliveryNoteData): Promise<DeliveryNote | undefined> {
     const { accessToken } = this.props;
 
-    if (!accessToken) {
-      return null;
-    }
+    if (!accessToken) return;
 
     const { imageUri, imageType } = deliveryNoteData;
     const fileService = new FileService(REACT_APP_API_URL, accessToken.access_token);
-    const image = imageUri && imageType && await fileService.uploadFile(deliveryNoteData.imageUri, deliveryNoteData.imageType);
+    const image = imageUri && imageType ?
+      await fileService.uploadFile(deliveryNoteData.imageUri, deliveryNoteData.imageType) :
+      undefined;
 
-    const deliveryService = new PakkasmarjaApi().getDeliveriesService(accessToken.access_token);
-    return deliveryService.createDeliveryNote(
-      {
-        text: deliveryNoteData.text,
-        image: image ? image.url : undefined
-      },
-      deliveryId || ""
-    );
+    return new PakkasmarjaApi()
+      .getDeliveriesService(accessToken.access_token)
+      .createDeliveryNote(
+        {
+          text: deliveryNoteData.text,
+          image: image?.url
+        },
+        deliveryId || ""
+      );
   }
 
   /**
-   * @param product product witch contracts will be fetched
+   * Fetches contract quantities for given product
+   *
+   * @param product product
    */
     private fetchContractQuantities = async (product?: Product) => {
       const { accessToken, route } = this.props;
       const { selectedContact, isNewDelivery } = this.state;
 
+      if (!accessToken?.access_token || !product) return;
+
+      this.setState({ loading: true });
+
       const deliveryData: DeliveryListItem = route.params.deliveryListItem;
 
-      const yearNow = parseInt(moment(new Date()).format("YYYY"));
+      const [ itemGroupId, userId ] = isNewDelivery ?
+        [ product.itemGroupId, selectedContact?.id ] :
+        [ deliveryData.product?.itemGroupId, deliveryData.contact?.id ];
 
-      if (!accessToken || !accessToken.access_token || !product) {
-        return;
-      }
+      if (!itemGroupId || !userId) return;
+
+      const contractQuantities = await new PakkasmarjaApi()
+        .getContractsService(accessToken.access_token)
+        .listContractQuantities(itemGroupId, userId);
 
       this.setState({
-        loading: true
+        contractQuantities: contractQuantities,
+        loading: false
       });
-
-      const Api = new PakkasmarjaApi();
-      const contractsService = await Api.getContractsService(accessToken.access_token);
-
-      if (isNewDelivery && selectedContact && selectedContact.id) {
-        const contractQuantities = await contractsService.listContractQuantities(product.itemGroupId, selectedContact.id);
-
-        this.setState({
-          contractQuantities: contractQuantities,
-          loading: false
-        });
-      }
-
-      if (!isNewDelivery && deliveryData && deliveryData.product && deliveryData.contact?.id) {
-      const contractQuantities = await contractsService.listContractQuantities(deliveryData.product?.itemGroupId, deliveryData.contact?.id);
-
-        this.setState({
-          contractQuantities: contractQuantities,
-          loading: false
-        });
-      }
     }
   }
 

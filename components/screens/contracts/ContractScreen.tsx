@@ -21,6 +21,7 @@ import Icon from "react-native-vector-icons/Feather";
 import AppConfig from "../../../utils/AppConfig";
 import strings from "../../../localization/strings";
 import { StackNavigationOptions } from '@react-navigation/stack';
+import _ from "lodash";
 
 /**
  * Interface for component props
@@ -100,25 +101,15 @@ class ContractScreen extends React.Component<Props, State> {
 
     navigation.setOptions(this.navigationOptions(navigation));
 
-    if (itemGroup) {
-      this.setState({ itemGroup: itemGroup });
-    }
-
-    if (contact) {
-      this.setState({ contact: contact });
-    }
-
-    if (contact) {
-      this.setState({ prices: prices });
-    }
-
-    if (deliveryPlaces) {
-      this.setState({ deliveryPlaces: deliveryPlaces });
-    }
+    this.setState({
+      itemGroup: itemGroup,
+      contact: contact,
+      prices: prices,
+      deliveryPlaces: deliveryPlaces,
+      contract: contract
+    })
 
     if (contract) {
-      this.setState({ contract: contract });
-
       this.updateContractData("quantityComment", contract.quantityComment || "");
       this.updateContractData("proposedQuantity", contract.proposedQuantity?.toString() || contract.contractQuantity?.toString() || "");
       this.updateContractData("areaDetailValues", contract.areaDetails || []);
@@ -126,14 +117,17 @@ class ContractScreen extends React.Component<Props, State> {
       this.updateContractData("deliveryPlaceComment", contract.deliveryPlaceComment || "");
       this.updateContractData("deliverAllChecked", contract.deliverAll);
     }
-    const appConfig: AppConfigOptions = await AppConfig.getAppConfig();
 
-    if (appConfig && itemGroup?.id) {
-      const configItemGroups = appConfig["item-groups"];
-      const configItemGroup: AppConfigItemGroupOptions = configItemGroups[itemGroup.id];
-      const requireAreaDetails = configItemGroup && configItemGroup["require-area-details"] ? true : false;
-      const allowDeliveryAll = configItemGroup && configItemGroup["allow-delivery-all"] ? true : false;
-      this.setState({ requireAreaDetails, allowDeliveryAll });
+    if (itemGroup?.id) {
+      const appConfig: AppConfigOptions = await AppConfig.getAppConfig();
+      const requireAreaDetails = _.get(appConfig, [ "item-groups", itemGroup.id, "require-area-details" ]);
+      const allowDeliveryAll = _.get(appConfig, [ "item-groups", itemGroup.id, "allow-delivery-all" ]);
+
+      this.setState({
+        requireAreaDetails: requireAreaDetails,
+        allowDeliveryAll: !!allowDeliveryAll
+      });
+
       this.validateContractData(contractData);
     }
   }
