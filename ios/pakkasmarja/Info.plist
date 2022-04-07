@@ -37,8 +37,6 @@
 			</dict>
 		</dict>
 	</dict>
-	<key>NSAppleMusicUsageDescription</key>
-	<string>Pakkasmarja would like to hava access to Apple Music as a part of devveloper dependencies use it</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Pakkasmarja would like to use your camera</string>
 	<key>NSHumanReadableCopyright</key>
