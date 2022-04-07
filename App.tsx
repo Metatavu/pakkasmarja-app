@@ -73,7 +73,6 @@ export default class App extends React.Component<any, State> {
    */
   private checkIosPermissions = async () => {
     await this.askPermissions([
-      PERMISSIONS.IOS.MEDIA_LIBRARY,
       PERMISSIONS.IOS.CAMERA
     ]);
   }
