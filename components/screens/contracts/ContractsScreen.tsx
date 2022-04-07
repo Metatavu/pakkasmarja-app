@@ -127,11 +127,15 @@ class ContractsScreen extends React.Component<Props, State> {
 
     this.setState({ loading: true });
 
-    const contractsService = new PakkasmarjaApi().getContractsService(accessToken.access_token);
-    const itemGroupsService = new PakkasmarjaApi().getItemGroupsService(accessToken.access_token);
-    const frozenContracts = await contractsService.listContracts("application/json", false, "FROZEN", undefined, undefined, undefined, undefined, 100);
-    const freshContracts = await contractsService.listContracts("application/json", false, "FRESH", undefined, undefined, undefined, undefined, 100);
-    const itemGroups = await itemGroupsService.listItemGroups();
+    const api = new PakkasmarjaApi();
+    const contractsService = api.getContractsService(accessToken.access_token);
+    const itemGroupsService = api.getItemGroupsService(accessToken.access_token);
+
+    const [ frozenContracts, freshContracts, itemGroups ] = await Promise.all([
+      contractsService.listContracts("application/json", false, "FROZEN", undefined, undefined, undefined, undefined, 1000),
+      contractsService.listContracts("application/json", false, "FRESH", undefined, undefined, undefined, undefined, 1000),
+      itemGroupsService.listItemGroups()
+    ]);
 
     const frozenContractTableData = frozenContracts.map(frozenContract => ({
       contract: frozenContract,
@@ -164,10 +168,9 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    const contact = await new PakkasmarjaApi()
+    return await new PakkasmarjaApi()
       .getContactsService(accessToken.access_token)
       .findContact(contract.contactId);
-    this.setState({ contact: contact });
   }
 
   /**
@@ -182,11 +185,9 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    const prices = await new PakkasmarjaApi()
+    return await new PakkasmarjaApi()
       .getItemGroupsService(accessToken.access_token)
       .listItemGroupPrices(contract.itemGroupId);
-
-    this.setState({ prices: prices });
   }
 
   /**
@@ -216,11 +217,9 @@ class ContractsScreen extends React.Component<Props, State> {
       return;
     }
 
-    const deliveryPlaces = await new PakkasmarjaApi()
+    return await new PakkasmarjaApi()
       .getDeliveryPlacesService(accessToken.access_token)
       .listDeliveryPlaces();
-
-    this.setState({ deliveryPlaces: deliveryPlaces });
   }
 
   /**
@@ -251,7 +250,6 @@ class ContractsScreen extends React.Component<Props, State> {
    */
   private handleContractClick = async (contract: Contract) => {
     const { navigation } = this.props;
-    const { contact, prices, deliveryPlaces } = this.state;
 
     if (contract.status === "REJECTED" || contract.status === "ON_HOLD" || !contract.itemGroupId) {
       this.displayOpenContractAlert(contract.status);
@@ -260,20 +258,22 @@ class ContractsScreen extends React.Component<Props, State> {
 
     this.setState({ loading: true });
 
-    await this.loadContractContact(contract);
-    await this.loadPrices(contract);
-    await this.loadDeliveryPlaces();
-    const itemGroup = await this.findItemGroupById(contract.itemGroupId);
+    const [ itemGroup, contact, prices, deliveryPlaces ] = await Promise.all([
+      this.findItemGroupById(contract.itemGroupId),
+      this.loadContractContact(contract),
+      this.loadPrices(contract),
+      this.loadDeliveryPlaces()
+    ]);
 
-    this.setState({ loading: false });
-
-    navigation.navigate('Contract', {
+    navigation.navigate("Contract", {
       contact: contact,
       itemGroup: itemGroup,
       prices: prices,
       contract: contract,
       deliveryPlaces: deliveryPlaces
     });
+
+    this.setState({ loading: false });
   }
 
   /**
@@ -295,7 +295,7 @@ class ContractsScreen extends React.Component<Props, State> {
     const { accessToken } = this.props;
 
     const appConfig = await AppConfig.getAppConfig();
-    const questionGroupId = appConfig['contracts-question-group'];
+    const questionGroupId = appConfig["contracts-question-group"];
 
     if (!questionGroupId || !accessToken) {
       return

@@ -115,8 +115,8 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
             <TouchableOpacity onPress={ () => this.goToScreen("ChatsList") }>
               <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
                 { unreadChats > 0 &&
-                  <Badge style={{ position: "absolute", height:20, zIndex:99 }}>
-                    <Text style={{ color:"white" }}>
+                  <Badge style={{ position: "absolute", height: 20, zIndex: 99 }}>
+                    <Text style={{ color: "white", display: "flex", flexBasis: 18 }}>
                       { unreadChats }
                     </Text>
                   </Badge>
