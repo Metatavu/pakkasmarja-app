@@ -21,7 +21,7 @@
     "buffer": "^6.0.3",
     "jwt-decode": "^2.2.0",
     "localized-strings": "^0.2.4",
-    "moment": "^2.27.0",
+    "moment": "^2.29.2",
     "moment-range": "^4.0.2",
     "mqtt": "^4.3.6",
     "native-base": "^2.15.2",
