@@ -29,7 +29,7 @@ import IncomingDeliveriesScreen from "./components/screens/deliveries/IncomingDe
 import NewDelivery from "./components/screens/deliveries/NewDelivery";
 import EditDelivery from "./components/screens/deliveries/EditDelivery";
 import ManageContact from "./components/screens/contact/ManageContact";
-import Permissions, { Permission, PERMISSIONS } from 'react-native-permissions';
+import Permissions, { Permission, PERMISSIONS, PermissionStatus } from 'react-native-permissions';
 import strings from "./localization/strings";
 import ManageDeliveries from "./components/screens/ManageDeliveries/ManageDeliveries";
 import ManageDelivery from "./components/screens/ManageDeliveries/ManageDelivery";
@@ -72,31 +72,37 @@ export default class App extends React.Component<any, State> {
    * Checks permissions on iOS
    */
   private checkIosPermissions = async () => {
-    await this.askPermission(PERMISSIONS.IOS.MEDIA_LIBRARY);
-    await this.askPermission(PERMISSIONS.IOS.CAMERA);
+    await this.askPermissions([
+      PERMISSIONS.IOS.CAMERA
+    ]);
   }
 
   /**
    * Checks permissions on Android
    */
   private checkAndroidPermissions = async () => {
-    await this.askPermission(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
-    await this.askPermission(PERMISSIONS.ANDROID.CAMERA);
+    await this.askPermissions([
+      PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
+      PERMISSIONS.ANDROID.CAMERA
+    ]);
   }
 
   /**
-   * Asks given permission
+   * Asks given permissions
    *
-   * @param permission permission to ask
+   * @param permissions permissions to ask
    */
-  private askPermission = async (permission: Permission): Promise<boolean> => {
-    const availabilityResult = await Permissions.check(permission);
+  private askPermissions = async (permissions: Permission[]): Promise<boolean> => {
+    const availabilityResult = await Permissions.checkMultiple(permissions);
 
-    if (availabilityResult !== "unavailable") {
-      return false;
+    const permissionStatuses: PermissionStatus[] = [];
+    for (const permission of permissions) {
+      if (availabilityResult[permission] !== "unavailable") {
+        permissionStatuses.push(await Permissions.request(permission));
+      }
     }
 
-    return await Permissions.request(permission) === "granted";
+    return permissionStatuses.every(status => status === "granted");
   };
 
   /**

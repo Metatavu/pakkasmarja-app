@@ -14,11 +14,11 @@ import Icon from "react-native-vector-icons/EvilIcons";
 import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
 import { FileService } from "../../../api/file.service";
-import { REACT_APP_API_URL } from 'react-native-dotenv';
-import Lightbox from 'react-native-lightbox';
+import { REACT_APP_API_URL } from "react-native-dotenv";
+import Lightbox from "react-native-lightbox";
 import AsyncButton from "../../generic/async-button";
-import { StackNavigationOptions } from '@react-navigation/stack';
-import { Body, CheckBox, Text } from "native-base";
+import { StackNavigationOptions } from "@react-navigation/stack";
+import { CheckBox, Text } from "native-base";
 import AppConfig from "../../../utils/AppConfig";
 import _ from "lodash";
 
@@ -110,8 +110,8 @@ class DeliveryScreen extends React.Component<Props, State> {
       headerLeft: () => (
         <TouchableHighlight onPress={ navigation.goBack }>
           <FeatherIcon
-            name='chevron-left'
-            color='#fff'
+            name="chevron-left"
+            color="#fff"
             size={40}
             style={{ marginLeft: 30 }}
           />
@@ -136,7 +136,7 @@ class DeliveryScreen extends React.Component<Props, State> {
     await this.loadData();
     this.setState({ loading: false });
 
-    this.navigationFocusEventSubscription = navigation.addListener('focus', this.loadData);
+    this.navigationFocusEventSubscription = navigation.addListener("focus", this.loadData);
   }
 
   /**
@@ -208,14 +208,14 @@ class DeliveryScreen extends React.Component<Props, State> {
    */
   private handleRemoveDelivery = async () => {
     Alert.alert(
-      'Hylkää toimitus!',
+      "Hylkää toimitus!",
       `Haluatko varmasti hylkää toimituksen?`,
       [
         {
-          text: 'En halua', onPress: () => { }
+          text: "En halua", onPress: () => { }
         },
         {
-          text: 'Kyllä', onPress: () => this.removeDelivery()
+          text: "Kyllä", onPress: () => this.removeDelivery()
         }
       ]
     );
@@ -387,7 +387,7 @@ class DeliveryScreen extends React.Component<Props, State> {
         {
           notes64.map((deliveryNote, index) => (
             <View
-              style={{ flex: 1, paddingVertical: 10, borderBottomColor: 'grey', borderBottomWidth: 1, }}
+              style={{ flex: 1, paddingVertical: 10, borderBottomColor: "grey", borderBottomWidth: 1, }}
               key={ index }
             >
               <Text style={{ flex: 1, paddingVertical: 5, fontSize: 15 }}>Huomio {index + 1}:</Text>
@@ -404,8 +404,8 @@ class DeliveryScreen extends React.Component<Props, State> {
                   <Image
                     source={{ uri: deliveryNote.url64 }}
                     style={ lightBoxOpen ?
-                      { flex: 1, alignSelf: "center", height: Dimensions.get('screen').height, width: Dimensions.get('screen').width, resizeMode: "contain" } :
-                      { flex: 1, alignSelf: "center", width: 200, height: 200, resizeMode: 'contain', marginBottom: 10 }
+                      { flex: 1, alignSelf: "center", height: Dimensions.get("screen").height, width: Dimensions.get("screen").width, resizeMode: "contain" } :
+                      { flex: 1, alignSelf: "center", width: 200, height: 200, resizeMode: "contain", marginBottom: 10 }
                     }
                   />
                 </Lightbox>
@@ -456,7 +456,7 @@ class DeliveryScreen extends React.Component<Props, State> {
         displayFooter
       >
         <View style={{ flex: 1, padding: 25 }}>
-          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+          <View style={{ flex: 1, flexDirection: "row", paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 15 }}>
                 Tuote
@@ -468,7 +468,7 @@ class DeliveryScreen extends React.Component<Props, State> {
               </Text>
             </View>
           </View>
-          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+          <View style={{ flex: 1, flexDirection: "row", paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 15 }}>
                 Määrä ({ product.unitName })
@@ -480,7 +480,7 @@ class DeliveryScreen extends React.Component<Props, State> {
               </Text>
             </View>
           </View>
-          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+          <View style={{ flex: 1, flexDirection: "row", paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 15 }}>Kiloa</Text>
             </View>
@@ -490,7 +490,7 @@ class DeliveryScreen extends React.Component<Props, State> {
               </Text>
             </View>
           </View>
-          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+          <View style={{ flex: 1, flexDirection: "row", paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
               { delivery.status === "DONE" || delivery.status === "NOT_ACCEPTED" ?
                 <Text style={{ fontSize: 15 }}>
@@ -502,7 +502,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                 </Text>
               }
             </View>
-            <View style={{ flex: 1, flexDirection: 'row' }}>
+            <View style={{ flex: 1, flexDirection: "row" }}>
               { delivery.status === "DONE" || delivery.status === "NOT_ACCEPTED" ?
                 <Text style={{ fontSize: 15, color: "black" }}>
                   { moment(delivery.time).format("DD.MM.YYYY HH:mm") }
@@ -519,7 +519,7 @@ class DeliveryScreen extends React.Component<Props, State> {
               }
             </View>
           </View>
-          <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+          <View style={{ flex: 1, flexDirection: "row", paddingVertical: 5 }}>
             <View style={{ flex: 0.8 }}>
               <Text style={{ fontSize: 15 }}>
                 Toimituspaikka
@@ -532,7 +532,7 @@ class DeliveryScreen extends React.Component<Props, State> {
             </View>
           </View>
           { deliveryQuality &&
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: "center", paddingVertical: 5, height: 60 }}>
+            <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingVertical: 5, height: 60 }}>
               <View style={{ flex: 0.8 }}>
                 <Text style={{ fontSize: 15 }}>
                   Laatuluokka
@@ -611,7 +611,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                   onPress={ () => this.setState({ confirmed: !confirmed }) }
                   style={{ marginRight: 20, paddingBottom: 0, paddingLeft: 0 }}
                 />
-                <Text style={{ color: 'black', fontSize: 15 }}>
+                <Text style={{ color: "black", fontSize: 15 }}>
                   Vakuutan, että toimituksessa mainittujen marjojen alkuperämaa on Suomi ja
                   että liitetty kuva on otettu tämän toimituksen marjoista.
                 </Text>
@@ -633,7 +633,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                     onPress={ () => this.setState({ organicConfirmed: !organicConfirmed }) }
                     style={{ marginRight: 20, paddingBottom: 0, paddingLeft: 0 }}
                   />
-                  <Text style={{ color: 'black', fontSize: 15 }}>
+                  <Text style={{ color: "black", fontSize: 15 }}>
                     Vakuutan tämän marjaerän olevan asetuksen (EU) 2018/848 ja
                     komission asetuksen (EY) 889/2008 mukaisesti tuotettu tuote.
                   </Text>
@@ -649,7 +649,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                     !this.canStartDelivery() && { backgroundColor: "#aaa" }
                   ]}
                   onPress={ this.handleBeginDelivery }>
-                  <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>
+                  <Text style={{ color: "#f2f2f2", fontWeight: "600" }}>
                     Aloita toimitus
                   </Text>
                 </AsyncButton>
@@ -658,7 +658,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                 <AsyncButton
                   style={[ styles.declineButton, styles.center, { width: "70%", height: 60 } ]}
                   onPress={ this.handleRemoveDelivery }>
-                  <Text style={{ color: '#f2f2f2', fontWeight: "600" }}>
+                  <Text style={{ color: "#f2f2f2", fontWeight: "600" }}>
                     Hylkää toimitus
                   </Text>
                 </AsyncButton>
@@ -669,7 +669,7 @@ class DeliveryScreen extends React.Component<Props, State> {
               {
                 delivery.status === "DONE" &&
                 <>
-                  <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+                  <View style={{ flex: 1, flexDirection: "row", paddingVertical: 5 }}>
                     <View style={{ flex: 0.8 }}>
                       <Text style={{ fontSize: 15 }}>
                         Yksikköhinta ALV 0%
@@ -681,7 +681,7 @@ class DeliveryScreen extends React.Component<Props, State> {
                       </Text>
                     </View>
                   </View>
-                  <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 5 }}>
+                  <View style={{ flex: 1, flexDirection: "row", paddingVertical: 5 }}>
                     <View style={{ flex: 0.8 }}>
                       <Text style={{ fontSize: 15 }}>
                         Yksikköhinta ALV 14%

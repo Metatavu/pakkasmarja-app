@@ -38,20 +38,26 @@ export default class ContractFooter extends React.Component<Props, State> {
    */
   public render() {
     return (
-      <View style={styles.WhiteContentView}>
+      <View style={ styles.WhiteContentView }>
         {
           this.props.isActiveContract &&
           <View>
-            <AsyncButton style={{ marginBottom: 25 }} onPress={this.props.downloadContractPdf}>
-              <Text style={styles.linkStyle}>
-                Lataa sopimus PDF - muodossa.
-                </Text>
-            </AsyncButton>
-            <TouchableOpacity style={styles.bigRedButton} onPress={this.props.goBack}>
-              <Text style={styles.buttonText}>
-                TAKAISIN
+            <AsyncButton
+              full
+              transparent
+              style={{ marginBottom: 10 }}
+              onPress={ this.props.downloadContractPdf }
+            >
+              <Text style={{ color: "#FF0000" }}>
+                Lataa sopimus PDF-muodossa
               </Text>
-            </TouchableOpacity>
+            </AsyncButton>
+            <AsyncButton
+              style={ styles.bigRedButton }
+              onPress={ this.props.goBack }
+            >
+              <Text>Takaisin</Text>
+            </AsyncButton>
           </View>
         }
         {

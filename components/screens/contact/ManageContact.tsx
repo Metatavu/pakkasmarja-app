@@ -399,7 +399,7 @@ class ManageContact extends React.Component<Props, State> {
         <Text style={{ fontWeight: "bold", fontSize: 16, color: "black", paddingBottom: 5 }}>{label}</Text>
         <TextInput
           editable={!isEditable}
-          style={{ borderRadius: 4, borderWidth: 1, borderColor: "red", color: "black" }}
+          style={{ borderRadius: 4, borderWidth: 1, borderColor: "red", color: "black", height: Platform.OS === "ios" ? 40 : "auto" }}
           onChangeText={(value) => this.handleInputChange(key, value)}
           value={this.state[key]}
         />

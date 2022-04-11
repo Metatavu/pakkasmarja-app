@@ -8,7 +8,7 @@ import { View, TouchableHighlight, TouchableOpacity, StyleSheet, ActivityIndicat
 import FeatherIcon from "react-native-vector-icons/Feather";
 import _ from "lodash";
 import PakkasmarjaApi from "../../../api";
-import { Tabs, Tab } from "native-base";
+import { Tabs, Tab, DefaultTabBar } from "native-base";
 import { styles } from "../deliveries/styles.tsx";
 import { ItemGroupCategory, Delivery, Contact, Product, DeliveryPlace, DeliveryStatus } from "pakkasmarja-client";
 import moment from "moment";
@@ -159,6 +159,10 @@ class ManageDeliveries extends React.Component<Props, State> {
           page={ category === "FRESH" ? 0 : 1 }
           tabBarUnderlineStyle={{ backgroundColor: "#fff" }}
           onChangeTab={ ({ i }: any) => this.setState({ category: i === 0 ? "FRESH" : "FROZEN" }) }
+          renderTabBar={ (props: any) => {
+            props.tabStyle = Object.create(props.tabStyle);
+            return <DefaultTabBar { ...props }/>;
+          }}
         >
           { canManageFreshDeliveries &&
             <Tab
