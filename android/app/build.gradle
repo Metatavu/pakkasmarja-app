@@ -136,8 +136,8 @@ android {
         applicationId "fi.metatavu.pakkasmarjaBerriesApp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 35100
-        versionName "3.5.1"
+        versionCode 36100
+        versionName "3.6.1"
     }
     splits {
         abi {
