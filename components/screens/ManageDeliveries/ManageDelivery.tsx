@@ -71,6 +71,8 @@ interface State {
   redBoxesReturned: number;
   grayBoxesLoaned: number;
   grayBoxesReturned: number;
+  orangeBoxesLoaned: number;
+  orangeBoxesReturned: number;
   query?: string;
   selectedContact?: Contact;
   contractQuantities?: ContractQuantities[];
@@ -109,6 +111,8 @@ class ManageDelivery extends React.Component<Props, State> {
       redBoxesReturned: 0,
       grayBoxesLoaned: 0,
       grayBoxesReturned: 0,
+      orangeBoxesLoaned: 0,
+      orangeBoxesReturned: 0,
 
       query: ""
     };
@@ -285,7 +289,9 @@ class ManageDelivery extends React.Component<Props, State> {
       redBoxesLoaned,
       redBoxesReturned,
       grayBoxesLoaned,
-      grayBoxesReturned
+      grayBoxesReturned,
+      orangeBoxesLoaned,
+      orangeBoxesReturned
     } = this.state;
 
     if (!accessToken || !product?.id || !deliveryPlaceId || !selectedDate) {
@@ -305,7 +311,8 @@ class ManageDelivery extends React.Component<Props, State> {
       qualityId: deliveryQualityId,
       loans: [
         { item: "RED_BOX", loaned: redBoxesLoaned, returned: redBoxesReturned },
-        { item: "GRAY_BOX", loaned: grayBoxesLoaned, returned: grayBoxesReturned }
+        { item: "GRAY_BOX", loaned: grayBoxesLoaned, returned: grayBoxesReturned },
+        { item: "ORANGE_BOX", loaned: orangeBoxesLoaned, returned: orangeBoxesReturned }
       ]
     }
 
@@ -619,7 +626,15 @@ class ManageDelivery extends React.Component<Props, State> {
     {
       key: "grayBoxesReturned",
       label: "Palautettu (Harmaat laatikot)"
-    }]
+    },
+    {
+      key: "orangeBoxesLoaned",
+      label: "Lainattu (oranssit laatikot)"
+    },
+    {
+      key: "orangeBoxesReturned",
+      label: "Palautettu (oranssit laatikot)"
+    }];
 
     return (
       <BasicScrollLayout
