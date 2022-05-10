@@ -18,6 +18,7 @@ import ModalSelector from 'react-native-modal-selector';
 import strings from "../../../localization/strings";
 import { Picker } from "native-base";
 import { StackNavigationOptions } from '@react-navigation/stack';
+import { useFocusEffect } from "@react-navigation/native";
 
 /**
  * Component props
@@ -26,6 +27,7 @@ interface Props {
   navigation: any;
   accessToken?: AccessToken;
   itemGroupCategory?: ItemGroupCategory;
+  isFocused?: boolean;
 };
 
 /**
@@ -134,7 +136,11 @@ class ManageDeliveries extends React.Component<Props, State> {
    * @param prevState previous component state
    */
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    if (prevState.date !== this.state.date || prevState.selectedDeliveryPlaceId !== this.state.selectedDeliveryPlaceId) {
+    if (
+      prevState.date !== this.state.date ||
+      prevState.selectedDeliveryPlaceId !== this.state.selectedDeliveryPlaceId ||
+      !prevProps.isFocused && this.props.isFocused
+    ) {
       this.loadData();
     }
   }
@@ -461,22 +467,51 @@ class ManageDeliveries extends React.Component<Props, State> {
  *
  * @param state store state
  */
-function mapStateToProps(state: StoreState) {
-  return {
-    accessToken: state.accessToken,
-    itemGroupCategory: state.itemGroupCategory
-  };
-}
+const mapStateToProps = (state: StoreState) => ({
+  accessToken: state.accessToken,
+  itemGroupCategory: state.itemGroupCategory
+});
 
 /**
  * Redux mapper for mapping component dispatches
  *
  * @param dispatch dispatch method
  */
-function mapDispatchToProps(dispatch: Dispatch<actions.AppAction>) {
-  return {
-    onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
-  };
-}
+const mapDispatchToProps = (dispatch: Dispatch<actions.AppAction>) => ({
+  onAccessTokenUpdate: (accessToken: AccessToken) => dispatch(actions.accessTokenUpdate(accessToken))
+});
 
-export default connect(mapStateToProps, mapDispatchToProps)(ManageDeliveries);
+/**
+ * Component with connected Redux
+ */
+const WithRedux = connect(mapStateToProps, mapDispatchToProps)(ManageDeliveries);
+
+/**
+ * Props for component without injected isFocused prop
+ */
+type ComponentProps = Omit<Props, "isFocused">;
+
+/**
+ * Wrapper component for injecting is focused
+ *
+ * @param props component properties
+ */
+const ComponentWithFocusEffect: React.FC<ComponentProps> = (props: ComponentProps) => {
+  const [ isFocused, setIsFocused ] = React.useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, [])
+  );
+
+  return (
+    <WithRedux
+      { ...props }
+      isFocused={ isFocused }
+    />
+  );
+};
+
+export default ComponentWithFocusEffect;

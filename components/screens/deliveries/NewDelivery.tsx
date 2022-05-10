@@ -57,7 +57,7 @@ interface State {
   deliveryPlaceId?: string;
   deliveryNoteData: DeliveryNoteData;
   deliveryNotes: DeliveryNoteData[];
-  products: Product[];
+  products?: Product[];
   product?: Product;
   deliveryNoteFile?: {
     fileUri: string,
@@ -84,7 +84,6 @@ class NewDelivery extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      products: [],
       loading: false,
       datepickerVisible: false,
       modalOpen: false,
@@ -112,55 +111,60 @@ class NewDelivery extends React.Component<Props, State> {
    * Component did mount life-cycle event
    */
   public async componentDidMount() {
-    const { accessToken, navigation } = this.props;
-    const { selectedDate } = this.state;
+    try {
+      const { accessToken, navigation } = this.props;
+      const { selectedDate } = this.state;
 
-    navigation.setOptions(this.navigationOptions(navigation));
+      navigation.setOptions(this.navigationOptions(navigation));
 
-    if (!accessToken?.access_token) {
-      return;
-    }
+      if (!accessToken?.access_token) {
+        return;
+      }
 
-    this.setState({ loading: true });
+      this.setState({ loading: true });
 
-    const Api = new PakkasmarjaApi();
-    const productsService = Api.getProductsService(accessToken.access_token);
-    const productPricesService = Api.getProductPricesService(accessToken.access_token);
-    const deliveryPlacesService = Api.getDeliveryPlacesService(accessToken.access_token);
-    const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
+      const Api = new PakkasmarjaApi();
+      const productsService = Api.getProductsService(accessToken.access_token);
+      const deliveryPlacesService = Api.getDeliveryPlacesService(accessToken.access_token);
 
-    const [ unfilteredProducts, deliveryPlaces ] = await Promise.all([
-      productsService.listProducts(undefined, this.props.itemGroupCategory, accessToken.userId, undefined, 999),
-      deliveryPlacesService.listDeliveryPlaces()
-    ]);
+      const [ unfilteredProducts, deliveryPlaces ] = await Promise.all([
+        productsService.listProducts(undefined, this.props.itemGroupCategory, accessToken.userId, undefined, 999),
+        deliveryPlacesService.listDeliveryPlaces()
+      ]);
 
-    const products = unfilteredProducts.filter(product => product.active === true);
-    const deliveries = this.getDeliveries();
+      const products = unfilteredProducts.filter(product => product.active === true);
+      const deliveries = this.getDeliveries();
 
-    const [ productPrice, deliveryQualities ] = await Promise.all([
-      products[0] ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [],
-      deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, products[0].id || "")
-    ]);
+      const productPricesService = Api.getProductPricesService(accessToken.access_token);
+      const deliveryQualitiesService = Api.getDeliveryQualitiesService(accessToken.access_token);
 
-    this.setState({
-      deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.id !== "OTHER"),
-      deliveries,
-      products,
-      productId: products[0]?.id,
-      product: products[0],
-      deliveryPlaceId: deliveryPlaces[0]?.id,
-      productPrice: productPrice[0],
-      deliveryQualities,
-      loading: false
-    });
+      const [ productPrice, deliveryQualities ] = await Promise.all([
+        products.length ? await productPricesService.listProductPrices(products[0].id || "", "CREATED_AT_DESC", undefined, undefined, 1) : [],
+        products.length ? deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, products[0].id || "") : []
+      ]);
 
-    if (products[0] && !productPrice[0]) {
-      this.renderAlert();
-    }
+      this.setState({
+        deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.id !== "OTHER"),
+        deliveries,
+        products,
+        productId: products.length ? products[0].id : undefined,
+        product: products.length ? products[0] : undefined,
+        deliveryPlaceId: deliveryPlaces.length ? deliveryPlaces[0].id : undefined,
+        productPrice: productPrice.length ? productPrice[0] : undefined,
+        deliveryQualities,
+        loading: false
+      });
+
+      if (products.length && !productPrice.length) {
+        this.renderAlert();
+      }
 
 
-    if (selectedDate && deliveryPlaces[0]?.id) {
-      this.getDeliveryPlaceOpeningHours(selectedDate, deliveryPlaces[0].id);
+      if (selectedDate && deliveryPlaces.length && deliveryPlaces[0].id) {
+        this.getDeliveryPlaceOpeningHours(selectedDate, deliveryPlaces[0].id);
+      }
+    } catch (e) {
+      console.error(e);
     }
   }
 
@@ -338,13 +342,11 @@ class NewDelivery extends React.Component<Props, State> {
     const { accessToken } = this.props;
     const { products } = this.state;
 
-    if (!accessToken) {
-      return;
-    }
+    if (!accessToken) return;
 
     this.setState({ productId: productId });
 
-    const product = products.find(({ id }) => id === productId);
+    const product = products?.find(({ id }) => id === productId);
 
     const Api = new PakkasmarjaApi();
     const productPricesService = Api.getProductPricesService(accessToken.access_token);
@@ -355,13 +357,13 @@ class NewDelivery extends React.Component<Props, State> {
       deliveryQualitiesService.listDeliveryQualities(ItemGroupCategory.FRESH, productId)
     ]);
 
-    if (!productPrice[0]) {
+    if (!productPrice.length) {
       this.renderAlert();
     }
 
     this.setState({
       product,
-      productPrice: productPrice[0],
+      productPrice: productPrice.length ? productPrice[0] : undefined,
       deliveryQualities
     });
   }
@@ -429,14 +431,12 @@ class NewDelivery extends React.Component<Props, State> {
         image = await fileService.uploadFile(deliveryNoteData.imageUri, deliveryNoteData.imageType);
       }
 
-      const deliveryNote: DeliveryNote = {
-        text: deliveryNoteData.text,
-        image: image ? image.url : undefined
-      };
-
-      const Api = new PakkasmarjaApi();
-      const deliveryService = await Api.getDeliveriesService(this.props.accessToken.access_token);
-      return deliveryService.createDeliveryNote(deliveryNote, deliveryId || "");
+      return new PakkasmarjaApi()
+        .getDeliveriesService(this.props.accessToken.access_token)
+        .createDeliveryNote({
+          text: deliveryNoteData.text,
+          image: image ? image.url : undefined
+        }, deliveryId || "");
     }
 
     return null;
@@ -444,6 +444,8 @@ class NewDelivery extends React.Component<Props, State> {
 
   /**
    * Update deliveries
+   *
+   * @param delivery delivery
    */
   private updateDeliveries = (delivery: Delivery) => {
     const {} = this.props
@@ -454,7 +456,7 @@ class NewDelivery extends React.Component<Props, State> {
     const deliveries = this.getDeliveries();
     const deliveryProduct: DeliveryProduct = {
       delivery: delivery,
-      product: this.state.products.find(product => product.id === delivery.productId)
+      product: this.state.products?.find(product => product.id === delivery.productId)
     };
 
     deliveries.push(deliveryProduct);
@@ -639,7 +641,7 @@ class NewDelivery extends React.Component<Props, State> {
       >
         <View style={ styles.deliveryContainer }>
           <Text style={ styles.textWithSpace }>Valitse tuote</Text>
-          { !products.length ?
+          { !products?.length ?
             <Text>Ei voimassa olevaa sopimusta. Jos näin ei pitäisi olla, ole yhteydessä Pakkasmarjaan.</Text>
             :
             <>
@@ -750,7 +752,7 @@ class NewDelivery extends React.Component<Props, State> {
             this.handleProductChange(itemValue)
           }
         >
-          { products.map(product =>
+          { (products || []).map(product =>
               <Picker.Item
                 key={ product.id }
                 label={ product.name || "" }
@@ -763,7 +765,7 @@ class NewDelivery extends React.Component<Props, State> {
     } else {
       return (
         <ModalSelector
-          data={ products?.map(({ id, name }) => ({ key: id, label: name })) }
+          data={ (products || []).map(({ id, name }) => ({ key: id, label: name })) }
           selectedKey={ product?.id }
           initValue="Valitse tuote"
           onChange={ (option: any) => { this.handleProductChange(option.key) }}

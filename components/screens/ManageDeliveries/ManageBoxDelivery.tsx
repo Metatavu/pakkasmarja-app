@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveryListItem, KeyboardType, boxKey } from "../../../types";
+import { AccessToken, StoreState, KeyboardType, boxKey } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
 import { Product, DeliveryPlace, ItemGroupCategory, Contact, Body1 } from "pakkasmarja-client";
@@ -47,6 +47,9 @@ interface State {
   redBoxesReturned: number;
   grayBoxesLoaned: number;
   grayBoxesReturned: number;
+  orangeBoxesLoaned: number;
+  orangeBoxesReturned: number;
+
   deliveryLoanComment: string;
 
   query?: string;
@@ -81,6 +84,8 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       redBoxesReturned: 0,
       grayBoxesLoaned: 0,
       grayBoxesReturned: 0,
+      orangeBoxesLoaned: 0,
+      orangeBoxesReturned: 0,
       deliveryLoanComment: "",
 
       query: ""
@@ -165,7 +170,9 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       redBoxesLoaned,
       redBoxesReturned,
       grayBoxesLoaned,
-      grayBoxesReturned
+      grayBoxesReturned,
+      orangeBoxesLoaned,
+      orangeBoxesReturned
     } = this.state;
 
     if (!accessToken|| !deliveryPlaceId|| !selectedDate || !selectedContact?.id) {
@@ -179,7 +186,8 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       comment: deliveryLoanComment,
       loans: [
         { item: "RED_BOX", loaned: redBoxesLoaned, returned: redBoxesReturned },
-        { item: "GRAY_BOX", loaned: grayBoxesLoaned, returned: grayBoxesReturned }
+        { item: "GRAY_BOX", loaned: grayBoxesLoaned, returned: grayBoxesReturned },
+        { item: "ORANGE_BOX", loaned: orangeBoxesLoaned, returned: orangeBoxesReturned }
       ]
     }
 
@@ -267,7 +275,7 @@ class ManageBoxDelivery extends React.Component<Props, State> {
           }}
           keyboardType={ keyboardType }
           value={ this.state[key].toString() }
-          onChangeText={ (text: string) => this.setState({ ...this.state, [key]: Number(text) }) }
+          onChangeText={ text => this.setState({ ...this.state, [key]: Number(text) }) }
         />
       </View>
     );
@@ -299,22 +307,32 @@ class ManageBoxDelivery extends React.Component<Props, State> {
 
     const compareValues = (a: any, b: any) => a.toLowerCase().trim() === b.toLowerCase().trim();
 
-    const boxInputs: { key: boxKey, label: string }[] = [{
-      key: "redBoxesLoaned",
-      label: "Lainattu (Punaiset laatikot)"
-    },
-    {
-      key: "redBoxesReturned",
-      label: "Palautettu (Punaiset laatikot)"
-    },
-    {
-      key: "grayBoxesLoaned",
-      label: "Lainattu (Harmaat laatikot)"
-    },
-    {
-      key: "grayBoxesReturned",
-      label: "Palautettu (Harmaat laatikot)"
-    }];
+    const boxInputs: { key: boxKey, label: string }[] = [
+      {
+        key: "redBoxesLoaned",
+        label: "Lainattu (Punaiset laatikot)"
+      },
+      {
+        key: "redBoxesReturned",
+        label: "Palautettu (Punaiset laatikot)"
+      },
+      {
+        key: "grayBoxesLoaned",
+        label: "Lainattu (Harmaat laatikot)"
+      },
+      {
+        key: "grayBoxesReturned",
+        label: "Palautettu (Harmaat laatikot)"
+      },
+      {
+        key: "orangeBoxesLoaned",
+        label: "Lainattu (oranssit laatikot)"
+      },
+      {
+        key: "orangeBoxesReturned",
+        label: "Palautettu (oranssit laatikot)"
+      }
+    ];
 
     return (
       <BasicScrollLayout
