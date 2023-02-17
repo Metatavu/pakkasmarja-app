@@ -3,6 +3,7 @@ import moment from "moment";
 import { AuthConfig, AccessToken } from "../types";
 import jwt_decode from "jwt-decode";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { REACT_APP_AUTH_SERVER_URL, REACT_APP_AUTH_REALM } from "react-native-dotenv";
 
 const ACCESS_TOKEN_STORAGE_KEY = "pakkasmarja-access";
 
@@ -15,6 +16,7 @@ export default class Auth {
    */
   static async login(config: AuthConfig) {
     const created = new Date();
+
     const response = await fetch(config.url, {
       method: 'POST',
       body: querystring.stringify({
@@ -40,18 +42,24 @@ export default class Auth {
   static async getToken() {
     const accessTokenData = await AsyncStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
     if (!accessTokenData) {
-      return null;
+      return undefined;
     }
 
     try {
-      const accessToken = JSON.parse(accessTokenData);
+      const accessToken: AccessToken = JSON.parse(accessTokenData);
+
+      const tokenUrl = `${REACT_APP_AUTH_SERVER_URL}/realms/${REACT_APP_AUTH_REALM}/protocol/openid-connect/token`;
+      if (accessToken.url !== tokenUrl) {
+        return undefined;
+      }
+
       if (Auth.isTokenValid(accessToken)) {
         return accessToken;
       }
 
       return await Auth.refreshToken(accessToken);
     } catch {
-      return null;
+      return undefined;
     }
   }
 
@@ -69,7 +77,7 @@ export default class Auth {
    */
   static async refreshToken(accessToken: AccessToken) {
     if (!Auth.canTokenRefresh(accessToken)) {
-      return null;
+      return undefined;
     }
 
     const created = new Date();
@@ -130,6 +138,7 @@ export default class Auth {
    */
   private static async buildToken(tokenData: any, created: Date, url: string, clientId: string, realmId: string) {
     const decodedToken: any = jwt_decode(tokenData.access_token);
+
     const token = {
       realmRoles: decodedToken.realm_access.roles,
       created: created,
