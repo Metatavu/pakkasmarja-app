@@ -124,7 +124,6 @@ export default class App extends React.Component<any, State> {
                 }}
               >
                 <RootStack.Screen name="Login" component={ LoginScreen } options={{ headerShown: false }}/>
-                <RootStack.Screen name="ChatsList" component={ ChatsListScreen }/>
                 <RootStack.Screen name="Contracts" component={ ContractsScreen }/>
                 <RootStack.Screen name="Contract" component={ ContractScreen }/>
                 <RootStack.Screen name="ContractTerms" component={ ContractTerms }/>
