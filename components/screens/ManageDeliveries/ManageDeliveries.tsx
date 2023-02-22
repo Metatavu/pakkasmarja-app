@@ -425,10 +425,7 @@ class ManageDeliveries extends React.Component<Props, State> {
    * @param deliveryListItem deliveryListItem
    */
   private handleListItemPress(category: ItemGroupCategory, isNewDelivery: boolean, delivery: string, deliveryListItem?: DeliveryListItem) {
-    const { date } = this.state;
-
     this.props.navigation.navigate(delivery, {
-      date,
       deliveryListItem,
       category,
       isNewDelivery

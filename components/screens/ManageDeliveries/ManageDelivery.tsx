@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, DeliveriesState, DeliveryListItem, KeyboardType, boxKey, DeliveryNoteData } from "../../../types";
+import { AccessToken, StoreState, DeliveriesState, DeliveryListItem, KeyboardType, BoxKey, DeliveryNoteData } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
 import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality, Contact, ContractQuantities } from "pakkasmarja-client";
@@ -25,6 +25,12 @@ import { REACT_APP_API_URL } from 'react-native-dotenv';
 import AsyncButton from "../../generic/async-button";
 import strings from "../../../localization/strings";
 import { Picker } from "native-base";
+import { extendMoment } from "moment-range";
+import { filterPossibleDeliveryPlaces } from "../../../utils/utility-functions";
+
+const Moment = require("moment");
+const extendedMoment = extendMoment(Moment);
+extendedMoment.locale("fi");
 
 /**
  * Component props
@@ -51,7 +57,7 @@ interface State {
   modalOpen: boolean;
   loading: boolean;
   amount: number;
-  selectedDate: Date;
+  selectedDate?: Date;
   deliveryNotes?: DeliveryNote[];
   createModal: boolean;
   editModal: boolean;
@@ -101,7 +107,6 @@ class ManageDelivery extends React.Component<Props, State> {
       createModal: false,
       editModal: false,
       deliveryQualities: [],
-      selectedDate: new Date(),
 
       noteEditable: false,
       deliveryNoteData: { text: "", imageType: "", imageUri: "" },
@@ -163,15 +168,14 @@ class ManageDelivery extends React.Component<Props, State> {
     this.setState({
       loading: true,
       isNewDelivery: isNewDelivery,
-      category: category,
-      selectedDate: date
+      category: category
     });
 
     const deliveryPlaces = await new PakkasmarjaApi()
       .getDeliveryPlacesService(accessToken.access_token)
       .listDeliveryPlaces();
 
-    this.setState({ deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.name !== "Muu") });
+    this.setState({ deliveryPlaces: filterPossibleDeliveryPlaces(deliveryPlaces, category) });
 
     await this.listProducts();
 
@@ -461,6 +465,45 @@ class ManageDelivery extends React.Component<Props, State> {
   }
 
   /**
+   * Returns a range of available delivery hours
+   */
+  private getAvailableHoursRange = () => {
+    const { selectedDate } = this.state;
+
+    return extendedMoment.range(
+      moment(selectedDate).startOf("day").hours(9),
+      moment(selectedDate).startOf("day").hours(20)
+    );
+  };
+
+  /**
+   * Returns delivery time options as list of dates
+   */
+  private getDeliveryTimeOptions = (): Date[] => {
+    const momentDateArray = Array.from(this.getAvailableHoursRange().by("minutes", { step: 15, excludeEnd: true }));
+    return momentDateArray.map(date => date.toDate());
+  }
+
+  /**
+   * Returns whether given date is valid delivery time
+   *
+   * @param date date
+   */
+  private isValidDeliveryTime = (date: Date) => {
+    return this.getAvailableHoursRange().contains(date);
+  };
+
+  /**
+   * Prints time from Date
+   *
+   * @param date date
+   * @returns time string formatted to finnish locale
+   */
+  private printTime = (date: Date): string => {
+    return moment(date).format("HH.mm");
+  }
+
+  /**
    * Find contact
    *
    * @param query query string
@@ -496,7 +539,13 @@ class ManageDelivery extends React.Component<Props, State> {
    */
   private isValid = () => {
     const { product, selectedDate, deliveryQualityId, deliveryPlaceId } = this.state;
-    return !!product && !!selectedDate && !!deliveryQualityId && !!deliveryPlaceId;
+    return !!(
+      product &&
+      selectedDate &&
+      this.isValidDeliveryTime(selectedDate) &&
+      deliveryQualityId &&
+      deliveryPlaceId
+    );
   }
 
   /**
@@ -506,7 +555,7 @@ class ManageDelivery extends React.Component<Props, State> {
    * @param keyboardType keyboard type
    * @param label label
    */
-  private renderInputField = (key: boxKey, keyboardType: KeyboardType, label: string) => {
+  private renderInputField = (key: BoxKey, keyboardType: KeyboardType, label: string) => {
     return (
       <View key={ key }>
         <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
@@ -611,7 +660,7 @@ class ManageDelivery extends React.Component<Props, State> {
 
     const comp = (a: any, b: any) => a.toLowerCase().trim() === b.toLowerCase().trim();
 
-    const boxInputs: { key: boxKey, label: string }[] = [{
+    const boxInputs: { key: BoxKey, label: string }[] = [{
       key: "redBoxesLoaned",
       label: "Lainattu (Punaiset laatikot)"
     },
@@ -635,6 +684,8 @@ class ManageDelivery extends React.Component<Props, State> {
       key: "orangeBoxesReturned",
       label: "Palautettu (oranssit laatikot)"
     }];
+
+    const availableDeliveryTimes = this.getDeliveryTimeOptions();
 
     return (
       <BasicScrollLayout
@@ -760,7 +811,7 @@ class ManageDelivery extends React.Component<Props, State> {
                   <View style={{ flex: 3, justifyContent: "center", alignItems: "flex-start" }}>
                     <Text style={{ paddingLeft: 10 }}>
                       { selectedDate ?
-                        moment(selectedDate).format("DD.MM.YYYY HH:mm") :
+                        moment(selectedDate).format("DD.MM.YYYY") :
                         "Valitse päivä"
                       }
                     </Text>
@@ -777,12 +828,58 @@ class ManageDelivery extends React.Component<Props, State> {
             </View>
             <DateTimePicker
               date={ selectedDate }
-              mode="datetime"
-              is24Hour
+              mode="date"
               isVisible={ datepickerVisible }
-              onConfirm={ date => this.setState({ selectedDate: date, datepickerVisible: false }) }
+              onConfirm={ date =>
+                this.setState({
+                  selectedDate: moment(date)
+                    .startOf("day")
+                    .hours(selectedDate?.getHours() || availableDeliveryTimes[0].getHours())
+                    .minutes(selectedDate?.getMinutes() || availableDeliveryTimes[0].getMinutes())
+                    .toDate(),
+                  datepickerVisible: false
+                })
+              }
               onCancel={ () => this.setState({ datepickerVisible: false }) }
             />
+          </View>
+          <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
+            <Text style={ styles.textWithSpace }>Ajankohta</Text>
+          </View>
+          <View style={[ styles.pickerWrap, { width: "100%" } ]}>
+          { Platform.OS !== "ios" && (
+            <Picker
+              selectedValue={ selectedDate?.valueOf() }
+              enabled={ !!selectedDate }
+              style={{ height: 50, width: "100%", color: !selectedDate ? "silver" : "black" }}
+              onValueChange={ (itemValue: string) =>
+                this.setState({ selectedDate: new Date(itemValue) })
+              }
+            >
+              {
+                availableDeliveryTimes.map(time =>
+                  <Picker.Item
+                    key={ time.valueOf() }
+                    label={ this.printTime(time) }
+                    value={ time.valueOf() }
+                  />
+                )
+              }
+            </Picker>
+          )}
+          { Platform.OS === "ios" && (
+            <ModalSelector
+              data={
+                availableDeliveryTimes.map(time => ({
+                  key: time.valueOf(),
+                  label: this.printTime(time)
+                }))
+              }
+              selectedKey={ selectedDate?.valueOf() }
+              initValue="Valitse toimitusaika"
+              onChange={ ({ key }) => this.setState({ selectedDate: new Date(key) }) }
+            />
+          )}
           </View>
           <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start", marginTop: 5 }}>
             <Text style={ styles.textWithSpace }>

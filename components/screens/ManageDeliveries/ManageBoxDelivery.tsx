@@ -2,7 +2,7 @@ import React, { Dispatch } from "react";
 import { connect } from "react-redux";
 import BasicScrollLayout from "../../layout/BasicScrollLayout";
 import TopBar from "../../layout/TopBar";
-import { AccessToken, StoreState, KeyboardType, boxKey } from "../../../types";
+import { AccessToken, StoreState, KeyboardType, BoxKey } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight } from "react-native";
 import { Product, DeliveryPlace, ItemGroupCategory, Contact, Body1 } from "pakkasmarja-client";
@@ -256,7 +256,7 @@ class ManageBoxDelivery extends React.Component<Props, State> {
    * @param keyboardType keyboardType
    * @param label label
    */
-  private renderInputField = (key: boxKey, keyboardType: KeyboardType, label: string) => {
+  private renderInputField = (key: BoxKey, keyboardType: KeyboardType, label: string) => {
     return (
       <View key={ key }>
         <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
@@ -307,7 +307,7 @@ class ManageBoxDelivery extends React.Component<Props, State> {
 
     const compareValues = (a: any, b: any) => a.toLowerCase().trim() === b.toLowerCase().trim();
 
-    const boxInputs: { key: boxKey, label: string }[] = [
+    const boxInputs: { key: BoxKey, label: string }[] = [
       {
         key: "redBoxesLoaned",
         label: "Lainattu (Punaiset laatikot)"

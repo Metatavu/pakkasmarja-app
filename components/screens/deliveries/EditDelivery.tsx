@@ -6,7 +6,7 @@ import TopBar from "../../layout/TopBar";
 import { AccessToken, StoreState, DeliveriesState, DeliveryProduct } from "../../../types";
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert, StyleProp, TextStyle, ViewStyle } from "react-native";
-import Api, { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, OpeningHourInterval, DeliveryQuality } from "pakkasmarja-client";
+import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality } from "pakkasmarja-client";
 import { styles } from "./styles.tsx";
 import { Text, Icon, H1 } from "native-base";
 import NumericInput from 'react-native-numeric-input'
@@ -20,7 +20,7 @@ import { extendMoment } from "moment-range";
 import _ from "lodash";
 import CreateDeliveryNoteModal from "./CreateDeliveryNoteModal";
 import ViewOrDeleteNoteModal from "./ViewOrDeleteNoteModal";
-import { roundPrice } from "../../../utils/utility-functions";
+import { filterPossibleDeliveryPlaces, roundPrice } from "../../../utils/utility-functions";
 import AsyncButton from "../../generic/async-button";
 import { Picker } from "native-base";
 import { StackNavigationOptions } from '@react-navigation/stack';
@@ -63,9 +63,6 @@ interface State {
   createModal: boolean;
   editModal: boolean;
   deliveryNoteId?: string;
-  deliveryPlaceOpeningHours?: OpeningHourInterval[];
-  defaultOpeningHours: OpeningHourInterval[];
-  selectedTime?: Date;
   productPrice?: ProductPrice;
   product?: Product;
   noteEditable: boolean;
@@ -94,15 +91,8 @@ class EditDelivery extends React.Component<Props, State> {
       createModal: false,
       editModal: false,
       deliveries: [],
-      selectedDate: new Date(),
-      selectedTime: new Date(),
       deliveryNotes: [],
       noteEditable: false,
-      deliveryPlaceOpeningHours: [],
-      defaultOpeningHours: [{
-        opens: moment().startOf("day").toDate(),
-        closes: moment().endOf("day").toDate()
-      }],
       deliveryQualities: []
     };
   }
@@ -174,102 +164,23 @@ class EditDelivery extends React.Component<Props, State> {
       if (!deliveryPlace.id) {
         return;
       }
-      const deliveryPlaceOpeningHours = await this.getDeliveryPlaceOpeningHours(deliveryData.delivery.time, deliveryPlace.id);
       this.setState({
         deliveryData,
         products: products,
         deliveryQualities,
-        deliveryPlaces: deliveryPlaces.filter(deliveryPlace => deliveryPlace.id !== "OTHER"),
+        deliveryPlaces: filterPossibleDeliveryPlaces(deliveryPlaces, this.props.itemGroupCategory!),
         userId: accessToken.userId,
         productId: deliveryData.product.id,
         product: deliveryData.product,
         deliveryPlaceId: deliveryPlace.id || "",
         amount: deliveryData.delivery.amount,
         selectedDate: new Date(deliveryData.delivery.time),
-        selectedTime: new Date(deliveryData.delivery.time),
-        deliveryPlaceOpeningHours: deliveryPlaceOpeningHours,
         loading: false,
         productPrice: productPrice[0]
       }, () => this.loadDeliveryNotes());
       if (products[0] && !productPrice[0]) {
         this.renderAlert();
       }
-    }
-  }
-
-  /**
-   * Component did update life cycle method
-   *
-   * @param prevProps previous props
-   * @param prevState previous state
-   */
-  public componentDidUpdate = async (prevProps: Props, prevState: State) => {
-    const { deliveryPlaceId, selectedDate, selectedTime } = this.state;
-    if (
-      selectedDate &&
-      deliveryPlaceId &&
-      (prevState.selectedDate !== selectedDate ||
-       prevState.deliveryPlaceId !== deliveryPlaceId)
-    ) {
-      const deliveryPlaceOpeningHours = await this.getDeliveryPlaceOpeningHours(selectedDate, deliveryPlaceId);
-      this.setState({ deliveryPlaceOpeningHours });
-
-      if (!this.getOpeningHours().find(time => this.matchTime(time, selectedTime))) {
-        this.setState({ selectedTime: undefined });
-      }
-    }
-  }
-
-    /**
-   * Gets delivery place opening hours on a given date
-   *
-   * @param date date object
-   * @param deliveryPlaceId delivery place id
-   */
-  private getDeliveryPlaceOpeningHours = async (date: Date, deliveryPlaceId: string): Promise<OpeningHourInterval[] | undefined> => {
-    const { accessToken } = this.props;
-    if (!accessToken || !accessToken.access_token) {
-      return;
-    }
-
-    try {
-      const openingHoursService = Api.getOpeningHoursService(accessToken.access_token);
-      const rangeStart = moment(date).startOf("day").toDate();
-      const rangeEnd = moment(date).endOf("day").toDate();
-      const openingHourPeriods = await openingHoursService.listOpeningHourPeriods(deliveryPlaceId, rangeStart, rangeEnd);
-      const openingHourExceptions = await openingHoursService.listOpeningHourExceptions(deliveryPlaceId);
-      const chosenDate = moment(date);
-
-      const exception = openingHourExceptions.find(item => {
-        const exceptionDate = moment(item.exceptionDate);
-        return exceptionDate.format("YYYY-MM-DD") === chosenDate.format("YYYY-MM-DD");
-      });
-
-      if (exception) {
-        return exception.hours;
-      }
-
-      const period = openingHourPeriods.find(period => {
-        const periodBegin = moment(period.beginDate);
-        const periodEnd = moment(period.endDate);
-        const sameAsBegin = chosenDate.format("YYYY-MM-DD") === periodBegin.format("YYYY-MM-DD");
-        const sameAsEnd = chosenDate.format("YYYY-MM-DD") === periodEnd.format("YYYY-MM-DD");
-        return chosenDate.isBetween(periodBegin, periodEnd) || sameAsBegin || sameAsEnd;
-      });
-
-      if (period) {
-        const periodDay = period.weekdays.find((item, index) => {
-          const day = moment(period.beginDate).add(index, "days");
-          return day.format("YYYY-MM-DD") === chosenDate.format("YYYY-MM-DD");
-        });
-
-        if (periodDay) {
-          return periodDay.hours;
-        }
-      };
-    } catch (error) {
-      console.warn(error);
-      return;
     }
   }
 
@@ -282,7 +193,6 @@ class EditDelivery extends React.Component<Props, State> {
       deliveryPlaceId,
       product,
       selectedDate,
-      selectedTime,
       amount,
       price,
       deliveryData,
@@ -305,16 +215,12 @@ class EditDelivery extends React.Component<Props, State> {
 
     const Api = new PakkasmarjaApi();
     const deliveryService = Api.getDeliveriesService(accessToken.access_token);
-    const deliveryTime = moment(selectedTime);
-    const time = moment(selectedDate)
-      .set({ "hour": deliveryTime.hour(), "minute": deliveryTime.minute() })
-      .toDate();
 
     const delivery: Delivery = {
       id: deliveryData.delivery.id,
       productId: product.id,
       userId: userId,
-      time: time,
+      time: selectedDate,
       status: "PLANNED",
       amount: amount,
       price: price,
@@ -388,6 +294,35 @@ class EditDelivery extends React.Component<Props, State> {
   }
 
   /**
+   * Returns a range of available delivery hours
+   */
+  private getAvailableHoursRange = () => {
+    const { selectedDate } = this.state;
+
+    return extendedMoment.range(
+      moment(selectedDate).startOf("day").hours(10),
+      moment(selectedDate).startOf("day").hours(17)
+    );
+  };
+
+  /**
+   * Returns delivery time options as list of dates
+   */
+  private getDeliveryTimeOptions = (): Date[] => {
+    const momentDateArray = Array.from(this.getAvailableHoursRange().by("minutes", { step: 15, excludeEnd: true }));
+    return momentDateArray.map(date => date.toDate());
+  }
+
+  /**
+   * Returns whether given date is valid delivery time
+   *
+   * @param date date
+   */
+  private isValidDeliveryTime = (date: Date) => {
+    return this.getAvailableHoursRange().contains(date);
+  };
+
+  /**
   * Prints date from Date
   *
   * @param date date
@@ -405,17 +340,6 @@ class EditDelivery extends React.Component<Props, State> {
    */
   private printTime = (date: Date): string => {
     return moment(date).format("HH.mm");
-  }
-
-  /**
-   * Removes currently selected date filter
-   */
-  private removeDate = () => {
-    this.setState({
-      selectedDate: undefined,
-      selectedTime: undefined,
-      deliveryPlaceOpeningHours: undefined
-    });
   }
 
   /**
@@ -468,58 +392,14 @@ class EditDelivery extends React.Component<Props, State> {
    * @return whether form is valid or not
    */
   private isValid = () => {
-    return !!(this.state.product
-      && this.state.selectedDate
-      && this.state.deliveryPlaceId
-      && this.state.selectedTime
+    const { product, selectedDate, deliveryPlaceId } = this.state;
+
+    return !!(
+      product
+      && selectedDate
+      && this.isValidDeliveryTime(selectedDate)
+      && deliveryPlaceId
     );
-  }
-
-  /**
-   * Gets opening hours if selected delivery place has ones set for selected date
-   *
-   * @returns date array if opening hours are found, otherwise undefined
-   */
-  private getOpeningHours = (): Date[] => {
-    const { deliveryPlaceOpeningHours, defaultOpeningHours } = this.state;
-    return deliveryPlaceOpeningHours ?
-      this.convertToDateArray(deliveryPlaceOpeningHours) :
-      this.convertToDateArray(defaultOpeningHours);
-  }
-
-  /**
-   * Converts opening hours to date array
-   *
-   * @param openingHours array of opening hours
-   * @return array of dates
-   */
-  private convertToDateArray = (openingHours: OpeningHourInterval[]) => {
-    return _.flatten(openingHours.map(this.mapToDateArray));
-  }
-
-  /**
-   * Maps single opening hour interval to date array
-   *
-   * @param interval opening hour interval
-   * @returns array of dates
-   */
-  private mapToDateArray = (interval: OpeningHourInterval): Date[] => {
-    const { opens, closes } = interval;
-    const dateRange = extendedMoment.range(
-      moment(opens),
-      moment(closes)
-    );
-    const momentDateArray = Array.from(dateRange.by("minutes", { step: 15, excludeEnd: true }));
-    return momentDateArray.map(date => date.toDate());
-  }
-
-  /**
-   * Checks if time of day matches
-   */
-  private matchTime = (a: Date | undefined, b: Date | undefined) => {
-    return a && b ?
-      moment(a).format("HH.mm") === moment(b).format("HH.mm") :
-      false;
   }
 
   /**
@@ -535,8 +415,7 @@ class EditDelivery extends React.Component<Props, State> {
       deliveryData,
       deliveryNoteId,
       createModal,
-      editModal,
-      deliveryPlaceOpeningHours
+      editModal
     } = this.state;
 
     if (loading) {
@@ -592,38 +471,22 @@ class EditDelivery extends React.Component<Props, State> {
           </View>
           <View style={{ flex: 1, flexDirection: "row", marginTop: 15 }}>
             <View style={{ flex: 1 }}>
-              {
-                this.renderDeliveryDateSelection()
-              }
+              { this.renderDeliveryDateSelection() }
             </View>
             <View style={{ flex: 1, marginLeft: "4%" }}>
-              {
-                this.renderDeliveryTimeSelection()
-              }
+              { this.renderDeliveryTimeSelection() }
             </View>
-          </View>
-          <View style={{ flex: 1, flexDirection: "row", marginTop: 15, justifyContent: "center" }}>
-            { !deliveryPlaceOpeningHours &&
-              <Text style={{ color: "red" }}>Aukioloajat voivat vielä muuttua</Text>
-            }
           </View>
           <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
             <Text style={ styles.textWithSpace }>Toimituspaikka</Text>
           </View>
           <View style={[ styles.pickerWrap, { width: "100%" } ]}>
-            {
-              this.renderDeliveryPlaceSelection()
-            }
+            { this.renderDeliveryPlaceSelection() }
           </View>
           <View style={{ flex: 1 }}>
-            {
-              this.renderDeliveryNotes()
-            }
-            {
-              this.renderAddDeliveryNote()
-            }
-            {
-              !this.isValid() &&
+            { this.renderDeliveryNotes() }
+            { this.renderAddDeliveryNote() }
+            { !this.isValid() &&
               <View style={[ styles.center, { flex: 1, marginTop: 5 } ]}>
                 <Text style={{ color: "red" }}>Tarvittavia tietoja puuttuu</Text>
               </View>
@@ -783,19 +646,11 @@ class EditDelivery extends React.Component<Props, State> {
               </Text>
             </View>
             <View style={[ styles.center, { flex: 0.6 } ]}>
-              { selectedDate ?
-                <Icon
-                  style={{ color: "#e01e36" }}
-                  onPress={ this.removeDate }
-                  type="AntDesign"
-                  name="close"
-                /> :
-                <Icon
-                  style={{ color: "#e01e36" }}
-                  type="AntDesign"
-                  name="calendar"
-                />
-              }
+              <Icon
+                style={{ color: "#e01e36" }}
+                type="AntDesign"
+                name="calendar"
+              />
             </View>
           </View>
         </TouchableOpacity>
@@ -803,7 +658,15 @@ class EditDelivery extends React.Component<Props, State> {
           date={ selectedDate }
           mode="date"
           isVisible={ datepickerVisible }
-          onConfirm={ date => this.setState({ selectedDate: date, datepickerVisible: false }) }
+          onConfirm={ date => this.setState({
+            selectedDate: moment(date)
+              .startOf("day")
+              .hours(selectedDate?.getHours() || 0)
+              .minutes(selectedDate?.getMinutes() || 0)
+              .toDate(),
+            datepickerVisible: false
+          })
+          }
           onCancel={ () => this.setState({ datepickerVisible: false }) }
         />
       </>
@@ -814,18 +677,13 @@ class EditDelivery extends React.Component<Props, State> {
    * Renders delivery time selection
    */
   private renderDeliveryTimeSelection = () => {
-    const includedHours = this.getOpeningHours();
-
     return (
       <>
         <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
           <Text style={ styles.textWithSpace }>Ajankohta</Text>
         </View>
         <View style={[ styles.pickerWrap, { width: "100%" } ]}>
-          { includedHours.length > 0 ?
-            this.renderTimePicker(includedHours) :
-            <Text style={{ flex: 1, textAlignVertical: "center", paddingLeft: 5 }}>Suljettu</Text>
-          }
+          { this.renderTimePicker() }
         </View>
       </>
     );
@@ -833,22 +691,21 @@ class EditDelivery extends React.Component<Props, State> {
 
   /**
    * Renders time picker element
-   *
-   * @param hours included hours list
    */
-  private renderTimePicker = (hours: Date[]) => {
-    const { selectedTime } = this.state;
+  private renderTimePicker = () => {
+    const { selectedDate } = this.state;
+
     if (Platform.OS !== "ios") {
       return (
         <Picker
-          selectedValue={ selectedTime?.valueOf() }
+          selectedValue={ selectedDate?.valueOf() }
           style={{ height: 50, width: "100%", color: "black" }}
           onValueChange={ (itemValue: string) =>
-            this.setState({ selectedTime: new Date(itemValue) })
+            this.setState({ selectedDate: new Date(itemValue) })
           }
         >
           {
-            (hours || []).map(time =>
+            this.getDeliveryTimeOptions().map(time =>
               <Picker.Item
                 key={ time.valueOf() }
                 label={ this.printTime(time) }
@@ -863,14 +720,14 @@ class EditDelivery extends React.Component<Props, State> {
     return (
       <ModalSelector
         data={
-          hours.map(time => ({
+          this.getDeliveryTimeOptions().map(time => ({
             key: time.valueOf(),
             label: this.printTime(time)
           }))
         }
-        selectedKey={ selectedTime?.valueOf() }
+        selectedKey={ selectedDate?.valueOf() }
         initValue="Valitse toimitusaika"
-        onChange={ ({ key }) => this.setState({ selectedTime: new Date(key) }) }
+        onChange={ ({ key }) => this.setState({ selectedDate: new Date(key) }) }
       />
     );
   }
@@ -1036,7 +893,7 @@ class EditDelivery extends React.Component<Props, State> {
       }
 
       return (
-        <View style={{ flex: 1, flexDirection: "row" }}>
+        <View key={ deliveryQuality.id } style={{ flex: 1, flexDirection: "row" }}>
           <Text style={{ ...rowBaseStyles, borderRightWidth: 1, borderRightColor: "#ccc" }}>
             { name }
           </Text>

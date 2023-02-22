@@ -1,13 +1,11 @@
 import React from "react";
 import { connect } from "react-redux";
-import { Toast, Spinner, Thumbnail, Badge, Icon, Fab, Text } from "native-base";
+import { Toast, Spinner, Thumbnail, Badge, Text } from "native-base";
 import { StyleSheet, View, SafeAreaView, TouchableOpacity } from "react-native";
 import strings from "../../localization/strings";
-import { CONTRACTS_ICON, DELIVERIES_ICON, MESSAGES_ICON, NEWS_ICON, DEFAULT_FILE } from "../../static/images";
+import { CONTRACTS_ICON, DELIVERIES_ICON, NEWS_ICON, DEFAULT_FILE } from "../../static/images";
 import { AccessToken, StoreState } from "../../types";
 import { Unread } from "pakkasmarja-client";
-import AppConfig from "../../utils/AppConfig";
-import PakkasmarjaApi from "../../api";
 
 /**
  * Component properties
@@ -63,10 +61,9 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
   }
 
   public render = () => {
-    const { loading, children, accessToken, displayFooter } = this.props;
+    const { loading, children, displayFooter } = this.props;
 
     const unreadNews = this.countUnreads("news-");
-    const unreadChats = this.countUnreads("chat");
 
     if (loading) {
       return (
@@ -79,18 +76,6 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
     return (
       <SafeAreaView style={{ flex: 1 }}>
         { children }
-        { accessToken && !accessToken.realmRoles.includes("manage-threads") &&
-          <Fab
-            active
-            direction="up"
-            containerStyle={{ bottom: 110, right: 5 }}
-            style={{ backgroundColor: '#e01e36', height: 40, width: 40 }}
-            position="bottomRight"
-            onPress={ this.onHelpClick }
-          >
-            <Icon name="help"/>
-          </Fab>
-        }
         { displayFooter &&
           <View style={ styles.footer }>
             <TouchableOpacity onPress={ () => this.goToScreen("News") }>
@@ -109,25 +94,6 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
                 />
                 <Text style={{ fontSize: 12, color: "#333" }}>
                   { strings.newsFooterLink }
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={ () => this.goToScreen("ChatsList") }>
-              <View style={{ flex: 0, alignItems: "center", alignContent: "center" }}>
-                { unreadChats > 0 &&
-                  <Badge style={{ position: "absolute", height: 20, zIndex: 99 }}>
-                    <Text style={{ color: "white", display: "flex", flexBasis: 18 }}>
-                      { unreadChats }
-                    </Text>
-                  </Badge>
-                }
-                <Thumbnail
-                  source={ MESSAGES_ICON }
-                  square
-                  style={{ width: 48, height:26 }}
-                />
-                <Text style={{ fontSize: 12, color: "#333" }}>
-                  { strings.messagingFooterLink }
                 </Text>
               </View>
             </TouchableOpacity>
@@ -171,35 +137,6 @@ class BasicLayout extends React.Component<BasicLayoutProps, State> {
         }
       </SafeAreaView>
     );
-  }
-
-  /**
-   * Handles help button click
-   */
-  private onHelpClick = async () => {
-    const { accessToken, navigation } = this.props;
-
-    const appConfig = await AppConfig.getAppConfig();
-    const questionGroupId = appConfig["help-question-group"];
-
-    if (!questionGroupId || !accessToken) {
-      return;
-    }
-
-    try {
-      const questionGroupThreads = await new PakkasmarjaApi()
-        .getChatThreadsService(accessToken.access_token)
-        .listChatThreads(questionGroupId, "QUESTION", accessToken.userId);
-
-      if (questionGroupThreads.length !== 1) {
-        console.warn("Could not find question group thread");
-        return; //Application is misconfigured, bail out.
-      }
-
-      navigation.push("ChatsList", { selectedQuestionThreadId: questionGroupThreads[0].id });
-    } catch (error: any) {
-      console.warn(error.stack);
-    }
   }
 
     /**
