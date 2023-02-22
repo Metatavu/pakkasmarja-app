@@ -627,6 +627,9 @@ class EditDelivery extends React.Component<Props, State> {
    */
   private renderDeliveryDateSelection = () => {
     const { datepickerVisible, selectedDate } = this.state;
+
+    const availableTimes = this.getDeliveryTimeOptions();
+
     return (
       <>
         <View style={{ flex: 1, justifyContent: "flex-start", alignItems: "flex-start" }}>
@@ -661,8 +664,8 @@ class EditDelivery extends React.Component<Props, State> {
           onConfirm={ date => this.setState({
             selectedDate: moment(date)
               .startOf("day")
-              .hours(selectedDate?.getHours() || 0)
-              .minutes(selectedDate?.getMinutes() || 0)
+              .hours(selectedDate?.getHours() || availableTimes[0].getHours())
+              .minutes(selectedDate?.getMinutes() || availableTimes[0].getMinutes())
               .toDate(),
             datepickerVisible: false
           })
