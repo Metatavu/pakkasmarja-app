@@ -66,8 +66,9 @@ buck-out/
 google-services.json
 GoogleService-Info.plist
 
-# CocoaPods
+# Ruby / CocoaPods
 /ios/Pods/
+/vendor/bundle/
 
 # Environment variables
 .env
