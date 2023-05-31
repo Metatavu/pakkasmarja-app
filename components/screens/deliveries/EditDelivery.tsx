@@ -24,6 +24,7 @@ import { filterPossibleDeliveryPlaces, roundPrice } from "../../../utils/utility
 import AsyncButton from "../../generic/async-button";
 import { Picker } from "native-base";
 import { StackNavigationOptions } from '@react-navigation/stack';
+import ProfileButton from "../../layout/ProfileButton";
 
 const Moment = require("moment");
 const extendedMoment = extendMoment(Moment);
@@ -108,14 +109,8 @@ class EditDelivery extends React.Component<Props, State> {
         height: 100,
         backgroundColor: "#E51D2A"
       },
-      headerTitle: () => <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
-      headerTitleContainerStyle: {
-        left: 0,
-      },
+      headerTitle: () => <TopBar/>,
+      headerTitleAlign: "center",
       headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
@@ -125,6 +120,8 @@ class EditDelivery extends React.Component<Props, State> {
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      ,
+      headerRight: () => <ProfileButton/>
     }
   };
 

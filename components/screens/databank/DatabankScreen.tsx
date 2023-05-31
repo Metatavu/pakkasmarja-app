@@ -13,6 +13,7 @@ import RNFetchBlob from 'rn-fetch-blob';
 import PakkasmarjaApi from "../../../api";
 import { REACT_APP_API_URL } from 'react-native-dotenv';
 import { StackNavigationOptions } from '@react-navigation/stack';
+import ProfileButton from "../../layout/ProfileButton";
 
 /**
  * Component props
@@ -69,14 +70,8 @@ class DatabankScreen extends React.Component<Props, State> {
         height: 100,
         backgroundColor: "#E51D2A"
       },
-      headerTitle: () => <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
-      headerTitleContainerStyle: {
-        left: 0,
-      },
+      headerTitle: () => <TopBar/>,
+      headerTitleAlign: "center",
       headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
@@ -86,6 +81,8 @@ class DatabankScreen extends React.Component<Props, State> {
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      ,
+      headerRight: () => <ProfileButton/>
     }
   };
 

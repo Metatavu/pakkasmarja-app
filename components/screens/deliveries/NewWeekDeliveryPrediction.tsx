@@ -15,6 +15,7 @@ import FeatherIcon from "react-native-vector-icons/Feather";
 import _ from "lodash";
 import AsyncButton from "../../generic/async-button";
 import { StackNavigationOptions } from '@react-navigation/stack';
+import ProfileButton from "../../layout/ProfileButton";
 
 /**
  * Component props
@@ -82,14 +83,8 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
         height: 100,
         backgroundColor: "#E51D2A"
       },
-      headerTitle: () => <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
-      headerTitleContainerStyle: {
-        left: 0,
-      },
+      headerTitle: () => <TopBar/>,
+      headerTitleAlign: "center",
       headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <FeatherIcon
@@ -99,6 +94,8 @@ class NewWeekDeliveryPrediction extends React.Component<Props, State> {
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      ,
+      headerRight: () => <ProfileButton/>
     }
   };
 

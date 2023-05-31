@@ -22,6 +22,7 @@ import AppConfig from "../../../utils/AppConfig";
 import strings from "../../../localization/strings";
 import { StackNavigationOptions } from '@react-navigation/stack';
 import _ from "lodash";
+import ProfileButton from "../../layout/ProfileButton";
 
 /**
  * Interface for component props
@@ -211,17 +212,8 @@ class ContractScreen extends React.Component<Props, State> {
         height: 100,
         backgroundColor: "#E51D2A"
       },
-      headerTitle: () => (
-        <TopBar
-          navigation={ navigation }
-          showMenu
-          showHeader={ false }
-          showUser
-        />
-      ),
-      headerTitleContainerStyle: {
-        left: 0
-      },
+      headerTitle: () => <TopBar/>,
+      headerTitleAlign: "center",
       headerLeft: () => (
         <TouchableHighlight onPress={ navigation.goBack }>
           <Icon
@@ -231,7 +223,8 @@ class ContractScreen extends React.Component<Props, State> {
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
-      )
+      ),
+      headerRight: () => <ProfileButton/>
     }
   };
 
