@@ -11,6 +11,7 @@ import _ from "lodash"
 import moment from "moment";
 import { StackNavigationOptions } from "@react-navigation/stack";
 import { Platform } from "react-native";
+import ProfileButton from "../../layout/ProfileButton";
 
 /**
  * Component props
@@ -62,19 +63,10 @@ class NewsListScreen extends React.Component<Props, State> {
         height: 100,
         backgroundColor: "#E51D2A"
       },
-      headerTitle: () => (
-        <TopBar
-          navigation={ navigation }
-          showMenu={ true }
-          showHeader={ false }
-          showUser={ true }
-          frontPage={ true }
-        />
-      ),
-      headerTitleContainerStyle: {
-        left: 0
-      },
-      headerLeft: () => null
+      headerTitle: () => <TopBar/>,
+      headerTitleAlign: "center",
+      headerLeft: () => null,
+      headerRight: () => <ProfileButton/>
     }
   };
 

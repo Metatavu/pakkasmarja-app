@@ -13,6 +13,7 @@ import { PREDICTIONS_ICON } from "../../../static/images";
 import Icon from "react-native-vector-icons/Feather";
 import _ from "lodash";
 import { StackNavigationOptions } from '@react-navigation/stack';
+import ProfileButton from "../../layout/ProfileButton";
 
 /**
  * Component props
@@ -65,14 +66,8 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
         height: 100,
         backgroundColor: "#E51D2A"
       },
-      headerTitle: () => <TopBar navigation={navigation}
-        showMenu={true}
-        showHeader={false}
-        showUser={true}
-      />,
-      headerTitleContainerStyle: {
-        left: 0,
-      },
+      headerTitle: () => <TopBar/>,
+      headerTitleAlign: "center",
       headerLeft: () =>
         <TouchableHighlight onPress={() => { navigation.goBack(null) }} >
           <Icon
@@ -82,6 +77,8 @@ class WeekDeliveryPredictionScreen extends React.Component<Props, State> {
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
+      ,
+      headerRight: () => <ProfileButton/>
     }
   };
 

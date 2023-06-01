@@ -16,6 +16,7 @@ import Autocomplete from 'native-base-autocomplete';
 import AsyncButton from "../../generic/async-button";
 import strings from "../../../localization/strings";
 import { StackNavigationOptions } from '@react-navigation/stack';
+import ProfileButton from "../../layout/ProfileButton";
 
 /**
  * Component props
@@ -103,16 +104,8 @@ class ManageBoxDelivery extends React.Component<Props, State> {
         height: 100,
         backgroundColor: "#E51D2A"
       },
-      headerTitle: () => (
-        <TopBar navigation={navigation}
-          showMenu={true}
-          showHeader={false}
-          showUser={true}
-        />
-      ),
-      headerTitleContainerStyle: {
-        left: 0,
-      },
+      headerTitle: () => <TopBar/>,
+      headerTitleAlign: "center",
       headerLeft: () =>(
         <TouchableHighlight onPress={ () => { navigation.goBack(null) }}>
           <FeatherIcon
@@ -122,7 +115,8 @@ class ManageBoxDelivery extends React.Component<Props, State> {
             style={{ marginLeft: 30 }}
           />
         </TouchableHighlight>
-      )
+      ),
+      headerRight: () => <ProfileButton/>
     }
   };
 

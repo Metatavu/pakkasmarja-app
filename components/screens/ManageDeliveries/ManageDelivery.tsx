@@ -6,7 +6,7 @@ import { AccessToken, StoreState, DeliveriesState, DeliveryListItem, KeyboardTyp
 import * as actions from "../../../actions";
 import { View, ActivityIndicator, TouchableOpacity, TouchableHighlight, Platform, Dimensions, Alert } from "react-native";
 import { Delivery, Product, DeliveryNote, DeliveryPlace, ItemGroupCategory, ProductPrice, DeliveryQuality, Contact, ContractQuantities } from "pakkasmarja-client";
-import { Text, Icon, Input, ListItem } from "native-base";
+import { Text, Icon, Input, ListItem, CheckBox, Body, Card, CardItem } from "native-base";
 import NumericInput from 'react-native-numeric-input'
 import moment from "moment"
 import PakkasmarjaApi from "../../../api";
@@ -27,6 +27,7 @@ import strings from "../../../localization/strings";
 import { Picker } from "native-base";
 import { extendMoment } from "moment-range";
 import { filterPossibleDeliveryPlaces } from "../../../utils/utility-functions";
+import ProfileButton from "../../layout/ProfileButton";
 
 const Moment = require("moment");
 const extendedMoment = extendMoment(Moment);
@@ -82,6 +83,7 @@ interface State {
   query?: string;
   selectedContact?: Contact;
   contractQuantities?: ContractQuantities[];
+  shouldMarkEquipmentInspected: boolean;
 };
 
 /**
@@ -119,7 +121,9 @@ class ManageDelivery extends React.Component<Props, State> {
       orangeBoxesLoaned: 0,
       orangeBoxesReturned: 0,
 
-      query: ""
+      query: "",
+
+      shouldMarkEquipmentInspected: false
     };
   }
 
@@ -133,14 +137,8 @@ class ManageDelivery extends React.Component<Props, State> {
       height: 100,
       backgroundColor: "#E51D2A"
     },
-    headerTitle: () => (
-      <TopBar
-        navigation={ navigation }
-        showMenu
-        showHeader={ false }
-        showUser
-      />
-    ),
+    headerTitle: () => <TopBar/>,
+    headerTitleAlign: "center",
     headerTitleContainerStyle: { left: 0 },
     headerLeft: () => (
       <TouchableHighlight onPress={ navigation.goBack }>
@@ -151,7 +149,8 @@ class ManageDelivery extends React.Component<Props, State> {
           style={{ marginLeft: 30 }}
         />
       </TouchableHighlight>
-    )
+    ),
+    headerRight: () => <ProfileButton/>
   });
 
   /**
@@ -159,7 +158,7 @@ class ManageDelivery extends React.Component<Props, State> {
    */
   public componentDidMount = async () => {
     const { accessToken, navigation, route } = this.props;
-    const { date, deliveryListItem, category, isNewDelivery } = route.params;
+    const { deliveryListItem, category, isNewDelivery } = route.params;
 
     navigation.setOptions(this.navigationOptions(navigation));
 
@@ -200,6 +199,7 @@ class ManageDelivery extends React.Component<Props, State> {
       deliveryPlaceId: deliveryPlace?.id,
       amount: deliveryListItem.delivery.amount,
       selectedDate: new Date(deliveryListItem.delivery.time),
+      selectedContact: deliveryListItem.contact,
       loading: false
     }, this.loadDeliveryNotes);
   }
@@ -275,6 +275,25 @@ class ManageDelivery extends React.Component<Props, State> {
     }, this.getProductPrice);
   }
 
+  private markContactEquipmentInspected = async () => {
+    const { accessToken } = this.props;
+
+    if (!accessToken?.access_token) return;
+
+    const contactToUpdate = this.state.isNewDelivery
+      ? this.state.selectedContact
+      : this.state.deliveryData?.contact;
+
+    if (!contactToUpdate?.id) return;
+
+    await new PakkasmarjaApi()
+      .getContactsService(accessToken.access_token)
+      .updateContact(
+        { ...contactToUpdate, equipmentInspected: true },
+        contactToUpdate.id!
+      );
+  };
+
   /**
    * Handles accept delivery
    */
@@ -295,7 +314,8 @@ class ManageDelivery extends React.Component<Props, State> {
       grayBoxesLoaned,
       grayBoxesReturned,
       orangeBoxesLoaned,
-      orangeBoxesReturned
+      orangeBoxesReturned,
+      shouldMarkEquipmentInspected
     } = this.state;
 
     if (!accessToken || !product?.id || !deliveryPlaceId || !selectedDate) {
@@ -338,6 +358,10 @@ class ManageDelivery extends React.Component<Props, State> {
       deliveryData && await deliveryService.updateDelivery(delivery, deliveryData.delivery.id!);
     }
 
+    if (shouldMarkEquipmentInspected) {
+      await this.markContactEquipmentInspected();
+    }
+
     navigation.navigate("ManageDeliveries");
   }
 
@@ -353,7 +377,8 @@ class ManageDelivery extends React.Component<Props, State> {
       deliveryQualities,
       amount,
       deliveryQualityId,
-      selectedDate
+      selectedDate,
+      shouldMarkEquipmentInspected
     } = this.state;
 
     if (
@@ -382,6 +407,10 @@ class ManageDelivery extends React.Component<Props, State> {
         },
         deliveryData.delivery.id
       );
+
+    if (shouldMarkEquipmentInspected) {
+      await this.markContactEquipmentInspected();
+    }
 
     navigation.navigate("ManageDeliveries");
   }
@@ -1070,6 +1099,25 @@ class ManageDelivery extends React.Component<Props, State> {
               )
             }
           </View>
+          { selectedContact && !selectedContact.equipmentInspected &&
+            <View style={{ marginVertical: 16 }}>
+              <Card noShadow style={{ borderColor: "red", borderRadius: 8, borderWidth: 2 }}>
+                <View style={{ padding: 16, paddingBottom: 8 }}>
+                  <Text style={{ color: "red", fontWeight: "bold" }}>Viljelijän kalustoa ei ole tarkastettu</Text>
+                </View>
+                <ListItem>
+                  <CheckBox
+                    color="#E51D2A"
+                    checked={ this.state.shouldMarkEquipmentInspected }
+                    onPress={ () => this.setState({ shouldMarkEquipmentInspected: !this.state.shouldMarkEquipmentInspected }) }
+                  />
+                  <Body>
+                    <Text>Merkkaa tarkastetuksi</Text>
+                  </Body>
+                </ListItem>
+              </Card>
+            </View>
+          }
           {
             !this.isValid() &&
             <View style={ styles.center }>

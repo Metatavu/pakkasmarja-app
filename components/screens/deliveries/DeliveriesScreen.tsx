@@ -15,6 +15,7 @@ import BasicLayout from "../../layout/BasicLayout";
 import strings from "../../../localization/strings";
 import _ from "lodash";
 import { StackNavigationOptions } from "@react-navigation/stack";
+import ProfileButton from "../../layout/ProfileButton";
 
 /**
  * Component props
@@ -80,18 +81,8 @@ class DeliveriesScreen extends React.Component<Props, State> {
       height: 100,
       backgroundColor: "#E51D2A"
     },
-    headerTitle: () => (
-      <TopBar
-        navigation={ navigation }
-        showMenu
-        showHeader={ false }
-        showUser
-      />
-    ),
-    headerTitleStyle: { width: Dimensions.get("window").width },
-    headerTitleContainerStyle: {
-      left: 0
-    },
+    headerTitle: () => <TopBar/>,
+    headerTitleAlign: "center",
     headerLeft: () => (
       <TouchableHighlight onPress={ navigation.goBack }>
         <FeatherIcon
@@ -101,7 +92,8 @@ class DeliveriesScreen extends React.Component<Props, State> {
           style={{ marginLeft: 30 }}
         />
       </TouchableHighlight>
-    )
+    ),
+    headerRight: () => <ProfileButton/>
   });
 
   /**
