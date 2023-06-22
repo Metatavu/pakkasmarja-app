@@ -105,7 +105,7 @@ export type DeliveryDataKey = "amount" | "deliveryPlaceId" | "deliveryTimeValue"
 /**
  * Type for box key
  */
-export type BoxKey = "redBoxesLoaned" | "redBoxesReturned" | "grayBoxesLoaned" | "grayBoxesReturned" | "orangeBoxesLoaned" | "orangeBoxesReturned";
+export type BoxKey = "redBoxesLoaned" | "redBoxesReturned" | "grayBoxesLoaned" | "grayBoxesReturned" | "orangeBoxesLoaned" | "orangeBoxesReturned" | "greenBoxesLoaned" | "greenBoxesReturned";
 
 /**
  * Type for manage contact key

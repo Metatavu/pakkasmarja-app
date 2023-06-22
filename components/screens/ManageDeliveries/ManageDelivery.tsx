@@ -80,6 +80,8 @@ interface State {
   grayBoxesReturned: number;
   orangeBoxesLoaned: number;
   orangeBoxesReturned: number;
+  greenBoxesLoaned: number;
+  greenBoxesReturned: number;
   query?: string;
   selectedContact?: Contact;
   contractQuantities?: ContractQuantities[];
@@ -120,6 +122,8 @@ class ManageDelivery extends React.Component<Props, State> {
       grayBoxesReturned: 0,
       orangeBoxesLoaned: 0,
       orangeBoxesReturned: 0,
+      greenBoxesLoaned: 0,
+      greenBoxesReturned: 0,
 
       query: "",
 
@@ -315,6 +319,8 @@ class ManageDelivery extends React.Component<Props, State> {
       grayBoxesReturned,
       orangeBoxesLoaned,
       orangeBoxesReturned,
+      greenBoxesLoaned,
+      greenBoxesReturned,
       shouldMarkEquipmentInspected
     } = this.state;
 
@@ -336,7 +342,8 @@ class ManageDelivery extends React.Component<Props, State> {
       loans: [
         { item: "RED_BOX", loaned: redBoxesLoaned, returned: redBoxesReturned },
         { item: "GRAY_BOX", loaned: grayBoxesLoaned, returned: grayBoxesReturned },
-        { item: "ORANGE_BOX", loaned: orangeBoxesLoaned, returned: orangeBoxesReturned }
+        { item: "ORANGE_BOX", loaned: orangeBoxesLoaned, returned: orangeBoxesReturned },
+        { item: "GREEN_BOX", loaned: greenBoxesLoaned, returned: greenBoxesReturned },
       ]
     }
 
@@ -712,6 +719,12 @@ class ManageDelivery extends React.Component<Props, State> {
     {
       key: "orangeBoxesReturned",
       label: "Palautettu (oranssit laatikot)"
+    }, {
+      key: "greenBoxesLoaned",
+      label: "Lainattu (vihreät laatikot)"
+    }, {
+      key: "greenBoxesReturned",
+      label: "Palautettu (vihreät laatikot)"
     }];
 
     const availableDeliveryTimes = this.getDeliveryTimeOptions();

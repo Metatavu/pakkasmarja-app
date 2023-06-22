@@ -50,6 +50,8 @@ interface State {
   grayBoxesReturned: number;
   orangeBoxesLoaned: number;
   orangeBoxesReturned: number;
+  greenBoxesLoaned: number;
+  greenBoxesReturned: number;
 
   deliveryLoanComment: string;
 
@@ -87,6 +89,8 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       grayBoxesReturned: 0,
       orangeBoxesLoaned: 0,
       orangeBoxesReturned: 0,
+      greenBoxesLoaned: 0,
+      greenBoxesReturned: 0,
       deliveryLoanComment: "",
 
       query: ""
@@ -166,7 +170,9 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       grayBoxesLoaned,
       grayBoxesReturned,
       orangeBoxesLoaned,
-      orangeBoxesReturned
+      orangeBoxesReturned,
+      greenBoxesLoaned,
+      greenBoxesReturned
     } = this.state;
 
     if (!accessToken|| !deliveryPlaceId|| !selectedDate || !selectedContact?.id) {
@@ -181,7 +187,8 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       loans: [
         { item: "RED_BOX", loaned: redBoxesLoaned, returned: redBoxesReturned },
         { item: "GRAY_BOX", loaned: grayBoxesLoaned, returned: grayBoxesReturned },
-        { item: "ORANGE_BOX", loaned: orangeBoxesLoaned, returned: orangeBoxesReturned }
+        { item: "ORANGE_BOX", loaned: orangeBoxesLoaned, returned: orangeBoxesReturned },
+        { item: "GREEN_BOX", loaned: greenBoxesLoaned, returned: greenBoxesReturned }
       ]
     }
 
@@ -325,6 +332,14 @@ class ManageBoxDelivery extends React.Component<Props, State> {
       {
         key: "orangeBoxesReturned",
         label: "Palautettu (oranssit laatikot)"
+      },
+      {
+        key: "greenBoxesLoaned",
+        label: "Lainattu (vihreät laatikot)"
+      },
+      {
+        key: "greenBoxesReturned",
+        label: "Palautettu (vihreät laatikot)"
       }
     ];
 
